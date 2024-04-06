@@ -2,11 +2,7 @@ import { useDb } from '@/hooks'
 import semver from 'semver'
 
 export default async () => {
-  const appVersion = APP_VERSION
-  if (semver.lt(appVersion, '0.6.1')) {
-    return
-  }
-  if (localStorage.getItem('URL_UPDATED')) return
+  if (localStorage.getItem('URL_UPDATED_V1')) return
   const objectDb = useDb('objects')
   const legacyObjects = await objectDb
     .filter(i => {
@@ -20,5 +16,5 @@ export default async () => {
     })
     .toArray()
   await objectDb.bulkPut(legacyObjects.map(i => ({ ...i, url: i.fileUrl || i.imageUrl })))
-  localStorage.setItem('URL_UPDATED', 'true')
+  localStorage.setItem('URL_UPDATED_V1', 'true')
 }

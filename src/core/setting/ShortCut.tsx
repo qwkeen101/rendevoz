@@ -12,14 +12,15 @@ import { IShortCutSetting } from './types'
 import SettingGroup from '@/core/setting/SettingGroup'
 
 const shortCutNameToTitle = {
-  global: {
+  function: {
     openSidebar: 'Open sidebar',
     openObjectPanel: 'Open object details',
-    // quickCreateObject: 'open create object form',
+    quickCreateObject: 'Create object',
     openScreenShot: 'open screen shot',
     openTranslatePanel: 'open translate panel',
-    // openSearchPanel: 'open web search panel',
-    openGlobalSearch: 'open global text search',
+    openGlobalSearch: 'open global text search'
+  },
+  layout: {
     closeCurrentTab: 'Close current focused tab',
     closeOtherTabs: 'Close other tabs',
     closeRightTabs: 'Close right tabs',
@@ -36,7 +37,11 @@ const shortCutNameToTitle = {
 
 const ShortCutSetting = () => {
   const { t } = useTranslation()
-  const globalItems: ISettingItem[] = Object.entries(shortCutNameToTitle.global).map(entry => ({
+  const functionItems: ISettingItem[] = Object.entries(shortCutNameToTitle.function).map(entry => ({
+    title: t(`settings.${entry[1]}`),
+    children: <ShortCutItem shortCutName={entry[0]} />
+  }))
+  const layoutItems: ISettingItem[] = Object.entries(shortCutNameToTitle.layout).map(entry => ({
     title: t(`settings.${entry[1]}`),
     children: <ShortCutItem shortCutName={entry[0]} />
   }))
@@ -46,7 +51,8 @@ const ShortCutSetting = () => {
   }))
   return (
     <>
-      <SettingGroup title={t('settings.global shortcuts')} layout={globalItems} />
+      <SettingGroup title={t('settings.Function shortcuts')} layout={functionItems} />
+      <SettingGroup title={t('settings.Layout shortcuts')} layout={layoutItems} />
       <SettingGroup title={t('settings.video shortcuts')} layout={videoItems} />
     </>
   )

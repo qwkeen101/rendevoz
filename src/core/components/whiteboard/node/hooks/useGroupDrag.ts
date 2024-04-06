@@ -15,7 +15,7 @@ const boxContain = (parentBox: Box, childBox: Box) => {
 }
 const useGroupDrag = (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
   const inGroupNodeIdsRef = useRef<number[]>([])
-  const { width, height, x, y } = node
+  const { x, y } = node
   const inGroupNodesOffsetMapRef = useRef(new Map<number, Position>())
   const handleGetInGroupNodes = () => {
     const inGroupNodes = instance.groupOps?.getNodesInGroup(node.id)
@@ -23,7 +23,6 @@ const useGroupDrag = (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
     inGroupNodes.forEach(n => {
       if (n.type === 'mindmap') {
         const expanded = instance.mindmapOps?.expandMindmap(n)
-        console.log(expanded)
         expanded?.forEach(o => inGroupNodes.push(o))
       }
     })

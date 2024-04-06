@@ -1,10 +1,8 @@
 import { memo, useEffect, useState } from 'react'
 import calculateAppearIn from '@/core/search/calculateAppearIn'
 import { Content, Icon } from '@/components'
-import { MetaStore, ObjectStore } from '@/api/stores'
+import { MetaStore } from '@/api/stores'
 import { useTranslation } from 'react-i18next'
-import classnames from 'classnames'
-import { ClassName } from 'rendevoz'
 import { useRenderObject } from '@/core'
 import { GlobalInstance } from '@/hooks'
 import getInsideMetas from '@/core/components/editor/utils/getInsideMetas'
@@ -20,7 +18,9 @@ export default memo(({ metaId, visible }: { metaId: number; visible?: boolean })
   }, [metaId, visible])
 
   const { t } = useTranslation()
-  if (backlinks && (backlinks.group.length || backlinks.whiteboard.length || backlinks.note.length)) {
+  if (backlinks) {
+    const items = Object.values(backlinks).flat(1)
+    if (!items.length) return null
     return (
       <Content>
         <Content
@@ -46,7 +46,7 @@ export default memo(({ metaId, visible }: { metaId: number; visible?: boolean })
           {t('general.Appear in')}
         </Content>
         <Content className={'border-box-shadow'} column gap={3} flex style={{ borderRadius: 8, padding: 8 }}>
-          {[...backlinks.group, ...backlinks.whiteboard, ...backlinks.note].map(i => (
+          {items.map(i => (
             <Item parentMetaId={metaId} metaId={i.parent.id} key={i.parent.id} />
           ))}
         </Content>
@@ -71,6 +71,7 @@ const Item = ({ metaId, parentMetaId }: { metaId: number; parentMetaId: number }
           showMoreOptions: true,
           onClick: () => {
             GlobalInstance.metaOps?.closeDetails()
+            GlobalInstance.searchOps?.closeSearchPanel()
             if (m.type === 'note') {
               GlobalInstance.layoutOps?.openObject<'editor'>(m.id).then(async ins => {
                 const v = ins?.getSlateEditor?.().children
@@ -82,6 +83,7 @@ const Item = ({ metaId, parentMetaId }: { metaId: number; parentMetaId: number }
                   }
                 }
               })
+              return
             }
             if (m.type === 'group') {
               GlobalInstance.layoutOps?.openObject<'group'>(m.id).then(ins => {
@@ -92,6 +94,7 @@ const Item = ({ metaId, parentMetaId }: { metaId: number; parentMetaId: number }
                   }
                 )
               })
+              return
             }
             if (m.type === 'whiteboard') {
               GlobalInstance.layoutOps?.openObject<'whiteboard'>(m.id).then(ins => {
@@ -99,7 +102,9 @@ const Item = ({ metaId, parentMetaId }: { metaId: number; parentMetaId: number }
                   select: true
                 })
               })
+              return
             }
+            GlobalInstance.layoutOps?.openObject(m.id)
           }
         })}
       </Content>

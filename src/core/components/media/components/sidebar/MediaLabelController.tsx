@@ -152,6 +152,9 @@ const Label = ({ id, type }: { id: number; type: string }) => {
       <Content flex gap={12} alignItems="flex-start">
         {mediaLabel?.imageUrl && (
           <Image
+            onContextMenu={() => {
+              mediaLabel.imageUrl && GlobalInstance.commonOps?.previewImage?.(mediaLabel.imageUrl)
+            }}
             width={100}
             ratio={0.5625}
             containerStyle={{

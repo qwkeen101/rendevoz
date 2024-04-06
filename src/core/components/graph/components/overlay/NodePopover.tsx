@@ -13,6 +13,7 @@ import useGraphNodes from '../../hooks/useGraphNodes'
 import useEdges from '../../hooks/useEdges'
 import * as d3 from 'd3'
 import { Rendevoz } from '@/core/rendevoz'
+import { GlobalInstance } from '@/hooks'
 
 const NodePopover = ({ metaId, nodeId, onClose }: { metaId: number; nodeId: number; onClose: VoidFunction }) => {
   const { renderWhole } = useRenderObject({ metaObjectId: metaId })
@@ -38,114 +39,81 @@ const NodePopover = ({ metaId, nodeId, onClose }: { metaId: number; nodeId: numb
     }
   }, [nodeId])
   return (
-    <Content
-      style={{
-        maxWidth: 320,
-        padding: 8
-      }}
-    >
-      {renderWhole({
-        titleOptions: {
-          ellipsisLine: 4,
-          onTitleClick: () => {
-            Rendevoz.Actions.Open.Meta.openMetaObject(metaId)
-            graph?.overlayManager?.close()
+    <>
+      <ObjectActionPopover
+        metaObjectId={metaId}
+        onClose={onClose}
+        onShowGraph={() => {
+          GlobalInstance.metaOps?.openGraph(metaId)
+        }}
+        onShowRelated={() => {
+          // after get related nodes, we need to
+          const nodes = getRelatedNodesOfNode(nodeId)
+
+          const centerNode = graph?.nodesMap?.get(nodeId)
+          const originNodes = graph?.originNodes
+          const edges = getAllEdgesOfNodes(new Set([...nodes.map(i => i.id), ...(originNodes?.map(i => i.id) || [])]))
+          if (graph) {
+            graph.originEdges = null
+            graph.originNodes = null
           }
-        },
+          setEdges(e => {
+            const currentEdges = new Map(edges.map(i => [i.id, i]))
+            e?.forEach(i => currentEdges.set(i.id, i))
+            const nextEdges = Array.from(currentEdges.values())
+            graph?.registerEdges(nextEdges)
+            return nextEdges
+          })
+          setNodes(n => {
+            const currentNodes = new Map(nodes.map(i => [i.id, i]))
+            n?.forEach(i => currentNodes.set(i.id, i))
 
-        descriptionOptions: {
-          style: {
-            fontSize: 13
-          },
-          ellipsisLine: 8
-        },
-        renderOptions: {
-          renderImage: true,
-          imageMode: 'whole',
-          renderFrom: true,
-          renderOption: true
-        },
-        optionOptions: {
-          style: {
-            right: 0,
-            top: -3
-          },
-          customNode: (
-            <WithBorder>
-              <ObjectActionPopover
-                metaObjectId={metaId}
-                onClose={onClose}
-                onShowRelated={() => {
-                  // after get related nodes, we need to
-                  const nodes = getRelatedNodesOfNode(nodeId)
-
-                  const centerNode = graph?.nodesMap?.get(nodeId)
-                  const originNodes = graph?.originNodes
-                  const edges = getAllEdgesOfNodes(new Set([...nodes.map(i => i.id), ...(originNodes?.map(i => i.id) || [])]))
-                  if (graph) {
-                    graph.originEdges = null
-                    graph.originNodes = null
-                  }
-                  setEdges(e => {
-                    const currentEdges = new Map(edges.map(i => [i.id, i]))
-                    e?.forEach(i => currentEdges.set(i.id, i))
-                    const nextEdges = Array.from(currentEdges.values())
-                    graph?.registerEdges(nextEdges)
-                    return nextEdges
-                  })
-                  setNodes(n => {
-                    const currentNodes = new Map(nodes.map(i => [i.id, i]))
-                    n?.forEach(i => currentNodes.set(i.id, i))
-
-                    originNodes?.forEach(i =>
-                      currentNodes.set(i.id, {
-                        ...currentNodes.get(i.id),
-                        fx: i.x,
-                        fy: i.y
-                      })
-                    )
-                    const nextNodes = Array.from(currentNodes.values())
-                    graph?.registerNodes(nextNodes)
-                    return nextNodes
-                  })
-                  setTimeout(() => {
-                    if (graph?.d3Simulation) {
-                      graph.d3Simulation = graph.d3Simulation
-                        .nodes(graph.originNodes.filter(i => !i.hidden))
-                        .force('center', d3.forceCenter(centerNode?.x, centerNode?.y).strength(0.005))
-                        .force(
-                          'link',
-                          d3
-                            .forceLink(graph.originEdges?.filter(i => !i.hidden))
-                            .id(d => d.id)
-                            .distance(300)
-                        )
-                        .alpha(1)
-                        .alphaTarget(0)
-                        .on('tick', graph.ticked)
-                        .restart()
-                    }
-                  }, 0)
-                }}
-                onGraphPin={() => {
-                  setPinnedIds(p =>
-                    produce(p, draft => {
-                      draft.has(nodeId) ? draft.delete(nodeId) : draft.add(nodeId)
-                    })
-                  )
-                }}
-                visibility={{
-                  graphPinVisible: true,
-                  showRelatedVisible: canExpand,
-                  graphPinned: pinnedIds.has(nodeId),
-                  relatedNum: relatedNum
-                }}
-              />
-            </WithBorder>
+            originNodes?.forEach(i =>
+              currentNodes.set(i.id, {
+                ...currentNodes.get(i.id),
+                fx: i.x,
+                fy: i.y
+              })
+            )
+            const nextNodes = Array.from(currentNodes.values())
+            graph?.registerNodes(nextNodes)
+            return nextNodes
+          })
+          setTimeout(() => {
+            if (graph?.d3Simulation) {
+              graph.d3Simulation = graph.d3Simulation
+                .nodes(graph.originNodes.filter(i => !i.hidden))
+                .force('center', d3.forceCenter(centerNode?.x, centerNode?.y).strength(0.005))
+                .force(
+                  'link',
+                  d3
+                    .forceLink(graph.originEdges?.filter(i => !i.hidden))
+                    .id(d => d.id)
+                    .distance(300)
+                )
+                .alpha(1)
+                .alphaTarget(0)
+                .on('tick', graph.ticked)
+                .restart()
+            }
+          }, 0)
+        }}
+        onGraphPin={() => {
+          setPinnedIds(p =>
+            produce(p, draft => {
+              draft.has(nodeId) ? draft.delete(nodeId) : draft.add(nodeId)
+            })
           )
-        }
-      })}
-    </Content>
+        }}
+        visibility={{
+          graphPinVisible: true,
+          showGraph: true,
+          // showRelatedVisible: canExpand,
+          graphPinned: pinnedIds.has(nodeId),
+          relatedNum: relatedNum
+        }}
+      />
+    </>
   )
 }
 

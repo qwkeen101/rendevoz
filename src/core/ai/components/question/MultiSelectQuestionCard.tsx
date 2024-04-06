@@ -73,7 +73,7 @@ export default ({
           }}
         >
           {isEditing ? (
-            <Content flex gap={6} alignItems={'center'}>
+            <Content flex auto gap={6} alignItems={'center'}>
               <input
                 className={ClassName.noStyleInput}
                 defaultValue={i}

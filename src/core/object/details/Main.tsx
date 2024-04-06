@@ -81,18 +81,25 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
           )}
         </Content>
       </Content>
-      <Content className={'border-box-shadow'} style={{ marginTop: 12, flexWrap: 'wrap', padding: 6, borderRadius: 8 }} flex gap={4}>
+      <Content
+        className={'border-bottom'}
+        style={{ marginTop: 12, flexWrap: 'wrap', padding: '6px 12px 12px', marginBottom: 6, marginLeft: -12, marginRight: -12 }}
+        flex
+        gap={4}
+      >
         <Button.IconButton
           text={t('general.Open')}
           icon={'park-share'}
           onClick={() => {
             Rendevoz.Actions.Open.Meta.openMetaObject(metaId)
+            GlobalInstance.metaOps?.closeDetails()
           }}
           className={flatButton}
         ></Button.IconButton>
         <Button.IconButton
           onClick={() => {
             Rendevoz.Actions.Open.Meta.openEditMetaDialog(metaId)
+            GlobalInstance.metaOps?.closeDetails()
           }}
           text={t('general.edit')}
           icon={'park-edit'}
@@ -110,6 +117,7 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
         ></Button.IconButton>
         <Button.IconButton
           onClick={() => {
+            GlobalInstance.metaOps?.closeDetails()
             GlobalInstance.metaOps?.openGraph(metaId)
           }}
           text={t('general.graph')}

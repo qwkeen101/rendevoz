@@ -34,6 +34,7 @@ import WhiteboardHookContainer from '@/core/components/whiteboard/WhiteboardHook
 import SnapDragLayer from '@/core/components/whiteboard/snap/SnapDragLayer'
 import FakeMindmapDragLayer from '@/core/components/whiteboard/node/mindmap/FakeMindmapDragLayer'
 import WhiteboardSearch from '@/core/components/whiteboard/WhiteboardSearch'
+import WhiteboardPasteSelector from '@/core/components/whiteboard/WhiteboardPasteSelector'
 
 const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly }: IWhiteboardProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -182,7 +183,7 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly }: I
           }
         }}
         onContextMenu={e => {
-          if (e.target === e.currentTarget && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+          if (e.target === e.currentTarget) {
             const coord = instance.coordOps?.transformWindowPositionToPosition({ x: e.clientX, y: e.clientY })
             if (coord) {
               instance.toolbarOps?.openContextMenuToolbar({
@@ -200,7 +201,7 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly }: I
         }}
         style={{
           touchAction: 'none',
-          overflow: 'hidden',
+          overflow: 'clip',
           transition: 'width 0.26s ease',
           width: rightBarState.visible ? `calc(100% - ${rightBarState.width})` : undefined
         }}
@@ -239,6 +240,7 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly }: I
       <WhiteboardFloatNodesLayer />
       <WhiteboardRightbar />
       <WhiteboardSearch />
+      <WhiteboardPasteSelector />
       <FakeMindmapDragLayer />
     </>
   )

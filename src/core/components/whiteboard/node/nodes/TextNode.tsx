@@ -11,41 +11,31 @@ const TextNode = ({ node, onClick }: InnerNodeProps & { onClick: VoidFunction })
   const handleChangeValue = (newValue: string) => {
     instance.updateNode?.(textNode.id, n => ({ ...n, content: newValue }), false)
   }
-
-  const containerRef = useRef<HTMLElement>(null)
-
   return (
-    <div
-      style={{
+    <SimpleEditor
+      disableScrollIntoView
+      textareaMode={true}
+      placeholder={node.type === 'mindmap' || node.rootId ? '' : undefined}
+      virtualizer={node.resized}
+      onInstanceInitialized={ins => (i.current = ins)}
+      value={textNode.content}
+      onClick={onClick}
+      containerStyle={{
+        height: '100%',
         background: 'transparent',
         width: node.type === 'mindmap' || node.rootId ? undefined : '200px',
         minWidth: '100%',
         maxWidth: '100%',
-        height: '100%',
         minHeight: '100%',
         maxHeight: '100%',
         padding: '3px 8px',
         pointerEvents: 'auto'
       }}
-      ref={containerRef}
-      onClick={onClick}
-    >
-      <SimpleEditor
-        disableScrollIntoView
-        textareaMode={true}
-        placeholder={node.type === 'mindmap' || node.rootId ? '' : undefined}
-        virtualizer={node.resized}
-        onInstanceInitialized={ins => (i.current = ins)}
-        value={textNode.content}
-        containerStyle={{
-          height: '100%'
-        }}
-        fontSize={node.type === 'mindmap' ? 30 : undefined}
-        onChange={v => {
-          handleChangeValue(v)
-        }}
-      />
-    </div>
+      fontSize={node.type === 'mindmap' ? 30 : undefined}
+      onChange={v => {
+        handleChangeValue(v)
+      }}
+    />
   )
 }
 

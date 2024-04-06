@@ -353,6 +353,7 @@ export default memo(
           <Content
             ref={ref}
             onContextMenu={e => {
+              e.preventDefault()
               if (instance.values.selectedRowIdSet.size === 1) {
                 instance.selectOps?.clearAllSelect()
               }
@@ -372,7 +373,7 @@ export default memo(
             flex
             column
             className={'light-hover bg-popover'}
-            role={'gallery-item-wrapper'}
+            role={'group-item-content'}
             style={{
               width: '100%',
               height: '100%',

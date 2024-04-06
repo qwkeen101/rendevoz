@@ -89,13 +89,12 @@ export default ({
     console.log(linkz)
     setLinks(linkz)
   })
-  const { handleLeftTreeChange, handleRightTreeChange, handleBothTreeChange, layoutCache, allSubNodeIds } = useKeepMindmapLayout(node, {
+  const { handleBothTreeChange, layoutCache, allSubNodeIds } = useKeepMindmapLayout(node, {
     drawEdges: drawAllEdges,
     getEdges
   })
   const { renderTempLink } = useMindmapDragHandler(node, {
-    handleRightTreeChange,
-    handleLeftTreeChange,
+    handleBothTreeChange,
     layoutCache: layoutCache,
     subNodeIds: allSubNodeIds,
     links,
@@ -124,7 +123,6 @@ export default ({
       if (newMindmap) {
         console.log(newMindmap)
         instance.updateNode?.(node.id, n => ({ ...n, ...newMindmap }))
-        instance.updateNode?.(newNode.id, n => ({ ...n, rootId: node.id }))
       }
     }
     nodeFunc.drawMindmapEdges = drawAllEdges

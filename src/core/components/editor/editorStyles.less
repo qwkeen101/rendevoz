@@ -60,3 +60,27 @@
   cursor: pointer;
   flex-shrink: 0
 }
+.print-editor{
+  body{
+    overflow: visible !important;
+  }
+  *{
+    visibility: hidden !important;
+  }
+  #root{
+    display: none;
+  }
+  [role="editor-container"]{
+    visibility: visible !important;
+    display: block !important;
+    height: fit-content !important;
+    padding: 10mm !important;
+    overflow: visible !important;
+  }
+  [role="editor-container"] *{
+    visibility: visible !important;
+  }
+  [role="editor-container"] [role="textbox"]{
+    margin: 0 auto;
+  }
+}

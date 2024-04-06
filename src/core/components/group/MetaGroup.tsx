@@ -147,10 +147,8 @@ const MetaGroupInner = ({ value, groupId, layout, title, on, state, styles, onIn
       if (!instance.values.isFocused) return
       const t = e.target
       if (t instanceof Element) {
-        console.log(t, t.closest('[role="click-cover"]'))
         if (document.querySelector('[role="click-cover"]')) return
         if (!c.contains(t)) {
-          console.log('here')
           instance.values.isFocused = false
         }
       }

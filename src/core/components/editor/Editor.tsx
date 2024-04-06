@@ -57,33 +57,6 @@ const pageWidthToSize = {
   Max: '100%'
 }
 
-// @ts-ignore
-const PrintClassname = css({
-  // '@media print': {
-  body: {
-    overflow: 'visible !important'
-  },
-  '*': {
-    visibility: 'hidden !important'
-  },
-  '#root': {
-    display: 'none'
-  },
-  '[role="editor-container"]': {
-    visibility: 'visible !important',
-    display: 'block !important',
-    height: 'fit-content !important',
-    padding: '10mm !important',
-    overflow: 'visible !important'
-  },
-  '[role="editor-container"] *': {
-    visibility: 'visible !important'
-  },
-  '[role="editor-container"] [role="inner-editor"]': {
-    margin: '0 auto'
-    // }
-  }
-})
 /**
  * Editor core, controlled component / uncontrolled
  * Can be independent component outside Rendevoz
@@ -99,6 +72,8 @@ export const EditorV1: FC<EditorProps> = memo(
     defaultValue,
     readOnly,
     layout,
+    onClick,
+    textboxMode,
     state,
     title,
     onReadOnlyChange,
@@ -118,6 +93,11 @@ export const EditorV1: FC<EditorProps> = memo(
     const setEditorState = useSetAtom(EditorStateAtom)
     const isDraggingDivider = useSelectAtomValue(EditorStateAtom, s => s.isDraggingDivider)
     const instance = useEditorInstance()
+    useEffect(() => {
+      if (textboxMode !== undefined) {
+        setEditorState(s => ({ ...s, textboxMode }))
+      }
+    }, [textboxMode])
     useLayoutEffect(() => {
       const scrollEle = scrollElementRef.current
       const resizeObserver = new ResizeObserver(c => {
@@ -211,9 +191,9 @@ export const EditorV1: FC<EditorProps> = memo(
         const ele = scrollElementRef.current!
         const p = ele.parentElement!
         document.body.appendChild(ele)
-        document.documentElement.classList.add(PrintClassname)
+        document.documentElement.classList.add('print-editor')
         const afterPrint = () => {
-          document.documentElement.classList.remove(PrintClassname)
+          document.documentElement.classList.remove('print-editor')
           p.appendChild(ele)
           setEditorState(s => ({ ...s, layout: { ...s.layout, virtualizer: enV } }))
           window.removeEventListener('afterprint', afterPrint)
@@ -328,11 +308,48 @@ export const EditorV1: FC<EditorProps> = memo(
       }
     }
 
-    useClickOutside(() => {
-      setBlockHandle(s => (s.visible === false ? s : { ...s, visible: false }))
-    }, scrollElementRef)
+    !textboxMode &&
+      useClickOutside(() => {
+        setBlockHandle(s => (s.visible === false ? s : { ...s, visible: false }))
+      }, scrollElementRef)
 
     const barState = useAtomValue(EditorBarStateAtom)
+    if (textboxMode) {
+      return (
+        <>
+          <EditorPluginHooks editor={editor} scrollElementRef={scrollElementRef} />
+          <div
+            onClick={onClick}
+            ref={scrollElementRef}
+            role="editor-container"
+            style={{
+              '--placeholder': `"${placeholder ?? t('editor.Type for commands')}"`,
+              '--editable-line-height': editorState.lineSpacing,
+              fontFamily: editorState.typeface || 'Inter',
+              '--font-size': editorState.fontSize,
+              ...styles?.containerStyle
+            }}
+          >
+            <InnerEditor
+              style={{
+                '--block-bg': realReadOnly ? 'none' : undefined,
+                fontSize: editorState.fontSize,
+                position: 'relative',
+                width: 'var(--editor-max-width)',
+                outline: 'none',
+                whiteSpace: 'pre-wrap',
+                wordWrap: 'break-word'
+              }}
+              editorClassName={classNames?.editorContainerClassName}
+              defaultValue={defaultValue || defaultV}
+              scrollElementRef={scrollElementRef}
+              editor={editor}
+              onChange={useMemoizedFn(v => editor.on({ type: 'valueChange', value: v }))}
+            />
+          </div>
+        </>
+      )
+    }
     return (
       <>
         <EditorPluginHooks editor={editor} scrollElementRef={scrollElementRef} />
@@ -340,7 +357,7 @@ export const EditorV1: FC<EditorProps> = memo(
           flex
           fullWidth
           auto
-          onClick={() => console.log(instance.values.selectedBlocks)}
+          onClick={onClick}
           column
           style={{
             height: styles?.containerHeight ?? '100%',
@@ -385,7 +402,6 @@ export const EditorV1: FC<EditorProps> = memo(
               />
             )}
             <div
-              role="inner-editor"
               className={Cla(EditorClasses.EditorWrapper, classNames?.editorContainerClassName)}
               style={{
                 '--block-bg': realReadOnly ? 'none' : undefined,

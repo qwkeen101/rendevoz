@@ -1,6 +1,6 @@
 import useFileUpload from '../../base/useFileUpload'
 import { Button } from '../../base'
-import { GlobalImporterInstance } from '@/core/global/components/FileImporter'
+import { GlobalImporterInstance } from '@/core/global/components/FileImportProcessor'
 import { useTranslation } from 'react-i18next'
 import ClassName from '@/styles/classNames'
 

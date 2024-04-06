@@ -9,10 +9,18 @@ const domParser = new DOMParser()
 import { getTweet } from 'react-tweet/api'
 import processGithubIssue from '@/core/rendevoz/utils/webProcessor/githubIssue'
 import { normalizeResult } from '@/core/components/editor/plugins/transformHTML/deserializeHTML'
+import processWeixin from '@/core/rendevoz/utils/webProcessor/weixin'
+import { getSetting } from '@/core'
+import { Rendevoz } from '@/core/rendevoz'
 const tweetRegexp = /https:\/\/twitter\.com\/\w+\/status\/\d+/gm
 
 const WebUtils: (typeof Utils)['Web'] = {
   fetchDetails: async url => {
+    try {
+      new URL(url)
+    } catch (e) {
+      return Promise.reject()
+    }
     // is tweet
     const reg = new RegExp(tweetRegexp)
     if (reg.test(url)) {
@@ -47,20 +55,28 @@ const WebUtils: (typeof Utils)['Web'] = {
     const parser = new DOMParser()
     const dom = parser.parseFromString(text, 'text/html')
     const head = dom.head
-    const title = head.querySelector('title')?.textContent || ''
     const metas = Array.from(head.querySelectorAll('meta').values())
+    const title = head.querySelector('title')?.textContent || metas.find(i => i.getAttribute('property') === 'og:title')?.content || ''
     const descriptionMeta = metas.find(i => i.name === 'description' || i.getAttribute('property') === 'og:description')?.content
     const imageMeta = metas.find(i => i.getAttribute('property') === 'og:image')?.content
+    const author = metas.find(i => i.name === 'author')?.content
     return {
       title,
       description: descriptionMeta,
-      image: imageMeta
+      image: imageMeta,
+      author
     }
   },
   parseWebpage: async (url, html) => {
+    try {
+      new URL(url)
+    } catch (e) {
+      return Promise.reject()
+    }
     let prefetchedHTML = html || (await fetch(url).then(r => r.text()))
     if (!prefetchedHTML) throw 'Failed to parse webpage!'
     prefetchedHTML = processGithubIssue(url, prefetchedHTML)
+    prefetchedHTML = processWeixin(url, prefetchedHTML)
     console.log(prefetchedHTML)
     // const res = await PostlightParser.parse(url, {
     //   html: prefetchedHTML
@@ -70,31 +86,33 @@ const WebUtils: (typeof Utils)['Web'] = {
       const parsedDoc = domParser.parseFromString(r.content, 'text/html')
       console.log(parsedDoc)
       const result = deserializeHTML(parsedDoc.body)
-      console.log(result)
       const normalized = normalizeResult(result, url)
-      console.log(normalized)
       const doc = domParser.parseFromString(await fetch(url).then(res => res.text()), 'text/html')
       const favicon = await getFavicon(doc, url)
       const image = await getImg(doc, url)
-      if ((!normalized.length || normalized[0].type !== 'image') && image) {
-        normalized.unshift({
-          id: Id.getId(),
-          type: 'image',
-          url: image,
-          children: [{ text: '' }]
-        })
+      const setting = getSetting()
+      if (setting.webpage.autoAddHeadImage) {
+        if ((!normalized.length || normalized[0].type !== 'image') && image) {
+          normalized.unshift({
+            id: Id.getId(),
+            type: 'image',
+            url: image,
+            children: [{ text: '' }]
+          })
+        }
       }
       let domain = 'Unknown'
       try {
         const u = new URL(url)
         domain = u.hostname.replace('www.', '')
       } catch (e) {}
+      const details = await Rendevoz.Utils.Web.fetchDetails(url)
       return {
         content: normalized,
         title: r.title,
         favicon,
-        image: image,
-        author: r.byline,
+        image: details.image || image,
+        author: details.author || r.byline,
         domain: domain || 'Unknown'
       }
     }

@@ -1,4 +1,4 @@
-import { useGlobalAtom, useMemoizedFn, useShortcut, useToggle } from '@/hooks'
+import { GlobalInstance, useGlobalAtom, useMemoizedFn, useShortcut, useToggle } from '@/hooks'
 import { Position } from '@/types'
 import isHotkey from 'is-hotkey'
 import { CSSProperties, useEffect, useRef, useState } from 'react'
@@ -628,6 +628,44 @@ const GlobalScreenShot = () => {
       </Content>
     )
   }
+  const handleAddMeta = async (showModal?: boolean) => {
+    if (selectionBoxState?.rect) {
+      const blob = await getImageBlob()
+      const imgPath = await saveImageLocally(blob, {
+        compress: false
+      })
+      setScreenShotLayerVisible(false)
+      const { relatedMeta, normalizedImage, normalizedImageMeta } = await normalizeScreenshot(selectionBoxState.rect, imgPath)
+      if (!normalizedImageMeta) {
+        return
+      }
+      const one = await ObjectStore('image').addOneWithMeta(
+        {
+          ...normalizedImage,
+          url: imgPath
+        },
+        {
+          showMetaModal: showModal,
+          currentMeta: {
+            type: 'image',
+            coverImgSrc: imgPath,
+            description: ocrResult,
+            ...normalizedImageMeta
+          }
+        }
+      )
+      relatedMeta.forEach(v => {
+        MetaStore.addMetaLink(
+          {
+            sourceId: v.id,
+            targetId: one.meta.id
+          },
+          true
+        )
+      })
+      return one.meta
+    }
+  }
   const renderScreenShotLayer = () => (
     <div
       style={{
@@ -712,45 +750,15 @@ const GlobalScreenShot = () => {
                     }
                     break
                   }
-                  case 'add as object': {
-                    if (selectionBoxState.rect) {
-                      const blob = await getImageBlob()
-                      const imgPath = await saveImageLocally(blob, {
-                        compress: false
-                      })
-                      setScreenShotLayerVisible(false)
-                      const { relatedMeta, normalizedImage, normalizedImageMeta } = await normalizeScreenshot(
-                        selectionBoxState.rect,
-                        imgPath
-                      )
-                      if (!normalizedImageMeta) {
-                        return
-                      }
-                      const one = await ObjectStore('image').addOneWithMeta(
-                        {
-                          ...normalizedImage,
-                          url: imgPath
-                        },
-                        {
-                          showMetaModal: true,
-                          currentMeta: {
-                            type: 'image',
-                            coverImgSrc: imgPath,
-                            description: ocrResult,
-                            ...normalizedImageMeta
-                          }
-                        }
-                      )
-                      relatedMeta.forEach(v => {
-                        MetaStore.addMetaLink(
-                          {
-                            sourceId: v.id,
-                            targetId: one.meta.id
-                          },
-                          true
-                        )
-                      })
+                  case 'move-to': {
+                    const m = await handleAddMeta()
+                    if (m) {
+                      GlobalInstance.metaOps?.quickAdd(m.id)
                     }
+                    break
+                  }
+                  case 'add as object': {
+                    handleAddMeta(true)
                     break
                   }
                   case 'download': {
@@ -799,13 +807,7 @@ const GlobalScreenShot = () => {
       )}
     </div>
   )
-  return createPortal(
-    <>
-      {screenShotLayerVisible && renderScreenShotLayer()}
-    </>,
-    document.body,
-    'screen-shot-layer'
-  )
+  return createPortal(<>{screenShotLayerVisible && renderScreenShotLayer()}</>, document.body, 'screen-shot-layer')
 }
 
 export default GlobalScreenShot

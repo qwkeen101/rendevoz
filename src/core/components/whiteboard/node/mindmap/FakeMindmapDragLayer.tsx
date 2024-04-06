@@ -2,9 +2,9 @@ import { memo, useEffect, useRef, useState } from 'react'
 import { IWhiteboardNode, XYPosition } from '~/typings'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import { assignProperties } from '@/utils'
-import { Rnd } from 'react-rnd'
-import checkAddLinkWhenDrag from '@/core/components/whiteboard/node/mindmap/drag/getClosestNodeLink'
+import getClosestLink from '@/core/components/whiteboard/node/mindmap/drag/getClosestNodeLink'
 import { debounce } from 'lodash'
+import getAttachableNodes from '@/core/components/whiteboard/node/mindmap/utils/getAttachableNodes'
 
 export default memo(() => {
   const [fakeMindmapNode, setFakeMindmapNode] = useState<{
@@ -29,7 +29,7 @@ export default memo(() => {
         }
         const transformed = instance.coordOps?.transformWindowPositionToPosition(windowPos)
         if (transformed) {
-          const targetMindmapNode = checkAddLinkWhenDrag({ ...node, x: transformed.x, y: transformed.y }, instance, e)
+          const targetMindmapNode = getClosestLink({ ...node, x: transformed.x, y: transformed.y }, instance, e)
           console.log(targetMindmapNode)
           Array.from(instance.values.ID_TO_NODE_MAP.values()).forEach(
             i => i.checkMindmapDrag?.(targetMindmapNode, { ...node, x: transformed.x, y: transformed.y })
@@ -99,6 +99,7 @@ export default memo(() => {
       ...instance.mindmapOps,
       startDragMindmapChild: (nodeId, e) => {
         if (e.target instanceof HTMLElement && e.target.closest('[data-disable-add-sub]')) return
+        getAttachableNodes(instance, nodeId)
         const nodeDOM = instance.nodeOps?.getNodeDOM(nodeId)
         const node = instance.getNode?.(nodeId)
         if (nodeDOM && node) {

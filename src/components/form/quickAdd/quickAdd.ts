@@ -4,7 +4,7 @@ import { Rendevoz } from '@/core/rendevoz'
 import { getSetting } from '@/core'
 import Id from '@/utils/id'
 
-export default async (metaId: number | number[], type: 'note' | 'group' | 'collection', id: number) => {
+export default async (metaId: number | number[], type: 'note' | 'group' | 'collection' | 'tag', id: number) => {
   const setting = getSetting()
   metaId = Array.isArray(metaId) ? metaId : [metaId]
   if (type === 'note') {
@@ -89,5 +89,16 @@ export default async (metaId: number | number[], type: 'note' | 'group' | 'colle
       })),
       id
     )
+  }
+  if (type === 'tag') {
+    updateMovetoCache(s => {
+      s.recently = s.recently ? [{ type: 'tag', id }, ...s.recently.filter(i => i.id !== id)] : [{ type: 'tag', id }]
+    })
+    metaId.forEach(mid => {
+      const m = MetaStore.getCachedMetaObject(mid)
+      if (m && !m.tags?.includes(id)) {
+        MetaStore.updateMetaObject({ id: mid, tags: [...(m.tags || []), id] })
+      }
+    })
   }
 }

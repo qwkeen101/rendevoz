@@ -96,6 +96,7 @@ export type IMediaInternalState = {
 }
 
 export type IMediaInstance = Partial<{
+  focus: VoidFunction
   actionOps: {
     play: VoidFunction
     pause: VoidFunction

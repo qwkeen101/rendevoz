@@ -1,6 +1,4 @@
 import { atom, useAtomValue, useSetAtom } from 'jotai'
-import { IMediaInstance, IMediaLabel } from '~/typings'
-import { captureVideoFrame, captureVideoFrameBlob } from '../utils'
 import { saveImageLocally } from '@/utils/img'
 import { ObjectStore } from '@/api/stores'
 import { RefObject, useEffect } from 'react'
@@ -9,6 +7,7 @@ import { MediaStateAtom } from './useMediaState'
 import { MediaToolbarStateAtom } from './useMediaToolbarState'
 import Id from '@/utils/id'
 import { getSetting } from '@/core'
+import { IMediaInstance } from '~/typings'
 
 export const MediaInstanceAtom = atom<IMediaInstance>({})
 
@@ -20,6 +19,9 @@ export const useAssignMediaInstance = (containerRef: RefObject<HTMLElement>) => 
     containerRef.current?.focus?.()
   }, [mediaState.paused])
   assignProperties(mediaInstance, {
+    focus: () => {
+      containerRef.current?.focus()
+    },
     getVideoState: () => mediaState,
     insertChapter: async chapter => {
       if (!chapter.startTime) return

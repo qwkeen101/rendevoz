@@ -447,6 +447,7 @@ export default (
             key: 'edit-meta',
             text: t('general.edit'),
             icon: 'park-edit',
+            suffix: WhiteboardDefaultKeyboardShortcut.Edit.text,
             onSelect: () => {
               const item = selected[0].type === 'metaObject' && selected[0].metaObjectId
               item && Rendevoz.Actions.Open.Meta.openEditMetaDialog(item)

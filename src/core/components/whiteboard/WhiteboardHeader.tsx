@@ -1,5 +1,5 @@
-import { Button, ButtonChooser, Content, Icon, IconWithPopover, NumberInput, Toolbar, Tooltip, WithBorder } from '@/components'
-import { useAtom } from 'jotai'
+import { Button, Content, Icon, IconWithPopover, NumberInput, Toolbar, Tooltip, WithBorder } from '@/components'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { WhiteboardSidebarStateAtom } from '@/core/components/whiteboard/sidebar/WhiteboardRightbar'
 import { ClassName } from 'rendevoz'
 import WhiteboardSettings from '@/core/components/whiteboard/WhiteboardSettings'
@@ -9,10 +9,21 @@ import ButtonSelect from '@/components/base/ButtonSelect'
 import { exportWhiteboardAsImage } from '@/core/components/whiteboard/utils/exportAsImage'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import { downloadImg } from '@/utils'
-import { useWhiteboardState } from '@/core/components/whiteboard/hooks/useWhiteboardState'
+import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
 import TooltipWithCmd from '@/components/TooltipWithCmd'
+import { selectAtom } from 'jotai/utils'
+import { isEqual } from 'lodash'
+const a = selectAtom(
+  WhiteboardStateAtom,
+  s => ({
+    currentTool: s.currentTool,
+    readOnly: s.readOnly
+  }),
+  isEqual
+)
 export default memo(() => {
-  const [whiteboardState, setWhiteboardState] = useWhiteboardState()
+  const { currentTool, readOnly } = useAtomValue(a)
+  const setWhiteboardState = useSetAtom(WhiteboardStateAtom)
   const [rightBarState, setRightBarState] = useAtom(WhiteboardSidebarStateAtom)
   const [exportState, setExportState] = useState({
     as: 'png',
@@ -38,7 +49,7 @@ export default memo(() => {
         borderRadius: 8
       }}
     >
-      {!whiteboardState.readOnly && (
+      {!readOnly && (
         <Toolbar disableDefaultStyle={true} style={{ gap: 4 }} itemSize={16} itemSpace={4}>
           <Toolbar.Item
             onClick={() =>
@@ -54,7 +65,7 @@ export default memo(() => {
             }}
             className={ClassName.flatButton(4, '5px')}
             iconName="park-pencil"
-            isActive={whiteboardState?.currentTool === 'freehand'}
+            isActive={currentTool === 'freehand'}
           />
           <Toolbar.Item
             style={{
@@ -70,7 +81,7 @@ export default memo(() => {
             }
             className={ClassName.flatButton(4, '5px')}
             iconName="custom-eraser"
-            isActive={whiteboardState?.currentTool === 'erase'}
+            isActive={currentTool === 'erase'}
           />
           <div
             style={{

@@ -107,6 +107,9 @@ export default function assignGlobalLayoutOps(layoutRef: RefObject<DockLayout>) 
               return
             }
           }
+          if (m.type === 'localFile') {
+            Rendevoz.Actions.Open.Meta.openMetaObject(m.id)
+          }
           const res = await new Promise(res => {
             GlobalInstance.layoutOps?.openNewTab({
               objectId: objectId,

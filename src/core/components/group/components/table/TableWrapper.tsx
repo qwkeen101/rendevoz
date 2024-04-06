@@ -103,7 +103,7 @@ const TableWrapper = memo(
             }}
           >
             <div
-              role={'table-wrapper'}
+              role={'group-render-content'}
               style={{
                 position: 'absolute',
                 top: 0,
@@ -138,7 +138,7 @@ const TableWrapper = memo(
         <Content
           flex
           column
-          role={'table-wrapper'}
+          role={'group-render-content'}
           ref={ref}
           style={{
             width: '100%',

@@ -1,10 +1,10 @@
 import { Box, IWhiteboardInstance, IWhiteboardNode } from '~/typings'
 import { assignProperties, boxContain, calculateImageAspectRatio, downloadImg } from '@/utils'
-import { getBoxOfNodes } from '@/core/components/whiteboard/utils'
+import { getBoxOfBoxes, getBoxOfNodes } from '@/core/components/whiteboard/utils'
 import { exportWhiteboardAsImage } from '@/core/components/whiteboard/utils/exportAsImage'
 import groupStore from '@/api/stores/group.store'
 
-export const enlargeBox = (currentBox: Box, enlarge: number = 24) => {
+export const enlargeBox = (currentBox: Box, enlarge: number = 30) => {
   return {
     left: currentBox.left - enlarge,
     top: currentBox.top - enlarge,
@@ -50,7 +50,7 @@ const assignGroupOps = (instance: IWhiteboardInstance) => {
         instance.containerOps?.fitTo(headPos)
         instance.nodeOps?.getNodeFuncs(groupNodeId)?.setNodeState(s => ({ ...s, isEditingName: true }))
       },
-      getParentGroupsOfNode: nodeId => {
+      getParentGroupsOfNode: (nodeId, mindmapChildUseRoot) => {
         const currentNode = instance.getNode?.(nodeId)
         if (!currentNode) throw 'Failed to find node!'
         const allNodes = instance.getAllNode?.()
@@ -61,21 +61,23 @@ const assignGroupOps = (instance: IWhiteboardInstance) => {
           width: currentNode.width,
           height: currentNode.height
         }
-        return allNodes.filter(
-          i => i.type === 'group' && i.id !== nodeId && boxContain({ left: i.x, top: i.y, width: i.width, height: i.height }, currentBox)
-        )
+        const rootBox = mindmapChildUseRoot && currentNode.rootId && instance.nodeOps?.getNodeFuncs(currentNode.rootId)?.getRealtimeBox()
+        return allNodes.filter(i => {
+          if (i.type === 'group' && i.id !== nodeId) {
+            const groupBox = instance.nodeOps?.getNodeFuncs(i.id)?.getRealtimeBox()
+            if (!groupBox) return false
+            return boxContain(groupBox, currentBox) || (mindmapChildUseRoot && rootBox && boxContain(groupBox, rootBox))
+          }
+          return false
+        })
       },
-      getNodesInGroup: (groupNodeId, includeSelf = false) => {
+      getNodesInGroup: (groupNodeId, includeSelf = false, mindmapChildUseRoot = false) => {
         const group = instance.getNode?.(groupNodeId)
         if (!group) throw new Error('Can not find node!')
         const allNodes = instance.getAllNode?.()
         if (!allNodes) throw new Error('Can not find node!')
-        const gb = {
-          left: group.x,
-          top: group.y,
-          width: group.width,
-          height: group.height
-        }
+        const gb = instance.nodeOps?.getNodeFuncs(group.id)?.getRealtimeBox()
+        if (!gb) throw new Error('Can not get group box!')
         return allNodes.filter(i => {
           if (!includeSelf && i.id === groupNodeId) return false
           const b = {
@@ -83,6 +85,17 @@ const assignGroupOps = (instance: IWhiteboardInstance) => {
             top: i.y,
             width: i.width,
             height: i.height
+          }
+          if (i.rootId && mindmapChildUseRoot) {
+            // contains self
+            if (boxContain(gb, b)) return true
+            const root = instance.nodeOps?.getDOMBoxOfNodes(i.rootId)
+            if (root) {
+              const rootBox = root[i.rootId]
+              // contains root
+              return boxContain(gb, rootBox)
+            }
+            return false
           }
           return boxContain(gb, b)
         })

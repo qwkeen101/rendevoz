@@ -5,7 +5,7 @@ function stringFilter<T extends MetaObject>(rule: StringFieldFilterRule, va: (o:
   const func = (o: T) => {
     let fieldValue = va(o)
     if (typeof fieldValue !== 'string' && fieldValue !== undefined) return false
-    if (!value?.length) return true
+    if (!value?.length && rule.type !== 'not empty') return true
     fieldValue = fieldValue ?? ''
     const nocaseRegexp = new RegExp(value, 'i')
     const startsWithRegexp = new RegExp('^' + value, 'i')

@@ -13,10 +13,11 @@ import { EditorTypeToElementMap } from '@/core/components/editor/maps'
 import Id from '@/utils/id'
 import deserializeTable from '@/core/components/editor/plugins/transformHTML/deserialize/deserializeTable'
 import deserializeLink from '@/core/components/editor/plugins/transformHTML/deserialize/deserializeLink'
+import deserializeWeixinAudio from '@/core/components/editor/plugins/transformHTML/deserialize/deserializeWeixinAudio'
 
 const NoNestedNodeNames = ['A', 'H1', 'H2', 'H3', 'LI', 'H4', 'H5', 'H6', 'PRE', 'SUP', 'FIGCAPTION', 'BLOCKQUOTE']
 
-const deserializeHTML = (root: HTMLElement) => {
+const deserializeHTML = (root: HTMLElement): Descendant[] | null => {
   // deserialize text node
   if (root.nodeType === Node.TEXT_NODE) {
     return deserializeText(root)
@@ -38,6 +39,8 @@ const deserializeHTML = (root: HTMLElement) => {
     case 'SPAN':
       return deserializeSpan(root)
     // TODO
+    case 'MP-COMMON-MPAUDIO':
+      return deserializeWeixinAudio(root)
     case 'BR':
       return null
     case 'TBODY':

@@ -78,12 +78,14 @@ const TreeEdge: FC<{
     const instance = useWhiteboardInstance()
     const pathRef = useRef<string>()
     const labelPosRef = useRef<XYPosition>()
+    const gRef = useRef<SVGGElement>(null)
     const underEdgeRef = useRef<SVGPathElement>(null)
     const targetNode = useSelectAtomValue(WhiteboardAtom, s => s?.nodes?.get(targetId))
     const targetBorderColor = targetNode?.border
     const targetBorderType = targetNode?.borderType
     const drawPath = () => {
       try {
+        instance.edgeOps?.getEdgeFuncs(edge.id)?.removeTransform()
         const sourceNode = instance.getNode?.(sourceId)
         const targetNode = instance.getNode?.(targetId)
 
@@ -172,7 +174,27 @@ const TreeEdge: FC<{
 
     instance.values.ID_TO_EDGE_MAP.set(id, {
       drawPath,
-      edit: () => toggleIsEditingLabel(true)
+      edit: () => toggleIsEditingLabel(true),
+      transformEdge: (x, y) => {
+        const g = gRef.current
+        const l = labelContainerRef.current
+        if (g) {
+          g.style.transform = `translate(${x}px,${y}px)`
+        }
+        if (l) {
+          l.style.transform = `translate(${x}px,${y}px)`
+        }
+      },
+      removeTransform: () => {
+        const g = gRef.current
+        const l = labelContainerRef.current
+        if (g) {
+          g.style.removeProperty('transform')
+        }
+        if (l) {
+          l.style.removeProperty('transform')
+        }
+      }
     })
     const clickHandler: MouseEventHandler = e => {
       if (clickEditLabel) {
@@ -278,6 +300,7 @@ const TreeEdge: FC<{
     return (
       <>
         <g
+          ref={gRef}
           onClick={clickHandler}
           onPointerDown={handlePointerDown}
           style={{

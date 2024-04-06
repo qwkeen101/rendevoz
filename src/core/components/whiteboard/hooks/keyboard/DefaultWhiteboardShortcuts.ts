@@ -15,6 +15,10 @@ export const WhiteboardDefaultKeyboardShortcut = {
     key: ['mod+e'],
     text: 'Cmd+E'
   },
+  Edit: {
+    key: ['shift+e'],
+    text: 'Shift+E'
+  },
   FitToContent: {
     key: ['f'],
     text: 'F'

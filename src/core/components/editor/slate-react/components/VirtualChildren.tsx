@@ -47,6 +47,7 @@ const VirtualChildren = memo(
     }, [children])
     const disableOverscanInReadOnly = useSelectAtomValue(EditorStateAtom, s => s.layout?.disableOverscanInReadOnly) ?? true
     const v = useSelectAtomValue(EditorStateAtom, s => s.layout?.virtualizer)
+    const textareaMode = useSelectAtomValue(EditorStateAtom, s => s.textboxMode)
     const disableVirtualizer = v === false
 
     const overscan = disableVirtualizer || (readOnly && disableOverscanInReadOnly) ? editor.children.length : 5
@@ -138,15 +139,17 @@ const VirtualChildren = memo(
         }
       }
     } else {
-      const parentEle = parentElement?.current
-      if (parentEle) {
-        parentEle.parentElement?.style.removeProperty('height')
-        parentEle.parentElement?.style.removeProperty('min-height')
-        parentEle.style.removeProperty('transform')
-        parentEle.style.removeProperty('position')
-        const paddingEnd = showPaddingBottom !== false ? bottomPadding || 200 : 0
-        if (paddingEnd) {
-          parentEle.style.paddingBottom = `${paddingEnd}px`
+      if (!textareaMode) {
+        const parentEle = parentElement?.current
+        if (parentEle) {
+          parentEle.parentElement?.style.removeProperty('height')
+          parentEle.parentElement?.style.removeProperty('min-height')
+          parentEle.style.removeProperty('transform')
+          parentEle.style.removeProperty('position')
+          const paddingEnd = showPaddingBottom !== false ? bottomPadding || 200 : 0
+          if (paddingEnd) {
+            parentEle.style.paddingBottom = `${paddingEnd}px`
+          }
         }
       }
     }

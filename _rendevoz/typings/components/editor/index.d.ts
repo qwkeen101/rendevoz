@@ -110,6 +110,7 @@ export type RegisteredEditorElement = {
 }
 
 export interface EditorProps {
+  onClick?: React.MouseEventHandler
   on?: (
     event: IEditorEvent & {
       editor: CustomEditor
@@ -202,6 +203,7 @@ export interface EditorProps {
   onOperationApplied?: (operation: Operation) => void
   // not controlled
   defaultReadOnly?: boolean
+  textboxMode?: boolean
   placeholder?: string
   onInstanceInitialized?: (instance: IEditorInstance) => void
 }

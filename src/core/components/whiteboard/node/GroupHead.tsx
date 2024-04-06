@@ -6,6 +6,9 @@ import { useSelectAtomValue } from '@/hooks'
 import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
 import { ClassName } from 'rendevoz'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
+import { selectAtom } from 'jotai/utils'
+import { isEqual } from 'lodash'
+import { useAtomValue } from 'jotai'
 
 function getTextWidth(text: string, font: string) {
   // re-use canvas object for better performance
@@ -15,6 +18,14 @@ function getTextWidth(text: string, font: string) {
   const metrics = context.measureText(text)
   return metrics.width
 }
+const zAd = selectAtom(
+  WhiteboardStateAtom,
+  s => ({
+    isDraggingNode: s.isDraggingNode,
+    zoomState: s.zoom
+  }),
+  isEqual
+)
 export default ({
   node,
   onClick,
@@ -32,8 +43,7 @@ export default ({
   isEditing: boolean
   nodeState: INodeInnerState
 }) => {
-  const isDraggingNode = useSelectAtomValue(WhiteboardStateAtom, s => s.isDraggingNode)
-  const zoomState = useSelectAtomValue(WhiteboardStateAtom, s => s.zoom)
+  const { isDraggingNode, zoomState } = useAtomValue(zAd)
   const rever = 1 / zoomState
   const handleClick = (e: MouseEvent) => {
     onClick?.()

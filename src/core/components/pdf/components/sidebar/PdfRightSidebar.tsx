@@ -23,7 +23,7 @@ const PdfRightSidebar = ({ pdfId }: { pdfId: number }) => {
   const [pdfBarState, setPdfBarState] = usePdfBarState()
   const { t } = useTranslation()
   const instance = usePdfInstance()
-  const content = instance.getTextOfPages?.()
+  const content = useMemo(() => instance.getTextOfPages?.(), [pdfBarState.showRightBar])
   const update = useUpdate()
   useEffect(() => {
     const inter = setInterval(() => {
@@ -45,7 +45,6 @@ const PdfRightSidebar = ({ pdfId }: { pdfId: number }) => {
       if (content?.length) {
         if (onlySummarize.start && onlySummarize.end) {
           const c = content.map(i => ({ id: i.id, text: i.str })).slice(onlySummarize.start - 1, onlySummarize.end)
-          console.log(c)
           setStringContent(JSON.stringify(c))
         } else {
           setStringContent(JSON.stringify(content.map(i => ({ id: i.id, text: i.str }))))
@@ -93,13 +92,6 @@ const PdfRightSidebar = ({ pdfId }: { pdfId: number }) => {
       }}
     >
       <Tabs
-        extra={
-          <Icon
-            name="park-double-right"
-            className={ClassName.circleButton()}
-            onClick={() => setPdfBarState(s => ({ ...s, showRightBar: false }))}
-          />
-        }
         defaultActiveKey="search"
         activeKey={pdfBarState.rightBarActive}
         tabNavContainerStyle={{

@@ -8,6 +8,7 @@ import { KEY } from '@/consts'
 import handleKeyboardNavigation from '@/core/components/whiteboard/hooks/keyboard/handleKeyboardNavigation'
 import { mousePos } from '@/hooks/utils/useMousePositionRef'
 import handleKeyboardPaste from '@/core/components/whiteboard/hooks/keyboard/handleKeyboardPaste'
+import { Rendevoz } from '@/core/rendevoz'
 
 export default () => {
   const instance = useWhiteboardInstance()
@@ -16,10 +17,10 @@ export default () => {
   }
   const [whiteboardState, setWhiteboardState] = useWhiteboardState()
   const keydownHandler = useMemoizedFn((e: KeyboardEvent) => {
+    handleKeyboardPaste(e, instance)
     if (!instance.isFocused?.()) return
     if (instance.getOutestContainerNode?.() !== document.activeElement && document.activeElement !== document.body) return
     if (e.defaultPrevented) return
-    handleKeyboardPaste(e, instance)
     handleKeyboardNavigation(e, instance)
     if (isHotkey('mod+p', e)) {
       instance.searchOps?.toggleSearchPanel()
@@ -44,6 +45,16 @@ export default () => {
         const metas = selected.filter(i => i.type === 'metaObject').map(i => i.metaObjectId)
         if (metas.length) {
           GlobalInstance.metaOps?.quickAdd(metas)
+          instance.toolbarOps?.closeToolbar()
+        }
+      }
+    }
+    if (includeShortcuts(e, WhiteboardDefaultKeyboardShortcut.Edit.key)) {
+      const selected = instance.selectOps?.getSelectedNodes()
+      if (selected?.length) {
+        const metas = selected.filter(i => i.type === 'metaObject').map(i => i.metaObjectId)
+        if (metas.length === 1) {
+          Rendevoz.Actions.Open.Meta.openEditMetaDialog(metas[0])
           instance.toolbarOps?.closeToolbar()
         }
       }
@@ -127,17 +138,7 @@ export default () => {
         instance.toolbarOps?.closeToolbar()
       }
     }
-    if (includeShortcuts(e, WhiteboardDefaultKeyboardShortcut.Paste.key)) {
-      const currentMousePos = mousePos.current
-      const transformed = instance.coordOps?.transformWindowPositionToPosition({ x: currentMousePos[0], y: currentMousePos[1] })
-      if (transformed) {
-        instance.nodeOps?.paste({
-          x: transformed.x,
-          y: transformed.y
-        })
-        instance.toolbarOps?.closeToolbar()
-      }
-    }
+
     if (includeShortcuts(e, WhiteboardDefaultKeyboardShortcut.Delete.key)) {
       const selected = instance.selectOps?.getSelectedNodes()
 

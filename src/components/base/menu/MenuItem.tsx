@@ -82,9 +82,13 @@ const ButtonMenuItem: FC<MenuItemWithProps & { type: 'item' }> = ({
   hoverOpenSubMenu,
   icon,
   text,
+  suffixIconStyle,
   type,
   dangerous,
   disabled,
+  suffixIcon,
+  onSuffixIconClick,
+  suffixIconClassName,
   name,
   onClick,
   selectedKey,
@@ -147,14 +151,17 @@ const ButtonMenuItem: FC<MenuItemWithProps & { type: 'item' }> = ({
         positions={['right', 'left', 'bottom']}
       >
         <Button.IconButton
-          suffixIcon={subMenu || popOver ? 'park-right' : undefined}
+          suffixIcon={subMenu || popOver ? 'park-right' : suffixIcon}
           onPointerMove={handlePointerMove}
+          onSuffixIconClick={onSuffixIconClick}
           icon={icon}
           suffixStr={suffix}
+          suffixIconClassName={suffixIconClassName}
           selected={selectedKey.includes(key)}
           text={typeof text === 'string' ? text : text?.()}
           dangerous={dangerous}
           data-key={innerKey}
+          suffixIconStyle={suffixIconStyle}
           style={{
             gap: 10,
             marginLeft: '0.25rem',
@@ -184,12 +191,15 @@ const ButtonMenuItem: FC<MenuItemWithProps & { type: 'item' }> = ({
   }
   return (
     <Button.IconButton
-      suffixIcon={subMenu ? 'park-right' : undefined}
+      suffixIcon={subMenu ? 'park-right' : suffixIcon}
+      onSuffixIconClick={onSuffixIconClick}
       onPointerMove={handlePointerMove}
       icon={icon}
       data-key={innerKey}
+      suffixIconClassName={suffixIconClassName}
       selected={selectedKey.includes(key)}
       text={typeof text === 'string' ? text : text?.()}
+      suffixIconStyle={suffixIconStyle}
       style={{
         marginLeft: '0.25rem',
         marginRight: '0.25rem',
@@ -199,6 +209,7 @@ const ButtonMenuItem: FC<MenuItemWithProps & { type: 'item' }> = ({
         fontSize: 14,
         lineHeight: '20px',
         alignItems: 'center',
+        flexShrink: '0',
         ...rest.style
       }}
       size={16}

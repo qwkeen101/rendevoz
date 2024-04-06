@@ -152,6 +152,7 @@ export type IComponentSetting = {
   webpage: {
     saveImageLocally: boolean
     enableSearchAutoSuggestion: boolean
+    autoAddHeadImage?: boolean
   }
   pdf: {
     renderMode: 'followTheme' | 'custom' | 'default'

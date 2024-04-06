@@ -12,6 +12,7 @@ import FileSystem from '@/api/fileSystem'
 import recoverFromBackup from '@/api/lifycycle/startup/recoverFromBackup'
 import initializeFilePath from './initializeFilePath'
 import getNoteContainsMeta from '@/api/lifycycle/startup/getNoteContainsMeta'
+import turnAllLabelsIntoMeta from '@/api/lifycycle/startup/turnAllLabelsIntoMeta'
 
 export default async () => {
   await initializeFilePath()
@@ -26,6 +27,7 @@ export default async () => {
   await MetaStore.getAllMetaLinks()
   await MetaStore.getAllMetaObjects()
   await CollectionStore.getAllCollections()
+  turnAllLabelsIntoMeta()
   await ObjectStore('metaProp').getAll()
   await ObjectStore('metaPropSelectOption').getAll()
   await ObjectStore('tag').getAll()

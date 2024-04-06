@@ -591,6 +591,10 @@ const StringFilter = ({ rule, onChange }: { rule: StringFieldFilterRule; onChang
       children: t('filter.not contains')
     },
     {
+      value: 'not empty',
+      children: t('filter.is not empty')
+    },
+    {
       value: 'is',
       children: t('filter.is')
     },
@@ -617,21 +621,22 @@ const StringFilter = ({ rule, onChange }: { rule: StringFieldFilterRule; onChang
         }}
         value={rule.type}
       />
-      <input
-        value={rule.value}
-        className={ClassName.noStyleInput}
-        onChange={e => {
-          onChange?.({ ...rule, value: e.target.value })
-        }}
-        placeholder={t('filter.value')}
-        style={{
-          border: `1px solid ${Colors.Background.Border}`,
-          borderRadius: 6,
-          padding: '3px 8px',
-          lineHeight: 1.2,
-          width: 120
-        }}
-      />
+      {rule.type !== 'not empty' && (
+        <input
+          value={rule.value}
+          className={'border'}
+          onChange={e => {
+            onChange?.({ ...rule, value: e.target.value })
+          }}
+          placeholder={t('filter.value')}
+          style={{
+            borderRadius: 6,
+            padding: '3px 8px',
+            lineHeight: 1.2,
+            width: 120
+          }}
+        />
+      )}
     </Content>
   )
 }
@@ -677,7 +682,10 @@ const TypeFilter = ({
         }}
         value={rule.value}
         placeholder={t('general.Select type')}
-        options={existedTypes.map(i => ({ value: i, children: Rendevoz.Utils.Meta.getTypeName(i) }))}
+        options={existedTypes.map(i => ({
+          value: i,
+          children: Rendevoz.Utils.Meta.getTypeName(i)
+        }))}
       />
     </Content>
   )

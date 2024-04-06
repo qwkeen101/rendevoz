@@ -3,13 +3,13 @@ import { useSetting } from '@/core'
 import produce from 'immer'
 import { ClassName } from 'rendevoz'
 import { useTranslation } from 'react-i18next'
-import { useFlow, useWhiteboardNodes, WhiteboardAtom } from '@/core/components/whiteboard/StateHooks'
-import { exportWhiteboardAsImage } from '@/core/components/whiteboard/utils/exportAsImage'
+import { WhiteboardAtom } from '@/core/components/whiteboard/StateHooks'
 import { useSelectAtomValue, useToggle } from '@/hooks'
 import { ObjectStore } from '@/api/stores'
 import ExportPanel from '@/core/components/whiteboard/toolbars/ExportPanel'
+import { memo } from 'react'
 
-const WhiteboardSettings = () => {
+const WhiteboardSettings = memo(() => {
   const [setting, setSetting] = useSetting()
   const { t } = useTranslation()
   const [exportModalVisible, toggleExportModalVisible] = useToggle(false)
@@ -149,6 +149,6 @@ const WhiteboardSettings = () => {
       </AnimatePopover>
     </>
   )
-}
+})
 
 export default WhiteboardSettings

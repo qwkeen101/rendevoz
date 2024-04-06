@@ -36,7 +36,21 @@ const ComponentSetting = () => {
       children: <Switch value={setting.label.autoAddAsObject} onChange={() => toggleSetting('label', 'autoAddAsObject')} />
     }
   ]
-
+  const webpageSettingItems: ISettingItem[] = [
+    {
+      title: t('settings.Automatically add head image'),
+      children: <Switch value={setting.webpage.autoAddHeadImage} onChange={() => toggleSetting('webpage', 'autoAddHeadImage')} />
+    },
+    {
+      title: t('settings.enable search auto suggestion'),
+      children: (
+        <Switch
+          value={setting.webpage.enableSearchAutoSuggestion}
+          onChange={() => toggleSetting('webpage', 'enableSearchAutoSuggestion')}
+        />
+      )
+    }
+  ]
   const whiteboardSettingItems: ISettingItem[] = [
     {
       title: t('settings.enable add link between objects when connect'),
@@ -265,27 +279,6 @@ const ComponentSetting = () => {
       : undefined
   ].filter(i => i)
 
-  const webpageSettingItems: ISettingItem[] = [
-    {
-      title: t('settings.enable search auto suggestion'),
-      children: (
-        <Switch
-          value={setting.webpage.enableSearchAutoSuggestion}
-          onChange={() => toggleSetting('webpage', 'enableSearchAutoSuggestion')}
-        />
-      )
-    }
-    // {
-    //   title: t('settings.Save image locally'),
-    //   children: (
-    //     <Switch
-    //       value={setting.webpage.saveImageLocally}
-    //       onChange={() => toggleSetting('webpage', 'saveImageLocally')}
-    //     />
-    //   )
-    // }
-  ]
-
   const videoSettingItems: ISettingItem[] = [
     {
       title: t('settings.jump back when making label'),
@@ -323,11 +316,11 @@ const ComponentSetting = () => {
   return (
     <>
       <SettingGroup title={t('settings.label settings')} layout={labelSettingItems} />
+      <SettingGroup title={t('settings.webpage settings')} layout={webpageSettingItems} />
       <SettingGroup title={t('settings.whiteboard settings')} layout={whiteboardSettingItems} />
       <SettingGroup title={t('settings.editor settings')} layout={editorSettingItems} />
       <SettingGroup title={t('settings.code settings')} layout={codeSettingItems} />
       {/*<SettingGroup title={t('settings.translate settings')} layout={translateSettingItems} />*/}
-      <SettingGroup title={t('settings.webpage settings')} layout={webpageSettingItems} />
       <SettingGroup title={t('settings.pdf settings')} layout={pdfSettingItems} />
       <SettingGroup title={t('settings.video settings')} layout={videoSettingItems} />
     </>

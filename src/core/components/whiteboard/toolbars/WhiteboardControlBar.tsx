@@ -5,14 +5,15 @@ import { ClassName } from 'rendevoz'
 import FontSize from '@/consts/font'
 import { useFlow } from '@/core/components/whiteboard/StateHooks'
 import WhiteboardMinimap from '@/core/components/whiteboard/minimap/WhiteboardMinimap'
-import { useEffect, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import { getBoxOfNodes } from '@/core/components/whiteboard/utils'
 import TooltipWithCmd from '@/components/TooltipWithCmd'
 import { useTranslation } from 'react-i18next'
 
-const WhiteboardControlBar = () => {
+const WhiteboardControlBar = memo(() => {
   const [whiteboardState, setWhiteboardState] = useWhiteboardState()
+  console.log('rerender', whiteboardState)
   const flow = useFlow()
   const [historyState, setHistoryState] = useState({
     redo: false,
@@ -21,10 +22,18 @@ const WhiteboardControlBar = () => {
   const instance = useWhiteboardInstance()
   useEffect(() => {
     const interval = setInterval(() => {
-      setHistoryState(s => ({
-        redo: !!flow.history.redos.length,
-        undo: !!flow.history.undos.length
-      }))
+      setHistoryState(s => {
+        const his = flow.history
+        const canRedo = !!his.redos.length
+        const canUndo = !!his.undos.length
+        if (canRedo !== s.redo || canUndo !== s.undo) {
+          return {
+            redo: canRedo,
+            undo: canUndo
+          }
+        }
+        return s
+      })
     }, 200)
     return () => {
       clearInterval(interval)
@@ -142,6 +151,7 @@ const WhiteboardControlBar = () => {
             e.preventDefault()
             const container = flow.containerEle
             const containerBounding = container?.parentElement?.getBoundingClientRect()
+            if (!containerBounding) return
             flow.panzoom?.smoothZoom(containerBounding.width / 2, containerBounding.height / 2, 0.5)
           }}
           name={'park-minus'}
@@ -197,6 +207,6 @@ const WhiteboardControlBar = () => {
       </WithBorder>
     </Content>
   )
-}
+})
 
 export default WhiteboardControlBar

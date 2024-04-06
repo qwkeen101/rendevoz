@@ -1,6 +1,5 @@
 import { ClassName } from 'rendevoz'
 import { Rendevoz } from '@/core/rendevoz'
-import { Content } from '@/components'
 import { CSSProperties } from 'react'
 
 export default ({ value, style }: { value: string; style?: CSSProperties }) => {

@@ -81,10 +81,10 @@ const ParentChildItem = ({ items, propId }: { items: ISearchResult; propId: numb
           style={{
             marginRight: 6,
             transition: 'all 0.16s ease',
-            transform: toggled ? undefined : 'rotate(90deg)'
+            transform: toggled ? undefined : 'rotate(90deg)',
+            padding: 3
           }}
           name={'park-right'}
-          className={ClassName.flatButton(4, '3px')}
         />
         <Content flex alignItems={'center'} className={'font-size-14'} gap={8}>
           <Icon name={prop?.icon} />

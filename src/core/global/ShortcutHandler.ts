@@ -3,8 +3,8 @@ import { GlobalInstance, useSelectGlobalAtomValue } from '@/hooks'
 import { SettingAtom } from '@/core'
 import { useEffect } from 'react'
 import isHotkey from 'is-hotkey'
-import { setPanelState } from '@/components/layout/sidebar'
-import produce from 'immer'
+import { Rendevoz } from '@/core/rendevoz'
+import updateSidebarState from '@/components/layout/sidebar/updateSidebarState'
 
 export default function useGlobalShortcutHandler() {
   const shortcutSettings = useSelectGlobalAtomValue(SettingAtom, s => s.shortcut)
@@ -26,6 +26,15 @@ export default function useGlobalShortcutHandler() {
     if (isHotkey('mod+w', e) || isHotkey('mod+q', e) || isHotkey('mod+r', e)) {
       e.preventDefault()
     }
+    if (isShortcut(e, 'quickCreateObject')) {
+      GlobalInstance.metaOps?.createObject().then(res => {
+        if (res) {
+          setTimeout(() => {
+            Rendevoz.Actions.Open.Meta.openMetaObject(res.id)
+          }, 200)
+        }
+      })
+    }
     if (isShortcut(e, 'openObjectPanel')) {
       GlobalInstance.metaOps?.toggleDetails()
     }
@@ -39,9 +48,9 @@ export default function useGlobalShortcutHandler() {
       GlobalInstance.layoutOps?.closeTabs('left')
     }
     if (isShortcut(e, 'openSidebar')) {
-      setPanelState(draft => {
+      updateSidebarState(draft => {
         draft.leftOpen = !draft.leftOpen
-        draft.visible.size === 0 && draft.visible.add('database')
+        draft.leftVisible = draft.leftVisible || 'database'
       })
     }
     if (isShortcut(e, 'openGlobalSearch')) {

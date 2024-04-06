@@ -11,6 +11,9 @@ const DangerousButtonClassName = css({
   color: Colors.Common.Red
 })
 
+const NoShrinkClassName = css({
+  flexShrink: 0
+})
 const IconButton = forwardRef(
   (
     {
@@ -35,13 +38,17 @@ const IconButton = forwardRef(
       iconColor,
       suffixIcon,
       size,
+      suffixIconStyle,
+      suffixIconClassName,
       ...rest
     }: {
       icon?: string
       onClick?: MouseEventHandler
       gap?: number
       text?: string
+      suffixIconStyle?: CSSProperties
       theme?: string
+      suffixIconClassName?: string
       enabled?: boolean
       className?: string
       dangerous?: boolean
@@ -90,6 +97,7 @@ const IconButton = forwardRef(
           }}
           className={classNames(
             className,
+            NoShrinkClassName,
             ClassName.flatButton(undefined, '3px 8px', dangerous ? 'rgb(253, 138, 138, 0.2)' : undefined),
             dangerous && DangerousButtonClassName
           )}
@@ -112,7 +120,14 @@ const IconButton = forwardRef(
             <Content flex gap={4} style={{ marginLeft: 'auto', paddingLeft: 18 }}>
               {enabled && <Icon name="park-check-small" />}
               {suffixStr && <span style={{ fontSize: '12px', color: Colors.Font.Transparent }}>{suffixStr}</span>}
-              {suffixIcon && <Icon onClick={onSuffixIconClick} name={suffixIcon} containerStyle={{ color: Colors.Font.Transparent }} />}
+              {suffixIcon && (
+                <Icon
+                  className={suffixIconClassName}
+                  onClick={onSuffixIconClick}
+                  name={suffixIcon}
+                  containerStyle={{ color: Colors.Font.Transparent, ...suffixIconStyle }}
+                />
+              )}
             </Content>
           )}
         </Content>

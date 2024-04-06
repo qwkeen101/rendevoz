@@ -158,7 +158,7 @@ const EditorBlockMenu = ({ editor, manager }: { editor: CustomEditor; manager: E
               text: selected.size > 1 ? t('general.Copy links to all') : t('general.Copy link to block'),
               onSelect: () => {
                 instance.blockOps?.copyLink()
-                toast.success(t('general.link is generated for this object'))
+                toast.success(t('general.Copied'))
                 instance.overlayOps?.close()
               }
             }

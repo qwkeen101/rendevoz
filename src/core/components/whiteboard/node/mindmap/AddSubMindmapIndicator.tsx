@@ -11,6 +11,7 @@ import { useIsIn, useSelectAtomValue } from '@/hooks'
 import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
 import { selectAtom } from 'jotai/utils'
 import { useAtomValue } from 'jotai'
+import calculateNewNodePosition from '@/core/components/whiteboard/node/mindmap/calculateNewNodePosition'
 
 type direction = 'right' | 'left'
 const rightClazz = css({
@@ -45,12 +46,11 @@ export default memo(({ node, containerRef }: { node: IWhiteboardNode; containerR
   }
 
   const handleAddSubNode = (direction: direction) => {
-    //
     if (node.type === 'mindmap') {
-      instance.updateWhiteboard?.(w => {
-        const newNodeId = Id.getId()
-        const maxZ = instance.nodeOps?.getMaxZindex() ?? 0
-        w.nodes?.set(newNodeId, {
+      const newNodeId = Id.getId()
+      const maxZ = instance.nodeOps?.getMaxZindex() ?? 0
+      const newNode = calculateNewNodePosition(
+        {
           id: newNodeId,
           x: 0,
           y: 0,
@@ -62,7 +62,14 @@ export default memo(({ node, containerRef }: { node: IWhiteboardNode; containerR
           border: node.border,
           z: maxZ,
           content: [{ id: Id.getId(), type: 'paragraph', children: [{ text: '' }] }]
-        })
+        },
+        node,
+        direction,
+        instance
+      )
+      if (!newNode) return
+      instance.updateWhiteboard?.(w => {
+        w.nodes?.set(newNodeId, newNode)
         const origin = w.nodes?.get(node.id)
         if (origin && origin.type === 'mindmap') {
           w.nodes?.set(origin.id, {
@@ -72,27 +79,29 @@ export default memo(({ node, containerRef }: { node: IWhiteboardNode; containerR
               direction === 'right' ? [...(origin.rightChildren || []), { root: newNodeId, children: [] }] : origin.rightChildren
           })
         }
-      })
+      }, true)
     } else {
-      console.log('ad here')
-      instance
-        .insertNode?.({
-          x: 0,
-          y: 0,
-          width: 100,
-          border: node.border,
-          type: 'text',
-          side: direction,
-          borderType: node.borderType,
-          content: [{ id: Id.getId(), type: 'paragraph', children: [{ text: '' }] }]
-        })
-        .then(n => {
+      const defaultNode = {
+        width: 100,
+        id: Id.getId(),
+        rootId: node.rootId,
+        border: node.border,
+        type: 'text',
+        side: direction,
+        borderType: node.borderType,
+        content: [{ id: Id.getId(), type: 'paragraph', children: [{ text: '' }] }]
+      }
+      console.log(node)
+      const newDefaultNode = calculateNewNodePosition(defaultNode, node, direction, instance)
+      if (newDefaultNode) {
+        instance.insertNode?.(newDefaultNode).then(n => {
           if (n.length === 1) {
             Array.from(instance.values.ID_TO_NODE_MAP.values()).forEach(i => {
               i.onAddSubNode?.(node.id, n[0], 0, direction)
             })
           }
         })
+      }
     }
   }
   const handleCollape = (direction: direction) => {

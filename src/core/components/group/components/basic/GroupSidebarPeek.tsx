@@ -1,11 +1,10 @@
 import useGroupState from '@/core/components/group/hooks/useGroupState'
 import { Resizable } from 're-resizable'
 import MediaLabelController from '@/core/components/media/components/sidebar/MediaLabelController'
-import { memo, useEffect, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import EditorLabelController from '@/core/components/editor/components/EditorLabelController'
 import PdfLabelController from '@/core/components/pdf/components/sidebar/PdfLabelController'
-import { RENDEVOZ_DEFAULT_TABS } from '@/api/lifycycle/startup/registerTabs'
 import { Colors, KEY } from '@/consts'
 import { Icon } from '@/components'
 import { ClassName } from 'rendevoz'
@@ -20,6 +19,48 @@ export default memo(() => {
   const [labelIds, setLabelIds] = useState([])
   const [labelType, setLabelType] = useState('')
   const peekMeta = MetaStore.useValue(groupState.sidebarState?.metaId)
+  useEffect(() => {
+    if (groupState.sidebarVisible) {
+      const groupContainer = instance.getOuterContainer?.()
+      const renderContainer = rendererRef.current
+      if (groupContainer && renderContainer) {
+        const keydownHandler = (e: KeyboardEvent) => {
+          if (isHotkey(KEY.Escape, e)) {
+            setTimeout(() => {
+              if (!e.defaultPrevented) {
+                setGroupState(s => ({ ...s, sidebarVisible: false }))
+              }
+            })
+          }
+        }
+        const clickHandler = (e: MouseEvent) => {
+          if (
+            document.querySelector('[role="click-cover"]') ||
+            document.querySelector('[role="popup-wrapper"]') ||
+            document.querySelector('[role="modal-container]"') ||
+            e.target.closest('[role="click-cover"]')
+          )
+            return
+          if (renderContainer.contains(e.target)) return
+          if (groupContainer.contains(e.target)) {
+            if (
+              !e.target.closest(
+                '[role="group-render-content"],[role="group-item-content"],[role="group-drag-handle"],[role="reorder-view"],input,textarea,[contenteditable="true"]'
+              )
+            ) {
+              setGroupState(s => ({ ...s, sidebarVisible: false }))
+            }
+          }
+        }
+        document.addEventListener('keydown', keydownHandler)
+        document.addEventListener('click', clickHandler, true)
+        return () => {
+          document.removeEventListener('click', clickHandler, true)
+          document.removeEventListener('keydown', keydownHandler)
+        }
+      }
+    }
+  }, [groupState.sidebarVisible])
   useEffect(() => {
     if (groupState.sidebarState?.type === 'labels') {
       const { objectType, objectId } = groupState.sidebarState
@@ -57,6 +98,7 @@ export default memo(() => {
         })
     }
   }
+  const rendererRef = useRef<HTMLDivElement>(null)
   const keydownHandler = useMemoizedFn((e: KeyboardEvent) => {
     if (e.defaultPrevented) return
     if (!instance.values.isFocused) return
@@ -151,6 +193,7 @@ export default memo(() => {
           display: 'flex',
           alignItems: 'center'
         }}
+        ref={rendererRef}
       >
         {renderer()}
       </div>

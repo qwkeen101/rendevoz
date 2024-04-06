@@ -69,10 +69,11 @@ export type InnerEditorProps = {
   onChange?: (value: Descendant[]) => void
   showToolbar?: boolean
   editorClassName?: string
+  style?: CSSProperties
 }
 
 const InnerEditor: FC<InnerEditorProps> = memo(
-  ({ editor, defaultValue, onChange, scrollElementRef, editorClassName }) => {
+  ({ editor, defaultValue, style, onChange, scrollElementRef, editorClassName }) => {
     const scrollElement = scrollElementRef?.current
     const renderInnerElement = useCallback((props: RenderElementProps) => <Element {...props} />, [])
     const renderLeaf = useCallback((props: RenderLeafProps) => <Leaf {...props} />, [])
@@ -339,6 +340,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           readOnly={readOnly}
           suppressContentEditableWarning={true}
           spellCheck="false"
+          style={style}
           onCopy={useCallback(() => {
             editor.currentCopyElement = undefined
             editor.currentCopyElements = undefined
@@ -377,6 +379,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           renderLeaf={renderLeaf}
           onKeyDown={handleKeydown}
           scrollSelectionIntoView={(editor, domRange) => {
+            console.log(canScrollIntoView)
             if (canScrollIntoView) {
               defaultScrollSelectionIntoView(editor, domRange)
             }

@@ -1,9 +1,9 @@
 import { defaultRangeExtractor, useVirtualizer, Virtualizer } from '@tanstack/react-virtual'
-import { CSSProperties, forwardRef, memo, ReactElement, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { CSSProperties, forwardRef, memo, ReactElement, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import isHotkey from 'is-hotkey'
-import { Colors, KEY } from '@/consts'
-import { useUpdateEffect } from '@/hooks'
+import { KEY } from '@/consts'
 import { Reorder } from 'framer-motion'
+import { GlobalInstance, useMemoizedFn } from '@/hooks'
 type Props<T> = {
   items: T[]
   renderItem: (item: T, idx: number, selected?: boolean) => ReactElement
@@ -42,7 +42,6 @@ function VirtualList<T>(
     rangeExtractor,
     reorder,
     canReorder = true,
-    onKeydown,
     onReorder,
     childrenContainerClassname,
     withKeyboardNavigation,
@@ -72,50 +71,51 @@ function VirtualList<T>(
     itemzRef.current = items
     const itemz = virtualizer.getVirtualItems()
     const length = items.length
-
+    const keydownHandler = useMemoizedFn((e: KeyboardEvent) => {
+      if (e.defaultPrevented) return
+      if (isHotkey(KEY.Enter, e) && withKeyboardNavigation) {
+        e.preventDefault()
+        onSelect?.(itemzRef.current[currentFocusIndex], currentFocusIndex)
+      }
+      if (isHotkey(KEY.ArrowUp, e)) {
+        e.stopPropagation()
+        e.preventDefault()
+        setCurrentFocusIndex(i => {
+          const next = i - 1
+          if (next < 0) {
+            virtualizer.scrollToIndex(length - 1)
+            return length - 1
+          } else {
+            virtualizer.scrollToIndex(next)
+            return next
+          }
+        })
+      }
+      if (isHotkey(KEY.ArrowDown, e)) {
+        e.preventDefault()
+        e.stopPropagation()
+        setCurrentFocusIndex(i => {
+          const next = i + 1
+          if (next > length - 1) {
+            virtualizer.scrollToIndex(0)
+            return 0
+          } else {
+            virtualizer.scrollToIndex(next)
+            return next
+          }
+        })
+      }
+    })
     useEffect(() => {
       if (withKeyboardNavigation) {
-        const keyboardEvent = (e: KeyboardEvent) => {
-          if (isHotkey(KEY.Enter, e) && withKeyboardNavigation) {
-            console.log('prevent here')
-            e.preventDefault()
-            onSelect?.(itemzRef.current[currentFocusIndex], currentFocusIndex)
-          }
-          if (isHotkey(KEY.ArrowUp, e)) {
-            e.stopPropagation()
-            e.preventDefault()
-            setCurrentFocusIndex(i => {
-              const next = i - 1
-              if (next < 0) {
-                virtualizer.scrollToIndex(length - 1)
-                return length - 1
-              } else {
-                virtualizer.scrollToIndex(next)
-                return next
-              }
-            })
-          }
-          if (isHotkey(KEY.ArrowDown, e)) {
-            e.preventDefault()
-            e.stopPropagation()
-            setCurrentFocusIndex(i => {
-              const next = i + 1
-              if (next > length - 1) {
-                virtualizer.scrollToIndex(0)
-                return 0
-              } else {
-                virtualizer.scrollToIndex(next)
-                return next
-              }
-            })
-          }
-        }
-        document.addEventListener('keydown', keyboardEvent, true)
+        GlobalInstance.values.registeredKeynavigationHandlers.unshift(keydownHandler)
         return () => {
-          document.removeEventListener('keydown', keyboardEvent, true)
+          GlobalInstance.values.registeredKeynavigationHandlers = GlobalInstance.values.registeredKeynavigationHandlers.filter(
+            i => i !== keydownHandler
+          )
         }
       }
-    }, [withKeyboardNavigation, length, currentFocusIndex, onSelect])
+    }, [withKeyboardNavigation])
     const [isReorder, setIsReorder] = useState(false)
     const [innerItems, setInnerItems] = useState(items)
     useEffect(() => {

@@ -74,7 +74,7 @@ const useGraphOverlay = () => {
       case 'pathIndicator':
         return ['top', 'bottom']
       case 'nodePopover':
-        return ['top', 'right', 'left']
+        return ['right', 'left']
       default:
         return ['top', 'bottom']
     }
@@ -83,9 +83,10 @@ const useGraphOverlay = () => {
     return (
       <Portal>
         <AnimatePopover
-          align="center"
+          align={overlayState.content === 'nodePopover' ? 'start' : 'center'}
           reposition
           keepAlign={true}
+          withClickCover
           position={{
             left: overlayState.position?.left,
             top: overlayState.position?.top

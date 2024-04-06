@@ -11,7 +11,7 @@ import { ClassName, MetaObject } from 'rendevoz'
 import _ from 'lodash'
 import Select from '@/components/base/select'
 import { Rendevoz } from '@/core/rendevoz'
-import { useDropObjectArea, useRenderObject } from '@/core'
+import { ObjectActionPopover, useDropObjectArea, useRenderObject } from '@/core'
 import { MetaLink } from '~/typings'
 import MetaFilterer from '@/core/object/filter/MetaFilterer'
 import HoverObjectDetails from '@/core/object/HoverObjectDetails'
@@ -321,65 +321,45 @@ const RelatedGroup = ({
   )
 }
 const RelatedItem = ({ metaId, linkId }: { metaId: number; linkId: number }) => {
-  const { renderInline } = useRenderObject({ metaObjectId: metaId })
+  const { renderInline, metaObject } = useRenderObject({ metaObjectId: metaId })
   const { t } = useTranslation()
   const link = MetaStore.useMetaLinksMap().get(linkId)
   const [editName, setEditName] = useState(false)
+  if (metaObject?.deleted || metaObject?.temp) return null
   return (
     <Content flex column>
       <Content flex gap={12} justifyContent={'space-between'} alignItems={'center'}>
-        <HoverObjectDetails metaObjectId={metaId}>
-          {renderInline({
-            containerStyle: {
-              fontSize: 13
-            },
-            ellipsisLine: 1
-          })}
-        </HoverObjectDetails>
+        {renderInline({
+          containerStyle: {
+            fontSize: 13
+          },
+          onClick: () => {
+            GlobalInstance.metaOps?.closeDetails()
+            GlobalInstance.searchOps?.closeSearchPanel()
+            GlobalInstance.layoutOps?.openObject(metaId)
+          },
+          ellipsisLine: 1
+        })}
         <IconWithPopover
-          className={ClassName.circleButton(2)}
+          className={ClassName.flatButton(4, '3px')}
           name={'park-more'}
+          placement={['right', 'left']}
           closeOnContentClick={true}
           renderOnParent={false}
           content={setV => (
-            <WithBorder
-              onPointerEnter={e => e.stopPropagation()}
-              onPointerMove={e => e.stopPropagation()}
-              width={160}
-              padding={6}
-              style={{ fontSize: 14 }}
-            >
-              <Button.IconButton
-                text={t('general.Edit link')}
-                icon={'park-edit'}
-                onClick={() => {
-                  setEditName(true)
-                }}
-              />
-              <Button.IconButton
-                icon={'park-unlink'}
-                onClick={() => {
+            <WithBorder onPointerEnter={e => e.stopPropagation()} onPointerMove={e => e.stopPropagation()} width={200}>
+              <ObjectActionPopover
+                onClose={() => setV(false)}
+                onDeleteLink={() => {
                   MetaStore.deleteMetaLink(linkId, true)
                 }}
-                dangerous
-                text={t('general.Delete link')}
-              />
-              <Button.IconButton
-                text={t('general.View details')}
-                icon={'park-preview-open'}
-                onClick={() => {
-                  GlobalInstance.metaOps?.openDetails(metaId)
+                onEditLink={() => {
+                  setEditName(true)
                 }}
-              />
-              <Button.IconButton
-                text={t('general.delete object')}
-                icon={'park-delete'}
-                dangerous
-                onClick={() => {
-                  setV(false)
-                  setTimeout(() => {
-                    MetaStore.deleteMetaObject(metaId)
-                  }, 300)
+                metaObjectId={metaId}
+                visibility={{
+                  editLink: true,
+                  deleteLink: true
                 }}
               />
             </WithBorder>

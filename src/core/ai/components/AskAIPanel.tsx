@@ -66,6 +66,11 @@ export default memo(
     const [needResummarize, setNeedResummarize] = useState(false)
     useEffect(() => {
       if (content) {
+        // eagerly return here
+        if (content.length > 20000) {
+          setCanSummarize(false)
+          return
+        }
         const token = caculateToken(content)
         setToken(token)
         if (token > 12000) {

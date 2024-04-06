@@ -8,7 +8,7 @@ import { GraphNode } from '@/core/components/graph/types/node'
 import PixiImageNode from '@/core/components/graph/components/node/PixiImageNode'
 import { Container, Text } from '@pixi/react'
 import { DisplayObject, FederatedPointerEvent, Container as PContainer } from 'pixi.js'
-import { useMemoizedFn, usePrevious } from '@/hooks'
+import { GlobalInstance, useMemoizedFn, usePrevious } from '@/hooks'
 import PixiIconNode, { fontStyle } from '@/core/components/graph/components/node/PixiIconNode'
 import { animate } from 'framer-motion'
 import { Rendevoz } from '@/core/rendevoz'
@@ -53,10 +53,7 @@ const PixiNode: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onCont
     if (graphMode === 'simple') {
       return null
     }
-    if (!meta) return null
-    // if (meta.icon) {
-    //   return <EmojiNode node={realNode} />
-    // }
+    if (!meta || meta.deleted) return null
     if (meta.coverImgSrc) {
       return <PixiImageNode node={realNode} />
     }
@@ -125,8 +122,23 @@ const PixiNode: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onCont
       })
     }
   }
-  const handleContextMenu: MouseEventHandler = e => {
+  const handleContextMenu = (e: FederatedPointerEvent) => {
     onContextMenu?.(e, node)
+    const rect = {
+      left: e.clientX,
+      top: e.clientY,
+      width: e.width
+    }
+    graph?.overlayManager?.setOverlayState({
+      position: {
+        left: rect.left + rect.width / 2,
+        top: rect.top - 10
+      },
+      visible: true,
+      content: 'nodePopover',
+      nodeId: node.id,
+      metaId: node.id
+    })
   }
   const handleClick = (e: FederatedPointerEvent) => {
     e.preventDefault()
@@ -145,21 +157,9 @@ const PixiNode: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onCont
     onClick?.(e, node)
 
     if (graph?.isDragging) return
-    const rect = {
-      left: e.clientX,
-      top: e.clientY,
-      width: e.width
+    if (meta) {
+      GlobalInstance.layoutOps?.openObject(meta.id)
     }
-    graph?.overlayManager?.setOverlayState({
-      position: {
-        left: rect.left + rect.width / 2,
-        top: rect.top - 10
-      },
-      visible: true,
-      content: 'nodePopover',
-      nodeId: node.id,
-      metaId: node.id
-    })
   }
 
   const handleMouseDown = useCallback(() => {

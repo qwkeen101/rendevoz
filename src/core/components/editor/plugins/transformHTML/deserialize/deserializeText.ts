@@ -8,19 +8,25 @@ export default (node: HTMLElement) => {
   if (textContent?.length) {
     const style = node.style
     const attributes = text || {}
-    if (style.fontStyle) {
-      if (style.fontStyle === 'italic') {
-        attributes['italic'] = true
+    if (style) {
+      console.log(style)
+      if (style.fontStyle) {
+        if (style.fontStyle === 'italic') {
+          attributes['italic'] = true
+        }
       }
-    }
-    if (style.fontWeight) {
-      if (style.fontWeight === 'bold' || style.fontWeight === 'bolder') {
-        attributes['bold'] = true
+      if (style.color) {
+        attributes['fontColor'] = style.color
       }
-      const numWeight = Number(style.fontWeight)
-      if (!Number.isNaN(numWeight)) {
-        if (numWeight >= 500) {
+      if (style.fontWeight) {
+        if (style.fontWeight === 'bold' || style.fontWeight === 'bolder') {
           attributes['bold'] = true
+        }
+        const numWeight = Number(style.fontWeight)
+        if (!Number.isNaN(numWeight)) {
+          if (numWeight >= 500) {
+            attributes['bold'] = true
+          }
         }
       }
     }

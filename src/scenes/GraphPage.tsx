@@ -26,7 +26,7 @@ const GraphPage = () => {
   useEffect(() => {
     if (!globalGraph) {
       const allNodes = Array.from(globalStore.get(metaObjectsAtom).values())
-        .filter(i => !i.deleted && !i.hidden)
+        .filter(i => !i.deleted && !i.hidden && !i.temp)
         .map(i => ({
           id: i.id,
           label: i.name,

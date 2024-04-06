@@ -1,6 +1,5 @@
 import { cloneElement, ReactNode } from 'react'
 import { CustomElement } from '../../../../../typings/editor/types'
-import EmbeddedCard from './EmbeddedCard'
 import LineCard from './LineCard'
 import SlimCard from './SlimCard'
 import WideCard from './WideCard'
@@ -31,9 +30,6 @@ const NoteCard = ({
       break
     case 'line':
       card = <LineCard />
-      break
-    case 'embedded':
-      card = <EmbeddedCard />
       break
     default:
       card = <LineCard />

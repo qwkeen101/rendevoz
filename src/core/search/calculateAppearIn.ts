@@ -5,13 +5,16 @@ type AppearIn = {
   parent: MetaObject
   children: MetaObject[]
 }
-// caculate what w and g contains metas
 export default async (
   currentMetas: number[],
   options?: {
     whiteboard?: boolean
     group?: boolean
     note?: boolean
+    video?: boolean
+    audio?: boolean
+    pdf?: boolean
+    webpage?: boolean
   }
 ) => {
   const metaIdSet = new Set(currentMetas)
@@ -19,20 +22,44 @@ export default async (
     group: AppearIn[]
     whiteboard: AppearIn[]
     note: AppearIn[]
+    video: AppearIn[]
+    pdf: AppearIn[]
+    audio: AppearIn[]
+    webpage: AppearIn[]
   } = {
     group: [],
+    video: [],
+    pdf: [],
     whiteboard: [],
+    audio: [],
+    webpage: [],
     note: []
   }
   if (!metaIdSet.size) return related
   const groups: MetaObject[] = [],
     whiteboards: MetaObject[] = [],
-    notes: MetaObject[] = []
+    notes: MetaObject[] = [],
+    audios: MetaObject[] = [],
+    videos: MetaObject[] = [],
+    pdfs: MetaObject[] = [],
+    webpages: MetaObject[] = []
   Array.from(MetaStore.getMetaObjectsMap().values()).forEach(m => {
     if (m.deleted) return
     switch (m.type) {
       case 'group':
         groups.push(m)
+        break
+      case 'webpage':
+        webpages.push(m)
+        break
+      case 'audio':
+        audios.push(m)
+        break
+      case 'video':
+        videos.push(m)
+        break
+      case 'pdf':
+        pdfs.push(m)
         break
       case 'whiteboard':
         whiteboards.push(m)
@@ -85,11 +112,23 @@ export default async (
     await Promise.all(
       notes.map(async i => {
         const nObj = await ObjectStore('note').fetchOneById(i.objectId!)
-        console.log(nObj)
         if (nObj && nObj.insideMetas) {
-          const withIn = Object.keys(nObj.insideMetas).filter(i => metaIdSet.has(Number(i)))
+          const withIn = Object.keys(nObj.insideMetas)
+            .filter(i => metaIdSet.has(Number(i)))
+            .map(i => Number(i))
+          const labels = nObj.labels
+          if (labels) {
+            const labelMetas = labels.map(id => MetaStore.getMetaObjectByObjectId(id)).filter(i => i) as MetaObject[]
+            labelMetas
+              .filter(i => metaIdSet.has(i.id))
+              .forEach(m => {
+                if (!withIn.includes(m.id)) {
+                  withIn.push(m.id)
+                }
+              })
+          }
           if (withIn.length) {
-            const c = withIn.map(i => metaMap.get(Number(i))!)
+            const c = withIn.map(i => metaMap.get(i)!)
             related.note.push({
               parent: metaMap.get(i.id)!,
               children: c
@@ -98,6 +137,38 @@ export default async (
         }
       })
     )
+  }
+  const transformLabels = async (type: 'pdf' | 'webpage' | 'video' | 'audio', metas: MetaObject[]) => {
+    await Promise.all(
+      metas.map(async m => {
+        if (m.objectId) {
+          const obj = await ObjectStore(type).fetchOneById(m.objectId)
+          if (obj && obj.labels?.length) {
+            const labels = obj.labels
+            const labelMetas = labels.map(id => MetaStore.getMetaObjectByObjectId(id)).filter(i => i) as MetaObject[]
+            const withIn = labelMetas.filter(i => metaIdSet.has(i.id))
+            if (withIn.length) {
+              related[type].push({
+                parent: m,
+                children: withIn
+              })
+            }
+          }
+        }
+      })
+    )
+  }
+  if (pdfs.length && options?.pdf !== false) {
+    await transformLabels('pdf', pdfs)
+  }
+  if (videos.length && options?.video !== false) {
+    await transformLabels('video', videos)
+  }
+  if (audios.length && options?.audio !== false) {
+    await transformLabels('audio', audios)
+  }
+  if (webpages.length && options?.webpage !== false) {
+    await transformLabels('webpage', webpages)
   }
   return related
 }

@@ -119,7 +119,7 @@ const GroupTableHeader = memo(({ extraNode, visible, grouperId }: { extraNode?: 
       {extraNode}
       {visible && (
         <Content
-          role={'table-wrapper'}
+          role={'group-render-content'}
           flex
           alignItems={'center'}
           style={{

@@ -43,7 +43,8 @@ export default () => {
         ref={imgRef}
         src={imgSrc}
         style={{
-          maxHeight: '80vh'
+          maxHeight: '80vh',
+          maxWidth: '80vw'
         }}
       />
     </Modal>

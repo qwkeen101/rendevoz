@@ -1,18 +1,17 @@
-import { Box } from '@/components/dragSelector'
 import useScopedEventEmitter from '@/events/useEventEmitter'
 import { WhiteboardEventHandler } from '@/events/whiteboardEvent'
-import { useRafFn } from '@/hooks'
+import { useRafFn, useSelectGlobalAtomValue } from '@/hooks'
 import { css } from '@emotion/css'
 import { FC, memo, PointerEventHandler, useEffect, useMemo, useRef } from 'react'
 import { useUpdate } from 'react-use'
-import { IWhiteboardNode } from '~/typings/data'
+import { IWhiteboardNode, Box } from '~/typings'
 import { useFlow, useWhiteboardNodes } from '../StateHooks'
 import { getBoxOfBoxes, getBoxOfNodes } from '../utils'
 import tinycolor from 'tinycolor2'
 import { WithBorder } from '@/components'
 import { Colors } from '@/consts'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
-import { getSetting } from '@/core'
+import { getSetting, SettingAtom } from '@/core'
 
 interface MinimapProps {
   width?: number
@@ -27,7 +26,7 @@ const WhiteboardMiniMap: FC<MinimapProps> = memo(({ width = DEFAULT_MINIMAP_WIDT
   const scopedEmitter = useScopedEventEmitter()
   const transform = instance.getTransform?.()
   const containerBounding = flow.containerEle?.getBoundingClientRect()
-
+  const isDarkMode = useSelectGlobalAtomValue(SettingAtom, s => s.general.darkMode)
   const viewBox: Box | null =
     transform && containerBounding
       ? {
@@ -140,14 +139,14 @@ const WhiteboardMiniMap: FC<MinimapProps> = memo(({ width = DEFAULT_MINIMAP_WIDT
         viewBox={`${x} ${y} ${realWidth} ${realHeight}`}
       >
         {Array.from(nodes.values()).map(i => (
-          <MinimapNode {...i} key={i.id} />
+          <MinimapNode {...i} isDark={isDarkMode} key={i.id} />
         ))}
         {viewBox && (
           <path
             d={`M${x - offset},${y - offset}h${realWidth + offset * 2}v${realHeight + offset * 2}h${-realWidth - offset * 2}z
         M${viewBox.left},${viewBox.top}h${viewBox.width / flow.containerTransformScale}v${viewBox.height / flow.containerTransformScale}h${
-              -viewBox.width / flow.containerTransformScale
-            }z`}
+          -viewBox.width / flow.containerTransformScale
+        }z`}
             fill={'rgba(0,0,0,0.2)'}
             fillRule="evenodd"
             pointerEvents="none"
@@ -158,9 +157,8 @@ const WhiteboardMiniMap: FC<MinimapProps> = memo(({ width = DEFAULT_MINIMAP_WIDT
   )
 })
 
-const MinimapNode: FC<IWhiteboardNode> = ({ x, y, width, height, name, background, id, type }) => {
-  const isDark = getSetting().general.darkMode
-  const defaultColor = isDark ? 'black' : 'white'
+const MinimapNode: FC<IWhiteboardNode & { isDark: boolean }> = ({ x, y, width, height, name, background, id, type, isDark }) => {
+  const defaultColor = isDark ? 'white' : 'black'
   const lightenbG = useMemo(() => {
     if (type === 'group') {
       const color = new tinycolor(background || defaultColor)
@@ -169,7 +167,7 @@ const MinimapNode: FC<IWhiteboardNode> = ({ x, y, width, height, name, backgroun
     } else {
       return background || defaultColor
     }
-  }, [type, background])
+  }, [type, background, defaultColor])
   return (
     <rect
       x={x}

@@ -4,7 +4,6 @@ import { getBoxOfBoxes } from '@/core/components/whiteboard/utils'
 const defaultEnlarge = 24
 export default (node: IWhiteboardNode, instance: IWhiteboardInstance, availableGroups: (IWhiteboardNode & { type: 'group' })[]) => {
   let nodeBox: Box | undefined = undefined
-  console.log(availableGroups)
   if (node.type === 'mindmap') {
     const allNodes = [node, ...(instance.mindmapOps?.expandMindmap(node) || [])]
     const allBoxes = allNodes.map(i => instance.nodeOps?.getNodeFuncs(i.id)?.getRealtimeBox()).filter(i => i) as Box[]
@@ -42,17 +41,24 @@ export default (node: IWhiteboardNode, instance: IWhiteboardInstance, availableG
     .filter(i => i)
   if (newGroups.length) {
     instance.updateWhiteboard?.(w => {
+      const groupSizes: IWhiteboardNode[] = []
       newGroups.forEach(g => {
         const origin = w.nodes?.get(g.id)
         if (origin) {
-          w.nodes?.set(g.id, {
+          const newOrigin = {
             ...origin,
             x: g.enlarged.left,
             y: g.enlarged.top,
             width: g.enlarged.width,
             height: g.enlarged.height
-          })
+          }
+          w.nodes?.set(g.id, newOrigin)
+          groupSizes.push(newOrigin)
         }
+      })
+      instance.emit?.({
+        type: 'nodeResized',
+        resized: groupSizes
       })
     }, true)
   }

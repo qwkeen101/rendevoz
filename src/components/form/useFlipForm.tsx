@@ -103,7 +103,13 @@ const useFlipForm = (options: useFlipFormOptions) => {
         return (
           <Form.Item
             style={{
-              padding: '12px 10px'
+              padding: '6px 10px'
+            }}
+            onKeyDown={e => {
+              if (isHotkey(KEY.Enter, e)) {
+                e.preventDefault()
+                i.onEnter?.()
+              }
             }}
             autoFocus={i.autoFocus}
             text={capitalize(i.text)}
@@ -126,9 +132,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
             text={capitalize(t('general.name'))}
             disable={i.disabled}
             type="textarea"
-            minRows={1}
-            maxRows={7}
-            style={{ fontSize: enlarged ? '1rem' : undefined, padding: '10px 10px 0px', wordBreak: 'break-all' }}
+            style={{ fontSize: enlarged ? '1rem' : undefined, padding: '6px 10px', wordBreak: 'break-all' }}
             value={i.value}
             onChange={i.onChange}
           />
@@ -138,10 +142,8 @@ const useFlipForm = (options: useFlipFormOptions) => {
         return (
           <Form.Item
             text={capitalize(t('general.description'))}
-            minRows={enlarged ? 10 : undefined}
-            style={{ fontSize: enlarged ? '1rem' : undefined, padding: '10px 10px 0px' }}
+            style={{ fontSize: enlarged ? '1rem' : undefined, padding: '6px 10px' }}
             type="textarea"
-            maxRows={enlarged ? 18 : 10}
             value={i.value}
             onChange={i.onChange}
             autoFocus={false}

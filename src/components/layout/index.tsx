@@ -32,7 +32,6 @@ const initialLayout: LayoutData = {
   }
 }
 
-const firstLayout = localStorage.getItem('layout')
 export const LayoutIdToTabMap = new Map<string, ILayoutTab>()
 export const defaultLayout = {
   ...initialLayout,
@@ -89,6 +88,7 @@ export const GlobalLayoutAtom = atom(defaultLayout)
 const Layout = () => {
   const [layout, setLayout] = useGlobalAtom(GlobalLayoutAtom)
   const layoutRef = useRef<DockLayout>()
+  const [firstLayout] = useState(localStorage.getItem('layout'))
   assignGlobalLayoutOps(layoutRef)
   const loadTab = tab => {
     const restored = restoreSavedTab(tab)
@@ -151,7 +151,7 @@ const Layout = () => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Helmet>
       {os === 'windows' && <TitleBar />}
-      <Container role={'body-container'} auto style={{ height: 0 }}>
+      <Container role={'body-container'} auto style={{ height: 0, overflow: 'clip' }}>
         <Sidebar direction={'right'} />
         <Container auto>
           {layout && (

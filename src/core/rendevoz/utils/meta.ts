@@ -59,13 +59,24 @@ const normalizeLocalFileToMeta = async (
 }
 
 const normalizeWebFileToMeta = async (url: string, type: string): Promise<IImportResult<any>> => {
+  try {
+    new URL(url)
+  } catch (e) {
+    return Promise.reject()
+  }
   const headers = await fetch(url, { method: 'HEAD' }).then(i => i.headers)
   if (!headers.get('Content-Type')?.includes('text/html')) {
     const arr = url.split('/')
+    let img: string | undefined = undefined
+    if (headers.get('Content-Type')?.startsWith('image')) {
+      img = url
+    }
+
     return {
       meta: {
         name: arr[arr.length - 1],
-        type
+        type,
+        coverImgSrc: img
       },
       object: {
         url,

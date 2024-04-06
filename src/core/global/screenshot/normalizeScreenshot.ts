@@ -9,8 +9,7 @@ export const normalizeScreenshot = async (screenshotBox: Box, imagePath: string)
   const intersectedTabs: ILayoutTab[] = []
   const normalizedImage: Partial<IImage> = {}
   let normalizedImageMeta: Partial<MetaObject> = {
-    type: 'image',
-    name: 'Unnamed Screenshot'
+    type: 'image'
   }
   const relatedMeta: MetaObject[] = []
   allTabs.forEach(i => {

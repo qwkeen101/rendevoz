@@ -67,7 +67,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
   const isDraggingRef = useRef(false)
   const isResizingRef = useRef(false)
 
-  console.log('rerender')
+  console.log('rerender', node)
   const [nodeState, setNodeState] = useState<NodeInnerState>({
     popoverVisible: false,
     expanded: false,
@@ -248,7 +248,15 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
   const renderInnerNode = (type: IWhiteboardNode['type']) => {
     switch (type) {
       case 'metaObject':
-        return <MetaObjectNode onNameChange={handleNameChange} nodeState={nodeState} setNodeState={setNodeState} node={node} />
+        return (
+          <MetaObjectNode
+            containerRef={containerRef}
+            onNameChange={handleNameChange}
+            nodeState={nodeState}
+            setNodeState={setNodeState}
+            node={node}
+          />
+        )
       case 'image':
         return <ImageNode node={node} />
       case 'video':
@@ -424,7 +432,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         updateWhiteboard?.(w => {
           const origin = w.nodes?.get(id)
           if (origin) {
-            w.nodes?.set(id, {
+            const newOrigin = {
               ...origin,
               x: box.left,
               y: box.top,
@@ -436,7 +444,12 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
                 (['top', 'bottom', 'topRight', 'topLeft', 'bottomRight', 'bottomLeft'].includes(dir) && delta.height !== 0),
               height: box.height,
               width: box.width
+            }
+            instance.emit?.({
+              type: 'nodeResized',
+              resized: [newOrigin]
             })
+            w.nodes?.set(id, newOrigin)
           }
         }, true)
       }}

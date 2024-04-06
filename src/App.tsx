@@ -3,7 +3,7 @@ import './styles/common.less'
 import Initializer, { initializedAtom } from './Initializer'
 import './styles/global.less'
 import './styles/font.less'
-import { GlobalCreateObject, GlobalDragOverlay, GlobalScreenShot, SettingAtom } from '@/core'
+import { GlobalDragOverlay, GlobalScreenShot, SettingAtom } from '@/core'
 import Notification from './components/NotificationCenter'
 import '@/styles/dock.less'
 import SvgMarker from './components/svg/Marker'
@@ -23,7 +23,7 @@ import GlobalSearchPanel from './core/global/GlobalSearchPanel'
 import 'highlight.js/styles/atom-one-dark.css'
 import TextSearch from './core/global/components/TextSearch'
 import '@/consts/colors.less'
-import FileImporter from './core/global/components/FileImporter'
+import FileImporter from './core/global/components/FileImportProcessor'
 import PluginManager from './core/plugin/PluginManager'
 import BuiltinEditorPlugin from './core/plugin/builtin/EditorPlugin'
 import { KeyToRegisteredGlobalElements } from './core/plugin/RegisterMap'
@@ -34,7 +34,7 @@ import { useSelectGlobalAtomValue } from '@/hooks'
 import GlobalCollection from '@/core/global/components/CollectionSelector'
 import { GlobalObjectDetails } from '@/core/object/details'
 import GlobalPreviewPanel from '@/core/global/components/ObjectPreviewer'
-import GlobalObjectCreator from '@/core/global/GlobalObjectCreator'
+import GlobalObjectCreator from '@/core/global/components/ObjectCreator'
 import GlobalQuickAdd from '@/components/form/quickAdd/GlobalQuickAdd'
 import GlobalDownloadIndicator from '@/core/global/DownloadIndicator'
 import { useAtomValue } from 'jotai'
@@ -43,6 +43,7 @@ import './styles/loading.less'
 import GlobalDialog from '@/core/global/GlobalDialog'
 import { ChineseFormats, DateFormat, EnglishFormats } from '@/utils'
 import useGlobalShortcutHandler from '@/core/global/ShortcutHandler'
+import ObjectEditForm from '@/core/global/components/ObjectEditForm'
 
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
@@ -137,10 +138,10 @@ const App = () => {
           <GlobalBaidudisk />
           <GlobalSearchPanel />
           <GlobalDialog />
+          <ObjectEditForm />
           <GlobalCollection />
           <GlobalObjectCreator />
           <GlobalObjectDetails />
-          <GlobalCreateObject />
           <GlobalTranslateResult />
           {initialized && <AuthenticatedLayout />}
           <GlobalDragOverlay />

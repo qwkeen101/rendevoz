@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
-import { useMemoizedFn, useSelectAtomValue } from '@/hooks'
+import { useMemoizedFn } from '@/hooks'
 import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
 import { useFlow } from '@/core/components/whiteboard/StateHooks'
+import { selectAtom } from 'jotai/utils'
+import { useAtomValue } from 'jotai'
 
+const isErasingAtom = selectAtom(WhiteboardStateAtom, s => s.erasing)
 const useEraseEdge = (edgeId: number) => {
-  const isErasing = useSelectAtomValue(WhiteboardStateAtom, s => s.erasing)
+  const isErasing = useAtomValue(isErasingAtom)
   const flow = useFlow()
   const [isTouched, setIsTouched] = useState(false)
   const handlePointerEvent = useMemoizedFn((e: PointerEvent) => {

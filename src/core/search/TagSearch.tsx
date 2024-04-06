@@ -75,10 +75,10 @@ const ParentChildItem = ({ items, tagId }: { items: ISearchResult; tagId: number
           style={{
             marginRight: 6,
             transition: 'all 0.16s ease',
-            transform: toggled ? undefined : 'rotate(90deg)'
+            transform: toggled ? undefined : 'rotate(90deg)',
+            padding: 3
           }}
           name={'park-right'}
-          className={ClassName.flatButton(4, '3px')}
         />
         <Tag showEdit={false} hideDelete hideSize hideAdd small square tag={tagId} />
         <div style={{ marginLeft: 4 }} className={'transparent-font font-size-12'}>

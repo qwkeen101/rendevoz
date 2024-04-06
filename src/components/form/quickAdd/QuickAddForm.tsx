@@ -3,7 +3,7 @@ import { Content, Menu } from '@/components'
 import ChooseGroupForm from './ChooseGroupForm'
 import ChooseTagForm from '@/components/form/quickAdd/ChooseTagForm'
 import ChooseCollectionForm from '@/components/form/quickAdd/ChooseCollectionForm'
-import { CollectionStore, MetaStore } from '@/api/stores'
+import { CollectionStore, MetaStore, ObjectStore } from '@/api/stores'
 import { ClassName } from 'rendevoz'
 import ChooseNoteForm from '@/components/form/quickAdd/ChooseNoteForm'
 import ChooseAttachmentForm from '@/components/form/quickAdd/ChooseAttachmentForm'
@@ -110,6 +110,16 @@ export default ({ currentMetaId, onClose }: { currentMetaId: number[]; onClose: 
                           let text = '',
                             icon = ''
                           switch (i.type) {
+                            case 'tag': {
+                              const t = ObjectStore('tag').getCachedOneById(i.id)
+                              if (t) {
+                                text = t.name || 'Unnamed tag'
+                                icon = 'park-tag-one'
+                                break
+                              } else {
+                                return
+                              }
+                            }
                             case 'collection': {
                               const c = CollectionStore.getCachedCollectionById(i.id)
                               if (c) {
@@ -137,6 +147,17 @@ export default ({ currentMetaId, onClose }: { currentMetaId: number[]; onClose: 
                             type: 'item',
                             key: i.id,
                             text: text,
+                            suffixIconClassName: ClassName.flatButton(4, '4px'),
+                            suffixIcon: 'park-close',
+                            suffixIconStyle: {
+                              color: Colors.Font.SuperTransparent
+                            },
+                            onSuffixIconClick: e => {
+                              e.stopPropagation()
+                              updateMovetoCache(s => {
+                                s.recently = s.recently?.filter(o => o.id !== i.id)
+                              })
+                            },
                             icon: icon,
                             onSelect: () => {
                               if (i.type === 'whiteboard') {

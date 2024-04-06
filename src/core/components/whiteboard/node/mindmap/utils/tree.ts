@@ -108,6 +108,7 @@ export const getChildrenOfNode = (node: IWhiteboardNode, instance: IWhiteboardIn
   if (node.rootId) {
     try {
       const root = instance.getNode?.(node.rootId)
+      console.log(root)
       if (root && root.type === 'mindmap') {
         return getSubChildren({ root: root.id, children: root[node.side === 'left' ? 'leftChildren' : 'rightChildren'] || [] }, node.id)
       }

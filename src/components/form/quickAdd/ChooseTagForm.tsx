@@ -4,6 +4,7 @@ import { MetaStore } from '@/api/stores'
 import { ClassName } from 'rendevoz'
 import { useTranslation } from 'react-i18next'
 import { useMemo } from 'react'
+import updateMovetoCache from '@/components/form/quickAdd/updateMovetoCache'
 
 export default ({ metaId, onBack }: { metaId: number[]; onBack: VoidFunction }) => {
   const obj = MetaStore.useMultipleObjects(metaId)
@@ -34,6 +35,13 @@ export default ({ metaId, onBack }: { metaId: number[]; onBack: VoidFunction }) 
       <MetaTagPicker
         alreadyTags={tags || []}
         onChange={v => {
+          const newTags = v.filter(i => !tags.includes(i))
+          if (newTags.length) {
+            const id = newTags[0]
+            updateMovetoCache(s => {
+              s.recently = s.recently ? [{ type: 'tag', id }, ...s.recently.filter(i => i.id !== id)] : [{ type: 'tag', id }]
+            })
+          }
           metaId.forEach(id => {
             MetaStore.updateMetaObject({ id, tags: v })
           })

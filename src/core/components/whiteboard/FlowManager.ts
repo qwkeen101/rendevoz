@@ -153,10 +153,13 @@ class FlowManager {
         }
       }
     }
-    console.log(nodeSizeChange)
     const nodeFuncArr = Array.from(this.instance.values.ID_TO_NODE_MAP.values())
     if (nodeSizeChange.length) {
       const sizeChanged = nodeSizeChange.map(i => ({ ...this.instance.getNode?.(i.id), ...i }))
+      this.instance.emit?.({
+        type: 'nodeSizeChange',
+        changed: sizeChanged
+      })
       setTimeout(() => {
         this.instance.eventEmitter.emit('whiteboard', {
           type: 'nodesSizeChange',
@@ -194,51 +197,11 @@ class FlowManager {
   public erasedNodeIds = new Set<number>()
   public erasedEdgeIds = new Set<number>()
 
-  public updateState: (updater: (curr: IWhiteboard) => void, withUndo?: boolean) => void = updater => {}
-
-  public onNodeFocus?: (n: IWhiteboardNode) => void
-
-  /**
-   * Transform pointer to whiteboard coordinates
-   */
-  public transformPointer = (e: PointerEvent) => {
-    const bounding = this.containerEle?.getBoundingClientRect()
-    if (bounding) {
-      const result = transformXY(bounding, e.clientX, e.clientY, this.containerTransformScale)
-      return result
-    }
-  }
-  public transformXY = (x: number, y: number) => {
-    const bounding = this.containerEle?.getBoundingClientRect()
-    if (bounding) {
-      const result = transformXY(bounding, x, y, this.containerTransformScale)
-      return result
-    }
-  }
-  public getLatestNodeSize = (nodeId: number): Box => {
-    const node = this.ID_TO_NODE_ELEMENT_MAP.get(nodeId)
-    const box = node?.getLatestSize() || {
-      left: 0,
-      top: 0,
-      width: 0,
-      height: 0
-    }
-    return box
-  }
-
-  public updateNodeSize = (nodeId: number, newSize: XYPosition & Size) => {
-    const node = this.ID_TO_NODE_ELEMENT_MAP.get(nodeId)
-    if (node) {
-      node.updateSize(newSize)
-    }
-  }
-
   public cachedRequest: {
     updater: (draft: Draft<IWhiteboard>) => void
     withUndo?: boolean
   }[] = []
   public batchUpdateWhiteboard = async (currentState: IWhiteboard) => {
-    console.log(this.cachedRequest)
     const withUndoRequests: typeof this.cachedRequest = [],
       commonRequests: typeof this.cachedRequest = []
     this.cachedRequest.forEach(r => {
@@ -259,7 +222,6 @@ class FlowManager {
       const [s, patches, inversePatches] = produceWithPatches(afterRequestState, draft => {
         withUndoRequests.forEach(r => r.updater(draft))
       })
-      console.log(patches, inversePatches, s)
       afterRequestState = s
       this.pushUpdates({
         patches,

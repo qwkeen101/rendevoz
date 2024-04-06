@@ -35,6 +35,7 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLDivElement, TextareaA
 ) => {
   const libRef = React.useRef<HTMLDivElement | null>(null)
   const ref = useMergedRef(libRef, userRef)
+  const edited = useRef(false)
   useEffect(() => {
     if (props.autoFocus) {
       setTimeout(() => {
@@ -57,6 +58,14 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLDivElement, TextareaA
       l.innerText = props.value || props.defaultValue || ''
     }
   }, [])
+  useEffect(() => {
+    if (props.defaultValue && !edited.current) {
+      const l = libRef.current
+      if (l) {
+        l.innerText = props.defaultValue || ''
+      }
+    }
+  }, [props.defaultValue])
   useLayoutEffect(() => {
     const l = libRef.current
     if (l && !isEditing.current) {
@@ -76,6 +85,7 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLDivElement, TextareaA
         document.execCommand('insertText', false, e.clipboardData.getData('text/plain'))
       }}
       onInput={e => {
+        edited.current = true
         if (debounceChange) {
           handleChange.run(e.currentTarget.innerText || '')
         } else {

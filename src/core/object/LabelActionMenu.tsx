@@ -59,7 +59,7 @@ const LabelActionMenu = ({ on, objectId, type, onClose }: Props) => {
       }
       case 'move-to': {
         let m = meta
-        if (!m) {
+        if (!m || m.temp) {
           m = await GlobalInstance.metaOps?.addDraggableAsMeta({
             type,
             labelId: objectId

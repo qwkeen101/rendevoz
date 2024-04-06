@@ -97,9 +97,6 @@ const Modal: FC<ModalProps> = ({
     if (isHotkey(KEY.Escape, e) && visible) {
       setTimeout(() => {
         if (e.defaultPrevented) return
-        if (e.target instanceof HTMLElement && e.target.closest('input,textarea,[contenteditable]')) {
-          return
-        }
         e.stopImmediatePropagation()
         onClose?.()
       })

@@ -12,6 +12,7 @@ import ButtonSelect from '@/components/base/ButtonSelect'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
+import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
 
 const FormFilePathPicker = ({
   onChange,
@@ -62,11 +63,12 @@ const FormFilePathPicker = ({
       setValidUrl(true)
     }
   }, [filePath])
+
   useEffect(() => {
     if (chooser === 'web') {
       setTimeout(() => {
         inputRef.current?.focus()
-        inputRef.current?.select()
+        inputRef.current?.select?.()
       })
     }
   }, [chooser])
@@ -105,53 +107,26 @@ const FormFilePathPicker = ({
       )}
       <div className={groupClassName} style={{ padding: '6px 8px' }}>
         <div className={hoverLabelClassName}>{t('general.file path')}</div>
-        {/*<Icon*/}
-        {/*  name="park-close"*/}
-        {/*  className={ClassName.circleButton()}*/}
-        {/*  onClick={() => {*/}
-        {/*    onChange({ type: 'clear' })*/}
-        {/*    removeFile()*/}
-        {/*    if (inputRef.current) {*/}
-        {/*      inputRef.current.value = ''*/}
-        {/*      inputRef.current.focus()*/}
-        {/*    }*/}
-        {/*  }}*/}
-        {/*  containerStyle={{*/}
-        {/*    position: 'absolute',*/}
-        {/*    top: -10,*/}
-        {/*    right: 10,*/}
-        {/*    fontSize: 10*/}
-        {/*  }}*/}
-        {/*/>*/}
         {chooser === 'web' && (
           <>
             <div>
-              <input
+              <AutosizeTextarea
                 ref={inputRef}
-                style={{
-                  width: '100%',
-                  background: 'transparent'
-                }}
                 onKeyDown={e => {
-                  if (e.currentTarget.value && isHotkey(KEY.Enter, e)) {
+                  if (e.currentTarget.innerText && isHotkey(KEY.Enter, e)) {
                     onEnter?.()
                   }
                 }}
+                autoFocus
                 defaultValue={filePath}
                 onChange={v => {
-                  const value = v.target.value
+                  const value = v
                   deboucedChange.run({
                     type: 'web',
                     url: value
                   })
-                  // if (Regexp.isValidWebUrl(value)) {
-                  //   setValidUrl(true)
-                  //
-                  // } else {
-                  //   setValidUrl(false)
-                  // }
                 }}
-                placeholder={t('general.Input video url')}
+                placeholder={'Type URL...'}
               />
             </div>
           </>

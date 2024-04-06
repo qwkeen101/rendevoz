@@ -52,6 +52,7 @@ const BaidudiskVideoPlayer = () => {
 
   useEffect(() => {
     const bda = localStorage.getItem('bda')
+    console.log(url)
     if (!bda) {
       loginBaidudisk()
       toast.error('身份验证已失效，请重新登录网盘后再打开')
@@ -135,6 +136,13 @@ const BaidudiskVideoPlayer = () => {
       }
     }
   }, [mediaState.paused, mediaState.loaded])
+  console.log(mediaState.jumpTime, mediaState.currentTime)
+  useEffect(() => {
+    if (mediaState.loaded && mediaState.currentTime !== undefined && mediaState.jumpTime === undefined && player) {
+      // jump time need to be undefined, otherwise trigger go to 0s bug
+      player.currentTime(mediaState.currentTime)
+    }
+  }, [mediaState.loaded])
 
   useEffect(() => {
     if (mediaState.loaded && mediaState.jumpTime !== undefined && player) {
@@ -143,11 +151,6 @@ const BaidudiskVideoPlayer = () => {
       }
     }
   }, [mediaState.jumpTime, mediaState.loaded])
-  useEffect(() => {
-    if (mediaState.loaded && mediaState.currentTime !== undefined && player) {
-      player.currentTime(mediaState.currentTime)
-    }
-  }, [mediaState.loaded])
   return (
     <div
       onClick={() => {

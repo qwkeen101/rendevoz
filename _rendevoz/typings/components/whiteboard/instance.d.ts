@@ -12,6 +12,7 @@ import {
   IWhiteboardOutline
 } from '~/typings'
 import { CSSProperties, Dispatch, SetStateAction } from 'react'
+import { DraggableData } from 'react-rnd'
 
 export type IWhiteboardToolbarState = {
   // originX and originY is whiteboard coord, for scroll and move
@@ -94,7 +95,8 @@ export type INodeInnerFuncs = {
           direction: 'right' | 'left'
         }
       | undefined,
-    dragNode: IWhiteboardNode
+    dragNode: IWhiteboardNode,
+    offset: XYPosition
   ) => void
   onNodesDelete?: (nodeIds: number[]) => void
   onSomeNodeSizeChange?: (node: IWhiteboardNode | IWhiteboardNode[]) => void
@@ -107,20 +109,36 @@ export type INodeInnerFuncs = {
 export type IEdgeInnerFuncs = {
   edit: VoidFunction
   drawPath: VoidFunction
+  transformEdge: (x: number, y: number) => void
+  removeTransform: VoidFunction
 }
 
-export type IWhiteboardEvents = {
-  type: 'drop'
-} & (
+export type IWhiteboardEvents =
+  | ({
+      type: 'drop'
+    } & (
+      | {
+          itemType: 'file'
+          file: File
+        }
+      | {
+          itemType: 'object'
+          metaId: number | number[]
+        }
+    ))
   | {
-      itemType: 'file'
-      file: File
+      type: 'nodeResized'
+      resized: IWhiteboardNode[]
     }
   | {
-      itemType: 'object'
-      metaId: number | number[]
+      type: 'nodeSizeChange'
+      changed: IWhiteboardNode[]
     }
-)
+  | {
+      type: 'whiteboardUpdated'
+      updated: IWhiteboardNode[]
+      withUndo: boolean
+    }
 export type IWhiteboardInstance = Partial<{
   openTabInSidebar?: (type: string, objectId?: number) => void
   getNode: (nodeId: number) => IWhiteboardNode | undefined
@@ -251,15 +269,17 @@ export type IWhiteboardInstance = Partial<{
     openSelectToolbar: (position: XYPosition) => void
     openEdgeToolbar: (edgeId: number, position: XYPosition) => void
     openContextMenuToolbar: (position: XYPosition) => void
+    selectPasteOption: (position: XYPosition) => Promise<'text' | 'image' | 'nodes'>
   }
   searchOps: {
     toggleSearchPanel: (visible?: boolean) => void
   }
   groupOps: {
+    expandGroups: VoidFunction
     // fit into view and rename
     renameGroup: (groupNodeId: number) => void
-    getParentGroupsOfNode: (nodeId: number) => IWhiteboardNode[]
-    getNodesInGroup: (groupNodeId: number, includeSelf?: boolean) => IWhiteboardNode[]
+    getParentGroupsOfNode: (nodeId: number, mindmapChildUseRoot?: boolean) => IWhiteboardNode[]
+    getNodesInGroup: (groupNodeId: number, includeSelf?: boolean, mindmapChildUseRoot?: boolean) => IWhiteboardNode[]
     groupNodes: (nodeId: number | number[]) => void
     exportGroupImage: (groupId: number) => void
   }
@@ -281,6 +301,7 @@ export type IWhiteboardInstance = Partial<{
   eventEmitter: IEventEmitter
   values: {
     id?: number
+    mindmapAttachableNodesCache?: IWhiteboardNode[]
     // need this to prevent resizeobserver update height loop.
     isResizingSelectionBox?: boolean
     currentDraggingNodeId?: number

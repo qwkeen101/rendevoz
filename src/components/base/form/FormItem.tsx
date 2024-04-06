@@ -80,7 +80,12 @@ const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children,
             autoFocus={rest.autoFocus}
             spellCheck="false"
             defaultValue={value}
-            style={{ height: 40, ...rest.style }}
+            style={{
+              maxHeight: '4lh',
+              overflowY: 'auto',
+              fontSize: 14,
+              ...rest.style
+            }}
             textarea={false}
             placeholder={text}
             onKeyDown={rest.onKeyDown}
@@ -93,21 +98,22 @@ const FormItem: FC<FormItemProps> = ({ onChange, onUpload, text, type, children,
         )
       }
       case 'textarea': {
-        const { maxRows, maxLength, minRows = 2, autoFocus } = rest
+        const { autoFocus } = rest
         return (
           <BorderInput
             value={value}
             defaultValue={value}
             onKeyDown={rest.onKeyDown}
             textarea={true}
-            style={{ height: 40, ...rest.style }}
+            style={{
+              maxHeight: '6lh',
+              overflowY: 'auto',
+              ...rest.style
+            }}
             placeholder={text}
             disable={disable}
             spellCheck="false"
-            maxRows={maxRows}
             autoFocus={autoFocus}
-            maxLength={maxLength}
-            minRows={minRows}
             onChange={e => {
               onChange?.(e)
               setInnerValue(e)

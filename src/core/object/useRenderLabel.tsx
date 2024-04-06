@@ -100,7 +100,7 @@ const useRenderLabel = (opts: {
                         padding: '2px 4px',
                         borderRadius: 4,
                         marginRight: 4,
-                        background: Colors.Common.SelectColorTransparent,
+                        background: Colors.Common.SelectColorTransparentLight,
                         color: Colors.Common.SelectColor
                       }}
                     >

@@ -1,5 +1,5 @@
 import { categorizeFilesByPath } from '@/components/fileImporter/baidudisk/handleImportAllAndCreateCollections'
-import { GlobalImporterInstance } from '@/core/global/components/FileImporter'
+import { GlobalImporterInstance } from '@/core/global/components/FileImportProcessor'
 import { MetaObject } from '~/typings'
 
 export default async (files: File[], onCreate?: (m: MetaObject) => void, parentCollectionId?: number) => {

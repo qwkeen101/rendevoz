@@ -20,6 +20,7 @@ type SimpleEditorProps = {
   replaceValueOnChange?: boolean
   disableScrollIntoView?: boolean
   virtualizer?: boolean
+  onClick?: React.MouseEventHandler
 }
 
 const textAreaClassname = css({
@@ -39,6 +40,7 @@ const SimpleEditor = ({
   fontSize = 17,
   replaceValueOnChange = false,
   readOnly = false,
+  onClick,
   changeOnBlur = false,
   disableScrollIntoView,
   textareaMode,
@@ -93,6 +95,8 @@ const SimpleEditor = ({
     <NoteEditor
       metaId={metaId}
       placeholder={placeholder}
+      textboxMode={textareaMode}
+      onClick={onClick}
       on={e => {
         if (e.type === 'valueChange') {
           setInnerValue(e.value)

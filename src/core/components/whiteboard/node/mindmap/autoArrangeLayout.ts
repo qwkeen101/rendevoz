@@ -37,7 +37,11 @@ export default (node: IWhiteboardNode & { type: 'mindmap' }, instance: IWhiteboa
       // return 40
     }
   })
-  const nodes = []
+  const nodes: {
+    id: number
+    x: number
+    y: number
+  }[] = []
   rootNode.eachNode(n => {
     nodes.push({
       id: n.data.root,
@@ -45,50 +49,5 @@ export default (node: IWhiteboardNode & { type: 'mindmap' }, instance: IWhiteboa
       y: n.y - rootNode.y
     })
   })
-  // const layout = flextree({
-  //   children: n => {
-  //     const id = n.root
-  //     const node = instance.getNode?.(id)
-  //     if (node?.collapse) {
-  //       return undefined
-  //     }
-  //     if (node?.collapseChildren) {
-  //       return undefined
-  //     }
-  //     return n.children
-  //   },
-  //   nodeSize: n => {
-  //     const id = n.data.root
-  //     const size = instance.nodeOps?.getNodeFuncs?.(id)?.getRealtimeBox()
-  //     return [size?.height ?? 0, size?.width ?? 0]
-  //   },
-  //   spacing: 24
-  // })
-  // const tree = layout.hierarchy(normalized)
-  // layout(tree)
-  // return transformLayout(tree, direction === 'right' ? 'r' : 'l')
   return nodes
-}
-
-const transformLayout = (root: FlextreeNode<any>, direction: 'r' | 'l') => {
-  if (direction === 'r') {
-    const ns = root.nodes.map(n => {
-      return {
-        x: n.y + n.depth * 150,
-        y: n.x,
-        id: n.data.root
-      }
-    })
-    return ns
-  }
-  if (direction === 'l') {
-    const ns = root.nodes.map(n => {
-      return {
-        x: -n.y + root.size[1] + n.depth * -150,
-        y: n.x,
-        id: n.data.root
-      }
-    })
-    return ns
-  }
 }

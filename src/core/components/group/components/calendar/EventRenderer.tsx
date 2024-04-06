@@ -220,7 +220,7 @@ export default memo(({ event }: EventProps) => {
   }
   return (
     <Content
-      role={'calendar-item-wrapper'}
+      role={'group-item-content'}
       ref={ref}
       column
       onClick={e => {
@@ -240,6 +240,7 @@ export default memo(({ event }: EventProps) => {
         transition: 'all 0.16s ease-out'
       }}
       onContextMenu={e => {
+        e.preventDefault()
         if (instance.values.selectedRowIdSet.size === 1) {
           instance.selectOps?.clearAllSelect()
         }

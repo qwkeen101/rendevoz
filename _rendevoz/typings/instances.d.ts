@@ -123,4 +123,9 @@ export type IGlobalInstance = Partial<{
     copyLink: (id: number | number[]) => void
     addDraggableAsMeta: (d: BuiltInDraggableElement, temp?: boolean) => Promise<MetaObject>
   }
-}>
+}> & {
+  values: {
+    copiedWhiteboardData?: IWhiteboardNode[]
+    registeredKeynavigationHandlers: ((e: KeyboardEvent) => void)[]
+  }
+}

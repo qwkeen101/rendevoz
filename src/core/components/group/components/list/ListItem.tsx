@@ -243,9 +243,10 @@ export default memo(
           flex
           ref={bodyRef}
           alignItems={'center'}
-          role={'list-item-wrapper'}
+          role={'group-item-content'}
           className={ClassName.flatButton(4, '4px 6px')}
           onContextMenu={e => {
+            e.preventDefault()
             if (instance.values.selectedRowIdSet.size === 1) {
               instance.selectOps?.clearAllSelect()
             }

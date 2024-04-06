@@ -28,6 +28,7 @@ export default memo(() => {
     })
   assignProperties(instance, {
     toolbarOps: {
+      ...instance.toolbarOps,
       openEdgeToolbar: (edgeId, pos) => {
         setToolbarState(s => ({ ...s, visible: true, edgeId, originX: pos.x, originY: pos.y, type: 'edge' }))
       },

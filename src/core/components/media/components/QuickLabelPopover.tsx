@@ -51,6 +51,7 @@ export default memo(() => {
       isPlayRef.current = !store.get(MediaStateAtom).paused
       instance.actionOps?.pause()
       return () => {
+        instance.focus?.()
         if (isPlayRef.current) {
           instance.actionOps?.play()
         }

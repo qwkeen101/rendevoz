@@ -7,6 +7,8 @@ import { useAssignWhiteboardInstance } from '@/core/components/whiteboard/hooks/
 import useWhiteboardQuickActions from '@/core/components/whiteboard/hooks/keyboard/useWhiteboardQuickActions'
 import { useUpdate } from 'react-use'
 import { useEffect } from 'react'
+import useGroupInnerSizeChangeProcessor
+  from '@/core/components/whiteboard/hooks/processors/useGroupInnerSizeChangeProcessor'
 
 export default ({ whiteboardId }: { whiteboardId: number }) => {
   const update = useUpdate()
@@ -17,7 +19,7 @@ export default ({ whiteboardId }: { whiteboardId: number }) => {
   useWhiteboardHistory()
   useAssignWhiteboardInstance()
   useWhiteboardQuickActions()
-
+  useGroupInnerSizeChangeProcessor()
   useEffect(() => {
     // trigger update here for some hooks to get container
     update()

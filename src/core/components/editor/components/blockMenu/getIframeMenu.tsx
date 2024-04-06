@@ -31,7 +31,7 @@ export default (editor: Editor, instance: IEditorInstance): IMenuLayoutItem[] =>
           text: t('editor.Copy link to original'),
           onSelect: () => {
             navigator.clipboard.writeText(url)
-            toast.success(t('general.link is generated for this object'))
+            toast.success(t('general.Copied'))
             instance.overlayOps?.close()
           }
         },

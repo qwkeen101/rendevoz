@@ -29,6 +29,17 @@ const useMediaShortcut = (containerRef: RefObject<HTMLElement>) => {
     if (!containerRef.current?.contains(e.target)) {
       return
     }
+    if (isHotkey(KEY.Space, e)) {
+      if (
+        !(
+          e.target instanceof HTMLElement &&
+          (e.target.closest('input') || e.target.closest('textarea') || e.target.closest('[contenteditable=true]'))
+        )
+      ) {
+        e.preventDefault()
+        setMediaState(s => ({ ...s, paused: !s.paused }))
+      }
+    }
     setTimeout(() => {
       if (e.defaultPrevented) return
       const setting = getSetting()
@@ -56,17 +67,6 @@ const useMediaShortcut = (containerRef: RefObject<HTMLElement>) => {
       }
       if (isShortCut(e, openSidebarShortcut)) {
         setSidebarState(s => ({ ...s, rightBarVisible: !s.rightBarVisible }))
-      }
-      if (isHotkey(KEY.Space, e)) {
-        if (
-          !(
-            e.target instanceof HTMLElement &&
-            (e.target.closest('input') || e.target.closest('textarea') || e.target.closest('[contenteditable=true]'))
-          )
-        ) {
-          e.preventDefault()
-          setMediaState(s => ({ ...s, paused: !s.paused }))
-        }
       }
       if (isHotkey(KEY.ArrowLeft, e)) {
         e.stopPropagation()

@@ -94,7 +94,7 @@ const withCustomComponent = (editor: CustomEditor) => {
   editor.insertNodes = (nodes, options) => {
     console.log(nodes)
     const path = options?.at || editor.selection
-    const isAllNodesBlock = (Array.isArray(nodes) ? nodes : [nodes]).every(i => Editor.isBlock(editor, i))
+    const isAllNodesBlock = (Array.isArray(nodes) ? nodes : [nodes]).every(i => 'type' in i && !Editor.isInline(editor, i))
     if (isAllNodesBlock && path && Editor.hasPath(editor, Editor.path(editor, path))) {
       const emptyParagraph = Editor.above(editor, {
         at: path,

@@ -1,6 +1,6 @@
 import { Box, IWhiteboardInstance, IWhiteboardNode } from '~/typings'
 import { assignProperties, boxContain, boxesIntersect } from '@/utils'
-import { useFlow, WhiteboardAtom } from '@/core/components/whiteboard/StateHooks'
+import { WhiteboardAtom } from '@/core/components/whiteboard/StateHooks'
 import { getBoxOfNodes } from '@/core/components/whiteboard/utils'
 import Id from '@/utils/id'
 import useUpdateWhiteboard from '@/core/components/whiteboard/hooks/useUpdateWhiteboard'
@@ -9,8 +9,12 @@ import { enlargeBox } from '@/core/components/whiteboard/hooks/ops/group'
 import { Rendevoz } from '@/core/rendevoz'
 import { GlobalInstance } from '@/hooks'
 import { useStore } from 'jotai'
-import { getChildrenOfNode, getFlattenChildrenOfNode } from '@/core/components/whiteboard/node/mindmap/utils/tree'
+import { getFlattenChildrenOfNode } from '@/core/components/whiteboard/node/mindmap/utils/tree'
 import { canCloneMindmap, cloneMindmap } from '@/core/components/whiteboard/node/mindmap/utils/cloneMindmap'
+import cloneNodes from '@/core/components/whiteboard/hooks/ops/cloneNodes'
+import pasteImage from '@/core/components/whiteboard/hooks/ops/paste/pasteImage'
+import pasteNodes from '@/core/components/whiteboard/hooks/ops/paste/pasteNodes'
+import pastePlainText from '@/core/components/whiteboard/hooks/ops/paste/pastePlainText'
 
 const assignNodeOps = (instance: IWhiteboardInstance) => {
   const updateWhiteboard = useUpdateWhiteboard()
@@ -172,35 +176,47 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
         const box = getBoxOfNodes(nodes)
         if (box) {
           // reset nodes coord to outest box
-          const newNodes = nodes.map(n => ({ ...n, x: n.x - box.left, y: n.y - box.top }))
-          instance.values.copiedElements = newNodes
-        }
-      },
-      paste: position => {
-        const currentCopied = instance.values.copiedElements
-        if (currentCopied.length) {
-          const slicedCopied = currentCopied.slice()
           const elements: IWhiteboardNode[] = []
-          slicedCopied.forEach(ele => {
+          const idSet = new Set(idArr)
+          nodes.forEach(ele => {
+            if (ele.rootId) {
+              const root = instance.getNode?.(ele.rootId)
+              if (root) {
+                const nodes = getFlattenChildrenOfNode(root, instance, ele.side)
+                // if ancestor is copied, do not process this node
+                if (nodes.some(i => i.root !== ele.id && idSet.has(i.root))) {
+                  return
+                }
+              }
+            }
             if (canCloneMindmap(ele, instance)) {
               const inserted = cloneMindmap(ele, instance)
               if (inserted) {
-                inserted.insertNewNodes.forEach(n => elements.push({ ...n, x: n.x + position.x, y: n.y + position.y }))
-                elements.push({ ...inserted.newMindmap, id: Id.getId(), x: ele.x + position.x, y: ele.y + position.y })
+                inserted.insertNewNodes.forEach(n => elements.push({ ...n }))
+                elements.push({ ...inserted.newMindmap, id: Id.getId() })
                 return
               }
             } else {
-              elements.push({ ...ele, id: Id.getId(), x: ele.x + position.x, y: ele.y + position.y })
+              elements.push({ ...ele, id: Id.getId() })
             }
           })
-          const pasteElements = elements
-          console.log(pasteElements, slicedCopied)
-          updateWhiteboard(w => {
-            pasteElements.forEach(n => {
-              w.nodes?.set(n.id, n)
-            })
-          }, true)
+          const newNodes = elements.map(n => ({ ...n, x: n.x - box.left, y: n.y - box.top }))
+          GlobalInstance.values.copiedWhiteboardData = newNodes
+          console.log(newNodes)
         }
+      },
+      paste: position => {
+        instance.toolbarOps?.selectPasteOption?.(position).then(res => {
+          if (res === 'text') {
+            pastePlainText(instance, position)
+          }
+          if (res === 'image') {
+            pasteImage(instance, position)
+          }
+          if (res === 'nodes') {
+            pasteNodes(instance, position)
+          }
+        })
       },
       getNodeFuncs: nodeId => {
         return instance.values.ID_TO_NODE_MAP.get(nodeId)

@@ -2,12 +2,11 @@ import React, { forwardRef, memo, useContext, useEffect, useLayoutEffect, useRef
 import { DragDropDiv } from './dragdrop/DragDropDiv'
 import { DockContextType, PanelData, TabData } from './DockData'
 import styles from './index.module.less'
-
 import { Reorder } from 'framer-motion'
 import { TabNavListProps } from '../tabs'
 import classNames from 'classnames'
 import AnimatePopover from '../AnimatePopover'
-import { GlobalInstance, useGlobalAtom, useGlobalAtomValue, useMergedRef, useToggle } from '@/hooks'
+import { GlobalInstance, useGlobalAtomValue, useMergedRef, useToggle } from '@/hooks'
 import WithBorder from '../WithBorder'
 import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
@@ -16,10 +15,10 @@ import { getOS } from '@/App'
 import { Rendevoz } from '@/core/rendevoz'
 import { MetaStore } from '@/api/stores'
 import { Content, Icon, Menu } from '@/components'
-import { SidebarPanelStateAtom } from '@/components/layout/sidebar'
-import produce from 'immer'
 import { Colors } from '@/consts'
 import useIsFullscreen from '@/hooks/utils/useIsFullscreen'
+import useSidebarState from '@/components/layout/sidebar/useSidebarState'
+import updateSidebarState from '@/components/layout/sidebar/updateSidebarState'
 
 interface DockTabBarProps {
   TabNavList: TabNavListProps
@@ -50,7 +49,7 @@ export const DockTabBar = memo(
     const [isTopRight, setIsTopRight] = useState(false)
     const [isTopLeft, setIsTopLeft] = useState(false)
     const isFullscreen = useIsFullscreen(true)
-    const [panelState, setPanelState] = useGlobalAtom(SidebarPanelStateAtom)
+    const sidebarState = useSidebarState()
     const [innerTabs, setInnerTabs] = useState<any[]>(navs)
     const reorderRef = useRef<HTMLElement>()
     useLayoutEffect(() => {
@@ -116,13 +115,13 @@ export const DockTabBar = memo(
         getRef={getRef}
         tabIndex={-1}
         style={{
-          paddingLeft: isTopLeft ? (panelState.leftOpen ? 8 : os === 'macos' && !isFullscreen ? 36 : 8) : 8,
+          paddingLeft: isTopLeft ? (sidebarState.leftOpen ? 8 : os === 'macos' && !isFullscreen ? 36 : 8) : 8,
           background: 'var(--tabs-bg)',
           zIndex: 102,
-          marginLeft: isTopLeft && !panelState.leftOpen && (isFullscreen || os === 'windows') ? -48 : undefined
+          marginLeft: isTopLeft && !sidebarState.leftOpen && (isFullscreen || os === 'windows') ? -48 : undefined
         }}
       >
-        {isTopLeft && !panelState.leftOpen && (
+        {isTopLeft && !sidebarState.leftOpen && (
           <Content
             flex
             gap={4}
@@ -139,12 +138,10 @@ export const DockTabBar = memo(
           >
             <Icon
               onClick={() => {
-                setPanelState(s =>
-                  produce(s, draft => {
-                    draft.leftOpen = true
-                    draft.visible.size === 0 && draft.visible.add('database')
-                  })
-                )
+                updateSidebarState(s => {
+                  s.leftOpen = !s.leftOpen
+                  s.leftVisible = s.leftVisible || 'database'
+                })
               }}
               name={'custom-left-bar'}
               className={ClassName.flatButton(4, '4px 6px')}
@@ -207,6 +204,7 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast, onDragEnd, is
   const dockContext = useContext(DockContextType)
   const tabRef = useRef<HTMLDivElement>(null)
   const [currentTabMetaId, setCurrentTabMetaId] = useState<number>()
+  // @ts-ignore
   const renderTabContextMenu = () => (
     <Menu.NavigationMenu
       layout={[
@@ -240,6 +238,7 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast, onDragEnd, is
             toggleContextMenuVisible()
           }
         },
+        // @ts-ignore
         ...(currentTabMetaId
           ? [
               {
@@ -267,6 +266,18 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast, onDragEnd, is
                 onSelect: () => {
                   toggleContextMenuVisible()
                   GlobalInstance.metaOps?.quickAdd(currentTabMetaId)
+                }
+              },
+              {
+                type: 'item',
+                key: 'delete',
+                text: t('general.delete'),
+                style: {
+                  color: Colors.Common.Red
+                },
+                onSelect: () => {
+                  toggleContextMenuVisible()
+                  MetaStore.deleteMetaObject(currentTabMetaId)
                 }
               }
             ]

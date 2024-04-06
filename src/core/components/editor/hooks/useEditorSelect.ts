@@ -28,7 +28,7 @@ const useEditorSelect = (editor: CustomEditor, scrollElement?: HTMLElement | nul
     // target is title or textbox
 
     if (!target.closest('[role="editor-title"')) {
-      if (target.getAttribute('role') === 'inner-editor') {
+      if (target.getAttribute('role') === 'textbox') {
         isPressed.current = true
       }
       // target is self

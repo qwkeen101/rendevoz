@@ -1,19 +1,28 @@
-import { Box, IWhiteboardInstance, IWhiteboardNode } from '~/typings'
+import { Box, IWhiteboardInstance, IWhiteboardNode, XYPosition } from '~/typings'
 import useGroupDrag from '@/core/components/whiteboard/node/hooks/useGroupDrag'
 import { DraggableEvent } from 'react-draggable'
 import { DraggableData } from 'react-rnd'
 import { useRef } from 'react'
 import { boxContain, pointInBox } from '@/utils'
-import { getBoxOfBoxes, getBoxOfNodes } from '@/core/components/whiteboard/utils'
-import checkAddLinkWhenDrag from '@/core/components/whiteboard/node/mindmap/drag/getClosestNodeLink'
+import { getBoxOfBoxes } from '@/core/components/whiteboard/utils'
+import getClosestLink from '@/core/components/whiteboard/node/mindmap/drag/getClosestNodeLink'
 import dragSingleNodeToEnlargeGroup from '@/core/components/whiteboard/node/hooks/drag/dragSingleNodeToEnlargeGroup'
+import getAttachableNodes from '@/core/components/whiteboard/node/mindmap/utils/getAttachableNodes'
 
-const defaultEnlarge = 24
 export default (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
   const { handleGroupMove, handleGroupMoveEnd, handleGroupMoveStart } = useGroupDrag(node, instance)
   const cachedGroupNodes = useRef<IWhiteboardNode[]>()
   const draggedIntoGroups = useRef<IWhiteboardNode[]>()
+  const initialPositionRef = useRef<XYPosition>()
   const handleDragStart = () => {
+    getAttachableNodes(instance, node.id)
+    const box = instance.nodeOps?.getNodeFuncs(node.id)?.getRealtimeBox()
+    if (box) {
+      initialPositionRef.current = {
+        x: box.left,
+        y: box.top
+      }
+    }
     instance.eventEmitter.emit('whiteboard', {
       type: 'nodeDragStart',
       data: {
@@ -29,11 +38,21 @@ export default (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
 
   const handleDrag = (e: DraggableEvent, data: DraggableData, sendEvent?: boolean) => {
     instance.nodeOps?.updateRelatedEdges(node.id)
-    const targetMindmapNode = checkAddLinkWhenDrag({ ...node, x: data.x, y: data.y }, instance, e)
-    console.log(targetMindmapNode)
-    Array.from(instance.values.ID_TO_NODE_MAP.values()).forEach(
-      i => i.checkMindmapDrag?.(targetMindmapNode, { ...node, x: data.x, y: data.y })
-    )
+    const targetMindmapNode = getClosestLink({ ...node, x: data.x, y: data.y }, instance, e)
+    if (initialPositionRef.current) {
+      const initial = initialPositionRef.current!
+      Array.from(instance.values.ID_TO_NODE_MAP.values()).forEach(
+        i =>
+          i.checkMindmapDrag?.(
+            targetMindmapNode,
+            { ...node, x: data.x, y: data.y },
+            {
+              x: data.x - initial.x,
+              y: data.y - initial.y
+            }
+          )
+      )
+    }
     const transformedWhiteboardPoint = instance.coordOps?.transformWindowPositionToPosition({
       x: e.clientX,
       y: e.clientY
@@ -63,11 +82,10 @@ export default (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
         } else {
           instance.values.ID_TO_NODE_MAP.get(i.id)?.deselect()
         }
-      }else{
+      } else {
         instance.values.ID_TO_NODE_MAP.get(i.id)?.deselect()
       }
     })
-    console.log(draggedIntoGroups.current)
     if (node.type === 'group') {
       handleGroupMove(data, data.node)
       throw new Error('')

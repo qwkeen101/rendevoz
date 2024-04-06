@@ -20,8 +20,7 @@ export default (
         right: Set<number>
       }
     }
-    handleRightTreeChange: VoidFunction
-    handleLeftTreeChange: VoidFunction
+    handleBothTreeChange: VoidFunction
     layoutCache?: {
       current: any
     }
@@ -32,7 +31,7 @@ export default (
     }[]
   }
 ) => {
-  const { subNodeIds, mindmapCoreId, layoutCache, links, handleLeftTreeChange, handleRightTreeChange } = opts
+  const { subNodeIds, mindmapCoreId, layoutCache, handleBothTreeChange, links } = opts
   const instance = useWhiteboardInstance()
   const edgeLayer = instance.getEdgeLayer?.()
   const [tempLink, setTempLink] = useState<{
@@ -48,17 +47,15 @@ export default (
       if (tempLink) return true
       return false
     }
-    nodeFunc.checkMindmapDrag = (targetNode, dragNode) => {
+    nodeFunc.checkMindmapDrag = (targetNode, dragNode, offset) => {
       // drag self, update children position
       if (dragNode.id === node.id) {
         if (layoutCache?.current) {
-          console.log(layoutCache.current)
           rafDragMindmapChildren(
-            dragNode,
             instance,
             [...subNodeIds.current.left, ...subNodeIds.current.right],
-            layoutCache.current,
-            links.map(link => `${mindmapCoreId}_${link.sourceId}_${link.targetId}`)
+            links.map(link => `${mindmapCoreId}_${link.sourceId}_${link.targetId}`),
+            offset
           )
         }
       } else {
@@ -103,8 +100,7 @@ export default (
         const ifOtherHaveTempLink = Array.from(instance.values.ID_TO_NODE_MAP.values()).some(i => i.hasTempMindmapLink?.())
         if (!ifOtherHaveTempLink) {
           setTimeout(() => {
-            handleRightTreeChange()
-            handleLeftTreeChange()
+            handleBothTreeChange()
           })
         }
         return false

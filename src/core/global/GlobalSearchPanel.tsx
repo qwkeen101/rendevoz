@@ -7,8 +7,8 @@ import { Content } from '@/components'
 import { getPanelPosition } from './utils'
 import { ObjectStore } from '@/api/stores'
 import { searchToUrl } from '../components/webpage/utils'
-import { setPanelState as setSidebarPanelState } from '@/components/layout/sidebar'
 import WebviewWepbage from '@/core/components/webpage/WebviewWepbage'
+import updateSidebarState from '@/components/layout/sidebar/updateSidebarState'
 
 export const GlobalSearchInstance: Partial<GlobalInstances.WebSearchInstance> = {}
 
@@ -67,9 +67,8 @@ const GlobalSearchPanel = () => {
             placement: 'right'
           })
 
-        setSidebarPanelState(s => {
-          s.visible.clear()
-          s.visible.add('webSearch')
+        updateSidebarState(s => {
+          s.leftVisible = 'webSearch'
           s.leftOpen = true
         })
         setPanelState(s => ({
@@ -85,12 +84,6 @@ const GlobalSearchPanel = () => {
       }
     }
   } as typeof GlobalSearchInstance)
-  useShortcut('openSearchPanel', () => {
-    setSidebarPanelState(s => {
-      s.visible.has('webSearch') ? s.visible.delete('webSearch') : s.visible.add('webSearch')
-    })
-    setPanelState(s => ({ ...s, visible: !s.visible }))
-  })
 }
 
 export const SearchPanel = () => {

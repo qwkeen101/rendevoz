@@ -8,6 +8,7 @@ export const cloneMindmap = (
 ):
   | {
       insertNewNodes: IWhiteboardNode[]
+      deletedNodeIds: Set<number>
       newMindmap: IWhiteboardNode
     }
   | undefined => {
@@ -61,6 +62,7 @@ export const cloneMindmap = (
     if (!root || root.type !== 'mindmap') return
     subChildren = getFlattenChildrenOfNode(node, instance, node.side) || []
     const children = getChildrenOfNode(node, instance, node.side)
+    console.log(subChildren, children)
     inserted = subChildren
       .map(i => {
         try {
@@ -88,7 +90,8 @@ export const cloneMindmap = (
   }
   return {
     insertNewNodes: inserted,
-    newMindmap: newMindmap
+    newMindmap: newMindmap,
+    deletedNodeIds: new Set(Object.keys(oldIdToNewId).map(i => Number(i)))
   }
 }
 

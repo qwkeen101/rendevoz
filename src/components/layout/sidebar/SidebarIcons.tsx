@@ -7,7 +7,6 @@ import FontSize from '@/consts/font'
 import { KeyToRegisteredSidebarElement } from '@/core/plugin/RegisterMap'
 import React, { useEffect, useRef, useState } from 'react'
 import { useGlobalAtom } from '@/hooks'
-import { SidebarPanelStateAtom } from '@/components/layout/sidebar/index'
 import { Colors } from '@/consts'
 import { Reorder } from 'framer-motion'
 import ContextMenu from '@/components/contextMenu'
@@ -18,6 +17,7 @@ import { ClassName } from 'rendevoz'
 import SidebarUser from '@/components/layout/sidebar/SidebarUser'
 import { useUpdate } from 'react-use'
 import { atom } from 'jotai'
+import useSidebarState from '@/components/layout/sidebar/useSidebarState'
 
 const SidebarIconDraggingAtom = atom<{
   isDragging: boolean
@@ -39,8 +39,7 @@ const SidebarIcons = ({
   onChange: (items: string[]) => void
   direction: 'left' | 'right'
 }) => {
-  const [panelState, setPanelState] = useGlobalAtom(SidebarPanelStateAtom)
-  const selectedItem = panelState.visible
+  const panelState = useSidebarState()
   const [sidebarIconDraggingState, setSidebarIconDraggingState] = useGlobalAtom(SidebarIconDraggingAtom)
   const hasItem = (k: string) => {
     return BuiltInSidebarItems[k] || KeyToRegisteredSidebarElement.has(k)
@@ -59,7 +58,6 @@ const SidebarIcons = ({
         <Tooltip positions={['right', 'left']} boundaryInset={8} content={buildIn.tooltip ? buildIn.tooltip() : buildIn.text?.()}>
           <Content
             style={{
-              background: selectedItem.has(k) ? Colors.Background.ButtonActive : undefined,
               borderRadius: 6
             }}
           >
@@ -133,7 +131,7 @@ const SidebarIcons = ({
               : Colors.Background.Global,
             minWidth: dragInto ? 44 : 1,
             boxShadow: direction === 'right' ? Colors.Consts.BoxShadowBorderRight : Colors.Consts.BoxShadowBorderLeft,
-            padding: direction === 'left' && items.length === 0 ? 0 : undefined,
+            padding: direction === 'left' && items.length === 0 ? 0 : undefined
             // marginTop: direction === 'right' ? 38 : undefined
           }}
           className={classNames(

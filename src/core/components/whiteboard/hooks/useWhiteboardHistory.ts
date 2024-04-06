@@ -30,7 +30,7 @@ const useWhiteboardHistory = () => {
       })
       redos.pop()
       undos.push(lastRedo)
-      instance.getOutestContainerNode?.().focus()
+      instance.getOutestContainerNode?.()?.focus()
     }
   }
   flow.redo = redo
@@ -50,7 +50,7 @@ const useWhiteboardHistory = () => {
         })
         redos.push(lastUndo)
         undos.pop()
-        instance.getOutestContainerNode?.().focus()
+        instance.getOutestContainerNode?.()?.focus()
       }
     }
   }

@@ -62,6 +62,7 @@ const NameEditor = ({
             console.log(e)
             if (isHotkey(KEY.Escape, e)) {
               onChange(value)
+              e.preventDefault()
               onCancel?.()
             }
             if (isHotkey(KEY.Enter, e)) {

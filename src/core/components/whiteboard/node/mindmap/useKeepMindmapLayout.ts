@@ -51,16 +51,13 @@ export default (
         if (target.collapse) return
         if (n.x === null || n.y === null) return
         layoutCache.current[n.id] = { ...n, side: direction }
-        const box = instance.nodeOps?.getNodeFuncs?.(n.id)?.getRealtimeBox()
-        if (box) {
-          const propBox = { x: currBox.left + n.x, y: currBox.top + n.y }
-          if (box.left !== propBox.x || box.top !== propBox.y) {
-            updateQueue.push({
-              id: n.id,
-              x: propBox.x,
-              y: propBox.y
-            })
-          }
+        const propBox = { x: currBox.left + n.x, y: currBox.top + n.y }
+        if (target.x !== propBox.x || target.y !== propBox.y) {
+          updateQueue.push({
+            id: n.id,
+            x: propBox.x,
+            y: propBox.y
+          })
         }
       })
       if (updateQueue.length) {

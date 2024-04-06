@@ -1,25 +1,23 @@
-import { useGlobalAtom } from '@/hooks'
-import { SidebarPanelStateAtom } from '@/components/layout/sidebar/index'
-import { ObjectPanel } from '@/core'
 import { Resizable } from 're-resizable'
 import { Content, Icon, TabPane, Tabs } from '@/components'
 import { createStore, Provider } from 'jotai'
 import SidebarFolder from '@/components/layout/sidebar/SidebarFolder'
 import { Colors } from '@/consts'
-import { Rendevoz } from '@/core/rendevoz'
 import { SearchPanel } from '@/core/global/GlobalSearchPanel'
 import React, { useMemo, useState } from 'react'
-import produce from 'immer'
 import { getOS } from '@/App'
 import ClassName from '@/styles/classNames'
 import useIsFullscreen from '@/hooks/utils/useIsFullscreen'
 import SidebarCategory from '@/components/layout/sidebar/SidebarCategory'
+import ObjectList from '@/core/object/ObjectList'
+import useSidebarState from '@/components/layout/sidebar/useSidebarState'
+import updateSidebarState from '@/components/layout/sidebar/updateSidebarState'
 const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
-  const [panelState, setPanelState] = useGlobalAtom(SidebarPanelStateAtom)
+  const panelState = useSidebarState()
   const store = useMemo(() => createStore(), [])
   const realOpen = panelState.leftOpen
   const os = getOS()
-  const [width, setWidth] = useState(240)
+  const width = panelState.leftWidth
   const fullScreen = useIsFullscreen(true)
   const [isResizing, setIsResizing] = useState(false)
   return (
@@ -28,8 +26,10 @@ const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
       onResizeStart={() => setIsResizing(true)}
       size={{ width: realOpen ? width : 0, height: '100%' }}
       minWidth={realOpen ? 240 : 0}
-      onResizeStop={(event, direction, elementRef, delta) => {
-        setWidth(elementRef.clientWidth)
+      onResizeStop={(event, direction, elementRef) => {
+        updateSidebarState(s => {
+          s.leftWidth = elementRef.clientWidth
+        })
         setIsResizing(false)
       }}
       handleStyles={{
@@ -68,64 +68,50 @@ const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
       >
         <Icon
           name={'park-data'}
-          data-active={panelState.visible.has('database')}
-          onClick={() => {
-            setPanelState(s =>
-              produce(s, draft => {
-                draft.visible.clear()
-                draft.visible.add('database')
-              })
-            )
-          }}
+          data-active={panelState.leftVisible === 'database'}
+          onClick={() =>
+            updateSidebarState(s => {
+              s.leftVisible = 'database'
+            })
+          }
           className={ClassName.flatButton(4, '4px 6px')}
         />
         <Icon
           name={'park-folder-close'}
-          data-active={panelState.visible.has('collections')}
-          onClick={() => {
-            setPanelState(s =>
-              produce(s, draft => {
-                draft.visible.clear()
-                draft.visible.add('collections')
-              })
-            )
-          }}
+          data-active={panelState.leftVisible === 'collections'}
+          onClick={() =>
+            updateSidebarState(s => {
+              s.leftVisible = 'collections'
+            })
+          }
           className={ClassName.flatButton(4, '4px 6px')}
         />
         <Icon
           name={'park-category-management'}
-          data-active={panelState.visible.has('category')}
-          onClick={() => {
-            setPanelState(s =>
-              produce(s, draft => {
-                draft.visible.clear()
-                draft.visible.add('category')
-              })
-            )
-          }}
+          data-active={panelState.leftVisible === 'category'}
+          onClick={() =>
+            updateSidebarState(s => {
+              s.leftVisible = 'category'
+            })
+          }
           className={ClassName.flatButton(4, '4px 6px')}
         />
         <Icon
           name={'park-google'}
-          data-active={panelState.visible.has('webSearch')}
-          onClick={() => {
-            setPanelState(s =>
-              produce(s, draft => {
-                draft.visible.clear()
-                draft.visible.add('webSearch')
-              })
-            )
-          }}
+          data-active={panelState.leftVisible === 'webSearch'}
+          onClick={() =>
+            updateSidebarState(s => {
+              s.leftVisible = 'webSearch'
+            })
+          }
           className={ClassName.flatButton(4, '4px 6px')}
         />
         <Icon
-          onClick={() => {
-            setPanelState(s =>
-              produce(s, draft => {
-                draft.leftOpen = false
-              })
-            )
-          }}
+          onClick={() =>
+            updateSidebarState(s => {
+              s.leftOpen = !s.leftOpen
+            })
+          }
           name={'custom-left-bar'}
           className={ClassName.flatButton(4, '4px 6px')}
           style={{
@@ -135,46 +121,14 @@ const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
       </Content>
 
       <Provider store={store}>
-        <Tabs disableTabNav={true} activeKey={panelState.visible.keys().next().value || 'none'}>
+        <Tabs disableTabNav={true} activeKey={panelState.leftVisible}>
           <TabPane tab={null} key="database">
-            <Content
-              fullHeight
-              fullWidth
-              flex
-              column
-              style={{
-                transform: panelState.showObjectDetails ? 'translateX(-100%)' : 'translateX(0px)',
-                transition: 'transform 0.3s ease'
-              }}
-            >
+            <Content fullHeight fullWidth flex column>
               <Provider store={store}>
-                <ObjectPanel
-                  renderFilterOnParent={false}
-                  padding={'8px 8px 4px'}
-                  onOpenInTab={() => {
-                    Rendevoz.Actions.Open.openDatabase()
-                  }}
-                  onClose={() => {
-                    setPanelState(s =>
-                      produce(s, draft => {
-                        draft.visible.delete('database')
-                      })
-                    )
-                  }}
-                  visiblility={{
-                    showClose: false,
-                    showCurrentTabObject: true,
-                    showOpenInTab: true
-                  }}
-                  onBackToList={() => setPanelState(s => ({ ...s, showObjectDetails: undefined }))}
-                  showObjectDetails={panelState.showObjectDetails ? { id: panelState.showObjectDetails.id } : undefined}
-                  isAddingObject={false}
-                  handleAddObject={() => {}}
-                />
+                <ObjectList renderFilterOnParent={false} padding={'8px 8px 4px'} />
               </Provider>
             </Content>
           </TabPane>
-
           <TabPane tab={null} key="collections">
             <SidebarFolder />
           </TabPane>

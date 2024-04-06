@@ -1,6 +1,6 @@
 import { IWhiteboardNode } from '~/typings/data'
 import { Content } from '@/components/base'
-import { FC, memo, useEffect, useMemo, useRef } from 'react'
+import { FC, memo, RefObject, useEffect, useRef } from 'react'
 import { InnerNodeProps } from '../WrapperNode'
 import PdfNode from './PdfNode'
 import NoteNode from './NoteNode'
@@ -12,7 +12,6 @@ import Audio from '@/core/components/media/wrappers/Audio'
 import { MetaGroupPage } from '@/scenes'
 import { DockTabPaneContext } from '@/components/base/dock/DockTabPane'
 import Code from '@/core/components/code'
-import { css } from '@emotion/css'
 import LabelDetailsRenderer from '@/core/object/renderer/LabelDetailsRenderer'
 import WhiteboardNode from '@/core/components/whiteboard/node/nodes/WhiteboardNode'
 import { Rendevoz } from '@/core/rendevoz'
@@ -22,8 +21,14 @@ import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import QuestionCard from '@/core/ai/components/question/QuestionCard'
 import Tweet from '@/core/components/tweet'
 import { Colors } from '@/consts'
+import { createPortal } from 'react-dom'
 
-const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }) => {
+const MetaObjectNode: FC<InnerNodeProps & { containerRef: RefObject<HTMLElement> }> = ({
+  node: n,
+  containerRef,
+  setNodeState,
+  nodeState
+}) => {
   const node = n as IWhiteboardNode & { type: 'metaObject' }
   const { expanded } = node
   const { metaObjectId } = node
@@ -33,7 +38,6 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
   })
 
   const imageRef = useRef<HTMLImageElement>(null)
-  const wholeContainerRef = useRef<HTMLDivElement>(null)
   const hasImage = !!metaObject?.coverImgSrc
 
   useEffect(() => {
@@ -45,7 +49,8 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
   }, [hasImage])
 
   const hasImageRenderer = () =>
-    metaObject && (
+    metaObject &&
+    containerRef.current && (
       <Content fullWidth flex column style={{ width: 500, minHeight: '100%', maxHeight: '100%', minWidth: '100%', maxWidth: '100%' }}>
         <img
           draggable={'false'}
@@ -60,47 +65,22 @@ const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, setNodeState, nodeState }
             borderRadius: 4
           }}
         />
-        <div
-          ref={wholeContainerRef}
-          style={{
-            padding: '8px',
-            width: '100%',
-            height: 'auto',
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            display: 'flex',
-            gap: 6,
-            paddingRight: 24
-          }}
-        >
-          <div
-            className={ClassName.ellipsisFont(1)}
-            style={{
-              padding: '1px 6px',
-              borderRadius: 4,
-              fontSize: 12,
-              // lineHeight: 1,
-              background: 'rgba(0,0,0,0.7)',
-              color: 'white',
-              flexShrink: 1
-            }}
-          >
-            {metaObject?.name || metaObject?.placeholderName}
-          </div>
-          <div
-            style={{
-              padding: '1px 6px',
-              borderRadius: 4,
-              fontSize: 12,
-              background: 'rgba(0,0,0,0.7)',
-              color: 'white',
-              flexShrink: 0
-            }}
-          >
-            {Rendevoz.Utils.Meta.getTypeName(metaObject.type)}
-          </div>
-        </div>
+        {metaObject?.name &&
+          createPortal(
+            <div
+              className={'ellipsis-font-1 transparent-font'}
+              style={{
+                borderRadius: 4,
+                fontSize: 'calc(12px * var(--zoom-level))',
+                position: 'absolute',
+                top: -4,
+                transform: 'translateY(-100%)'
+              }}
+            >
+              {metaObject?.name}
+            </div>,
+            containerRef.current
+          )}
       </Content>
     )
 

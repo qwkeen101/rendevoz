@@ -6,11 +6,17 @@ import { getSetting, traverseGetRelatedNodeIds } from '@/core'
 import { globalStore, MetaStore } from '@/api/stores'
 import { Rendevoz } from '@/core/rendevoz'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { ObjectCreateHandler } from '@/core/global/GlobalObjectCreator'
+import { ObjectCreateHandler } from '@/core/global/components/ObjectCreator'
 import { GlobalGraphAtom } from '@/scenes/GraphPage'
 import jumpBackToSyncBlock from '@/core/object/jumpBack/jumpBackToSyncBlock'
-const GlobalInstance: Partial<IGlobalInstance> = {}
-
+const GlobalInstance: IGlobalInstance = {
+  values: {
+    registeredKeynavigationHandlers: []
+  }
+}
+document.addEventListener('keydown', e => {
+  GlobalInstance.values.registeredKeynavigationHandlers[0]?.(e)
+})
 assignProperties(GlobalInstance, {
   goBackOps: {
     goBackToSyncBlock: jumpBackToSyncBlock
@@ -63,13 +69,12 @@ assignProperties(GlobalInstance, {
     openGraph: id => {
       const metaObjectsMap = MetaStore.getMetaObjectsMap()
       const allMetaLinks = Array.from(MetaStore.getMetaLinksMap().values())
-      // setVisible(true)
       const nodeIds = new Set<number>()
       traverseGetRelatedNodeIds(id, nodeIds, true)
 
       const nodes = Array.from(nodeIds.values())
         .map(nodeId => metaObjectsMap.get(nodeId))
-        .filter(i => i)
+        .filter(i => i && !i.deleted)
         .map(i => ({
           id: i.id,
           label: i.name,
@@ -127,7 +132,7 @@ assignProperties(GlobalInstance, {
           navigator.clipboard.write(content)
         }
       }
-      toast.success(t('general.link is generated for this object'))
+      toast.success(t('general.Copied'))
     }
   }
 })

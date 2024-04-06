@@ -1,26 +1,17 @@
 import React from 'react'
 import SidebarIcons from './SidebarIcons'
-import { atom } from 'jotai'
-import { Content, Icon } from '@/components'
+import { Content } from '@/components'
 import SidebarPanel from '@/components/layout/sidebar/SidebarPanel'
 import { KeyToRegisteredSidebarElement } from '@/core/plugin/RegisterMap'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { RegisteredSidebarItem } from '~/typings/registered'
 import { Rendevoz } from '@/core/rendevoz'
 import { t } from 'i18next'
-import { globalStore } from '@/api/stores'
 import { GlobalScreenshotInstance } from '@/core/global/screenshot'
 import SidebarSetting from '@/components/layout/sidebar/SidebarSetting'
-import produce, { Draft } from 'immer'
-import { GlobalInstance, useSelectGlobalAtomValue } from '@/hooks'
+import { GlobalInstance } from '@/hooks'
+import useSidebarState from '@/components/layout/sidebar/useSidebarState'
 
-export const setPanelState = (updater: (panelState: Draft<SidebarPanelState>) => void) => {
-  const panelState = globalStore.get(SidebarPanelStateAtom)
-  const newState = produce(panelState, draft => {
-    updater(draft)
-  })
-  globalStore.set(SidebarPanelStateAtom, newState)
-}
 export const BuiltInSidebarItems: Record<string, RegisteredSidebarItem> = {
   home: {
     key: 'home',
@@ -30,16 +21,6 @@ export const BuiltInSidebarItems: Record<string, RegisteredSidebarItem> = {
     },
     text: () => t('general.home')
   },
-  // collections: {
-  //   key: 'collections',
-  //   icon: 'park-folder-close',
-  //   onClick: () => {
-  //     setPanelState(s => {
-  //       s.visible.has('collections') ? s.visible.delete('collections') : s.visible.add('collections')
-  //     })
-  //   },
-  //   text: () => t('general.collection')
-  // },
   screenshot: {
     key: 'screenshot',
     icon: 'park-screenshot-one',
@@ -58,7 +39,7 @@ export const BuiltInSidebarItems: Record<string, RegisteredSidebarItem> = {
   },
   recycleBin: {
     key: 'recycleBin',
-    icon: 'park-recycling',
+    icon: 'park-delete',
     text: () => t('general.Trash'),
     onClick: () => {
       Rendevoz.Actions.Open.openRecycleBin()
@@ -72,13 +53,6 @@ export const BuiltInSidebarItems: Record<string, RegisteredSidebarItem> = {
       Rendevoz.Actions.Layout.openNewTab({ data: { type: 'graph' } })
     }
   },
-  // database: {
-  //   key: 'database',
-  //   text: () => t('general.object library'),
-  //   tooltip: () => t('general.drop here to add object'),
-  //   element: <SidebarDatabase />,
-  //   icon: 'park-data'
-  // },
   settings: {
     key: 'settings',
     text: () => t('general.settings'),
@@ -93,31 +67,16 @@ export const BuiltInSidebarItems: Record<string, RegisteredSidebarItem> = {
       Rendevoz.Actions.Layout.openNewTab({ data: { type: 'feeds' } })
     }
   }
-  // webSearch: {
-  //   key: 'webSearch',
-  //   text: () => t('general.web search'),
-  //   icon: 'park-google',
-  //   onClick: () => {
-  //     setPanelState(s => {
-  //       s.visible.has('webSearch') ? s.visible.delete('webSearch') : s.visible.add('webSearch')
-  //     })
-  //   }
-  // }
 }
 
-export type ISidebarPanelVisibleItems = 'database' | 'collections' | 'webSearch' | 'category'
+export type ISidebarVisibleItems = 'database' | 'collections' | 'webSearch' | 'category'
 
-type SidebarPanelState = {
-  visible: Set<ISidebarPanelVisibleItems>
+export type ISidebarState = {
+  visible: Set<ISidebarVisibleItems>
   leftOpen?: boolean
-  showObjectDetails?: {
-    id: number
-    visible: boolean
-  }
+  leftWidth: number
+  leftVisible: ISidebarVisibleItems
 }
-export const SidebarPanelStateAtom = atom<SidebarPanelState>({
-  visible: new Set<ISidebarPanelVisibleItems>()
-})
 
 const defaultSidebarItems = ['home', 'database', 'collections', 'feeds', 'search', 'graph', 'settings']
 
@@ -135,7 +94,7 @@ export const Sidebar = ({ direction = 'right' }: { direction: 'left' | 'right' }
   const leftItems = [...(items.map(key => allItemsMap.get(key)).filter(o => o) as RegisteredSidebarItem[])].concat(
     ...allItems.filter(i => !usedItems.has(i.key))
   )
-  const panelOpen = useSelectGlobalAtomValue(SidebarPanelStateAtom, s => s.leftOpen)
+  const panelOpen = useSidebarState().leftOpen
   return (
     <Content
       flex
@@ -164,7 +123,6 @@ export const Sidebar = ({ direction = 'right' }: { direction: 'left' | 'right' }
           }}
         ></SidebarIcons>
       </Content>
-
       <SidebarPanel direction={direction} />
     </Content>
   )

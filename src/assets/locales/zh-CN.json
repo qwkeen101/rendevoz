@@ -4,6 +4,7 @@
     "All": "全部",
     "Appear in": "出现于",
     "none": "无",
+    "View graph": "查看关系图",
     "Default new object type": "默认新实体类型",
     "Settings": "设置",
     "Last updated at": "上次修改于",
@@ -392,7 +393,7 @@
     "export": "导出",
     "generate link": "复制链接",
     "show current tab's object": "显示当前标签的实体",
-    "link is generated for this object": "已复制到剪贴板中",
+    "Copied": "已复制到剪贴板中",
     "subcollection": "子文件夹",
     "Search online": "在线搜索",
     "Translate": "翻译",
@@ -683,8 +684,10 @@
     "code-block": "代码块"
   },
   "settings": {
+    "Automatically add head image": "自动添加题头图",
     "Close other tabs": "关闭其他标签",
     "Close left tabs": "关闭左侧标签",
+    "Create object": "创建实体",
     "Close right tabs": "关闭右侧标签",
     "Rebuild search desc": "当无法获得正确搜索结果时，重建索引",
     "Global stylesheet": "全局样式",
@@ -789,7 +792,8 @@
     "enable or disable all notifications": "开启或关闭全部通知",
     "customize displayed notifications": "自定义显示的通知",
     "choose which notification should be displayed": "选择你想要显示哪些通知",
-    "global shortcuts": "全局快捷键",
+    "Layout shortcuts": "布局快捷键",
+    "Function shortcuts": "功能快捷键",
     "Open object details": "打开实体信息",
     "open create object form": "打开创建对象面板",
     "open screen shot": "打开屏幕截图",
@@ -1031,6 +1035,9 @@
     "Sort": "排序"
   },
   "whiteboard": {
+    "Paste text": "粘贴文本",
+    "Paste image": "粘贴图片",
+    "Paste nodes": "粘贴白板节点",
     "Text": "文本",
     "Turn into document card": "转为文档卡片",
     "Document": "文档卡片",

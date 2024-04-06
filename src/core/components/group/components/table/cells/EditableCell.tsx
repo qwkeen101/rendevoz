@@ -6,7 +6,25 @@ import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance
 import { css } from '@emotion/css'
 import TextProp from '@/core/object/renderer/properties/TextProp'
 import { useTranslation } from 'react-i18next'
+import classnames from 'classnames'
+import toast from 'react-hot-toast'
 
+const buttonClazz = classnames(
+  'transparent-font',
+  'normal-font',
+  'font-size-13',
+  css({
+    boxShadow: 'var(--box-shadow-secondary)',
+    background: Colors.Background.Popover,
+    height: '24px !important',
+    ':hover': {
+      background: `${Colors.Background.Secondary} !important`
+    },
+    ':active': {
+      background: `${Colors.Background.Secondary} !important`
+    }
+  })
+)
 const EditableCell = ({
   value,
   onChange,
@@ -58,10 +76,28 @@ const EditableCell = ({
               gap: 4
             }}
           >
+            {(value || placeholder) && (
+              <Button.IconButton
+                gap={4}
+                icon={'park-copy'}
+                text={t('general.Copy')}
+                onClick={e => {
+                  e.stopPropagation()
+                  toast.success(t('general.Copied'))
+                  navigator.clipboard.writeText(value || placeholder || '')
+                }}
+                className={buttonClazz}
+                style={{
+                  borderRadius: 4,
+                  lineHeight: '20px',
+                  padding: '0px 6px'
+                }}
+              ></Button.IconButton>
+            )}
             {openMeta && (
               <Button.IconButton
-                gap={6}
-                icon={'park-expand-text-input'}
+                gap={4}
+                icon={'park-arrow-right-up'}
                 text={t('general.Open')}
                 onClick={e => {
                   e.stopPropagation()
@@ -69,48 +105,11 @@ const EditableCell = ({
                     instance.openObject?.(openMeta, rowId)
                   }
                 }}
-                className={css({
-                  background: Colors.Background.Popover,
-                  ':hover': {
-                    background: Colors.Background.Secondary
-                  },
-                  ':active': {
-                    background: Colors.Background.Secondary
-                  }
-                })}
+                className={buttonClazz}
                 style={{
-                  border: `1px solid ${Colors.Background.Border}`,
                   borderRadius: 4,
-                  fontSize: 14,
                   lineHeight: '20px',
-                  padding: '0px 4px'
-                }}
-              ></Button.IconButton>
-            )}
-            {!openMeta && value && (
-              <Button.IconButton
-                gap={6}
-                icon={'park-copy'}
-                text={t('general.Copy')}
-                onClick={e => {
-                  e.stopPropagation()
-                  navigator.clipboard.writeText(value)
-                }}
-                className={css({
-                  background: Colors.Background.Popover,
-                  ':hover': {
-                    background: Colors.Background.Secondary
-                  },
-                  ':active': {
-                    background: Colors.Background.Secondary
-                  }
-                })}
-                style={{
-                  border: `1px solid ${Colors.Background.Border}`,
-                  borderRadius: 4,
-                  fontSize: 14,
-                  lineHeight: '20px',
-                  padding: '0px 4px'
+                  padding: '0px 6px'
                 }}
               ></Button.IconButton>
             )}

@@ -43,7 +43,7 @@ const LocalVideoPlayer = () => {
   }, [paused, loaded])
 
   useEffect(() => {
-    if (loaded && v && jumpTime) {
+    if (loaded && v && jumpTime !== undefined) {
       v.currentTime = jumpTime
     }
   }, [loaded, jumpTime])

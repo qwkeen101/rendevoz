@@ -60,23 +60,26 @@ const ObjectForm: FC<
     }
   }
   let showUrl = false
-  if (originObject) {
-    if (object.type === 'webpage') {
-      if ('url' in originObject) {
-        showUrl = true
-      }
-    }
-    if (object.type === 'tweet') {
-      showUrl = true
-    }
+  if (object.type === 'webpage') {
+    showUrl = true
   }
+  if (object.type === 'tweet') {
+    showUrl = true
+  }
+
   const defaultLayout: MetaFormLayoutItem[] = [
     showUrl
       ? {
           type: 'input',
           autoFocus: true,
           text: t('general.url'),
-          value: originObject.url,
+          value: originObject?.url,
+          onEnter: () => {
+            onSubmit?.(object)
+            if (originObject) {
+              ObjectStore(object.type).updateOne({ id: originObject.id, ...originObject })
+            }
+          },
           onChange: async v => {
             setOriginObject(o => ({ ...o, url: v }))
             if (v) {
@@ -125,7 +128,7 @@ const ObjectForm: FC<
             }
           },
           filePath: (originObject as IFile)?.url,
-          enableWeb: ['video', 'audio'].includes(object.type),
+          enableWeb: ['video', 'audio', 'image'].includes(object.type),
           enableBaidudisk: ['video'].includes(object.type),
           onChange: async details => {
             if (details.type === 'local' && details.file) {

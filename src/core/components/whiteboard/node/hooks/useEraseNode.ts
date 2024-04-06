@@ -4,9 +4,12 @@ import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhite
 import { useFlow } from '@/core/components/whiteboard/StateHooks'
 import { IWhiteboardNode } from '~/typings'
 import { getSetting } from '@/core'
+import { selectAtom } from 'jotai/utils'
+import { useAtomValue } from 'jotai'
 
+const isErasingAtom = selectAtom(WhiteboardStateAtom, s => s.erasing)
 const useEraseNode = (node: IWhiteboardNode) => {
-  const isErasing = useSelectAtomValue(WhiteboardStateAtom, s => s.erasing)
+  const isErasing = useAtomValue(isErasingAtom)
   const flow = useFlow()
   const [isTouched, setIsTouched] = useState(false)
   const handlePointerEvent = useMemoizedFn((e: PointerEvent) => {

@@ -12,15 +12,21 @@ export const ObjectActionPopover: FC<
     onJump: VoidFunction
     onGraphPin: VoidFunction
     onShowRelated: VoidFunction
+    onShowGraph: VoidFunction
+    onEditLink: VoidFunction
+    onDeleteLink: VoidFunction
     visibility: {
+      editLink?: boolean
+      deleteLink?: boolean
       jumpToVisible?: boolean
       graphPinVisible?: boolean
       showRelatedVisible?: boolean
       graphPinned?: boolean
       relatedNum?: number
+      showGraph?: boolean
     }
   }> & { metaObjectId: number }
-> = ({ onClose, metaObjectId, visibility, onJump, onGraphPin }) => {
+> = ({ onClose, metaObjectId, visibility, onJump, onEditLink, onDeleteLink, onGraphPin, onShowGraph }) => {
   const { updateMetaObject, deleteMetaObject } = MetaStore
   const { t } = useTranslation()
   const metaObject = MetaStore.useValue(metaObjectId)
@@ -29,14 +35,17 @@ export const ObjectActionPopover: FC<
     if (metaObject) {
       const keydownHandler = (e: KeyboardEvent) => {
         if (isHotkey('m', e)) {
+          e.preventDefault()
           GlobalInstance.metaOps?.quickAdd(metaObjectId)
           onClose?.()
         }
         if (isHotkey('v', e)) {
+          e.preventDefault()
           GlobalInstance.metaOps?.openDetails(metaObjectId)
           onClose?.()
         }
         if (isHotkey('e', e)) {
+          e.preventDefault()
           Rendevoz.Actions.Open.Meta.openEditMetaDialog(metaObjectId)
           onClose?.()
         }
@@ -47,6 +56,7 @@ export const ObjectActionPopover: FC<
         }
         if (isHotkey('shift+enter', e)) {
           onClose?.()
+          e.preventDefault()
           GlobalInstance.metaOps?.closeDetails()
           Rendevoz.Actions.Open.Meta.openMetaObject(metaObjectId)
         }
@@ -62,6 +72,42 @@ export const ObjectActionPopover: FC<
     <Content style={{ padding: '0.4rem 0', minWidth: 200, fontSize: 14 }} ref={containerRef} role="object-popover-panel">
       <Menu.NavigationMenu
         layout={[
+          visibility?.editLink
+            ? {
+                type: 'item',
+                key: 'edit-link',
+                onSelect: () => {
+                  onEditLink?.()
+                  onClose?.()
+                },
+                text: t('general.Edit link'),
+                icon: 'park-link'
+              }
+            : undefined,
+          visibility?.deleteLink
+            ? {
+                type: 'item',
+                key: 'delete-link',
+                onSelect: () => {
+                  onDeleteLink?.()
+                  onClose?.()
+                },
+                text: t('general.Delete link'),
+                icon: 'park-unlink'
+              }
+            : undefined,
+          visibility?.showGraph
+            ? {
+                type: 'item',
+                key: 'show-graph',
+                onSelect: () => {
+                  onShowGraph?.()
+                  onClose?.()
+                },
+                text: t('general.View graph'),
+                icon: 'park-share-one'
+              }
+            : undefined,
           visibility?.jumpToVisible
             ? {
                 type: 'item',

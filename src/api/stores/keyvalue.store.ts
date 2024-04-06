@@ -4,6 +4,8 @@ import { globalStore } from '@/api/stores/index'
 import { useEffect } from 'react'
 import { Setting } from '@/core'
 import { MetaFilterGroup, MetaGroup, MetaObject } from '~/typings'
+import { SorterGroup } from '@/core/object/filter/BetterSorter'
+import { ISidebarState } from '@/components/layout/sidebar'
 
 export type CurrentKeyValues = {
   currentWorkspace: {
@@ -11,6 +13,14 @@ export type CurrentKeyValues = {
     name: string
     createdAt: number
   }
+  sidebarDatabaseCache?: {
+    filter?: MetaFilterGroup
+    filterVisible?: boolean
+    sort?: 'create' | 'view'
+    searchInput?: string
+    searchVisible?: boolean
+  }
+  sidebarState?: ISidebarState
   filePickerType: 'local' | 'web' | 'baidudisk'
   moveToShowInvisible?: boolean
   // workspace to cache
@@ -18,7 +28,7 @@ export type CurrentKeyValues = {
     number,
     {
       recently?: {
-        type: 'whiteboard' | 'note' | 'group' | 'collection'
+        type: 'whiteboard' | 'note' | 'group' | 'collection' | 'tag'
         id: number
       }[]
       whiteboard?: {

@@ -26,6 +26,14 @@ export const ObjectFamilyAtom = atomFamily(() => atom(new Map<number, ObjectFami
 
 export const TypeToRegisteredObject = new Map<string, IRegisterdObject>()
 
+type ObjectStore<T extends keyof ObjectFamily, V extends ObjectFamily[T]> = {
+  localStore: IStore<V>
+  objectMapAtom: PrimitiveAtom<Map<number, V>>
+  adaptStore: () => IStore<V>
+  createAtom: (id?: number) => Atom<V | undefined>
+  getCachedOneById: (id: number) => V | undefined
+  useValue: (id?: number) => Awaited<V> | undefined
+} & IStore<V>
 const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[T], S extends IStore<V>>(
   type: T,
   options?: {
@@ -54,13 +62,7 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
       onFail?: (silent: boolean) => void
     }
   }
-): {
-  localStore: IStore<V>
-  objectMapAtom: PrimitiveAtom<Map<number, V>>
-  adaptStore: () => IStore<V>
-  createAtom: (id?: number) => Atom<V | undefined>
-  useValue: (id?: number) => Awaited<V> | undefined
-} & IStore<V> => {
+): ObjectStore<T> => {
   const objectsDb = useDb('objects')
   const objectMapAtom = ObjectFamilyAtom(type) as unknown as PrimitiveAtom<Map<number, V>>
   const initializedLocalStore = initializeLocalStore(objectMapAtom, objectsDb)
@@ -275,25 +277,18 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
     adaptStore,
     createAtom,
     useValue,
+    getCachedOneById: id => {
+      return globalStore.get(objectMapAtom).get(id)
+    },
     useAll,
     useMultiple,
     ...realStore
   }
 }
 
-export const storeMap = new Map<keyof ObjectFamily, ReturnType<typeof createObjectStore>>()
+export const storeMap = new Map<keyof ObjectFamily, any>()
 
-export const objectStore = <T extends keyof ObjectFamily>(
-  type: T
-): {
-  localStore: IStore<ObjectFamily[T]>
-  objectMapAtom: PrimitiveAtom<Map<number, ObjectFamily[T]>>
-  adaptStore: () => IStore<ObjectFamily[T]>
-  createAtom: (id?: number) => Atom<ObjectFamily[T] | undefined>
-  useValue: (id?: number) => Awaited<ObjectFamily[T]> | undefined
-  useMultiple: (ids?: Iterable<number>) => Awaited<ObjectFamily[T]>[]
-  useAll: () => Awaited<ObjectFamily[T]>[]
-} & IStore<ObjectFamily[T]> => {
+export const objectStore = <T extends keyof ObjectFamily>(type: T): ObjectStore<T, ObjectFamily[T]> => {
   const store = storeMap.get(type)
   if (store) {
     return store

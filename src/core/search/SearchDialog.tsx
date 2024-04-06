@@ -41,6 +41,10 @@ export type SearchRelated = {
   whiteboard: SearchRelatedResult[]
   group: SearchRelatedResult[]
   note: SearchRelatedResult[]
+  webpage: SearchRelatedResult[]
+  audio: SearchRelatedResult[]
+  video: SearchRelatedResult[]
+  pdf: SearchRelatedResult[]
 }
 
 const FilterAtom = atom<MetaFilterGroup | undefined>(undefined)
@@ -137,11 +141,28 @@ export const SearchDialog = memo(({ onClose, visible }: { onClose: VoidFunction;
               parent: { id: i.parent.id, metaId: i.parent.id, name: i.parent.name || i.parent.placeholderName },
               children: i.children.map(c => metaIdToResultMap.get(c.id)).filter(i => i)
             })),
+            pdf: appearIn.pdf.map(i => ({
+              parent: { id: i.parent.id, metaId: i.parent.id, name: i.parent.name || i.parent.placeholderName },
+              children: i.children.map(c => metaIdToResultMap.get(c.id)).filter(i => i)
+            })),
             note: appearIn.note.map(i => ({
+              parent: { id: i.parent.id, metaId: i.parent.id, name: i.parent.name || i.parent.placeholderName },
+              children: i.children.map(c => metaIdToResultMap.get(c.id)).filter(i => i)
+            })),
+            audio: appearIn.audio.map(i => ({
+              parent: { id: i.parent.id, metaId: i.parent.id, name: i.parent.name || i.parent.placeholderName },
+              children: i.children.map(c => metaIdToResultMap.get(c.id)).filter(i => i)
+            })),
+            webpage: appearIn.webpage.map(i => ({
+              parent: { id: i.parent.id, metaId: i.parent.id, name: i.parent.name || i.parent.placeholderName },
+              children: i.children.map(c => metaIdToResultMap.get(c.id)).filter(i => i)
+            })),
+            video: appearIn.video.map(i => ({
               parent: { id: i.parent.id, metaId: i.parent.id, name: i.parent.name || i.parent.placeholderName },
               children: i.children.map(c => metaIdToResultMap.get(c.id)).filter(i => i)
             }))
           }
+          console.log(related)
           const msUsed = Date.now() - n
           setTimeout(
             () => {
@@ -153,7 +174,14 @@ export const SearchDialog = memo(({ onClose, visible }: { onClose: VoidFunction;
               setResultNums(s => ({
                 ...s,
                 all: textResults?.length || 0,
-                appearIn: related.group.length + related.whiteboard.length + related.note.length
+                appearIn:
+                  related.group.length +
+                  related.whiteboard.length +
+                  related.note.length +
+                  related.video.length +
+                  related.pdf.length +
+                  related.audio.length +
+                  related.webpage.length
               }))
             },
             Math.max(500 - msUsed, 0)

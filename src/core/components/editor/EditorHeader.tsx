@@ -5,7 +5,6 @@ import useEditorState from '@/core/components/editor/hooks/useEditorState'
 import ClassName from '@/styles/classNames'
 import FontSize from '@/consts/font'
 import { css } from '@emotion/css'
-import { useTranslation } from 'react-i18next'
 import { CustomEditor } from '~/typings'
 import EditorSetting from '@/core/components/editor/components/setting/EditorSetting'
 
@@ -13,8 +12,6 @@ const EditorHeader = ({ title, editor, maxTitleWidth }: { editor: CustomEditor; 
   const instance = useEditorInstance()
   const [barState, setEditorBarState] = UseEditorBarState()
   const [editorState, setEditorState] = useEditorState()
-  const { t } = useTranslation()
-  const { lastSavedAt } = editorState.state || {}
   const { readOnly, header } = editorState
 
   return (
@@ -25,7 +22,6 @@ const EditorHeader = ({ title, editor, maxTitleWidth }: { editor: CustomEditor; 
         padding: '6px 8px 6px 8px',
         top: 0,
         zIndex: 99
-        // borderBottom: `1px solid ${Colors.Background.ButtonHover}`
       }}
       position={'sticky'}
       gap={30}

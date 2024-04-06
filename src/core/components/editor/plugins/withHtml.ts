@@ -43,7 +43,6 @@ const withHtml = (editor: CustomEditor) => {
       })
       return
     }
-    console.log(html, plainText)
     if (html) {
       const parsed = new DOMParser().parseFromString(html, 'text/html')
       const wrapper = document.createElement('div')
@@ -56,6 +55,12 @@ const withHtml = (editor: CustomEditor) => {
         const normalized = normalize(deserialized)
         Transforms.insertFragment(editor, normalized)
         return
+      } else {
+        if (!plainText?.length) {
+          const t = parsed.textContent
+          Transforms.insertText(editor, t)
+          return
+        }
       }
     }
     if (slateFragment) {
@@ -78,12 +83,6 @@ const withHtml = (editor: CustomEditor) => {
               children: matched.map(i => ({ type: 'link', url: i, children: [{ text: i }] }))
             }
           } else {
-            // try {
-            //   const table = createMarkdownObjectTable(p)
-            //   if (table) {
-            //     console.log(table)
-            //   }
-            // } catch (e) {}
             return {
               type: 'paragraph',
               id: Id.getId(),

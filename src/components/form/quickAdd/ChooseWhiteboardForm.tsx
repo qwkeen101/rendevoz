@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { IWhiteboardEvents, IWhiteboardInstance, MetaObject } from '~/typings'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { Content, Icon, Menu } from '@/components'

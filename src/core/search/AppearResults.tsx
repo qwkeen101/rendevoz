@@ -13,6 +13,8 @@ import { Node } from 'slate'
 
 export default memo(({ related }: { related?: SearchRelated }) => {
   if (!related) return null
+  const r = Object.values(related).flat(1)
+  console.log(r)
   return (
     <VirtualList
       style={{
@@ -21,7 +23,7 @@ export default memo(({ related }: { related?: SearchRelated }) => {
       }}
       estimateSize={100}
       renderItem={i => <Wrapper item={i} />}
-      items={[...related.group, ...related.whiteboard, ...related.note]}
+      items={r}
     ></VirtualList>
   )
 })
@@ -29,7 +31,14 @@ export default memo(({ related }: { related?: SearchRelated }) => {
 const Wrapper = ({ item }: { item: SearchRelatedResult }) => {
   const m = MetaStore.getCachedMetaObject(item.parent.metaId)
   if (!m || m.deleted) return null
-  if (m.type === 'group' || m.type === 'whiteboard') {
+  if (
+    m.type === 'group' ||
+    m.type === 'whiteboard' ||
+    m.type === 'pdf' ||
+    m.type === 'webpage' ||
+    m.type === 'audio' ||
+    m.type === 'video'
+  ) {
     return <ParentChildItem item={item} type={m.type} />
   }
   if (m.type === 'note') {
@@ -55,18 +64,15 @@ const ParentChildItem = ({ item, type }: { item: SearchRelatedResult; type: 'gro
           onClick={() => setToggled(!toggled)}
           style={{
             transition: 'all 0.16s ease',
-            transform: toggled ? undefined : 'rotate(90deg)'
+            transform: toggled ? undefined : 'rotate(90deg)',
+            padding: 3
           }}
           name={'park-right'}
-          className={ClassName.flatButton(4, '3px')}
         />
         <SearchItemRenderer
           onClick={() => {
             GlobalInstance.searchOps?.closeSearchPanel()
             Rendevoz.Actions.Open.Meta.openMetaObject(item.parent.metaId)
-          }}
-          style={{
-            padding: '0px'
           }}
           selected={false}
           hit={item.parent}
@@ -107,9 +113,9 @@ const ParentChildItem = ({ item, type }: { item: SearchRelatedResult; type: 'gro
                       }
                     })
                   }
+                  return
                 }
                 if (type === 'group') {
-                  console.log('yes')
                   GlobalInstance.layoutOps?.openObject<'group'>(item.parent.metaId).then(ins => {
                     if (ins) {
                       waitFor(
@@ -120,7 +126,9 @@ const ParentChildItem = ({ item, type }: { item: SearchRelatedResult; type: 'gro
                       )
                     }
                   })
+                  return
                 }
+                GlobalInstance.layoutOps?.openObject(i.metaId)
               }}
               selected={false}
               hit={i}

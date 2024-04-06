@@ -1,13 +1,13 @@
 import { IBase } from './base'
-import { Box, XYPosition, TextSelectRect } from '..'
+import { Box, XYPosition, TextSelectRect, ILabel } from '..'
 
-export type IPDFLabel = IBase & {
-  background?: string
-  color?: string
-  name?: string
-  page: number
-  specType: 'pdfLabel'
-} & (ICropLabel | IHighlightLabel)
+export type IPDFLabel = IBase &
+  ILabel & {
+    background?: string
+    color?: string
+    page: number
+    specType: 'pdfLabel'
+  } & (ICropLabel | IHighlightLabel)
 
 export type ICropLabel = {
   type: 'crop'

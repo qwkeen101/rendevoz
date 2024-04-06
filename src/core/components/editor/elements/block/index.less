@@ -24,14 +24,10 @@
   }
 }
 .BlockCommon {
-  > * {
-    &:not(.editor-disable-format) {
-      * span,
-      textarea {
-        &:not([data-meta]) {
-          color: var(--block-font-color);
-        }
-      }
+  &:not(:has(.editor-disable-format)) {
+    span,
+    textarea {
+      color: var(--block-font-color);
     }
   }
   flex-shrink: 0;

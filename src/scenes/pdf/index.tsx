@@ -2,7 +2,7 @@ import { FC, memo } from 'react'
 import { Container } from '@/components'
 import TabTitle from '@/components/layout/TabTitle'
 import { IPdfInstance } from '~/typings'
-import { ObjectStore } from '@/api/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import Pdf from '@/core/components/pdf'
 import { Rendevoz } from '@/core/rendevoz'
 
@@ -12,11 +12,12 @@ const PdfPage: FC<{
   disableTitle?: boolean
 }> = memo(({ pdfId, onInstanceInitialized, disableTitle }) => {
   const document = ObjectStore('pdf').useValue(pdfId)
+  const pdfMeta = MetaStore.useObjectToMetaValue(pdfId)
   return (
     <>
       {!disableTitle && (
         <TabTitle
-          title={document?.metadata?.title || document?.name || 'Unknown book'}
+          title={pdfMeta?.name || document?.metadata?.title || document?.name || 'Unknown PDF'}
           icon={Rendevoz.Utils.Object.getMetaObjectIcon('pdf')}
         />
       )}

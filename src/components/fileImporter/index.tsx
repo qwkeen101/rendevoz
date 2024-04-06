@@ -1,4 +1,4 @@
-import { Content } from '@/components'
+import { Content, Menu } from '@/components'
 import { ClassName } from 'rendevoz'
 import { useTranslation } from 'react-i18next'
 import whiteboard from '@/assets/images/whiteboard.png?url'
@@ -14,20 +14,38 @@ import picture from '@/assets/images/picture.png?url'
 import code from '@/assets/images/code.png?url'
 import music from '@/assets/images/music.png?url'
 import question from '@/assets/images/question.png?url'
+import localfile from '@/assets/images/localfile.png?url'
 import twitter from '@/assets/images/twitter.png?url'
 import { fetchRemoteImageAndSaveLocally } from '@/utils'
 import { BaidudiskInstance } from '@/components/fileImporter/baidudisk/BaidudiskDisplayer'
 import { ObjectStore } from '@/api/stores'
 import { Rendevoz } from '@/core/rendevoz'
-import { GlobalImporterInstance } from '@/core/global/components/FileImporter'
+import { GlobalImporterInstance } from '@/core/global/components/FileImportProcessor'
 import loginBaidudisk from '@/components/fileImporter/baidudisk/loginBaidudisk'
 import { toast } from 'react-hot-toast'
 import { MetaObject } from '~/typings'
-import { ObjectCreateHandler } from '@/core/global/GlobalObjectCreator'
+import { ObjectCreateHandler } from '@/core/global/components/ObjectCreator'
 import { Utils } from 'rendevoz'
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import handleImportNestedCollections from '@/components/fileImporter/handleImportNestedCollections'
+import { Colors } from '@/consts'
+import isHotkey from 'is-hotkey'
 
+const keyToCreateType: Record<string, string> = {
+  1: 'note',
+  2: 'whiteboard',
+  3: 'group',
+  4: 'code',
+  5: 'question',
+  6: 'pdf',
+  7: 'webpage',
+  8: 'video',
+  9: 'audio',
+  f1: 'image',
+  f2: 'localFile',
+  f3: 'tweet'
+}
+const typeToKey = Object.fromEntries(Object.entries(keyToCreateType).map(i => [i[1], i[0]]))
 const FileImporter = ({
   onClose,
   onCreate,
@@ -45,7 +63,6 @@ const FileImporter = ({
 }) => {
   const { t } = useTranslation()
   const isChinese = Utils.Navigator.getDefaultLanguage() === 'zh-CN'
-  console.log(createHandler)
   const handleAfterCreate = useCallback((one: { meta: MetaObject }) => {
     autoOpen && Rendevoz.Actions.Open.Meta.openMetaObject(one.meta.id)
     onCreate?.(one.meta)
@@ -56,17 +73,32 @@ const FileImporter = ({
     onClose?.()
     ObjectCreateHandler[type]?.().then(handleAfterCreate)
   }
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => {
+      Object.keys(keyToCreateType).forEach(k => {
+        if (isHotkey(k, e)) {
+          handleCreate(keyToCreateType[k])
+        }
+      })
+    }
+    document.addEventListener('keydown', k)
+    return () => {
+      document.removeEventListener('keydown', k)
+    }
+  }, [])
   const records = [
     {
       name: t('general.note'),
       desc: t('general.Capture ideas with a wysiwyg editor'),
       image: note,
+      type: 'note',
       onClick: () => {
         handleCreate('note')
       }
     },
     {
       name: t('general.whiteboard'),
+      type: 'whiteboard',
       desc: t('general.Present your brilliant ideas on whiteboards'),
       image: whiteboard,
       onClick: () => {
@@ -75,6 +107,7 @@ const FileImporter = ({
     },
     {
       name: t('general.Object group'),
+      type: 'group',
       desc: t('general.Manage objects with powerful groups'),
       image: group,
       onClick: () => {
@@ -83,6 +116,7 @@ const FileImporter = ({
     },
     {
       name: t('general.code'),
+      type: 'code',
       image: code,
       onClick: () => {
         handleCreate('code')
@@ -90,6 +124,7 @@ const FileImporter = ({
     },
     {
       name: t('general.question'),
+      type: 'question',
       image: question,
       onClick: () => {
         handleCreate('question')
@@ -102,12 +137,14 @@ const FileImporter = ({
       name: t('general.PDF'),
       desc: t('general.Reading PDFs and making labels'),
       image: PDF,
+      type: 'pdf',
       onClick: () => {
         handleCreate('pdf')
       }
     },
     {
       name: t('general.webpage'),
+      type: 'webpage',
       desc: t('general.Get distraction-free webpages with one-click'),
       image: chrome,
       onClick: () => {
@@ -116,6 +153,7 @@ const FileImporter = ({
     },
     {
       name: Rendevoz.Utils.Meta.getTypeName('video'),
+      type: 'video',
       desc: t('general.Watching and learning local or online videos'),
       image: youtube,
       onClick: () => {
@@ -125,12 +163,14 @@ const FileImporter = ({
     {
       name: Rendevoz.Utils.Meta.getTypeName('audio'),
       image: music,
+      type: 'audio',
       onClick: () => {
         handleCreate('audio')
       }
     },
     {
       name: Rendevoz.Utils.Meta.getTypeName('image'),
+      type: 'image',
       desc: t('general.Edit your image'),
       image: picture,
       onClick: () => {
@@ -138,8 +178,17 @@ const FileImporter = ({
       }
     },
     {
+      name: t('general.localFile'),
+      image: localfile,
+      type: 'localFile',
+      onClick: () => {
+        handleCreate('localFile')
+      }
+    },
+    {
       name: t('general.tweet'),
       image: twitter,
+      type: 'tweet',
       onClick: () => {
         handleCreate('tweet')
       }
@@ -208,15 +257,23 @@ const FileImporter = ({
       }
     })
   }
-  const renderer = (details: { name: string; desc: string; image: string; onClick?: VoidFunction }) => {
+  const renderer = (
+    details: { name: string; image: string; type: string },
+    opts: {
+      isSelected: boolean
+      onPointerMove: VoidFunction
+      onClick: VoidFunction
+    }
+  ) => {
     return (
       <Content
         flex
         gap={12}
-        style={{ width: '100%' }}
+        style={{ width: '100%', background: opts.isSelected ? Colors.Background.ButtonHover : undefined }}
         alignItems={'center'}
+        onPointerMove={opts.onPointerMove}
         className={ClassName.flatButton(4, '4px 8px')}
-        onClick={details.onClick}
+        onClick={opts.onClick}
       >
         <div
           style={{
@@ -234,8 +291,18 @@ const FileImporter = ({
             }}
           />
         </div>
-        <Content style={{ fontSize: 15, fontWeight: 500 }}>
+        <Content flex alignItems={'center'} justifyContent={'space-between'} style={{ fontSize: 15, fontWeight: 500, flex: 1 }}>
           <div>{details.name}</div>
+          {typeToKey[details.type] ? (
+            <div
+              style={{
+                textTransform: 'uppercase'
+              }}
+              className={'font-size-12 transparent-font'}
+            >
+              {typeToKey[details.type]}
+            </div>
+          ) : undefined}
         </Content>
       </Content>
     )
@@ -245,38 +312,72 @@ const FileImporter = ({
       <div style={{ paddingLeft: 8, marginBottom: 18 }} className={ClassName.title('20px')}>
         {t('general.Create new object')}
       </div>
-      <Content
-        gap={6}
+      <Menu.NavigationMenu
         style={{
           display: 'flex',
-          flexWrap: 'wrap'
+          flexWrap: 'wrap',
+          gap: 12
         }}
-      >
-        <Content style={{ minWidth: 240, flex: 'auto' }}>
-          <div style={{ paddingLeft: 8, margin: '8px 0px' }} className={ClassName.title('1rem')}>
-            {t('general.Organize your ideas')}
-          </div>
-          <Content flex column gap={4}>
-            {records.map(r => renderer(r))}
-          </Content>
-        </Content>
-        <Content style={{ minWidth: 240, flex: 'auto' }}>
-          <div style={{ paddingLeft: 8, margin: '8px 0px' }} className={ClassName.title('1rem')}>
-            {t('general.Learning new things')}
-          </div>
-          <Content flex column gap={4}>
-            {files.map(f => renderer(f))}
-          </Content>
-        </Content>
-        <Content style={{ minWidth: 280, flex: 'auto' }}>
-          <div style={{ paddingLeft: 8, margin: '8px 0px' }} className={ClassName.title('1rem')}>
-            {t('general.Others')}
-          </div>
-          <Content flex column gap={4}>
-            {others.map(o => renderer(o))}
-          </Content>
-        </Content>
-      </Content>
+        layout={[
+          {
+            type: 'column',
+            style: {
+              minWidth: 240,
+              flex: 'auto'
+            },
+            children: [
+              {
+                type: 'title',
+                name: t('general.Organize your ideas')
+              },
+              ...records.map(r => ({
+                type: 'custom',
+                children: options => renderer(r, options),
+                key: r.name,
+                onSelect: () => r.onClick()
+              }))
+            ]
+          },
+          {
+            type: 'column',
+            style: {
+              minWidth: 240,
+              flex: 'auto'
+            },
+            children: [
+              {
+                type: 'title',
+                name: t('general.Learning new things')
+              },
+              ...files.map(r => ({
+                type: 'custom',
+                children: options => renderer(r, options),
+                key: r.name,
+                onSelect: () => r.onClick()
+              }))
+            ]
+          },
+          {
+            type: 'column',
+            style: {
+              minWidth: 240,
+              flex: 'auto'
+            },
+            children: [
+              {
+                type: 'title',
+                name: t('general.Others')
+              },
+              ...others.map(r => ({
+                type: 'custom',
+                children: options => renderer(r, options),
+                key: r.name,
+                onSelect: () => r.onClick()
+              }))
+            ]
+          }
+        ]}
+      />
     </Content>
   )
 }

@@ -3,6 +3,7 @@
     "Export as image": "Export as image",
     "No selected object": "No selected object",
     "none": "None",
+    "View graph": "View graph",
     "Default new object type": "Default new object type",
     "Settings": "Settings",
     "All": "All",
@@ -396,7 +397,7 @@
     "margin": "Margin",
     "export": "Export",
     "drop here to add object": "Drop here to add object",
-    "link is generated for this object": "Copied to your clipboard!",
+    "Copied": "Copied to your clipboard!",
     "pdf": "PDF",
     "subcollection": "subcollection",
     "object details": "Object details",
@@ -687,8 +688,10 @@
     "code-block": "Code block"
   },
   "settings": {
+    "Automatically add head image": "Automatically add head image",
     "Close other tabs": "Close other tabs",
     "Close left tabs": "Close left tabs",
+    "Create object": "Create object",
     "Close right tabs": "Close right tabs",
     "Rebuild search desc": "Rebuild search index when failed to get correct search results",
     "Global stylesheet": "Global stylesheet",
@@ -789,7 +792,8 @@
     "enable or disable all notifications": "Enable or disable all notifications",
     "customize displayed notifications": "Customize displayed notifications",
     "choose which notification should be displayed": "Choose which notification should be displayed",
-    "global shortcuts": "Global shortcuts",
+    "Layout shortcuts": "Layout shortcuts",
+    "Function shortcuts": "Function shortcuts",
     "Open object details": "Open object details",
     "open create object form": "Open create object form",
     "open screen shot": "Open screenshot",
@@ -1035,6 +1039,9 @@
     "descending": "descending"
   },
   "whiteboard": {
+    "Paste text": "Paste text",
+    "Paste image": "Paste image",
+    "Paste nodes": "Paste whiteboard nodes",
     "Text": "Text",
     "Document": "Document",
     "Turn into document card": "Turn into document card",

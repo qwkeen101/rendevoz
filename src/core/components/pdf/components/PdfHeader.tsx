@@ -143,7 +143,7 @@ const PdfHeader = ({ documentId }: { documentId: number }) => {
                 <Tooltip content={<TooltipWithCmd name={'Navigate back'} cmd={'Alt+←'} />}>
                   <Icon
                     size={16}
-                    className={ClassName.flatButton(6, '5px')}
+                    className={ClassName.flatButton(4, '5px')}
                     name={'park-arrow-left'}
                     onClick={() => {
                       instance.navigateOps?.back()
@@ -155,7 +155,7 @@ const PdfHeader = ({ documentId }: { documentId: number }) => {
                 <Tooltip content={<TooltipWithCmd name={'Navigate forward'} cmd={'Alt+→'} />}>
                   <Icon
                     size={16}
-                    className={ClassName.flatButton(6, '5px')}
+                    className={ClassName.flatButton(4, '5px')}
                     name={'park-arrow-right'}
                     onClick={() => {
                       instance.navigateOps?.forward()
@@ -189,13 +189,13 @@ const PdfHeader = ({ documentId }: { documentId: number }) => {
             containerStyle={{
               background: pdf?.doublePage ? Colors.Common.SelectColorTransparent : undefined
             }}
-            className={ClassName.flatButton(6, '5px')}
+            className={ClassName.flatButton(4, '5px')}
             name={'custom-double-column'}
           />
           <Tooltip content={<TooltipWithCmd name={'Fit width'} cmd={'Shift+F'} />}>
             <Icon
               size={16}
-              className={ClassName.flatButton(6, '5px')}
+              className={ClassName.flatButton(4, '5px')}
               name={'park-auto-width'}
               onClick={() => {
                 instance.actionOps?.fitWidth()
@@ -205,7 +205,7 @@ const PdfHeader = ({ documentId }: { documentId: number }) => {
           <Tooltip content={<TooltipWithCmd name={'Zoom in'} cmd={'Cmd+='} />}>
             <Icon
               size={16}
-              className={ClassName.flatButton(6, '5px')}
+              className={ClassName.flatButton(4, '5px')}
               name={'park-zoom-in'}
               onClick={() => {
                 instance.actionOps?.zoomIn()
@@ -215,7 +215,7 @@ const PdfHeader = ({ documentId }: { documentId: number }) => {
           <Tooltip content={<TooltipWithCmd name={'Zoom out'} cmd={'Cmd+-'} />}>
             <Icon
               size={16}
-              className={ClassName.flatButton(6, '5px')}
+              className={ClassName.flatButton(4, '5px')}
               name={'park-zoom-out'}
               onClick={() => {
                 instance.actionOps?.zoomOut()
@@ -225,7 +225,7 @@ const PdfHeader = ({ documentId }: { documentId: number }) => {
           <Icon
             size={16}
             tooltip={<TooltipWithCmd name={'Clip'} cmd={'Cmd+Alt+A'}></TooltipWithCmd>}
-            className={ClassName.flatButton(6, '5px')}
+            className={ClassName.flatButton(4, '5px')}
             name={'park-screenshot'}
             containerStyle={{
               background: pdfState.croppingImage ? Colors.Common.SelectColorTransparent : undefined
@@ -235,34 +235,42 @@ const PdfHeader = ({ documentId }: { documentId: number }) => {
             }}
           />
           <div style={{ height: '20px', margin: 'auto 0', background: Colors.Background.Border, width: 1 }}></div>
-          <Tooltip content={<TooltipWithCmd name={'Search'} cmd={'Cmd+F'} />}>
-            <Icon
-              size={16}
-              className={ClassName.flatButton(6, '5px')}
-              name={'park-search'}
-              onClick={() => {
-                setBarState(s => ({ ...s, rightBarActive: 'search', showRightBar: true }))
-              }}
-            />
-          </Tooltip>
-          <Tooltip content={<TooltipWithCmd name={'Labels'} cmd={'Cmd+L'} />}>
-            <Icon
-              size={16}
-              className={ClassName.flatButton(6, '5px')}
-              name={'park-label'}
-              onClick={() => {
-                setBarState(s => ({ ...s, rightBarActive: 'label', showRightBar: true }))
-              }}
-            />
-          </Tooltip>
           <Icon
-            name={'custom-magic'}
-            onClick={() => {
-              setBarState(s => ({ ...s, rightBarActive: 'ai', showRightBar: true }))
-            }}
+            name={'custom-right-bar'}
             size={16}
-            className={ClassName.flatButton(6, '5px')}
+            className={ClassName.flatButton(4, '5px')}
+            onClick={() => {
+              setBarState(s => ({ ...s, showRightBar: !s.showRightBar }))
+            }}
           />
+          {/*<Tooltip content={<TooltipWithCmd name={'Search'} cmd={'Cmd+F'} />}>*/}
+          {/*  <Icon*/}
+          {/*    size={16}*/}
+          {/*    className={ClassName.flatButton(6, '5px')}*/}
+          {/*    name={'park-search'}*/}
+          {/*    onClick={() => {*/}
+          {/*      setBarState(s => ({ ...s, rightBarActive: 'search', showRightBar: true }))*/}
+          {/*    }}*/}
+          {/*  />*/}
+          {/*</Tooltip>*/}
+          {/*<Tooltip content={<TooltipWithCmd name={'Labels'} cmd={'Cmd+L'} />}>*/}
+          {/*  <Icon*/}
+          {/*    size={16}*/}
+          {/*    className={ClassName.flatButton(6, '5px')}*/}
+          {/*    name={'park-label'}*/}
+          {/*    onClick={() => {*/}
+          {/*      setBarState(s => ({ ...s, rightBarActive: 'label', showRightBar: true }))*/}
+          {/*    }}*/}
+          {/*  />*/}
+          {/*</Tooltip>*/}
+          {/*<Icon*/}
+          {/*  name={'custom-magic'}*/}
+          {/*  onClick={() => {*/}
+          {/*    setBarState(s => ({ ...s, rightBarActive: 'ai', showRightBar: true }))*/}
+          {/*  }}*/}
+          {/*  size={16}*/}
+          {/*  className={ClassName.flatButton(6, '5px')}*/}
+          {/*/>*/}
         </Content>
       </Content>
     )

@@ -40,12 +40,12 @@ export default memo(({ onInstanceInitialized }: { onInstanceInitialized?: (i: IG
 
   return (
     <Content fullHeight fullWidth>
-      <TabTitle title={t('general.Trash')} icon={<Icon name={'park-recycling'} />} />
+      <TabTitle title={t('general.Trash')} icon={<Icon name={'park-delete'} />} />
       <MetaGroup
         title={useMemo(
           () => ({
             title: t('general.Trash'),
-            icon: 'arrows_counterclockwise',
+            icon: 'park-delete',
             titleEditable: false
           }),
           []

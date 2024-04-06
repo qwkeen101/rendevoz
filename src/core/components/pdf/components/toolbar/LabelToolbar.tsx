@@ -4,6 +4,7 @@ import BlockColorPicker from '@/core/components/editor/components/BlockColorPick
 import { FC, memo } from 'react'
 import { IHighlightLabel } from '~/typings'
 import { useTranslation } from 'react-i18next'
+import toast from 'react-hot-toast'
 
 type Layout =
   | 'colorPicker'
@@ -124,6 +125,7 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
       iconName="park-copy-one"
       onClick={() => {
         if (selectedText) {
+          toast.success(t('general.Copied'))
           navigator.clipboard.writeText(selectedText)
         }
       }}

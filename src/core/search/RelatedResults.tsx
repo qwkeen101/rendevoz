@@ -59,10 +59,10 @@ const RelatedItem = ({ item }: { item: ISearchResult[0] }) => {
           onClick={() => setToggled(!toggled)}
           style={{
             transition: 'all 0.16s ease',
-            transform: toggled ? undefined : 'rotate(90deg)'
+            transform: toggled ? undefined : 'rotate(90deg)',
+            padding: 3
           }}
           name={'park-right'}
-          className={ClassName.flatButton(4, '3px')}
         />
         <SearchItemRenderer
           onClick={() => {

@@ -1,30 +1,23 @@
-import { IWhiteboardInstance, IWhiteboardNode } from '~/typings'
-import { getFlattenChildrenOfNode } from '@/core/components/whiteboard/node/mindmap/utils/tree'
+import { IWhiteboardInstance, IWhiteboardNode, XYPosition } from '~/typings'
 
 // update by cache
-export default (
-  currentNode: IWhiteboardNode,
-  instance: IWhiteboardInstance,
-  subIds: number[],
-  layoutCache: Record<number, { x: number; y: number; side: 'right' | 'left' }>,
-  linkIds: string[]
-) => {
+export default (instance: IWhiteboardInstance, subIds: number[], linkIds: string[], dragOffset: XYPosition) => {
   instance.nodeOps?.updateRelatedEdges(subIds)
   subIds.forEach(id => {
-    if (!layoutCache[id]) return
-    const nodeFuncs = instance.nodeOps?.getNodeFuncs(id)
-    if (nodeFuncs) {
+    const node = instance.getNode?.(id)
+    if (node) {
       const result = {
-        x: currentNode.x + layoutCache[id].x,
-        y: currentNode.y + layoutCache[id].y
+        x: node.x + dragOffset.x,
+        y: node.y + dragOffset.y
       }
+      console.log(node)
       const s = `translate(${result.x}px,${result.y}px)`
-      nodeFuncs.setStyle({
+      instance.nodeOps?.getNodeFuncs(id)?.setStyle({
         transform: s
       })
     }
   })
   linkIds.forEach(id => {
-    instance.edgeOps?.getEdgeFuncs(id)?.drawPath()
+    instance.edgeOps?.getEdgeFuncs(id)?.transformEdge(dragOffset.x, dragOffset.y)
   })
 }

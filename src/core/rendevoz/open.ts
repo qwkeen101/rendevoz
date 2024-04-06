@@ -13,7 +13,6 @@ import Workspace from '@/api/common/workspace'
 import { t } from 'i18next'
 const openMetaObject = async (metaObjectId: number) => {
   const metaObject = globalStore.get(metaObjectsAtom).get(metaObjectId)
-  console.log(metaObjectId, metaObject)
   if (!metaObject) {
     toast.error('Target Object Not Exist!')
     return
@@ -43,6 +42,7 @@ const openMetaObject = async (metaObjectId: number) => {
     case 'video':
     case 'audio':
     case 'audioLabel':
+    case 'localFile':
     case 'syncedBlock':
     case 'group':
     case 'question':
@@ -217,8 +217,8 @@ const openRendevozLink = async (link: string) => {
 }
 const openLocalFile = async (fileId: number) => {
   const localFile = await ObjectStore('localFile').getOneById(fileId)
-  if (localFile && localFile.fileUrl) {
-    return ipcInstance.send('openLocalFile', localFile.fileUrl)
+  if (localFile && localFile.url) {
+    return ipcInstance.send('openLocalFile', localFile.url)
   }
 }
 

@@ -191,7 +191,8 @@ export const OrderListItem = ({ children, element }: RenderElementProps) => {
   return (
     <div
       style={{
-        position: 'relative'
+        position: 'relative',
+        display: 'flex'
       }}
       ref={containerRef}
     >
@@ -220,7 +221,7 @@ export const OrderListItem = ({ children, element }: RenderElementProps) => {
       >
         {prefix}.{' '}
       </span>
-      {children}
+      <div>{children}</div>
     </div>
   )
 }

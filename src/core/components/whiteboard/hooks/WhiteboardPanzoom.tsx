@@ -141,7 +141,7 @@ const WhiteboardPanzoom = memo(({ onInitialized }: { onInitialized?: VoidFunctio
             zoomMultiplier: zoomMultipler
           }
         })
-        setWhiteboardState(s => ({ ...s, zoom: scale }))
+        setWhiteboardState(s => (s.zoom === scale ? s : { ...s, zoom: scale }))
         debounceSetZoom.run(zoomMultipler)
         debounceUpdateLastViewport.run()
       })

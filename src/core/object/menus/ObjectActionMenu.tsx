@@ -39,15 +39,17 @@ export const ObjectActionPopover: FC<
           GlobalInstance.metaOps?.quickAdd(metaObjectId)
           onClose?.()
         }
-        if (isHotkey('v', e)) {
-          e.preventDefault()
-          GlobalInstance.metaOps?.openDetails(metaObjectId)
-          onClose?.()
-        }
-        if (isHotkey('e', e)) {
-          e.preventDefault()
-          Rendevoz.Actions.Open.Meta.openEditMetaDialog(metaObjectId)
-          onClose?.()
+        if (!metaObject.temp) {
+          if (isHotkey('v', e)) {
+            e.preventDefault()
+            GlobalInstance.metaOps?.openDetails(metaObjectId)
+            onClose?.()
+          }
+          if (isHotkey('e', e)) {
+            e.preventDefault()
+            Rendevoz.Actions.Open.Meta.openEditMetaDialog(metaObjectId)
+            onClose?.()
+          }
         }
         if (isHotkey('mod+c', e)) {
           e.preventDefault()

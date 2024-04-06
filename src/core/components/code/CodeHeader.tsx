@@ -7,6 +7,8 @@ import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
 import { useSelectGlobalAtomValue } from '@/hooks'
 import { SettingAtom } from '@/core'
+import toast from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
 
 export const CodeLangs: (keyof typeof langs)[] = [
   'angular',
@@ -53,6 +55,7 @@ export const CodeLangs: (keyof typeof langs)[] = [
 ]
 export default ({ id }: { id: number }) => {
   const code = ObjectStore('code').useValue(id)
+  const { t } = useTranslation()
   const defaultLang = useSelectGlobalAtomValue(SettingAtom, s => s.code.defaultLanguage)
   const language = code?.language || defaultLang || 'typescript'
   const codeMeta = MetaStore.useObjectToMetaValue(id)
@@ -89,7 +92,10 @@ export default ({ id }: { id: number }) => {
       <Content flex gap={8} alignItems={'center'}>
         <Icon
           onClick={() => {
-            code?.content && navigator.clipboard.writeText(code.content)
+            if (code?.content) {
+              navigator.clipboard.writeText(code.content)
+              toast.success(t('general.Copied'))
+            }
           }}
           tooltip={'Copy'}
           name={'park-copy-one'}

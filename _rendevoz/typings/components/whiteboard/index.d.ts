@@ -21,7 +21,10 @@ export type IWhiteboardProps = {
   enableMiniMap?: boolean
   onInstanceInitialized?: (i: IWhiteboardInstance) => void
   readOnly?: boolean
+  onRename?: (name: string) => void
+  name?: string
   layout?: {
+    showRename?: boolean
     showControlBar?: boolean
     showPencilToolbar?: boolean
     showLeftToolbar?: boolean

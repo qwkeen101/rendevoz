@@ -40,7 +40,9 @@ const LabelActionMenu = ({ on, objectId, type, onClose }: Props) => {
     onClose()
     switch (t) {
       case 'view-details': {
-        GlobalInstance.metaOps?.openDetails(meta.id)
+        if (meta && !meta.temp) {
+          GlobalInstance.metaOps?.openDetails(meta.id)
+        }
         return
       }
       case 'copy': {

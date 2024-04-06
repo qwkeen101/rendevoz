@@ -11,6 +11,8 @@ import { CodeLangs } from '@/core/components/code/CodeHeader'
 import { ClassName } from 'rendevoz'
 import { useIsIn, useSelectGlobalAtomValue } from '@/hooks'
 import { SettingAtom } from '@/core'
+import { useTranslation } from 'react-i18next'
+import toast from 'react-hot-toast'
 
 const Code: FC<RenderElementProps> = ({ element, attributes, children }) => {
   const codeEle = element as CustomElement & { type: 'code-block' }
@@ -18,7 +20,7 @@ const Code: FC<RenderElementProps> = ({ element, attributes, children }) => {
   const editor = useSlateStatic()
   const readOnly = useReadOnlyEditor()
   const { ref, isIn } = useIsIn()
-
+  const { t } = useTranslation()
   return (
     <div
       className="editor-disable-format"
@@ -70,10 +72,13 @@ const Code: FC<RenderElementProps> = ({ element, attributes, children }) => {
             name={'park-copy-one'}
             tooltip={'Copy'}
             style={{
-              opacity: isIn ? 1 : 0
+              opacity: isIn && codeEle.content ? 1 : 0
             }}
             onClick={() => {
-              codeEle.content && navigator.clipboard.writeText(codeEle.content)
+              if (codeEle.content) {
+                navigator.clipboard.writeText(codeEle.content)
+                toast.success(t('general.Copied'))
+              }
             }}
             className={ClassName.flatButton(3, '4px')}
           />

@@ -35,8 +35,9 @@ import SnapDragLayer from '@/core/components/whiteboard/snap/SnapDragLayer'
 import FakeMindmapDragLayer from '@/core/components/whiteboard/node/mindmap/FakeMindmapDragLayer'
 import WhiteboardSearch from '@/core/components/whiteboard/WhiteboardSearch'
 import WhiteboardPasteSelector from '@/core/components/whiteboard/WhiteboardPasteSelector'
+import WhiteboardRename from '@/core/components/whiteboard/WhiteboardRename'
 
-const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly }: IWhiteboardProps) => {
+const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly, name, onRename }: IWhiteboardProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const flow = useFlow()
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
@@ -242,6 +243,7 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly }: I
       <WhiteboardSearch />
       <WhiteboardPasteSelector />
       <FakeMindmapDragLayer />
+      {/*{layout?.showRename && <WhiteboardRename name={name} onRename={onRename} />}*/}
     </>
   )
 })
@@ -249,14 +251,14 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly }: I
 export const Whiteboard = memo(
   ({
     whiteboardId,
-    onTabTitleChange,
     readOnly,
+    name,
+    onRename,
     onInstanceInitialized,
     layout
   }: {
     whiteboardId: number
     onInstanceInitialized?: (i: IWhiteboardInstance) => void
-    onTabTitleChange?: (s?: string) => void
   } & Omit<IWhiteboardProps, 'id'>) => {
     const previousWhiteboard = useRef<IWhiteboard>()
     const whiteboardAtom = ObjectStore('whiteboard').createAtom(whiteboardId)
@@ -292,12 +294,9 @@ export const Whiteboard = memo(
       const flowManager = new FlowManager(instance)
       flowManager.whiteboardId = whiteboardId
       store.set(FlowAtom, flowManager)
-
       store.set(WhiteboardInstanceAtom, instance)
-
-      onTabTitleChange?.(whiteboard?.name)
       return store
-    }, [whiteboard?.id])
+    }, [whiteboardId])
     useEffect(() => {
       const unsub = globalStore.sub(whiteboardAtom, () => {
         const whiteboard = globalStore.get(whiteboardAtom)
@@ -306,18 +305,22 @@ export const Whiteboard = memo(
         previousWhiteboard.current = whiteboard
         if (prev && prev !== whiteboard) {
           store.set(WhiteboardAtom, whiteboard)
-          if (prev.name !== whiteboard?.name) {
-            onTabTitleChange?.(whiteboard?.name)
-          }
         }
       })
       return unsub
-    }, [whiteboard?.id])
+    }, [whiteboardId])
     if (!whiteboard) return null
     return (
       <Provider store={store}>
         {whiteboardId && (
-          <WhiteboardInner onInstanceInitialized={onInstanceInitialized} id={whiteboardId} layout={layout} readOnly={readOnly} />
+          <WhiteboardInner
+            name={name}
+            onRename={onRename}
+            onInstanceInitialized={onInstanceInitialized}
+            id={whiteboardId}
+            layout={layout}
+            readOnly={readOnly}
+          />
         )}
       </Provider>
     )

@@ -126,7 +126,7 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({
       ? defaultSelected
       : firstKey
     : firstKey
-  const [currentSelect, setCurrentSelect] = useState<string[]>(defaultSelectedKeys)
+  const [currentSelect, setCurrentSelect] = useState<string[]>([])
 
   const handleSelectItem = (currentItem: IMenuLayoutItem) => {
     if ('onSelect' in currentItem && currentItem.onSelect) {
@@ -137,7 +137,7 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({
   }
   useEffect(() => {
     if (reselectOnLayoutChange) {
-      setCurrentSelect(defaultSelectedKeys)
+      setCurrentSelect([])
     }
   }, [normalizedLayout.length, reselectOnLayoutChange])
   const getCurrentItemList = (): IMenuLayoutItem[] => {
@@ -224,8 +224,15 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({
       setCurrentSelect(s => {
         const currentList = getCurrentItemList()
         if (s.length === 0) {
-          const k = currentList.find(i => i.type === 'item' && i.key)?.key
-          return k ? [k] : []
+          const firstKey = currentList.find(i => i.type === 'item' && i.key)?.key
+          const lastKey = currentList.findLast(i => i.type === 'item' && i.key)?.key
+          if (direction === 'down') {
+            return firstKey ? [firstKey] : []
+          }
+          if (direction === 'up') {
+            return lastKey ? [lastKey] : []
+          }
+          return []
         }
         const newS = [...s]
         const last = newS[newS.length - 1]

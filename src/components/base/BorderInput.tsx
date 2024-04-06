@@ -3,10 +3,7 @@ import { css } from '@emotion/css'
 import { AnimatePresence, motion } from 'framer-motion'
 import { isHotkey } from 'is-hotkey'
 import { CSSProperties, HTMLProps, useEffect, useRef, useState } from 'react'
-import AutosizeTextarea, { TextareaAutosizeProps } from '../custom/input/autosizeTextarea'
-import Colors from '@/consts/colors'
-import { useUpdate } from 'react-use'
-import { useTranslation } from 'react-i18next'
+import { AutosizeTextarea } from '@/components'
 import classnames from 'classnames'
 
 type BorderInputProps = {
@@ -14,21 +11,13 @@ type BorderInputProps = {
   placeholder?: string
   style?: CSSProperties
   defaultValue?: string
-  textarea?: boolean
   containerStyle?: CSSProperties
   autoFocus?: boolean
   disable?: boolean
   id?: string
   spellCheck?: 'false' | 'true'
-} & (
-  | ({
-      textarea: true
-    } & TextareaAutosizeProps)
-  | {
-      textarea: false
-    }
-) &
-  HTMLProps<HTMLInputElement>
+  textarea?: boolean
+} & HTMLProps<HTMLInputElement>
 
 const inputClassName = css({
   padding: '12px 16px',

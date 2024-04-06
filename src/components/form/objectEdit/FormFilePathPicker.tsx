@@ -1,4 +1,4 @@
-import { Icon } from '../../base'
+import { Icon, AutosizeTextarea } from '@/components'
 import { groupClassName, hoverLabelClassName } from '../useFlipForm'
 import useFileUpload from '../../base/useFileUpload'
 import { useTranslation } from 'react-i18next'
@@ -12,7 +12,6 @@ import ButtonSelect from '@/components/base/ButtonSelect'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
-import AutosizeTextarea from '@/components/custom/input/autosizeTextarea'
 
 const FormFilePathPicker = ({
   onChange,

@@ -9,7 +9,7 @@ import { getOS } from '@/App'
 import ClassName from '@/styles/classNames'
 import useIsFullscreen from '@/hooks/utils/useIsFullscreen'
 import SidebarCategory from '@/components/layout/sidebar/SidebarCategory'
-import ObjectList from '@/core/object/ObjectList'
+import ObjectList from '@/core/object/objectList/ObjectList'
 import useSidebarState from '@/components/layout/sidebar/useSidebarState'
 import updateSidebarState from '@/components/layout/sidebar/updateSidebarState'
 const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
@@ -67,7 +67,7 @@ const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
         alignItems={'center'}
       >
         <Icon
-          name={'park-data'}
+          name={'custom-card-library'}
           data-active={panelState.leftVisible === 'database'}
           onClick={() =>
             updateSidebarState(s => {
@@ -125,7 +125,7 @@ const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
           <TabPane tab={null} key="database">
             <Content fullHeight fullWidth flex column>
               <Provider store={store}>
-                <ObjectList renderFilterOnParent={false} padding={'8px 8px 4px'} />
+                <ObjectList padding={'8px'} />
               </Provider>
             </Content>
           </TabPane>

@@ -10,6 +10,7 @@ import availableLangs from '../../google/AvailableLangAndRegions.json'
 import Select from '@/components/base/select'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import addItems from '@/core/components/feed/utils/addItems'
+import { useTranslation } from 'react-i18next'
 
 const GoogleNewsSearch = () => {
   const [searchInput, setSearchInput] = useState('')
@@ -51,10 +52,11 @@ const GoogleNewsSearch = () => {
     [searchInput],
     { wait: 500 }
   )
+  const { t } = useTranslation()
   return (
     <Content flex column style={{ padding: '0px 12px' }} fullHeight>
-      <Content flex justifyContent={'space-between'} style={{ margin: '12px 0px 0px' }}>
-        <div className={ClassName.title()}>Google News Search</div>
+      <Content flex justifyContent={'space-between'} style={{ margin: '16px 0px 12px' }}>
+        <div className={ClassName.title()}>{t('feed.Search news')}</div>
         {searchInput && searchResults.items?.length ? (
           <div
             onClick={() => {
@@ -64,33 +66,26 @@ const GoogleNewsSearch = () => {
                 icon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Google_News_icon.svg/2503px-Google_News_icon.svg.png'
               })
             }}
-            style={{ color: Colors.Common.SelectColor, cursor: 'pointer' }}
+            className={ClassName.selectButton()}
           >
-            Follow this search
+            {t('feed.Follow this search')}
           </div>
         ) : null}
       </Content>
-      <div style={{ fontSize: 13, color: Colors.Font.Transparent, marginBottom: 10 }}>Get up to date google search results</div>
       <Content
         flex
         tabIndex={0}
-        className={css({
-          transition: 'all 0.2s ease',
-          ':focus-within': {
-            boxShadow: '0 0 0 2px var(--select-color)'
-          }
-        })}
+        className={'focus-within-input border-box-shadow'}
         gap={10}
         style={{
-          border: `1px solid ${Colors.Background.Border}`,
-          padding: '4px 12px',
+          padding: '3px 12px',
           borderRadius: 48,
-          marginBottom: 8
+          marginBottom: 12
         }}
       >
         <Icon name={isLoading ? 'park-loading-four' : 'park-search'} spin={isLoading} />
         <input
-          placeholder={"Search news"}
+          placeholder={t('general.Type to search') + '...'}
           value={searchInput}
           onChange={e => setSearchInput(e.target.value)}
           className={ClassName.noStyleInput}
@@ -108,6 +103,7 @@ const GoogleNewsSearch = () => {
           }}
           closeOnSelect={true}
           value={currentLang || 'zh-cn'}
+          className={'transparent-font font-size-14'}
           options={[
             {
               value: 'all',

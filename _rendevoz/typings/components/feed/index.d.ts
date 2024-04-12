@@ -46,6 +46,7 @@ export interface IFeedFolder extends IBase {
 }
 
 export type IFeedInstance = Partial<{
+  editFeed: (id: number) => void
   navigateOps: {
     back: VoidFunction
     forward: VoidFunction

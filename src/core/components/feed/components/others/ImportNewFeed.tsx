@@ -47,44 +47,48 @@ export default () => {
   )
 
   return (
-    <Content style={{ width: '100%', padding: '20px' }}>
+    <Content style={{ width: '100%', padding: '12px 20px' }}>
       <Content column flex gap={12}>
         <Content style={{ fontSize: 13, color: Colors.Font.Transparent }}>
           <div>Tips:</div>
-          <div>1. Youtube channels and playlists are supported. (e.g. https://www.youtube.com/@BBCNews)</div>
-          <div>
-            2. Set your{' '}
-            <a target={'_blank'} href={'https://developers.google.com/youtube/v3/getting-started'}>
-              Youtube API Key
-            </a>{' '}
-            in setting-general-others to get all videos in playlist/channel.
-          </div>
-          <div>3. Twitter user tweets and search results are supported. (e.g. https://twitter.com/elonmusk)</div>
-          <div>4. Some feeds may not return correct thumbnail / content.</div>
-          <div>5. Websites require subscriptions may not return correct content.</div>
+          <ol>
+            <li>
+              Setup your{' '}
+              <a target={'_blank'} href={'https://developers.google.com/youtube/v3/getting-started'}>
+                Youtube API Key
+              </a>{' '}
+              in settings to get all videos in playlists or channels.
+            </li>
+            <li>Some results may not return correct thumbnail or content.</li>
+          </ol>
+          <div style={{ marginTop: 12 }}>Supported RSS:</div>
+          <ul>
+            <li>Any valid RSS source.</li>
+            <li>Youtube channels and playlists. (e.g. https://www.youtube.com/@BBCNews)</li>
+            <li>Tweets from users and search results. (e.g. https://twitter.com/elonmusk)</li>
+          </ul>
         </Content>
       </Content>
       <input
         onChange={e => setNewFeedUrl(e.target.value)}
         value={newFeedUrl}
-        placeholder={'Type any feed url here...'}
+        placeholder={t('feed.Type RSS feed URL')}
         className={ClassName.noStyleInput}
         style={{
           width: '100%',
           borderBottom: `1px solid ${Colors.Background.Border}`,
-          marginBottom: 24,
+          marginBottom: 12,
           marginTop: 16
         }}
       ></input>
       {feedDetails?.isLoading ? (
-        <Content flex gap={12} style={{ marginBottom: 24 }}>
+        <Content flex gap={12} style={{ marginBottom: 12 }}>
           <Icon name={'park-loading-four'} spin size={20} />
           <div>Loading feed details...</div>
         </Content>
       ) : null}
       {feedDetails?.details && !feedDetails.isLoading && (
-        <Content fullWidth style={{ marginBottom: 24 }}>
-          <div style={{ color: Colors.Font.Transparent }}>Feed details</div>
+        <Content fullWidth style={{ marginBottom: 12 }}>
           <Content flex alignItems={'center'}>
             <Content>
               <div style={{ fontSize: 20, fontWeight: 600 }}>{feedDetails.details.title}</div>
@@ -93,15 +97,7 @@ export default () => {
           </Content>
         </Content>
       )}
-      <Content flex justifyContent={'space-between'}>
-        <div
-          onClick={() => {
-            setNewFeedUrl('')
-          }}
-          className={ClassName.flatButton(undefined, '2px 14px', undefined, true)}
-        >
-          {t('general.Cancel')}
-        </div>
+      {newFeedUrl && (
         <div
           onClick={() => {
             setNewFeedUrl('')
@@ -110,11 +106,15 @@ export default () => {
               fetchFeedAndAddCollection(newFeedUrl, 'webpage').then(() => setIsImporting(false))
             }
           }}
-          className={ClassName.selectButton(undefined, '2px 14px')}
+          style={{
+            width: 'fit-content',
+            padding: '4px 12px'
+          }}
+          className={ClassName.selectButton()}
         >
-          {isImporting ? 'Loading...' : t('general.OK')}
+          {isImporting ? t('general.Loading') + '...' : t('feed.Follow')}
         </div>
-      </Content>
+      )}
     </Content>
   )
 }

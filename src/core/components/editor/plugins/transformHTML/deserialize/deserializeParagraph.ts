@@ -8,7 +8,7 @@ import deserializeSpan from '@/core/components/editor/plugins/transformHTML/dese
 import normalizeText from '@/core/components/editor/plugins/transformHTML/deserialize/normalizeText'
 import { Text } from 'slate'
 
-export default (node: HTMLElement) => {
+export default (node: HTMLElement, type = 'paragraph') => {
   let shouldBeFragment = true
   // 如果内部有text node就不是fragment，不然就是fragment
   for (const n of node.childNodes) {
@@ -83,7 +83,7 @@ export default (node: HTMLElement) => {
     return jsx(
       'element',
       {
-        type: 'paragraph',
+        type,
         id: Id.getId()
       },
       children

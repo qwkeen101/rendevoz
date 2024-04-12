@@ -184,14 +184,15 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
   if (metaObject?.type?.includes('Label')) {
     return (
       <>
-        {children}
         <LabelDetailsRenderer
+          imageStyle={{ objectFit: 'contain' }}
           style={{
             border: '1px solid var(--border-background)',
             borderRadius: 8
           }}
           metaId={metaObject.id}
         />
+        {children}
       </>
     )
   }

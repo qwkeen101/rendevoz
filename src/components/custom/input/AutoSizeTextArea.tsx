@@ -85,6 +85,7 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLDivElement, TextareaA
         document.execCommand('insertText', false, e.clipboardData.getData('text/plain'))
       }}
       onInput={e => {
+        console.log(e)
         edited.current = true
         if (debounceChange) {
           handleChange.run(e.currentTarget.innerText || '')

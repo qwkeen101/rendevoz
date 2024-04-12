@@ -8,6 +8,7 @@ function NoteContentDisplayer({ id }: { id: number }) {
       <NoteEditor
         readOnly={true}
         layout={{
+          canScrollIntoView: false,
           showTitle: false,
           showBottomPadding: false,
           showBlockHandle: false,

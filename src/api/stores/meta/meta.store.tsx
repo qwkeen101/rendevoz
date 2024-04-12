@@ -301,15 +301,17 @@ const createMetaStore = () => {
       })
     })
   }
-  const getMetaObjectByObjectId = (objId: number) => {
+  const getMetaObjectByObjectId = (objId: number, filterAll = true): MetaObject | undefined => {
     const metaObjectId = globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(objId)
     if (metaObjectId) {
       const one = globalStore.get(metaObjectsAtom).get(metaObjectId)
       return one
     }
-    const allMetas = Array.from(globalStore.get(metaObjectsAtom).values())
-    const one = allMetas.find(i => i.objectId === objId)
-    return one
+    if (filterAll) {
+      const allMetas = Array.from(globalStore.get(metaObjectsAtom).values())
+      const one = allMetas.find(i => i.objectId === objId)
+      return one
+    }
   }
   const useObjectToMetaValue = (objectId?: number) => {
     const objectIdToMetaObjectIdAtom = useMemo(() => selectAtom(objectIdToMetaObjectIdMapAtom, m => m?.get(objectId || 0)), [objectId])
@@ -355,10 +357,24 @@ const createMetaStore = () => {
     return useGlobalAtomValue(metaObjectsAtom)
   }
 
-  function isVisibleMetaObject(o?: Partial<MetaObject>): o is MetaObject {
+  function isVisibleMetaObject(
+    o?: Partial<MetaObject>,
+    opts?: {
+      temp?: boolean
+      deleted?: boolean
+      hidden?: boolean
+    }
+  ): o is MetaObject {
     if (!o) return false
-    if (o.deleted || o.hidden || o.temp) return false
-
+    if (o.temp && opts?.temp !== true) {
+      return false
+    }
+    if (o.deleted && opts?.deleted !== true) {
+      return false
+    }
+    if (o.hidden && opts?.hidden !== true) {
+      return false
+    }
     return true
   }
   const useMetaLinksMap = () => {

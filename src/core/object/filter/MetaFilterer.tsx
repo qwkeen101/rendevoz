@@ -8,7 +8,7 @@ import fuzzysort from 'fuzzysort'
 import { Virtualizer } from '@tanstack/react-virtual'
 import { Colors, KEY } from '@/consts'
 import isHotkey from 'is-hotkey'
-import ContentDisplayer from '@/core/components/group/components/gallery/items/ContentDisplayer'
+import ContentDisplayer from '@/core/components/group/components/gallery/items/FixedHeightContentDisplayer'
 
 interface MetaFiltererProps {
   withInput?: boolean

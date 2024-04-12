@@ -69,7 +69,7 @@ export const DEFAULT_GROUP_PROPERTIES = [
   },
   {
     name: 'fromObject',
-    icon: 'park-share-one',
+    icon: 'park-arrow-left-down',
     display: 'general.from',
     visible: false,
     type: 'basic',
@@ -97,6 +97,7 @@ export const DEFAULT_GROUP_PROPERTIES = [
   {
     name: 'related',
     display: 'general.related',
+    icon: 'park-share-one',
     visible: false,
     type: 'basic',
     editable: false,

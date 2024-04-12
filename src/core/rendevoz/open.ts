@@ -461,9 +461,13 @@ const openMediaAtTime = async (id: number, type: string, time: number) => {
   }
   if (i) {
     const ins = i as IMediaInstance
+    ins.actionOps?.autoPlay?.()
     waitFor(
       () => !!ins.actionOps?.jumpTo,
-      () => ins.actionOps?.jumpTo(time),
+      () => {
+        ins.actionOps?.jumpTo(time)
+        ins.actionOps?.play()
+      },
       {
         timeout: 15000
       }

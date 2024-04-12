@@ -34,12 +34,14 @@ const useOverlayDrop = () => {
       ...GlobalInstance.metaOps,
       addDraggableAsMeta: async (d, temp) => {
         const currentKeys = new Set(MetaStore.getMetaObjectsMap().keys())
+        console.log(d)
         const res = (await emitter.emitWithCallback('global', {
           type: 'globalDropNeedFurtherProcess',
           data: {
             draggingElement: d
           }
         })) as MetaObject
+        console.log(res)
         const isNewlyCreated = !currentKeys.has(res.id)
         if (res.temp && temp !== true) {
           await MetaStore.updateMetaObject({ id: res.id, temp: false })
@@ -116,29 +118,28 @@ const useOverlayDrop = () => {
     if (!enableLink) {
       allPendingLinks = []
     }
-    if (shouldOpenEditMetaModal === false || alreadyHasMeta) {
+    if (alreadyHasMeta) {
       res?.(normalizedMetaObject)
       allPendingLinks.forEach(i => addMetaLink(i))
       return
     }
-
-    if (settings.objectAndLink.enableDropAutoGenerateObject) {
-      allPendingLinks.forEach(i => addMetaLink(i, true))
-      addMetaObject(normalizedMetaObject).then(m => {
-        res?.(m)
-      })
-      return
-    }
-    promiseRef.current = {
-      res,
-      rej
-    }
     allPendingLinks.forEach(i => addMetaLink(i, true))
-    setPendingLinks(allPendingLinks)
     addMetaObject(normalizedMetaObject).then(m => {
-      setMetaObject(m)
-      toggleEditMetaVisible(true)
+      res?.(m)
     })
+    return
+    // if (settings.objectAndLink.enableDropAutoGenerateObject) {
+    // }
+    // promiseRef.current = {
+    //   res,
+    //   rej
+    // }
+    // allPendingLinks.forEach(i => addMetaLink(i, true))
+    // setPendingLinks(allPendingLinks)
+    // addMetaObject(normalizedMetaObject).then(m => {
+    //   setMetaObject(m)
+    //   toggleEditMetaVisible(true)
+    // })
   })
 
   const getDropOnPostLinks = async (dropOn: BuiltInDropOn, metaObject: MetaObject) => {

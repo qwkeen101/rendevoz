@@ -14,6 +14,8 @@ import LabelDetailsRenderer from '@/core/object/renderer/LabelDetailsRenderer'
 import MetaPropDisplayer from '@/core/object/renderer/properties/MetaPropDisplayer'
 import ParentItems from '@/core/object/details/ParentItems'
 import Backlinks from '@/core/object/details/Backlinks'
+import { useEffect, useState } from 'react'
+import calculateContains from '@/core/object/objectList/calculateContains'
 
 const flatButton = css([
   ClassName.flatButton(4, '3px 10px'),
@@ -21,7 +23,7 @@ const flatButton = css([
     // backgroundColor: Colors.Background.ButtonHover,
     // fontWeight: 600,
     borderRadius: '4px !important',
-    fontSize: 13,
+    fontSize: 14,
     gap: 4,
     alignItems: 'center',
     ':hover': {
@@ -34,6 +36,25 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
   const object = MetaStore.useValue(metaId)
   const { renderWhole, metaObject } = useRenderObject({ metaObjectId: metaId })
   const { t } = useTranslation()
+  const [showContains, setShowContains] = useState(false)
+  useEffect(() => {
+    if (GlobalInstance.metaOps?.canViewContains(metaId)) {
+      const m = MetaStore.getCachedMetaObject(metaId)
+      if (m && !m.deleted) {
+        calculateContains(m).then(res => {
+          if (res?.length) {
+            setShowContains(true)
+            return
+          }
+          setShowContains(false)
+        })
+        return
+      }
+      setShowContains(false)
+      return
+    }
+    setShowContains(false)
+  }, [metaId, visible])
   if (!object) return null
 
   return (
@@ -70,7 +91,9 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
               titleOptions: {
                 style: {
                   maxWidth: 'calc(100% - 16px)',
-                  zIndex: 30
+                  zIndex: 30,
+                  fontSize: 15,
+                  lineHeight: 1.5
                 }
               },
               renderOptions: {
@@ -81,12 +104,7 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
           )}
         </Content>
       </Content>
-      <Content
-        className={'border-bottom'}
-        style={{ marginTop: 12, flexWrap: 'wrap', padding: '6px 12px 12px', marginBottom: 6, marginLeft: -12, marginRight: -12 }}
-        flex
-        gap={4}
-      >
+      <Content className={'border-box-shadow'} style={{ marginTop: 16, flexWrap: 'wrap', borderRadius: 8, padding: '8px' }} flex gap={4}>
         <Button.IconButton
           text={t('general.Open')}
           icon={'park-share'}
@@ -105,16 +123,16 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
           icon={'park-edit'}
           className={flatButton}
         ></Button.IconButton>
-        <Button.IconButton
-          onClick={() => {
-            MetaStore.updateMetaObject({ id: metaId, pinned: !object.pinned })
-          }}
-          theme={object.pinned ? 'filled' : undefined}
-          iconColor={object.pinned ? Colors.Common.Pink : undefined}
-          text={object.pinned ? t('general.unpin') : t('general.pin')}
-          icon={'park-like'}
-          className={flatButton}
-        ></Button.IconButton>
+        {showContains && (
+          <Button.IconButton
+            icon={'park-hamburger-button'}
+            text={t('general.View included objects')}
+            onClick={() => {
+              GlobalInstance.metaOps?.viewContains(metaId)
+            }}
+            className={flatButton}
+          />
+        )}
         <Button.IconButton
           onClick={() => {
             GlobalInstance.metaOps?.closeDetails()
@@ -147,23 +165,13 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
       <Content
         flex
         alignItems={'center'}
-        gap={12}
+        gap={8}
         style={{
-          fontWeight: 500,
           fontSize: 14,
-          margin: '16px 0 12px'
+          margin: '16px 0'
         }}
       >
-        <Icon
-          name={'park-tag-one'}
-          size={16}
-          containerStyle={{
-            background: 'linear-gradient(rgb(255 133 109) 0%, rgb(221 50 126) 140%)',
-            color: 'white',
-            borderRadius: 6,
-            padding: 4
-          }}
-        />
+        <Icon name={'park-tag-one'} size={16} />
         {t('general.Tags')}
       </Content>
       <AnimatePopover
@@ -201,38 +209,29 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
           {object.tags?.length ? (
             object.tags?.map(i => <Tag square hideDelete hideSize tag={i} key={i} />)
           ) : (
-            <div
+            <Button.IconButton
+              icon={'park-plus'}
               style={{
-                fontSize: 12,
-                padding: 6,
-                color: Colors.Font.SuperTransparent
+                fontSize: 14,
+                padding: '5px 6px',
+                color: Colors.Font.Transparent,
+                minWidth: 160
               }}
-            >
-              {t('general.Add tags')}...
-            </div>
+              text={`${t('general.Add tags')}`}
+            ></Button.IconButton>
           )}
         </Content>
       </AnimatePopover>
       <Content
         flex
         alignItems={'center'}
-        gap={12}
+        gap={8}
         style={{
-          fontWeight: 500,
           fontSize: 14,
-          margin: '16px 0 12px'
+          margin: '16px 0'
         }}
       >
-        <Icon
-          name={'custom-property'}
-          size={16}
-          containerStyle={{
-            background: 'linear-gradient(rgb(213 112 171) 0%, rgb(227 42 124) 140%)',
-            color: 'white',
-            borderRadius: 6,
-            padding: 4
-          }}
-        />
+        <Icon name={'custom-property'} size={18} />
         {t('general.Properties')}
       </Content>
       <Content
@@ -248,23 +247,13 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
       <Content
         flex
         alignItems={'center'}
-        gap={12}
+        gap={8}
         style={{
-          fontWeight: 500,
           fontSize: 14,
-          margin: '12px 0'
+          margin: '16px 0'
         }}
       >
-        <Icon
-          name={'park-share-one'}
-          size={16}
-          containerStyle={{
-            background: 'linear-gradient(rgb(117 166 219) 0%, rgb(122 0 255) 140%)',
-            color: 'white',
-            borderRadius: 6,
-            padding: 4
-          }}
-        />
+        <Icon name={'park-share-one'} size={16} />
         {t('general.Linked objects')}
       </Content>
       <RelatedPanel
@@ -282,26 +271,17 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
       <Content
         flex
         alignItems={'center'}
-        gap={12}
+        gap={8}
         style={{
-          fontWeight: 500,
           fontSize: 14,
-          margin: '12px 0 16px'
+          margin: '16px 0'
         }}
       >
-        <Icon
-          name={'park-link-three'}
-          size={16}
-          containerStyle={{
-            background: 'linear-gradient(rgb(84 193 170) 0%, rgb(28 150 153) 140%)',
-            color: 'white',
-            borderRadius: 6,
-            padding: 4
-          }}
-        />
+        <Icon name={'park-link-three'} size={16} />
         {t('general.Attachments')}
       </Content>
       <AttachmentWrapper
+        showField={false}
         innerContainerStyle={{
           justifyContent: 'space-between',
           height: '100%',

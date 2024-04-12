@@ -37,7 +37,7 @@ const EditorHeader = ({ title, editor, maxTitleWidth }: { editor: CustomEditor; 
       >
         {header?.leftExtra}
         {header?.display?.title !== false && (
-          <div style={{ textTransform: 'none', marginLeft: 4 }} className={css([ClassName.title('14px'), ClassName.ellipsisFont(1)])}>
+          <div style={{ marginLeft: 4 }} className={'ellipsis-font-1 font-size-14'}>
             {title}
           </div>
         )}

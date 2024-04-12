@@ -179,7 +179,9 @@ export default (result: {
         ...w.nodes.get(originDragNode.id)!,
         rootId: currN.id,
         collapse: targetCollapse ? dragAttachTarget?.id : false,
-        side: link.direction
+        side: link.direction,
+        border: currN.border,
+        borderType: currN.borderType
       })
     }
   }, true)

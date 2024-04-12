@@ -11,6 +11,7 @@ import useFeedFolder from '@/core/components/feed/hooks/useFeedFolder'
 import { TabTitle } from '@/core/rendevoz/components'
 import { useTranslation } from 'react-i18next'
 import { useSelectAtomValue } from '@/hooks'
+import EditFeedItem from '@/core/components/feed/components/EditFeedItem'
 
 // google news only have webpages
 const GoogleNewsViewer = () => {
@@ -24,6 +25,7 @@ const GoogleNewsViewer = () => {
   return (
     <Content fullWidth tabIndex={0} fullHeight flex ref={pageContainerRef}>
       <FeedSidebar />
+      <EditFeedItem />
       <TabTitle title={t('general.Feeds')} icon={<Icon name={'park-broadcast'} />} />
       {renderModal()}
       <Content fullHeight auto flex column>

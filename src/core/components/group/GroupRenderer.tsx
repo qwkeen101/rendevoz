@@ -16,6 +16,7 @@ export const GroupRenderer = memo(() => {
   const containerRef = useRef<HTMLDivElement>(null)
   const currentView = useSelectAtomValue(GroupStateAtom, s => s.currentView?.type)
   const hasGroup = useSelectAtomValue(GroupStateAtom, s => s.groups !== undefined)
+  const value = filterValues || displayValues
   return (
     <Content
       role={'renderer-container'}
@@ -29,11 +30,11 @@ export const GroupRenderer = memo(() => {
         <GroupGrouperRenderer />
       ) : (
         <>
-          {currentView === 'table' && <TableRenderer value={filterValues || displayValues} />}
-          {currentView === 'gallery' && <GalleryRenderer value={filterValues || displayValues} />}
-          {currentView === 'list' && <ListRenderer value={filterValues || displayValues} />}
+          {currentView === 'table' && <TableRenderer value={value} />}
+          {currentView === 'gallery' && <GalleryRenderer value={value} />}
+          {currentView === 'list' && <ListRenderer value={value} />}
           {currentView === 'kanban' && <KanbanRenderer />}
-          {currentView === 'calendar' && <CalendarRenderer value={filterValues || displayValues} />}
+          {currentView === 'calendar' && <CalendarRenderer value={value} />}
         </>
       )}
     </Content>

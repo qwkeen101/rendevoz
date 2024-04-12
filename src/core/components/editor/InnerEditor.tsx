@@ -284,7 +284,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
                     instance.labelOps?.deleteLabel(Number(highlightId))
                   } else {
                     const highlightId = Id.getId()
-                    const selectedText = editor.selection ? Editor.string(editor, editor.selection) : ''
+                    const selectedText = editor.selection ? Editor.string(editor, editor.selection, { voids: true }) : ''
                     if (!selectedText) return
                     Editor.addMark(editor, 'highlight', highlightId)
                     const label = await instance.labelOps?.addLabel?.({

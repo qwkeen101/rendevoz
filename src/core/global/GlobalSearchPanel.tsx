@@ -97,7 +97,7 @@ export const SearchPanel = () => {
   }, [panelState.currentPosition])
 
   return (
-    <Content flex column fullWidth fullHeight>
+    <Content flex column fullWidth fullHeight style={{ paddingRight: 1 }}>
       <Content fullWidth auto style={{ height: 0, overflow: 'hidden' }}>
         <WebviewWepbage
           onUrlChange={s => {

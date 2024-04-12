@@ -7,13 +7,14 @@ export const waitFor = (
     checkTime?: number
     // check mutiple times and every time should be true, if false, retry
     checkEnsure?: number
+    requestAnimationFrame?: boolean
   } = {
     timeout: 5000,
     checkDelay: 0,
     checkEnsure: 1
   }
 ) => {
-  const { timeout = 5000, checkDelay = 0, checkEnsure = 1} = options
+  const { timeout = 5000, checkDelay = 0, checkEnsure = 1 } = options
   let ensured = 0
   const start = Date.now()
   const loop = () => {
@@ -33,10 +34,18 @@ export const waitFor = (
     console.log('waiting')
     if (checkDelay) {
       setTimeout(() => {
-        requestIdleCallback(loop)
+        if (options.requestAnimationFrame) {
+          requestAnimationFrame(loop)
+        } else {
+          requestIdleCallback(loop)
+        }
       }, checkDelay)
     } else {
-      requestIdleCallback(loop)
+      if (options.requestAnimationFrame) {
+        requestAnimationFrame(loop)
+      } else {
+        requestIdleCallback(loop)
+      }
     }
   }
 

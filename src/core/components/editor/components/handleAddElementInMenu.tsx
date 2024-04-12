@@ -128,7 +128,9 @@ export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, o
     }
     case 'image':
       ReactEditor.blur(editor)
-      Rendevoz.Actions.Utils.uploadFile().then(files => {
+      Rendevoz.Actions.Utils.uploadFile({
+        accept: 'image/*'
+      }).then(files => {
         const firstFile = files as File
         if (firstFile && firstFile.type.startsWith('image')) {
           FileSystem.saveImage(firstFile, { compress: false }).then(data => {

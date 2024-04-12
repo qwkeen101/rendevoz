@@ -20,21 +20,26 @@ const SidebarPinned = memo(() => {
   const { t } = useTranslation()
   return (
     <Content flex column style={{ marginBottom: 10 }}>
-      <Content flex alignItems="center" justifyContent="space-between" style={{ fontSize: 13, color: Colors.Font.Transparent }}>
+      <Content
+        flex
+        alignItems="center"
+        justifyContent="space-between"
+        style={{ fontSize: 13, color: Colors.Font.Transparent, paddingRight: 8 }}
+      >
         <div style={{ cursor: 'pointer', userSelect: 'none' }} onClick={toggleCollapsed}>
           {t('sidebar.pinned')}
         </div>
         {totalPinned > 0 ? totalPinned : undefined}
       </Content>
       {!collapsed && (
-        <>
+        <Content style={{ marginLeft: -4 }}>
           {pinnedObjects.map(i => (
             <SidebarObjectItem draggable={false} key={i.id} id={i.id} />
           ))}
           {pinnedCollections.map(i => (
             <SidebarCollectionItem draggable={false} key={i.id} id={i.id} />
           ))}
-        </>
+        </Content>
       )}
     </Content>
   )

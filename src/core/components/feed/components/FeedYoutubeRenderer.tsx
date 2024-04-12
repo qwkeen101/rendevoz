@@ -15,7 +15,7 @@ export default () => {
 
   if (currentFeedItem) {
     return (
-      <Content fullWidth fullHeight style={{ borderLeft: mode === 'rightBar' ? `1px solid ${Colors.Background.Border}` : undefined }}>
+      <Content fullWidth fullHeight>
         <Video
           mediaState={{
             url: currentFeedItem.link,

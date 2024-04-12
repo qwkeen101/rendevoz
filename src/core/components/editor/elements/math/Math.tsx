@@ -78,7 +78,8 @@ const MathElement = memo(({ element, children, attributes }: RenderElementProps)
             style={{
               display: 'inline-block',
               lineHeight: 1,
-              transition: 'background 0.16s ease-out'
+              transition: 'background 0.16s ease-out',
+              userSelect: 'auto'
             }}
             onClick={toggleFormVisible}
           >
@@ -100,6 +101,7 @@ const MathElement = memo(({ element, children, attributes }: RenderElementProps)
               style={{
                 color: Colors.Font.Transparent,
                 fontSize: '0.8em',
+                userSelect: 'auto',
                 transition: 'background 0.16s ease-out'
               }}
             >

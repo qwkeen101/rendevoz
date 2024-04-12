@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Helmet } from 'react-helmet'
 import { Container, Icon } from '../base'
 import DockLayout, { LayoutData, TabData } from '../base/dock'
@@ -128,7 +128,11 @@ const Layout = () => {
     })
   }
   const [currentActiveName, setCurrentActiveName] = useState('Rendevoz')
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (layout.dockbox.children.length === 1 && layout.dockbox.children[0].tabs.length === 0) {
+      Rendevoz.Actions.Open.openHome()
+      return
+    }
     setTimeout(() => {
       const currentActiveTab = GlobalInstance.layoutOps?.getCurrentFocusedTab()
       if (currentActiveTab) {

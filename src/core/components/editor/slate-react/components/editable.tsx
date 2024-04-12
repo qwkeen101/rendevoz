@@ -422,6 +422,9 @@ export const Editable = memo(
         onUserInput()
 
         if (!readOnly && ReactEditor.hasEditableTarget(editor, event.target) && !isDOMEventHandled(event, propsOnDOMBeforeInput)) {
+          // handle contenteditable controlled by other elements inside editor
+          if (event.target instanceof HTMLElement && event.target.closest('[contenteditable]') !== ref.current) return
+          console.log(event)
           // COMPAT: BeforeInput events aren't cancelable on android, so we have to handle them differently using the android input manager.
           if (androidInputManager) {
             return androidInputManager.handleDOMBeforeInput(event)
@@ -1164,6 +1167,7 @@ export const Editable = memo(
               )}
               onKeyDown={useCallback(
                 (event: React.KeyboardEvent<HTMLDivElement>) => {
+                  if (event.target instanceof HTMLElement && event.target.closest('[contenteditable]') !== ref.current) return
                   if (!readOnly && ReactEditor.hasEditableTarget(editor, event.target)) {
                     androidInputManager?.handleKeyDown(event)
 

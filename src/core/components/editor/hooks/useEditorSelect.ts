@@ -59,11 +59,12 @@ const useEditorSelect = (editor: CustomEditor, scrollElement?: HTMLElement | nul
   const keyDownHandler = (e: KeyboardEvent) => {
     const selected = instance.values.selectedBlocks
     if (isHotkey(KEY.Delete, e) || isHotkey(KEY.Backspace, e)) {
-      instance.blockOps?.deleteBlock()
       if (selected.size) {
+        instance.overlayOps?.close()
         e.preventDefault()
         e.stopPropagation()
       }
+      instance.blockOps?.deleteBlock()
     }
     if (isHotkey(KEY.Escape, e)) {
       if (selected.size) {

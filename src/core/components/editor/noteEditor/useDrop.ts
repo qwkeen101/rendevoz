@@ -41,6 +41,7 @@ const useDrop = (noteId?: number, metaId?: number) => {
       return
     }
     const autoBecomeInline = getSetting().editor.objectAutoBecomeInline
+    console.log(autoBecomeInline)
     const id = Id.getId()
     const metaId = (
       await Rendevoz.Events.Emit.GlobalEventEmitter.emitWithCallback('global', {

@@ -175,7 +175,17 @@ const MetaObjectNode: FC<InnerNodeProps & { containerRef: RefObject<HTMLElement>
   }
   const instance = useWhiteboardInstance()
   if (metaObject?.type.includes('Label')) {
-    return <LabelDetailsRenderer autoPlay showAudio showVideo={nodeState?.focused} metaId={metaObjectId} />
+    return (
+      <LabelDetailsRenderer
+        style={{
+          fontSize: 14
+        }}
+        autoPlay
+        showAudio
+        showVideo={nodeState?.focused}
+        metaId={metaObjectId}
+      />
+    )
   }
 
   const titleRenderer = () => {

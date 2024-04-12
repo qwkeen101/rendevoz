@@ -4,6 +4,7 @@ import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
 import { Reorder } from 'framer-motion'
 import { GlobalInstance, useMemoizedFn } from '@/hooks'
+import { useMeasure } from 'react-use'
 type Props<T> = {
   items: T[]
   renderItem: (item: T, idx: number, selected?: boolean) => ReactElement
@@ -23,6 +24,9 @@ type Props<T> = {
   scrollMargin?: number
   canReorder?: boolean
   onReorder?: (items: T[]) => void
+  gridMode?: boolean
+  gridColBreakPoint?: number
+  getKey?: (item: T) => string | number
 }
 
 type VirtualListRef = Virtualizer<Element, Element> & {
@@ -37,6 +41,8 @@ function VirtualList<T>(
     itemStyle,
     itemClassname,
     itemContainerClassname,
+    gridColBreakPoint,
+    gridMode,
     estimateSize,
     style,
     rangeExtractor,
@@ -45,7 +51,8 @@ function VirtualList<T>(
     onReorder,
     childrenContainerClassname,
     withKeyboardNavigation,
-    paddingEnd
+    paddingEnd,
+    getKey
   }: Props<T>,
   ref: VirtualListRef
 ) {
@@ -57,6 +64,7 @@ function VirtualList<T>(
       getScrollElement: () => contentRef.current,
       overscan: reorder ? items.length : overscan,
       paddingEnd,
+      getItemKey: getKey ? idx => getKey(items[idx]) : undefined,
       rangeExtractor: rangeExtractor || defaultRangeExtractor
     })
     const [currentFocusIndex, setCurrentFocusIndex] = useState(0)
@@ -122,6 +130,7 @@ function VirtualList<T>(
     useEffect(() => {
       setInnerItems(items)
     }, [items])
+
     const renderChildren = () => {
       if (reorder) {
         return (

@@ -17,11 +17,17 @@ import TweetPage from '@/scenes/TweetPage'
 import CollectionGroup from '@/core/components/category/CollectionGroup'
 import { GlobalInstance } from '@/hooks'
 import PropGroup from '@/core/components/category/PropGroup'
+import { CardLibrary } from '@/components/custom/icons/map'
+import All from '@/core/components/category/All'
 
 export const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   {
     type: 'typeGroup',
     content: opts => opts.metaType && <TypeGroup type={opts.metaType} />
+  },
+  {
+    type: 'database',
+    content: () => <All />
   },
   {
     type: 'propGroup',

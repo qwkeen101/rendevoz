@@ -20,10 +20,8 @@ import { Rendevoz } from '@/core/rendevoz'
 import HomeGallery from '@/scenes/home/HomeGallery'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import GalleryConfig from '@/scenes/home/GalleryConfig'
-import { CollectionStore, MetaStore } from '@/api/stores'
-import RecycleBin from '@/core/components/category/TrashBin'
+import { MetaStore } from '@/api/stores'
 import Workspace from '@/api/common/workspace'
-import { request } from '@/utils/request'
 
 const { Content } = Components
 const HomeSearchAtom = atom<string | undefined>(undefined)
@@ -52,7 +50,7 @@ export const HomePage: FC = () => {
             <AnimatePopover
               align={'start'}
               content={setV => (
-                <WithBorder padding={6} style={{ maxHeight: 260, overflowY: 'auto', maxWidth: 200, overflowX: 'hidden' }}>
+                <WithBorder padding={6} width={180}>
                   {allWorkspaces.map(i => (
                     <div
                       key={i.createdAt}

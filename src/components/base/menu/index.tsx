@@ -1,7 +1,7 @@
 import { KEY } from '@/consts'
 import FontSize from '@/consts/font'
 import { isHotkey } from 'is-hotkey'
-import { CSSProperties, FC, Fragment, MouseEventHandler, ReactNode, useEffect, useRef, useState } from 'react'
+import { CSSProperties, FC, Fragment, MouseEventHandler, ReactElement, ReactNode, useEffect, useRef, useState } from 'react'
 import Content from '../Content'
 import MenuItem from './MenuItem'
 import ClassName from '@/styles/classNames'
@@ -63,11 +63,13 @@ export type IMenuLayoutItem =
       suffixIconStyle?: CSSProperties
       onSuffixIconClick?: React.MouseEventHandler
       subMenu?: IMenuLayoutItem[]
+      subMenuStyle?: CSSProperties
       popOver?: {
         key: string
         node: ReactNode
       }
       suffix?: string
+      contextMenu?: ReactElement | ((setV: (v: boolean) => void) => ReactElement)
       hoverOpenSubMenu?: boolean
       key: string
       onSelect?: VoidFunction
@@ -126,7 +128,7 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({
       ? defaultSelected
       : firstKey
     : firstKey
-  const [currentSelect, setCurrentSelect] = useState<string[]>(defaultSelectFirst ? defaultSelectedKeys : [])
+  const [currentSelect, setCurrentSelect] = useState<string[]>(defaultSelectFirst ? defaultSelectedKeys : defaultSelected || [])
   const handleSelectItem = (currentItem: IMenuLayoutItem) => {
     if ('onSelect' in currentItem && currentItem.onSelect) {
       currentItem.onSelect?.()
@@ -136,7 +138,7 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({
   }
   useEffect(() => {
     if (reselectOnLayoutChange && !selectedKeys) {
-      setCurrentSelect(defaultSelectFirst ? defaultSelectedKeys : [])
+      setCurrentSelect(defaultSelectFirst ? defaultSelectedKeys : defaultSelected || [])
     }
   }, [normalizedLayout.length, reselectOnLayoutChange])
   const getCurrentItemList = (): IMenuLayoutItem[] => {
@@ -166,7 +168,7 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({
   useEffect(() => {
     onSelectChange?.(currentSelect)
   }, [currentSelect])
-  const keyNavigatedRef = useRef(false)
+  const keyNavigatedRef = useRef(defaultSelected ? true : false)
   const keydownHandler = useMemoizedFn((e: KeyboardEvent) => {
     let direction: 'up' | 'down' | undefined = undefined
     if (isHotkey(KEY.ArrowUp, e)) {
@@ -291,6 +293,7 @@ export const NavigationMenu: FC<NavigationMenuProps> = ({
         scrollMode: 'if-needed',
         block: 'center'
       })
+      keyNavigatedRef.current = false
     }
   }, [currentSelect])
   return (

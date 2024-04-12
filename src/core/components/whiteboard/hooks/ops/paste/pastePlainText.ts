@@ -22,6 +22,7 @@ export default async (instance: IWhiteboardInstance, pos: XYPosition) => {
       Array.from(doc.body.children).forEach(n => wrapper.appendChild(n))
       doc.body.appendChild(wrapper)
       const deserialized = deserializeHTML(doc.body)
+      console.log(deserialized, doc.body)
       if (deserialized?.length) {
         instance.insertNode?.({
           type: 'text',

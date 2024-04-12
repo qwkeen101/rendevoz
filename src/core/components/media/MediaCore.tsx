@@ -47,6 +47,9 @@ const MediaCore = memo(() => {
 
   assignProperties(instance, {
     actionOps: {
+      autoPlay: () => {
+        setMediaState(s => ({ ...s, autoPlay: true }))
+      },
       pause: () => setMediaState(s => ({ ...s, paused: true })),
       play: () => setMediaState(s => ({ ...s, paused: false })),
       loop: () => setMediaState(s => ({ ...s, loop: true })),
@@ -74,8 +77,6 @@ const MediaCore = memo(() => {
     }
   })
 
-  const contextMenuRef = useRef()
-  console.log(mediaState)
   if (!mediaState.url) return null
 
   if (mediaState.mode === 'audio') {
@@ -84,15 +85,14 @@ const MediaCore = memo(() => {
   const borderRadius = mediaState.styles?.videoBorderRadius ?? MEDIA_PLAYER_DEFAULT_BORDER_RADIUS
   return (
     <ContextMenu
-      ref={contextMenuRef}
       enableContextMenu={mediaState.loaded}
-      content={
+      content={setV => (
         <MediaActionsMenu
           onClose={() => {
-            contextMenuRef.current?.closeContextMenu?.()
+            setV(false)
           }}
         />
-      }
+      )}
     >
       <Content
         style={{

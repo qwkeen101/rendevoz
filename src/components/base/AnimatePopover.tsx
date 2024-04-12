@@ -123,6 +123,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
     onVisiblityChange?.(isOpen)
     const keydownHandler = (e: KeyboardEvent) => {
       if (isHotkey(KEY.Escape, e)) {
+        if (e.defaultPrevented) return
         e.preventDefault()
         e.stopPropagation()
         onClickOutside?.(e)
@@ -133,7 +134,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
       }
     }
     if (isOpen) {
-      document.addEventListener('keydown', keydownHandler, true)
+      document.addEventListener('keydown', keydownHandler)
       const containerDockPane = intersectionRef.current?.closest(`[role='tabpane']`)
       if (containerDockPane) {
         const visiblityWatcher = new MutationObserver(cb => {
@@ -151,13 +152,13 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
           attributeFilter: ['style']
         })
         return () => {
-          document.removeEventListener('keydown', keydownHandler, true)
+          document.removeEventListener('keydown', keydownHandler)
           visiblityWatcher.disconnect()
         }
       }
     }
     return () => {
-      document.removeEventListener('keydown', keydownHandler, true)
+      document.removeEventListener('keydown', keydownHandler)
     }
   }, [isOpen])
 

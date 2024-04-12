@@ -1,5 +1,5 @@
 import ContextMenu from '@/components/contextMenu'
-import { AnimatePopover, Button, Content, WithBorder } from '@/components'
+import { AnimatePopover, Button, Content, Menu, WithBorder } from '@/components'
 import deleteCollection from '@/core/components/feed/utils/deleteCollection'
 import { ClassName } from 'rendevoz'
 import { useSetAtom } from 'jotai'
@@ -20,82 +20,96 @@ export default ({ collectionId, parentFolderId }: { collectionId: number; parent
   const instance = UseFeedInstance()
   const c = ObjectStore('feedCollection').useValue(collectionId)
   const allFolders = useGlobalAtomValue(ObjectStore('feedFolder').objectMapAtom)
-  const ref = useRef()
   if (!c) return null
+  // @ts-ignore
   return (
     <ContextMenu
-      ref={ref}
-      content={
-        <WithBorder padding={4} width={160} style={{ fontSize: 14 }}>
-          <Button.IconButton
-            icon={'park-edit'}
-            text={t('general.rename')}
-            onClick={() => {
-              setIsRename(true)
-              ref.current?.closeContextMenu?.()
-            }}
-          />
-          <AnimatePopover
-            positions={['right']}
-            align={'start'}
-            content={
-              <WithBorder width={160} padding={4} style={{ fontSize: 14, maxHeight: 400, overflowY: 'auto' }}>
-                {parentFolderId && (
-                  <div
-                    className={ClassName.flatButton(4, '2px 6px')}
-                    onClick={async () => {
-                      const parentFolder = await ObjectStore('feedFolder').getOneById(parentFolderId)
-                      if (parentFolder) {
-                        await ObjectStore('feedFolder').updateOne({
-                          id: parentFolderId,
-                          collections: parentFolder.collections.filter(i => i !== collectionId)
-                        })
+      content={setV => (
+        <WithBorder padding={'0.4rem 0'} width={160} style={{ fontSize: 14 }}>
+          <Menu.NavigationMenu
+            layout={[
+              {
+                type: 'item',
+                text: t('general.edit'),
+                key: 'edit',
+                icon: 'park-edit',
+                onSelect: () => {
+                  setV(false)
+                  instance.editFeed?.(collectionId)
+                }
+              },
+              {
+                type: 'item',
+                key: 'move-to',
+                text: t('general.Move to'),
+                subMenuStyle: { width: 200 },
+                icon: 'park-folder-close',
+                subMenu: [
+                  {
+                    type: 'item',
+                    key: 'create-folder',
+                    text: t('feed.Create new folder'),
+                    icon: 'park-folder-plus',
+                    onSelect: async () => {
+                      setV(false)
+                      instance.folderOps?.createFolder().then(f => {
+                        ObjectStore('feedFolder').updateOne({ id: f.id, collections: [collectionId] })
+                      })
+                    }
+                  },
+                  parentFolderId
+                    ? {
+                        type: 'item',
+                        key: 'move-out',
+                        text: t('feed.Move out from folder'),
+                        icon: 'park-folder-withdrawal',
+                        onSelect: async () => {
+                          setV(false)
+                          const parentFolder = await ObjectStore('feedFolder').getOneById(parentFolderId)
+                          if (parentFolder) {
+                            await ObjectStore('feedFolder').updateOne({
+                              id: parentFolderId,
+                              collections: parentFolder.collections.filter(i => i !== collectionId)
+                            })
+                          }
+                        }
                       }
-                    }}
-                  >
-                    Move to root
-                  </div>
-                )}
-                <div
-                  className={ClassName.flatButton(4, '2px 6px')}
-                  onClick={() => {
-                    instance.folderOps?.createFolder().then(f => {
-                      ObjectStore('feedFolder').updateOne({ id: f.id, collections: [collectionId] })
-                    })
-                  }}
-                >
-                  Assign to new folder
-                </div>
-                {/*<div style={{ height: 1, width: '100%', margin: '4px 0px', background: Colors.Background.Border }}></div>*/}
-                {Array.from(allFolders.values()).map(
-                  i =>
-                    i.id !== parentFolderId && (
-                      <div
-                        className={ClassName.flatButton(4, '2px 6px')}
-                        onClick={() => {
-                          ObjectStore('feedFolder').updateOne({ id: i.id, collections: [...i.collections, collectionId] })
-                        }}
-                      >
-                        {i.name}
-                      </div>
-                    )
-                )}
-              </WithBorder>
-            }
-          >
-            <Button.IconButton suffixIcon={'park-right'} icon={'park-folder-close'} text={t('general.Move to')} />
-          </AnimatePopover>
-          <Button.IconButton
-            icon={'park-delete'}
-            dangerous
-            text={t('general.delete')}
-            onClick={() => {
-              deleteCollection(collectionId)
-              ref.current?.closeContextMenu?.()
-            }}
+                    : undefined,
+                  Array.from(allFolders.values()).filter(i => i.id !== parentFolderId).length
+                    ? {
+                        type: 'title',
+                        name: t('feed.Assign to folder')
+                      }
+                    : undefined,
+                  // @ts-ignore
+                  ...Array.from(allFolders.values()).map(i =>
+                    i.id !== parentFolderId
+                      ? {
+                          type: 'item',
+                          key: String(i.id),
+                          text: i.name,
+                          onSelect: () => {
+                            ObjectStore('feedFolder').updateOne({ id: i.id, collections: [...i.collections, collectionId] })
+                          }
+                        }
+                      : undefined
+                  )
+                ].filter(i => i)
+              },
+              {
+                type: 'item',
+                key: 'delete',
+                text: t('general.delete'),
+                icon: 'park-delete',
+                onSelect: () => {
+                  deleteCollection(collectionId)
+                  setV(false)
+                }
+              }
+            ]}
           />
         </WithBorder>
-      }
+      )}
       position={['right', 'left']}
     >
       {isRename ? (
@@ -133,7 +147,7 @@ export default ({ collectionId, parentFolderId }: { collectionId: number; parent
               headerName: undefined
             }))
           }}
-          className={ClassName.flatButton(4, '2px 6px')}
+          className={ClassName.flatButton()}
           flex
           justifyContent={'space-between'}
           gap={10}

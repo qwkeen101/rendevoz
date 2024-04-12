@@ -41,6 +41,8 @@ const DraggableElement = forwardRef<
         cloned.style.width = `${bound.width}px`
         cloned.style.height = `${bound.height}px`
         cloned.style.pointerEvents = 'none'
+        // cloned.style.boxShadow = '0 0 0 2px var(--select-color)'
+        // cloned.style.borderRadius = '4px'
         draggingDetails && (GlobalDragOverlayInstance.draggingDetails = draggingDetails)
         GlobalDragOverlayInstance.addDragElements?.(cloned)
       }

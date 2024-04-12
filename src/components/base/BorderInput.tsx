@@ -6,7 +6,7 @@ import { CSSProperties, HTMLProps, useEffect, useRef, useState } from 'react'
 import { AutosizeTextarea } from '@/components'
 import classnames from 'classnames'
 
-type BorderInputProps = {
+type BorderInputProps = Omit<HTMLProps<HTMLInputElement>, 'onChange'> & {
   onChange?: (v: string) => void
   placeholder?: string
   style?: CSSProperties
@@ -17,7 +17,7 @@ type BorderInputProps = {
   id?: string
   spellCheck?: 'false' | 'true'
   textarea?: boolean
-} & HTMLProps<HTMLInputElement>
+}
 
 const inputClassName = css({
   padding: '12px 16px',

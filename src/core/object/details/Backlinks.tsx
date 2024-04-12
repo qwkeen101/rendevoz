@@ -26,26 +26,19 @@ export default memo(({ metaId, visible }: { metaId: number; visible?: boolean })
         <Content
           flex
           alignItems={'center'}
-          gap={12}
+          gap={8}
           style={{
-            fontWeight: 500,
             fontSize: 14,
-            margin: '16px 0 12px'
+            margin: '16px 0'
           }}
         >
           <Icon
             name={'park-arrow-up'}
             size={16}
-            containerStyle={{
-              background: 'linear-gradient(#7bc3ff 0%, #286efa 140%)',
-              color: 'white',
-              borderRadius: 6,
-              padding: 4
-            }}
           />
           {t('general.Appear in')}
         </Content>
-        <Content className={'border-box-shadow'} column gap={3} flex style={{ borderRadius: 8, padding: 8 }}>
+        <Content className={'border-box-shadow'} column gap={5} flex style={{ borderRadius: 8, padding: 8 }}>
           {items.map(i => (
             <Item parentMetaId={metaId} metaId={i.parent.id} key={i.parent.id} />
           ))}

@@ -87,8 +87,7 @@ const FeedSidebar = () => {
         transform: feedState.sidebarCollapsed ? 'translateX(-100%)' : 'unset',
         position: feedState.sidebarCollapsed ? 'absolute' : 'relative',
         top: 0,
-        left: 0,
-        transition: 'transform 0.25s ease, opacity 0.25s ease'
+        left: 0
       }}
     >
       <Content flex column gap={4} style={{ padding: '6px 6px' }}>
@@ -106,7 +105,7 @@ const FeedSidebar = () => {
             }))
           }
           icon={'park-plus'}
-          text={t('general.Add new feed')}
+          text={t('feed.Follow new feeds')}
         ></Button.IconButton>
       </Content>
       <Content flex column style={{ padding: '0px 8px 10px', overflowY: 'auto', flexGrow: 1 }}>
@@ -119,7 +118,7 @@ const FeedSidebar = () => {
         >
           {t('general.Feeds')}
         </div>
-        <Content flex column gap={3}>
+        <Content flex column>
           {rootFolders?.map(i => <FeedSidebarFolder folderId={i} key={i} />)}
           {rootCollections?.map(i => <FeedSidebarItem collectionId={i} key={i} />)}
         </Content>
@@ -132,7 +131,7 @@ const FeedSidebar = () => {
         >
           {t('general.Podcasts')}
         </div>
-        <Content flex column gap={3}>
+        <Content flex column>
           {rootPodcasts?.map(i => <FeedSidebarItem collectionId={i} key={i} />)}
         </Content>
       </Content>

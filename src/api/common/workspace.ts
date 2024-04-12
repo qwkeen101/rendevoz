@@ -20,8 +20,8 @@ export default {
         force: true
       })
     )
-    const allWorkspaces = await KeyvalueStore.getOne('allWorkspaces')
-    const currentWorkspace = await KeyvalueStore.getOne('currentWorkspace')
+    const allWorkspaces = KeyvalueStore.getOne('allWorkspaces')
+    const currentWorkspace = KeyvalueStore.getOne('currentWorkspace')
     if (allWorkspaces && currentWorkspace) {
       KeyvalueStore.updateOne(
         'allWorkspaces',

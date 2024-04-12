@@ -21,13 +21,13 @@ export const BuiltInSidebarItems: Record<string, RegisteredSidebarItem> = {
     },
     text: () => t('general.home')
   },
-  screenshot: {
-    key: 'screenshot',
-    icon: 'park-screenshot-one',
+  database: {
+    key: 'database',
+    text: () => t('general.Library'),
+    icon: 'custom-card-library',
     onClick: () => {
-      GlobalScreenshotInstance.open?.()
-    },
-    text: () => t('general.screenshot')
+      GlobalInstance.layoutOps?.openNewTab({ type: 'database' })
+    }
   },
   search: {
     key: 'search',
@@ -37,14 +37,6 @@ export const BuiltInSidebarItems: Record<string, RegisteredSidebarItem> = {
     },
     text: () => t('general.search')
   },
-  recycleBin: {
-    key: 'recycleBin',
-    icon: 'park-delete',
-    text: () => t('general.Trash'),
-    onClick: () => {
-      Rendevoz.Actions.Open.openRecycleBin()
-    }
-  },
   graph: {
     key: 'graph',
     icon: 'park-share-one',
@@ -53,12 +45,6 @@ export const BuiltInSidebarItems: Record<string, RegisteredSidebarItem> = {
       Rendevoz.Actions.Layout.openNewTab({ data: { type: 'graph' } })
     }
   },
-  settings: {
-    key: 'settings',
-    text: () => t('general.settings'),
-    element: <SidebarSetting />,
-    icon: 'park-setting-two'
-  },
   feeds: {
     key: 'feeds',
     text: () => t('general.Feeds'),
@@ -66,6 +52,28 @@ export const BuiltInSidebarItems: Record<string, RegisteredSidebarItem> = {
     onClick: () => {
       Rendevoz.Actions.Layout.openNewTab({ data: { type: 'feeds' } })
     }
+  },
+  screenshot: {
+    key: 'screenshot',
+    icon: 'park-screenshot-one',
+    onClick: () => {
+      GlobalScreenshotInstance.open?.()
+    },
+    text: () => t('general.screenshot')
+  },
+  recycleBin: {
+    key: 'recycleBin',
+    icon: 'park-delete',
+    text: () => t('general.Trash'),
+    onClick: () => {
+      Rendevoz.Actions.Open.openRecycleBin()
+    }
+  },
+  settings: {
+    key: 'settings',
+    text: () => t('general.settings'),
+    element: <SidebarSetting />,
+    icon: 'park-setting-two'
   }
 }
 
@@ -114,6 +122,7 @@ export const Sidebar = ({ direction = 'right' }: { direction: 'left' | 'right' }
           }}
         ></div>
         <SidebarIcons
+          defaultItems={allItems}
           items={items}
           direction={direction}
           showUser={direction === 'right'}

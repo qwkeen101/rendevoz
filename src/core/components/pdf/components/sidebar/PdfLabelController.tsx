@@ -274,8 +274,14 @@ const Label = ({ id, highlight }: { id: number; highlight: boolean }) => {
           preview
         />
       )}
-      {pdfLabel.selectedText && renderOriginalText({ text: pdfLabel.selectedText })}
-      <Content flex style={{ marginTop: 4 }}>
+      {pdfLabel.selectedText &&
+        renderOriginalText({
+          text: pdfLabel.selectedText,
+          style: {
+            marginBottom: 8
+          }
+        })}
+      <Content flex>
         {renderName({})}
         {renderPopover({
           on: event => {
@@ -287,13 +293,9 @@ const Label = ({ id, highlight }: { id: number; highlight: boolean }) => {
           }
         })}
       </Content>
-      {renderDescription({ style: { width: '100%' } })}
-      {renderAttachment({
-        style: { marginTop: 8 },
-        renderAttOnParent: false,
-        renderObjectDetailsOnParent: false
-      })}
-      <div className={'font-size-13 transparent-font'}>{t('general.Page', { num: (pdfLabel.page ?? 0) + 1 })}</div>
+      <div style={{ marginTop: 6, lineHeight: 1 }} className={'font-size-12 super-transparent-font'}>
+        {t('general.Page', { num: (pdfLabel.page ?? 0) + 1 })}
+      </div>
     </Content>
   )
 }

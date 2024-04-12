@@ -95,6 +95,8 @@ export type IGlobalInstance = Partial<{
     getSearchResults: (query: string) => Promise<string>
   }
   metaOps: {
+    viewContains: (metaId: number) => void
+    canViewContains: (metaId: number) => boolean
     canCreateDirectly: (type: MetaObject['type']) => boolean
     getLink: (nodeId: number) => Promise<{
       link: string

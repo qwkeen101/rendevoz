@@ -117,6 +117,7 @@ const withCustomComponent = (editor: CustomEditor) => {
     return false
   }
   editor.isSelectable = e => {
+    if (e.type === 'math' || e.type === 'math-block') return true
     if (Editor.isVoid(editor, e) && !Editor.isInline(editor, e)) {
       return false
     }

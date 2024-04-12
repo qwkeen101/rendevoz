@@ -27,7 +27,7 @@ import { css } from '@emotion/css'
 import classnames from 'classnames'
 import { FromCell, RelatedCell, TagCell } from '@/core/components/group/components/table/cells'
 import FileProp from '@/core/object/renderer/properties/FileProp'
-import ContentDisplayer from '@/core/components/group/components/gallery/items/ContentDisplayer'
+import ContentDisplayer from '@/core/components/group/components/gallery/items/FixedHeightContentDisplayer'
 import { useUpdate } from 'react-use'
 
 export const WrapperClassName = css({
@@ -48,6 +48,7 @@ export default memo(
         visibleProps,
         showCover,
         showDeleted,
+        thumbnailMode,
         showOriginalText,
         ...rest
       }: {
@@ -58,6 +59,7 @@ export default memo(
         showOriginalText: boolean
         showCover?: (MetaGroup['views'][0] & { type: 'gallery' })['options']['cardCover']
         visibleProps: MetaGroupProperty[]
+        thumbnailMode?: boolean
         showDeleted?: boolean
         dragPosition?: 'tb' | 'lr'
       },
@@ -431,21 +433,18 @@ export default memo(
               />
             </Content>
             {renderIndicator()}
-            {showCover === 'content' && (
+            {(showCover === 'content' || thumbnailMode) && (
               <ContentDisplayer
                 onClick={e => {
                   if (isEditing) return
                   instance.openObject?.(meta.id, rowDetails.rowId)
                 }}
+                thumbnailMode={thumbnailMode}
                 hideCoverIfEmpty={hideCoverIfEmpty}
                 metaId={meta.id}
-                isEditing={isEditing}
-                onChange={v => {
-                  instance.metaOps?.updateMeta({ id: meta.id, coverImgSrc: v })
-                }}
               />
             )}
-            {showCover === 'cover' && (isEditing || !hideCoverIfEmpty || meta.coverImgSrc) && (
+            {showCover === 'cover' && !thumbnailMode && (isEditing || !hideCoverIfEmpty || meta.coverImgSrc) && (
               <ImageItem
                 isEditing={isEditing}
                 value={meta.coverImgSrc}
@@ -461,65 +460,68 @@ export default memo(
                 }}
               />
             )}
-            <div
-              style={{ width: '100%', flex: 1 }}
-              onClick={e => {
-                if (isEditing) return
-                if (e.target instanceof HTMLElement && e.target.closest('[role="prop"]')) return
-                if (e.currentTarget.contains(e.target)) {
-                  instance.openObject?.(meta.id, rowDetails.rowId)
-                }
-              }}
-            >
-              {isEditing ? (
-                <AutosizeTextarea
-                  ref={titleTextRef}
-                  disabled={!isEditing}
-                  onBlur={e => {
-                    instance.metaOps?.updateMeta({ id: meta.id, name: e.target.innerText })
-                  }}
-                  style={{
-                    padding: '8px 10px 2px',
-                    display: 'block',
-                    width: '100%',
-                    fontWeight: 500,
-                    fontSize: 14,
-                    color: meta.name ? undefined : Colors.Font.Transparent,
-                    overflow: 'hidden',
-                    cursor: isEditing ? 'text' : 'pointer',
-                    pointerEvents: isEditing ? 'auto' : 'none'
-                  }}
-                  placeholder={t('general.Type a name')}
-                ></AutosizeTextarea>
-              ) : (
-                <div
-                  style={{
-                    padding: '8px 10px 2px',
-                    display: 'block',
-                    width: '100%',
-                    fontWeight: 500,
-                    color: meta.name ? undefined : Colors.Font.Transparent,
-                    overflow: 'hidden',
-                    resize: 'none',
-                    cursor: 'pointer',
-                    wordBreak: 'break-word',
-                    whiteSpace: 'pre-wrap',
-                    fontSize: 14,
-                    pointerEvents: 'none'
-                  }}
-                >
-                  {meta.name || meta.placeholderName}
-                </div>
-              )}
+            {(!thumbnailMode || (thumbnailMode && isEditing)) && (
               <div
-                style={{
-                  overflow: 'hidden',
-                  paddingBottom: 6
+                style={{ width: '100%', flex: 1 }}
+                onClick={e => {
+                  if (isEditing) return
+                  if (e.target instanceof HTMLElement && e.target.closest('[role="prop"]')) return
+                  if (e.currentTarget.contains(e.target)) {
+                    instance.openObject?.(meta.id, rowDetails.rowId)
+                  }
                 }}
               >
-                {visibleProps?.map(i => <Fragment key={i.id}>{propRender(i)}</Fragment>)}
+                {isEditing ? (
+                  <AutosizeTextarea
+                    disabled={!isEditing}
+                    onBlur={e => {
+                      instance.metaOps?.updateMeta({ id: meta.id, name: e.target.innerText })
+                    }}
+                    autoFocus
+                    value={meta?.name || ''}
+                    style={{
+                      padding: '8px 10px 2px',
+                      display: 'block',
+                      width: '100%',
+                      fontWeight: 500,
+                      fontSize: 14,
+                      color: meta.name ? undefined : Colors.Font.Transparent,
+                      overflow: 'hidden',
+                      cursor: isEditing ? 'text' : 'pointer',
+                      pointerEvents: isEditing ? 'auto' : 'none'
+                    }}
+                    placeholder={t('general.Type a name')}
+                  ></AutosizeTextarea>
+                ) : (
+                  <div
+                    style={{
+                      padding: '8px 10px 2px',
+                      display: 'block',
+                      width: '100%',
+                      fontWeight: 500,
+                      color: meta.name ? undefined : Colors.Font.Transparent,
+                      overflow: 'hidden',
+                      resize: 'none',
+                      cursor: 'pointer',
+                      wordBreak: 'break-word',
+                      whiteSpace: 'pre-wrap',
+                      fontSize: 14,
+                      pointerEvents: 'none'
+                    }}
+                  >
+                    {meta.name || (showCover === 'content' || showOriginalText ? undefined : meta.placeholderName)}
+                  </div>
+                )}
+                <div
+                  style={{
+                    overflow: 'hidden',
+                    paddingBottom: 6
+                  }}
+                >
+                  {visibleProps?.map(i => <Fragment key={i.id}>{propRender(i)}</Fragment>)}
+                </div>
               </div>
-            </div>
+            )}
           </Content>
         </Content>
       )

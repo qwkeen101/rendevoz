@@ -4,20 +4,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import FeedSidebarItem from '@/core/components/feed/components/FeedSidebarItem'
 import { ClassName } from 'rendevoz'
 import ContextMenu from '@/components/contextMenu'
-import deleteCollection from '@/core/components/feed/utils/deleteCollection'
 import isHotkey from 'is-hotkey'
 import { Colors, KEY } from '@/consts'
-import { css } from '@emotion/css'
 import { useTranslation } from 'react-i18next'
-import displayAllFeedsUnderCollection from '@/core/components/feed/utils/displayAllFeedsUnderCollection'
-import { useSetAtom } from 'jotai'
-import { FeedStateAtom } from '@/core/components/feed/hooks/useFeedState'
 
 export default ({ folderId }: { folderId: number }) => {
   const folder = ObjectStore('feedFolder').useValue(folderId)
   const folded = folder?.folded ?? true
   const [isRename, setIsRename] = useState(false)
-  const ref = useRef()
   const [folderUnread, setFolderUnread] = useState(0)
   useEffect(() => {
     if (folder?.collections.length) {
@@ -36,28 +30,26 @@ export default ({ folderId }: { folderId: number }) => {
   return (
     <Content>
       <ContextMenu
-        ref={ref}
-        content={
+        content={setV => (
           <WithBorder padding={4} width={160} style={{ fontSize: 14 }}>
             <Button.IconButton
               icon={'park-edit'}
               text={t('general.rename')}
               onClick={() => {
                 setIsRename(true)
-                ref.current?.closeContextMenu?.()
+                setV(false)
               }}
             />
             <Button.IconButton
               icon={'park-delete'}
-              dangerous
               text={t('general.delete')}
               onClick={() => {
                 ObjectStore('feedFolder').deleteOneById(folderId)
-                ref.current?.closeContextMenu?.()
+                setV(false)
               }}
             />
           </WithBorder>
-        }
+        )}
         position={['right', 'left']}
       >
         {isRename ? (
@@ -86,32 +78,16 @@ export default ({ folderId }: { folderId: number }) => {
           />
         ) : (
           <Content
+            onClick={() => {
+              ObjectStore('feedFolder').updateOne({ id: folderId, folded: !folded })
+            }}
             flex
             gap={4}
-            // onClick={() => {
-            //   displayAllFeedsUnderCollection(folderId).then(items => {
-            //     if (items) {
-            //       setFeedState(s =>
-            //         s.currentFolderId === folderId
-            //           ? s
-            //           : {
-            //               ...s,
-            //               allFeedItems: items?.map(i => i.id),
-            //               currentVisiblePage: 'feeds',
-            //               currentCollectionId: undefined,
-            //               currentFocusedFeedItemId: undefined,
-            //               currentFolderId: folderId
-            //             }
-            //       )
-            //     }
-            //   })
-            // }}
-            className={ClassName.flatButton(4, '2px 6px 2px 2px')}
+            alignItems={'center'}
+            style={{ paddingLeft: 4 }}
+            className={ClassName.flatButton()}
           >
             <Icon
-              onClick={() => {
-                ObjectStore('feedFolder').updateOne({ id: folderId, folded: !folded })
-              }}
               theme={'filled'}
               name={'park-right-one'}
               style={{

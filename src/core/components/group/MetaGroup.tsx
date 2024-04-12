@@ -49,6 +49,7 @@ export type IMetaGroupProps = {
   }
   on?: (e: IGroupEvent) => void
   layout?: {
+    showContains?: boolean
     showTitle?: boolean
     showActions?: boolean
     showSidebar?: boolean

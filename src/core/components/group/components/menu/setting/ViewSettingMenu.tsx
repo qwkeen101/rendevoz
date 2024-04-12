@@ -11,6 +11,7 @@ export default () => {
   const { t } = useTranslation()
   const instance = useGroupInstance()
   const currentGroupView = groupState.currentView
+  const thumbnailMode = currentGroupView?.options.thumbnailMode === true
   const showCardSetting = currentGroupView?.type === 'gallery' || currentGroupView?.type === 'kanban'
   return (
     <>
@@ -82,73 +83,87 @@ export default () => {
       </Content>
       <div style={{ padding: 4 }}>
         {showCardSetting && (
-          <ButtonSwitch
-            onChange={v => {
-              instance.updateCurrentView?.(s => ({
-                ...s,
-                options: {
-                  ...s.options,
-                  fitImage: v
+          <>
+            <ButtonSwitch
+              value={!!currentGroupView?.options.thumbnailMode}
+              name={t('general.Thumbnail mode')}
+              onChange={v => {
+                instance.updateCurrentView?.(s => ({
+                  ...s,
+                  options: {
+                    ...s.options,
+                    thumbnailMode: v
+                  }
+                }))
+              }}
+            />
+            <ButtonSwitch
+              onChange={v => {
+                instance.updateCurrentView?.(s => ({
+                  ...s,
+                  options: {
+                    ...s.options,
+                    fitImage: v
+                  }
+                }))
+              }}
+              name={t('general.Fit image')}
+              value={!!currentGroupView?.options.fitImage}
+            ></ButtonSwitch>
+            <ButtonSelect
+              closeOnSelect={true}
+              name={t('general.Card size')}
+              onSelect={v => {
+                instance.updateCurrentView?.(s => ({ ...s, options: { ...s.options, cardSize: v[0] } }))
+              }}
+              value={currentGroupView.options.cardSize || 'medium'}
+              options={[
+                {
+                  value: 'small',
+                  children: t('general.Small')
+                },
+                {
+                  value: 'medium',
+                  children: t('general.Medium')
+                },
+                {
+                  value: 'large',
+                  children: t('general.Large')
                 }
-              }))
-            }}
-            name={t('general.Fit image')}
-            value={!!currentGroupView?.options.fitImage}
-          ></ButtonSwitch>
+              ]}
+            />
+            {!thumbnailMode && (
+              <ButtonSelect
+                closeOnSelect={true}
+                name={t('general.Card cover')}
+                onSelect={v => {
+                  instance.updateCurrentView?.(s => ({ ...s, options: { ...s.options, cardCover: v[0] } }))
+                }}
+                value={currentGroupView.options.cardCover || 'cover'}
+                options={[
+                  {
+                    value: 'cover',
+                    children: t('general.Cover image')
+                  },
+                  {
+                    value: 'content',
+                    children: t('general.Card content')
+                  },
+                  {
+                    value: 'none',
+                    children: t('general.None')
+                  }
+                ]}
+              />
+            )}
+          </>
         )}
-        {showCardSetting && (
-          <ButtonSelect
-            closeOnSelect={true}
-            name={t('general.Card size')}
-            onSelect={v => {
-              instance.updateCurrentView?.(s => ({ ...s, options: { ...s.options, cardSize: v[0] } }))
-            }}
-            value={currentGroupView.options.cardSize || 'medium'}
-            options={[
-              {
-                value: 'small',
-                children: t('general.Small')
-              },
-              {
-                value: 'medium',
-                children: t('general.Medium')
-              },
-              {
-                value: 'large',
-                children: t('general.Large')
-              }
-            ]}
-          />
-        )}
-        {showCardSetting && (
-          <ButtonSelect
-            closeOnSelect={true}
-            name={t('general.Card cover')}
-            onSelect={v => {
-              instance.updateCurrentView?.(s => ({ ...s, options: { ...s.options, cardCover: v[0] } }))
-            }}
-            value={currentGroupView.options.cardCover || 'cover'}
-            options={[
-              {
-                value: 'cover',
-                children: t('general.Cover image')
-              },
-              {
-                value: 'content',
-                children: t('general.Card content')
-              },
-              {
-                value: 'none',
-                children: t('general.None')
-              }
-            ]}
-          />
-        )}
-        {currentGroupView?.type === 'gallery' && (
+        {currentGroupView?.type === 'gallery' && !thumbnailMode && (
           <ButtonSwitch
             onChange={v => {
               instance.updateCurrentView?.(s => ({
                 ...s,
+                type: 'gallery',
                 options: {
                   ...s.options,
                   hideCoverIfEmpty: v
@@ -159,7 +174,7 @@ export default () => {
             value={!!currentGroupView?.options.hideCoverIfEmpty}
           ></ButtonSwitch>
         )}
-        {currentGroupView?.type !== 'list' && currentGroupView?.type !== 'calendar' && (
+        {currentGroupView?.type !== 'list' && currentGroupView?.type !== 'calendar' && !thumbnailMode && (
           <ButtonSwitch
             onChange={v => {
               instance.updateCurrentView?.(s => ({

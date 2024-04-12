@@ -27,16 +27,9 @@ export const useAssignEditorInstance = (editor: CustomEditor, scrollElementRef: 
   const getHighlightLocation = (highlightId: number) => {
     const iter = Node.texts(editor)
     const values = []
-    let findFirst = false
     for (const value of iter) {
       if ('highlight' in value[0] && value[0].highlight === highlightId) {
-        findFirst = true
         values.push(value)
-      } else {
-        if (findFirst && value[0].text.length) {
-          console.log(value)
-          break
-        }
       }
     }
     return values

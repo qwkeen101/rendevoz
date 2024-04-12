@@ -67,6 +67,7 @@ export interface MetaGroup extends IBase {
     | {
         type: 'kanban'
         options: {
+          thumbnailMode?: boolean
           wrapColumns?: boolean
           properties?: Record<number, MetaGroupViewProperty>
         }
@@ -90,6 +91,7 @@ export interface MetaGroup extends IBase {
           properties?: Record<number, MetaGroupViewProperty>
           cardSize?: 'small' | 'medium' | 'large'
           fitImage?: boolean
+          thumbnailMode?: boolean
           cardCover?: 'cover' | 'none' | 'content'
           hideCoverIfEmpty?: boolean
         }
@@ -122,6 +124,7 @@ export interface MetaGroup extends IBase {
     sort?: SorterGroup
     search?: string
     group?: IMetaGroupGrouper
+    selectedContainsMeta?: number[]
     storedGroups?: IGroupGrouper[]
   })[]
   rootFilterGroup: MetaFilterGroup

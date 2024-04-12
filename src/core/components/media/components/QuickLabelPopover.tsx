@@ -97,9 +97,13 @@ export default memo(() => {
           </Content>
           <ContentEditor
             onCancel={() => {
+              setTimeout(() => {
+                console.log(currLabel)
+                currLabel && instance.deleteLabel?.(currLabel?.id)
+              }, 300)
               setPopoverState(s => ({ ...s, visible: false }))
             }}
-            placeholder={'Press ↵ to save, Esc to close'}
+            placeholder={'Press ↵ to save, Esc to cancel.'}
             onChange={v => {
               if (currLabel) {
                 const labelMeta = MetaStore.getMetaObjectByObjectId(currLabel.id)
@@ -110,13 +114,6 @@ export default memo(() => {
                 }
               }
               setPopoverState(s => ({ ...s, visible: false }))
-            }}
-            showDelete={true}
-            onDelete={() => {
-              setPopoverState(s => ({ ...s, visible: false }))
-              setTimeout(() => {
-                currLabel && instance.deleteLabel?.(currLabel?.id)
-              }, 300)
             }}
             value={currLabel?.name}
           />

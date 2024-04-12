@@ -9,6 +9,8 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { ObjectCreateHandler } from '@/core/global/components/ObjectCreator'
 import { GlobalGraphAtom } from '@/scenes/GraphPage'
 import jumpBackToSyncBlock from '@/core/object/jumpBack/jumpBackToSyncBlock'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
+import updateSidebarState from '@/components/layout/sidebar/updateSidebarState'
 const GlobalInstance: IGlobalInstance = {
   values: {
     registeredKeynavigationHandlers: []
@@ -33,6 +35,42 @@ assignProperties(GlobalInstance, {
     }
   },
   metaOps: {
+    viewContains: async metaId => {
+      const workspace = KeyvalueStore.getOne('currentWorkspace')
+      if (workspace) {
+        const curr = KeyvalueStore.getOne(`sidebarDatabaseCache_${workspace.id}`) || {
+          filterVisible: false,
+          searchInput: '',
+          searchVisible: false,
+          viewMode: 'thumbnail',
+          filter: {
+            groupType: 'and',
+            filterType: 'group',
+            rules: []
+          }
+        }
+        updateSidebarState(s => {
+          s.leftOpen = true
+          s.leftVisible = 'database'
+        })
+        KeyvalueStore.updateOne(`sidebarDatabaseCache_${workspace.id}`, { ...curr, selectedMeta: [...(curr.selectedMeta || []), metaId] })
+      }
+    },
+    canViewContains: metaId => {
+      const m = MetaStore.getCachedMetaObject(metaId)
+      if (!m || m.deleted) return false
+      const workspace = KeyvalueStore.getOne('currentWorkspace')
+      if (workspace) {
+        const sidebarCache = KeyvalueStore.getOne(`sidebarDatabaseCache_${workspace.id}`)
+        if (
+          !sidebarCache?.selectedMeta?.includes(metaId) &&
+          ['pdf', 'video', 'audio', 'note', 'webpage', 'whiteboard', 'group'].includes(m.type)
+        ) {
+          return true
+        }
+      }
+      return false
+    },
     canCreateDirectly: type => {
       if (ObjectCreateHandler[type]) return true
       return false

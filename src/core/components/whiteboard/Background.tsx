@@ -18,7 +18,7 @@ const Background = () => {
   const scale = useSelectAtomValue(WhiteboardStateAtom, s => s.zoom)
   if (!backgroundType || backgroundType === 'none') return null
   const gapXY = backgroundType === 'line' ? [80, 80] : [40, 40]
-  const patternSize = 3
+  const patternSize = 4
   const scaledGap = [gapXY[0] * transform[2] || 1, gapXY[1] * transform[2] || 1]
   const scaledSize = patternSize * transform[2]
   const patternDimensions = scaledGap

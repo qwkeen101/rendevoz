@@ -15,6 +15,7 @@ import { useSelectAtomValue } from '@/hooks'
 import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import { EditorOverlayStateAtom } from '@/core/components/editor/components/overlay/useEditorOverlay'
+import { assignProperties } from '@/utils'
 
 type IBlockHandle = FC<{
   outerVisible: boolean
@@ -26,6 +27,7 @@ type IBlockHandle = FC<{
 const BlockHandle: IBlockHandle = ({ outerVisible, onAddClick, onDragClick, onMenuClick, containerRef }) => {
   const [innerVisible, setInnerVisible] = useState(false)
   const [globalDragging] = useGlobalIsDragging()
+  const instance = useEditorInstance()
   const blockHandleState = useAtomValue(EditorBlockHandleAtom)
   const { visible, targetHeight, top, left } = blockHandleState
   const overlayStata = useAtomValue(EditorOverlayStateAtom)
@@ -94,7 +96,6 @@ const BlockHandle: IBlockHandle = ({ outerVisible, onAddClick, onDragClick, onMe
   )
   const hasHeader = useSelectAtomValue(EditorStateAtom, s => s.layout?.showHeader) !== false
   const menuClickedRef = useRef(false)
-  const instance = useEditorInstance()
 
   const renderHandle = () => {
     return (

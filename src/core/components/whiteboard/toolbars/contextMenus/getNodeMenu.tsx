@@ -37,6 +37,9 @@ export default (
                 key: 'create-on-group',
                 text: t('whiteboard.Create new card'),
                 icon: 'park-plus',
+                subMenuStyle: {
+                  minWidth: 200
+                },
                 subMenu: [...getContextMenu(instance, t)]
               }
             : undefined,

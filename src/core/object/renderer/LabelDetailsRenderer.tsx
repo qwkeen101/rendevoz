@@ -2,7 +2,7 @@
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { Content, Icon, Tooltip } from '@/components'
 import { CSSProperties, memo, ReactElement, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { ILabel } from '~/typings'
+import { ILabel, MetaObject } from '~/typings'
 import AutosizeTextarea from '@/components/custom/input/AutoSizeTextArea'
 import { ClassName } from 'rendevoz'
 import { Rendevoz } from '@/core/rendevoz'
@@ -18,15 +18,23 @@ export default memo(
     style,
     showImage,
     showVideo,
+    showAddNote = true,
     autoPlay,
-    showAudio
+    showAudio,
+    imageStyle,
+    sourceStyle,
+    noteStyle
   }: {
     metaId: number
     style?: CSSProperties
     showImage?: boolean
+    showAddNote?: boolean
     showVideo?: boolean
     showAudio?: boolean
     autoPlay?: boolean
+    noteStyle?: CSSProperties
+    sourceStyle?: CSSProperties
+    imageStyle?: CSSProperties | ((m?: MetaObject) => CSSProperties)
   }) => {
     const metaObject = MetaStore.useValue(metaId)
     const { t } = useTranslation()
@@ -123,11 +131,13 @@ export default memo(
         }
       }
       if (metaObject?.coverImgSrc) {
+        const s = typeof imageStyle === 'function' ? imageStyle(metaObject) : imageStyle
         setDisplayer(
           <img
             style={{
               aspectRatio: '16 / 9',
-              objectFit: 'cover'
+              objectFit: 'cover',
+              ...s
             }}
             src={metaObject.coverImgSrc}
             width={'100%'}
@@ -147,7 +157,7 @@ export default memo(
         onPointerEnter={() => {
           setShowToolbar(true)
         }}
-        style={style}
+        style={{ ...style }}
         fullWidth
         onPointerMove={() => !showToolbar && setShowToolbar(true)}
       >
@@ -157,7 +167,8 @@ export default memo(
           alignItems={'center'}
           justifyContent={'space-between'}
           style={{
-            padding: '8px 12px 0px'
+            padding: '8px 12px',
+            ...sourceStyle
           }}
           gap={6}
         >
@@ -166,7 +177,6 @@ export default memo(
               flex
               gap={8}
               style={{
-                fontSize: 14,
                 flex: 1
               }}
             >
@@ -194,35 +204,50 @@ export default memo(
           <AutosizeTextarea
             value={label.selectedText}
             onBlur={e => {
-              ObjectStore(label.specType).updateOne({ id: label.id, selectedText: e.target.innerText })
-              MetaStore.updateMetaObject({ id: metaId, placeholderName: e.target.innerText || '' })
+              ObjectStore(label.specType).updateOne({
+                id: label.id,
+                selectedText: e.target.innerText
+              })
+              MetaStore.updateMetaObject({
+                id: metaId,
+                placeholderName: e.target.innerText || ''
+              })
             }}
             style={{
               width: '100%',
+              marginBottom: 8,
               display: 'block',
               padding: '4px 10px 4px 10px',
               resize: 'none',
+              lineHeight: 1.57,
               borderLeft: `2px solid ${Colors.getAdaptColor(label.color) || 'var(--emphasis)'}`,
-              marginTop: 8,
               background: Colors.Background.ButtonHover
             }}
           ></AutosizeTextarea>
         )}
-        <AutosizeTextarea
-          ref={inputRef}
-          onBlur={e => {
-            metaObject && MetaStore.updateMetaObject({ id: metaObject.id, name: e.target.innerText || '' })
-          }}
-          style={{
-            resize: 'none',
-            display: 'block',
-            width: '100%',
-            padding: '8px 12px'
-          }}
-          value={metaObject?.name}
-          placeholder={t('general.Add note')}
-          className={ClassName.noStyleInput}
-        />
+        {showAddNote === false && !metaObject?.name ? null : (
+          <AutosizeTextarea
+            ref={inputRef}
+            onBlur={e => {
+              metaObject &&
+                MetaStore.updateMetaObject({
+                  id: metaObject.id,
+                  name: e.target.innerText || ''
+                })
+            }}
+            style={{
+              resize: 'none',
+              display: 'block',
+              width: '100%',
+              padding: '0px 12px 8px',
+              lineHeight: 1.57,
+              ...noteStyle
+            }}
+            value={metaObject?.name}
+            placeholder={t('general.Add note')}
+            className={ClassName.noStyleInput}
+          />
+        )}
       </Content>
     )
   }

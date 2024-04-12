@@ -12,6 +12,7 @@ import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhite
 import { selectAtom } from 'jotai/utils'
 import { useAtomValue } from 'jotai'
 import calculateNewNodePosition from '@/core/components/whiteboard/node/mindmap/calculateNewNodePosition'
+import { waitFor } from '@/utils'
 
 type direction = 'right' | 'left'
 const rightClazz = css({
@@ -101,6 +102,22 @@ export default memo(({ node, containerRef }: { node: IWhiteboardNode; containerR
             })
           }
         })
+        waitFor(
+          () => !!instance.nodeOps?.getNodeFuncs?.(newDefaultNode.id!),
+          () => {
+            instance.nodeOps?.getNodeFuncs(newDefaultNode.id!)?.setStyle({
+              opacity: 0
+            })
+            setTimeout(() => {
+              instance.nodeOps?.getNodeFuncs(newDefaultNode.id!)?.setStyle({
+                opacity: 1
+              })
+            }, 5)
+          },
+          {
+            requestAnimationFrame: true
+          }
+        )
       }
     }
   }

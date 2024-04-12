@@ -7,18 +7,20 @@ import { MetaFilterGroup, MetaGroup, MetaObject } from '~/typings'
 import { SorterGroup } from '@/core/object/filter/BetterSorter'
 import { ISidebarState } from '@/components/layout/sidebar'
 
+export type SidebarDatabaseCache = {
+  viewMode?: 'title' | 'thumbnail'
+  filter?: MetaFilterGroup
+  filterVisible?: boolean
+  sort?: 'create' | 'view'
+  searchInput?: string
+  searchVisible?: boolean
+  selectedMeta?: number[]
+}
 export type CurrentKeyValues = {
   currentWorkspace: {
     id: number
     name: string
     createdAt: number
-  }
-  sidebarDatabaseCache?: {
-    filter?: MetaFilterGroup
-    filterVisible?: boolean
-    sort?: 'create' | 'view'
-    searchInput?: string
-    searchVisible?: boolean
   }
   sidebarState?: ISidebarState
   filePickerType: 'local' | 'web' | 'baidudisk'
@@ -121,7 +123,9 @@ export type CurrentKeyValues = {
 } & Record<`${MetaObject['type']}_${string}_group`, MetaGroup> &
   Record<`tag_${number}_${string}_group`, MetaGroup> &
   Record<`collection_${number}_group`, MetaGroup> &
-  Record<`prop_${number}_group`, MetaGroup>
+  Record<`prop_${number}_group`, MetaGroup> &
+  Record<`all_${number}_group`, MetaGroup> &
+  Record<`sidebarDatabaseCache_${number}`, SidebarDatabaseCache>
 
 const keyvalueAtom = atom<Map<string, any>>(new Map())
 
@@ -152,7 +156,7 @@ const createKeyvalueStore = () => {
       return keyvalueDb.delete(key)
     },
     useValue: <T extends keyof CurrentKeyValues>(key: T): CurrentKeyValues[T] | undefined => {
-      const v = useSelectGlobalAtomValue(keyvalueAtom, s => s.get(key))
+      const v = useSelectGlobalAtomValue(keyvalueAtom, s => s.get(key), [key])
       useEffect(() => {
         if (!v) {
           keyvalueDb.get(key).then(one => {

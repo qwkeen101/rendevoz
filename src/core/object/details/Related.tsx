@@ -290,6 +290,7 @@ const RelatedGroup = ({
               className={'font-size-12 transparent-font'}
               text={t('general.New')}
               style={{
+                marginBottom: 1,
                 padding: '3px 6px',
                 width: 'fit-content',
                 minWidth: 140,
@@ -311,7 +312,11 @@ const RelatedGroup = ({
             }}
           >
             {t('general.Drop object here to add link')}
-            <Button.IconButton text={t('general.New')} icon={'park-plus'} onClick={createAndAddLink} />
+            <Button.IconButton
+              text={t('general.New')}
+              icon={'park-plus'}
+              onClick={createAndAddLink}
+            />
           </Content>
         )}
       </Content>

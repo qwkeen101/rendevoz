@@ -36,6 +36,8 @@ const deserializeHTML = (root: HTMLElement): Descendant[] | null => {
       return deserializeParagraph(root)
     case 'LI':
       return deserializeLi(root)
+    case 'BLOCKQUOTE':
+      return deserializeParagraph(root, 'block-quote')
     case 'SPAN':
       return deserializeSpan(root)
     // TODO

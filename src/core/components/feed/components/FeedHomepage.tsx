@@ -15,27 +15,31 @@ const FeedHomepage = () => {
           height: '100%',
           width: '100%',
           maxWidth: '840px',
-          padding: '40px 20px'
+          padding: '28px 12px 0px'
         }}
         flex
         column
       >
-        <div style={{ fontWeight: 700, fontSize: 34, marginBottom: 8, padding: '12px' }}>{t('general.Add new feeds')}</div>
+        <div style={{ fontWeight: 700, fontSize: 28, padding: '12px' }}>{t('feed.Follow new feeds')}</div>
         <div style={{ height: 0, flex: 1, width: '100%' }}>
           <Tabs
+            tabNavStyle={{
+              fontSize: 14,
+              padding: '3px 10px'
+            }}
             tabNavContainerStyle={{
               padding: '12px 12px 0px'
             }}
             defaultActiveKey={'Google News'}
           >
-            <TabPane key={'Google News'} tab={t('general.Google news')}>
+            <TabPane key={'Google News'} tab={t('feed.News')}>
               <GoogleNewsSearch />
             </TabPane>
-            <TabPane key={'Import'} tab={t('general.Import from url')}>
-              <ImportNewFeed />
-            </TabPane>
-            <TabPane tab={t('general.Itunes podcasts')} key={'Itunes podcasts'}>
+            <TabPane tab={t('feed.Podcasts')} key={'Itunes podcasts'}>
               <ItunesPodcastSearch />
+            </TabPane>
+            <TabPane key={'Import'} tab={t('feed.RSS feeds')}>
+              <ImportNewFeed />
             </TabPane>
           </Tabs>
         </div>

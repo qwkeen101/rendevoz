@@ -146,8 +146,11 @@ export default async (
     }
     case 'whiteboard': {
       const whiteboardMeta =
-        (await getMetaObjectByObjectId(dragElement.whiteboardId)) ||
-        (await addMetaObject({ type: 'whiteboard', objectId: dragElement.whiteboardId }))
+        getMetaObjectByObjectId(dragElement.whiteboardId) ||
+        (await addMetaObject({
+          type: "whiteboard",
+          objectId: dragElement.whiteboardId,
+        }));
       Object.assign(normalizedMetaObject, whiteboardMeta)
       alreadyHasMeta = true
       shouldOpenEditMetaModal = false
@@ -163,7 +166,7 @@ export default async (
         Object.assign(normalizedMetaObject, result.normalizedMetaObject)
         result.preLinks.forEach(i => normalizedLinks.push(i))
         alreadyHasMeta = result.alreadyHasMeta
-        shouldOpenEditMetaModal = result.shouldOpenEditMetaModal
+        shouldOpenEditMetaModal = false
       }
       break
     }

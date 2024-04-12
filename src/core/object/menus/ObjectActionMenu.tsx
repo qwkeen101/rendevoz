@@ -1,10 +1,14 @@
-import { FC, useEffect, useRef } from 'react'
+import { FC, useEffect, useRef, useState } from 'react'
 import { GlobalInstance } from '@/hooks'
 import { Button, Content, Menu } from '@/components'
 import { MetaStore } from '@/api/stores'
 import { useTranslation } from 'react-i18next'
 import { Rendevoz } from '@/core/rendevoz'
 import isHotkey from 'is-hotkey'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
+import calculateContains from '@/core/object/objectList/calculateContains'
+import updateSidebarState from '@/components/layout/sidebar/updateSidebarState'
+import useSidebarDatabaseState from '@/components/layout/sidebar/useSidebarDatabaseState'
 
 export const ObjectActionPopover: FC<
   Partial<{
@@ -16,6 +20,7 @@ export const ObjectActionPopover: FC<
     onEditLink: VoidFunction
     onDeleteLink: VoidFunction
     visibility: {
+      showContainsInSidebar?: boolean
       editLink?: boolean
       deleteLink?: boolean
       jumpToVisible?: boolean
@@ -67,11 +72,34 @@ export const ObjectActionPopover: FC<
       }
     }
   }, [metaObject])
+  const [sidebarCache] = useSidebarDatabaseState()
+  const [contains, setContains] = useState(0)
+  const displayContains =
+    metaObject &&
+    !sidebarCache?.selectedMeta?.includes(metaObject.id) &&
+    ['pdf', 'video', 'audio', 'note', 'webpage', 'whiteboard', 'group'].includes(metaObject.type)
+  useEffect(() => {
+    if (displayContains && metaObject) {
+      calculateContains(metaObject).then(res => setContains(res?.length || 0))
+    }
+  }, [metaObject])
   if (!metaObject) return null
   return (
     <Content style={{ padding: '0.4rem 0', minWidth: 200, fontSize: 14 }} ref={containerRef} role="object-popover-panel">
       <Menu.NavigationMenu
         layout={[
+          displayContains && contains > 0
+            ? {
+                type: 'item',
+                key: 'show-contains-in-sidebar',
+                onSelect: async () => {
+                  onClose?.()
+                  GlobalInstance.metaOps?.viewContains(metaObjectId)
+                },
+                text: t('general.View included objects'),
+                icon: 'park-hamburger-button'
+              }
+            : undefined,
           visibility?.editLink
             ? {
                 type: 'item',

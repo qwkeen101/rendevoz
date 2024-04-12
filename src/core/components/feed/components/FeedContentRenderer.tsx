@@ -166,100 +166,79 @@ const FeedContentRenderer = () => {
   }
   if (currentItem && !currentItem.link.includes('news.google.com')) {
     return (
-      <Content
-        style={{
-          height: '100%',
-          width: '100%',
-          overflow: 'hidden',
-          borderRadius: displayMode === 'center' ? 12 : 0,
-          borderLeft: displayMode !== 'center' ? `1px solid ${Colors.Background.Border}` : undefined
-        }}
-      >
-        <Content fullHeight fullWidth>
-          <Webpage
-            initialWebpageId={alreadySaved}
-            onFailLoad={() => {
-              if (contentCache) {
-                setFailLoading(true)
-              }
+      <>
+        {displayMode === 'sidePeek' && (
+          <Icon
+            name={modalOpen ? 'park-double-right' : 'park-double-left'}
+            className={ClassName.flatButton(4, '6px')}
+            size={20}
+            onClick={() => {
+              setFeedState(s => ({ ...s, modalOpen: !s.modalOpen }))
             }}
-            disableTabTitle={true}
-            editorOptions={{
-              on: async e => {
-                if (e.type === 'valueChange') {
-                  FEED_CONTENT_CACHE.set(currentItem.id, e.value)
-                }
-                if (e.type === 'titleChange') {
-                  ObjectStore('feed').updateOne({ id: currentItem.id, title: e.value, state: { ...currentItem?.state, title: e.value } })
-                }
-              },
-              header: {
-                boxShadow: false,
-                display: {
-                  label: alreadySaved ? true : false
-                },
-                rightExtra: (
-                  <>
-                    {!alreadySaved && (
-                      <Tooltip content={'Add as object'}>
-                        <Icon
-                          size={16}
-                          className={ClassName.flatButton(4, '4px')}
-                          onClick={() => {
-                            addFeedAsMeta(currentItem?.id)
-                          }}
-                          name={'park-share-one'}
-                        />
-                      </Tooltip>
-                    )}
-                    <Tooltip content={'Read later'}>
-                      <Icon
-                        size={16}
-                        className={ClassName.flatButton(4, '4px')}
-                        onClick={() => {
-                          if (alreadyReadLater) {
-                            removeReadLater(currentItem.id)
-                          } else {
-                            moveToReadLater(currentItem.id)
-                          }
-                        }}
-                        containerStyle={{
-                          color: alreadyReadLater ? 'yellow' : 'unset'
-                        }}
-                        theme={alreadyReadLater ? 'filled' : undefined}
-                        name={'park-star'}
-                      />
-                    </Tooltip>
-                  </>
-                ),
-                leftExtra:
-                  displayMode === 'sidePeek' ? (
-                    <Icon
-                      size={16}
-                      className={ClassName.flatButton(4, '4px')}
-                      onClick={() => setFeedState(s => ({ ...s, modalOpen: false }))}
-                      name={'park-right'}
-                    />
-                  ) : undefined
-              }
+            containerStyle={{
+              position: 'absolute',
+              background: Colors.Background.Popover,
+              boxShadow: Colors.Background.BorderBoxShadow,
+              color: Colors.Font.Transparent,
+              left: -40,
+              top: '20px',
+              transform: 'translateY(-50%)',
+              zIndex: 15
             }}
-            onStartLoad={() => {
-              setIsLoading(true)
-              setFailLoading(false)
-            }}
-            onEndLoad={() => {
-              if (isLoading && !fakeLoad.current) {
-                setIsLoading(false)
-              }
-
-              setFailLoading(false)
-            }}
-            onWebpageParsed={memoparse}
-            initialUrl={currentItem.link}
-            state={currentItem.state ? { ...currentItem.state, content: memoedContent } : undefined}
           />
+        )}
+        <Content
+          style={{
+            height: '100%',
+            width: '100%',
+            overflow: 'hidden',
+            borderRadius: displayMode === 'center' ? 12 : 0,
+            borderLeft: displayMode !== 'center' ? `1px solid ${Colors.Background.Border}` : undefined
+          }}
+        >
+          <Content fullHeight fullWidth>
+            <Webpage
+              initialWebpageId={alreadySaved}
+              onFailLoad={() => {
+                if (contentCache) {
+                  setFailLoading(true)
+                }
+              }}
+              disableTabTitle={true}
+              editorOptions={{
+                on: async e => {
+                  if (e.type === 'valueChange') {
+                    FEED_CONTENT_CACHE.set(currentItem.id, e.value)
+                  }
+                  if (e.type === 'titleChange') {
+                    ObjectStore('feed').updateOne({ id: currentItem.id, title: e.value, state: { ...currentItem?.state, title: e.value } })
+                  }
+                },
+                header: {
+                  boxShadow: false,
+                  display: {
+                    label: alreadySaved ? true : false
+                  }
+                }
+              }}
+              onStartLoad={() => {
+                setIsLoading(true)
+                setFailLoading(false)
+              }}
+              onEndLoad={() => {
+                if (isLoading && !fakeLoad.current) {
+                  setIsLoading(false)
+                }
+
+                setFailLoading(false)
+              }}
+              onWebpageParsed={memoparse}
+              initialUrl={currentItem.link}
+              state={currentItem.state ? { ...currentItem.state, content: memoedContent } : undefined}
+            />
+          </Content>
         </Content>
-      </Content>
+      </>
     )
   }
 

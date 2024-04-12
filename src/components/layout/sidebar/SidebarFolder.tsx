@@ -9,9 +9,6 @@ const SidebarFolder = () => {
   const { t } = useTranslation()
   return (
     <Content fullHeight flex column fullWidth style={{ padding: '12px', overflowY: 'auto' }}>
-      <div className={ClassName.title(FontSize['14px'])} style={{ marginBottom: 16 }}>
-        {t('general.collection')}
-      </div>
       <SidebarPinned />
       <SidebarCollection />
     </Content>

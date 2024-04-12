@@ -31,10 +31,12 @@ export default memo(
       showOriginalText = false,
       showDeleted = false,
       showCover = 'cover',
-      bottomPadding
+      bottomPadding,
+      thumbnailMode
     } = useSelectAtomValue(
       GroupStateAtom,
       s => ({
+        thumbnailMode: s.currentView?.options.thumbnailMode,
         showAddMore: s.layout?.showAddNew,
         visibleProps: s.visibleProperties,
         showOriginalText: s.showOriginalText,
@@ -76,6 +78,7 @@ export default memo(
             <GalleryItemWrapper
               style={{ padding: '4px 10px', fontSize: 14 }}
               showCover={showCover}
+              thumbnailMode={thumbnailMode}
               showOriginalText={showOriginalText}
               hideCoverIfEmpty={true}
               visibleProps={visibleProps}

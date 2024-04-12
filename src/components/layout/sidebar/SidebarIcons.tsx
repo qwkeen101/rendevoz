@@ -31,10 +31,12 @@ const SidebarIcons = ({
   onChange,
   showUser,
   direction,
-  leftItems
+  leftItems,
+  defaultItems = []
 }: {
   items: string[]
   showUser?: boolean
+  defaultItems: RegisteredSidebarItem[]
   leftItems: RegisteredSidebarItem[]
   onChange: (items: string[]) => void
   direction: 'left' | 'right'
@@ -79,17 +81,18 @@ const SidebarIcons = ({
   return (
     <>
       <ContextMenu
+        boundaryInset={0}
         content={
-          <WithBorder padding={6} style={{ minWidth: 160 }}>
-            {leftItems.map(i => (
+          <WithBorder padding={6} width={180}>
+            {defaultItems.map(i => (
               <Content
                 onClick={() => {
                   items.some(o => o === i.key) ? onChange(items.filter(o => o !== i.key)) : onChange([...items, i.key])
                 }}
                 key={i.key}
                 flex
-                gap={6}
-                className={ClassName.flatButton(3, '2px 6px')}
+                gap={10}
+                className={ClassName.flatButton()}
               >
                 {i.icon && <Icon name={i.icon} />}
                 <span>{i.text?.()}</span>
@@ -130,12 +133,12 @@ const SidebarIcons = ({
               ? Colors.Background.Secondary
               : Colors.Background.Global,
             minWidth: dragInto ? 44 : 1,
-            boxShadow: direction === 'right' ? Colors.Consts.BoxShadowBorderRight : Colors.Consts.BoxShadowBorderLeft,
             padding: direction === 'left' && items.length === 0 ? 0 : undefined
             // marginTop: direction === 'right' ? 38 : undefined
           }}
           className={classNames(
             styles.list,
+            'border-right',
             css({
               display: 'flex',
               paddingBottom: '20px',
@@ -147,6 +150,7 @@ const SidebarIcons = ({
               }
             })
           )}
+          axis={'y'}
           onReorder={v => {
             onChange(v)
           }}
@@ -158,7 +162,6 @@ const SidebarIcons = ({
               i &&
               hasItem(i) && (
                 <Reorder.Item
-                  drag={true}
                   id={`sidebar-${i}`}
                   onDrag={() => {
                     isDraggingRef.current = true

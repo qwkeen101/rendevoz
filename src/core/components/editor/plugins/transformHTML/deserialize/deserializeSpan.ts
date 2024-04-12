@@ -5,7 +5,7 @@ import normalizeText from './normalizeText'
 import Id from '@/utils/id'
 
 export default (node: HTMLElement) => {
-  if (node.classList.contains('ztext-math')) {
+  if (node.classList.contains('ztext-math') || node.hasAttribute('data-tex')) {
     return jsx(
       'element',
       {
@@ -13,7 +13,7 @@ export default (node: HTMLElement) => {
         content: node.textContent,
         id: Id.getId()
       },
-      [{ text: '' }]
+      [{ text: node.textContent }]
     )
   }
   const children = Array.from(node.childNodes)

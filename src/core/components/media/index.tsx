@@ -103,7 +103,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
   useEffect(() => {
     waitFor(
       () => {
-        return latestVideoLoaded.current
+        return !!(latestVideoLoaded.current && instance.actionOps)
       },
       () => {
         onInstanceInitialized?.(instance)
@@ -395,12 +395,10 @@ const Media = (props: MediaProps) => {
       currentTime
     } = props.mediaState || {}
     store.set(MediaInstanceAtom, {})
-    console.log(subtitleList, subtitleLang, DEFAULT_MEDIA_STATE)
     const u = transformUrl(url, {
       autoPlay,
       startTime: currentTime ?? lastPlayedTime
     })
-    console.log(u)
     store.set(MediaStateAtom, {
       ..._.merge({}, DEFAULT_MEDIA_STATE, {
         thumbnail,

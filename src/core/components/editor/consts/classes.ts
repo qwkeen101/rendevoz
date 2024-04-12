@@ -50,9 +50,8 @@ const DefaultContentClass = css({
     maxWidth: '100%'
   },
   figcaption: {
-    color: Colors.Font.Secondary,
-    fontSize: FontSize['12px'],
-    margin: `0px ${FontSize['12px']}`,
+    color: Colors.Font.Transparent,
+    fontSize: '0.85em',
     padding: 0,
     display: 'flex',
     justifyContent: 'center'

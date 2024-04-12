@@ -155,8 +155,8 @@ const Label = ({ id, type }: { id: number; type: string }) => {
             onContextMenu={() => {
               mediaLabel.imageUrl && GlobalInstance.commonOps?.previewImage?.(mediaLabel.imageUrl)
             }}
-            width={100}
-            ratio={0.5625}
+            width={120}
+            ratio={0.56}
             containerStyle={{
               borderRadius: 8,
               cursor: 'pointer'
@@ -189,8 +189,6 @@ const Label = ({ id, type }: { id: number; type: string }) => {
           </div>
         </Content>
       </Content>
-      {renderDescription({})}
-      {renderAttachment({})}
     </Content>
   )
 }

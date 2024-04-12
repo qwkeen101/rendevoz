@@ -52,18 +52,18 @@ const PdfHeader = ({ documentId }: { documentId: number }) => {
           borderBottom: `1px solid ${Colors.Background.Border}`
         }}
       >
-        <Content flex gap={10} alignItems={'center'} style={{ maxWidth: '40%' }}>
+        <Content flex gap={6} alignItems={'center'} style={{ maxWidth: '40%' }}>
           <Icon
             onClick={() => {
               setBarState(s => ({ ...s, showLeftBar: !s.showLeftBar }))
             }}
             size={16}
-            className={ClassName.flatButton(6, '5px')}
+            className={ClassName.flatButton(4, '5px')}
             name={'custom-left-bar'}
           />
 
           {width > 600 && (
-            <div className={ClassName.ellipsisFont(1)} style={{ fontWeight: 600 }}>
+            <div className={ClassName.ellipsisFont(1)}>
               {pdfMeta.name}
             </div>
           )}

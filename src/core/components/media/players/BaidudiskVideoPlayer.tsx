@@ -83,7 +83,10 @@ const BaidudiskVideoPlayer = () => {
           }
         ]
       })
-      setMediaState(s => ({ ...s, loaded: true }))
+      player.on('loadeddata', () => {
+        setMediaState(s => ({ ...s, loaded: true }))
+      })
+
       player.on('timeupdate', () => {
         const currentTime = player.currentTime()
         if (currentTime !== undefined && currentTime >= 0) {
@@ -140,6 +143,7 @@ const BaidudiskVideoPlayer = () => {
   useEffect(() => {
     if (mediaState.loaded && mediaState.currentTime !== undefined && mediaState.jumpTime === undefined && player) {
       // jump time need to be undefined, otherwise trigger go to 0s bug
+      console.log(mediaState.currentTime)
       player.currentTime(mediaState.currentTime)
     }
   }, [mediaState.loaded])

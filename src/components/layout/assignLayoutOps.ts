@@ -121,6 +121,9 @@ export default function assignGlobalLayoutOps(layoutRef: RefObject<DockLayout>) 
               }
             })
           })
+          if (m.type === 'videoLabel') {
+            ;(res as IMediaInstance).actionOps?.autoPlay?.()
+          }
           MetaStore.updateMetaObject({ id: m.id, viewAt: Date.now() })
           return res
         }

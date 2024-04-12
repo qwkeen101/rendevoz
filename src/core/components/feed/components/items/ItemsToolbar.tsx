@@ -1,5 +1,5 @@
 import { FeedItem } from '@/core/components/feed/types'
-import { Button, Content, Icon, IconWithPopover, WithBorder } from '@/components'
+import { Button, Content, Icon, IconWithPopover, Menu, WithBorder } from '@/components'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { DateFormat } from '@/utils'
@@ -13,6 +13,7 @@ import readItem from '@/core/components/feed/utils/service/readItem'
 import addFeedAsMeta from '@/core/components/feed/utils/service/addFeedAsMeta'
 import { useTranslation } from 'react-i18next'
 import { GlobalInstance } from '@/hooks'
+import toast from 'react-hot-toast'
 
 const ItemsToolbar = ({ itemId }: { itemId: number }) => {
   const item = ObjectStore('feed').useValue(itemId)
@@ -77,60 +78,65 @@ const ItemsToolbar = ({ itemId }: { itemId: number }) => {
           name={'park-share-one'}
         />
         <IconWithPopover
+          placement={['right', 'left']}
           name={'park-more'}
           size={13}
           renderOnParent={false}
           onClick={e => e.stopPropagation()}
           className={ClassName.flatButton(4, '3px')}
           content={setV => (
-            <WithBorder onClick={e => e.stopPropagation()} padding={4} width={160}>
-              {[
-                metaId
-                  ? {
-                      icon: 'park-info',
-                      text: t('general.View details'),
-                      onClick: () => {
-                        setV(false)
-                        GlobalInstance.metaOps?.openDetails(metaId)
+            <WithBorder onClick={e => e.stopPropagation()} padding={'0.4rem 0'} width={180}>
+              <Menu.NavigationMenu
+                layout={[
+                  metaId
+                    ? {
+                        type: 'item',
+                        key: 'view-details',
+                        icon: 'park-info',
+                        text: t('general.View details'),
+                        onSelect: () => {
+                          setV(false)
+                          GlobalInstance.metaOps?.openDetails(metaId)
+                        }
+                      }
+                    : undefined,
+                  {
+                    key: 'move-to',
+                    type: 'item',
+                    icon: 'park-corner-up-right',
+                    text: t('general.Move to'),
+                    onSelect: async () => {
+                      setV(false)
+                      if (!isMeta) {
+                        const m = await addFeedAsMeta(itemId)
+                        if (m) {
+                          GlobalInstance.metaOps?.quickAdd(m.id)
+                        }
+                      } else {
+                        if (metaId) {
+                          GlobalInstance.metaOps?.quickAdd(metaId)
+                        }
                       }
                     }
-                  : undefined,
-                {
-                  icon: 'park-corner-up-right',
-                  text: t('general.Move to'),
-                  onClick: async () => {
-                    setV(false)
-                    if (!isMeta) {
-                      const m = await addFeedAsMeta(itemId)
-                      if (m) {
-                        GlobalInstance.metaOps?.quickAdd(m.id)
-                      }
-                    } else {
-                      if (metaId) {
-                        GlobalInstance.metaOps?.quickAdd(metaId)
-                      }
+                  },
+                  {
+                    key: 'copy-link',
+                    type: 'item',
+                    icon: 'park-link',
+                    text: t('general.Copy link'),
+                    onSelect: async () => {
+                      setV(false)
+                      navigator.clipboard.writeText(item?.link)
+                      toast.success(t('general.Copied'))
                     }
-                  }
-                },
-                {
-                  icon: 'park-link',
-                  text: t('general.Copy link'),
-                  onClick: async () => {
-                    setV(false)
-                    navigator.clipboard.writeText(item?.link)
-                  }
-                }
-              ].map(
-                i =>
-                  i && (
-                    <Button.IconButton
-                      style={{
-                        padding: '2px 8px'
-                      }}
-                      {...i}
-                      key={i.icon}
-                    />
-                  )
+                  },
+                  item?.link ? { type: 'separator' } : undefined
+                ]}
+              />
+              {item.link && (
+                <div style={{ padding: '0px 8px' }} className={'transparent-font font-size-12'}>
+                  <div style={{ maxWidth: 200, wordBreak: 'break-all' }}>{item?.link}</div>
+                </div>
               )}
             </WithBorder>
           )}

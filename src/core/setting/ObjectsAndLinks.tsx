@@ -35,10 +35,10 @@ const ObjectsAndLinksSetting = () => {
     }
   ]
   const objectSettingItems: SettingItem[] = [
-    {
-      title: t('settings.enable drop auto generate object'),
-      children: <Switch value={enableDropAutoGenerateObject} onChange={() => toggleSetting('enableDropAutoGenerateObject')} />
-    },
+    // {
+    //   title: t('settings.enable drop auto generate object'),
+    //   children: <Switch value={enableDropAutoGenerateObject} onChange={() => toggleSetting('enableDropAutoGenerateObject')} />
+    // },
     {
       title: t('settings.auto hide label object'),
       children: (

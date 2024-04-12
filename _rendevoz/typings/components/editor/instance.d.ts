@@ -16,6 +16,7 @@ export type IEditorOverlayContent =
 export type IEditorInstance = Partial<{
   focusTitle: (onlyWhenEmpty?: boolean) => void
   getTitle: () => string
+  closeBlockHandleMenu: VoidFunction
   scrollToBlock: (options: { blockId?: number; highlight?: boolean }) => Promise<void>
   selectBlock: (options: { blockId?: number }) => Promise<void>
   scrollToHighlight: (options: { highlightId: number }) => Promise<void>

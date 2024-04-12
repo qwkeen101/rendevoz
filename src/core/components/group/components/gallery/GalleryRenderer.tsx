@@ -34,6 +34,7 @@ const GalleryRenderer = memo(
       showDeleted = false,
       showCover = 'cover',
       cardSize,
+      thumbnailMode,
       bottomPadding,
       hideCoverIfEmpty = false
     } = useSelectAtomValue(
@@ -41,6 +42,7 @@ const GalleryRenderer = memo(
       s => ({
         visibleProps: s.visibleProperties,
         showOriginalText: s.showOriginalText,
+        thumbnailMode: s.currentView?.options.thumbnailMode,
         wrapContent: s.currentView?.options.wrapColumns,
         showDeleted: s.layout?.showDeletedMetas,
         showAddMore: s.layout?.showAddNew,
@@ -115,7 +117,12 @@ const GalleryRenderer = memo(
         <Content
           flex
           column
-          style={{ height: 0, flex: 1, padding: '0px var(--page-padding-right) 0px var(--page-padding-right)', width: '100%' }}
+          style={{
+            height: 0,
+            flex: 1,
+            padding: '0px max(calc(var(--page-padding-right) - 10px), 0px) 0px max(calc(var(--page-padding-right) - 10px), 0px)',
+            width: '100%'
+          }}
         >
           <Content ref={measureRef} role={'gallery-wrapper'} style={{ width: '100%', height: 'auto' }}>
             <Content
@@ -166,6 +173,7 @@ const GalleryRenderer = memo(
                             if (v) {
                               return (
                                 <GalleryItemWrapper
+                                  thumbnailMode={thumbnailMode}
                                   showCover={showCover}
                                   showOriginalText={showOriginalText}
                                   hideCoverIfEmpty={hideCoverIfEmpty}
@@ -221,7 +229,12 @@ const GalleryRenderer = memo(
         <Content
           flex
           column
-          style={{ height: 'auto', flex: 1, padding: '0px var(--page-padding-right) 0px var(--page-padding-right)', width: '100%' }}
+          style={{
+            height: 'auto',
+            flex: 1,
+            padding: '0px max(calc(var(--page-padding-right) - 10px), 0px) 0px max(calc(var(--page-padding-right) - 10px), 0px)',
+            width: '100%'
+          }}
         >
           <div
             style={{
@@ -233,6 +246,7 @@ const GalleryRenderer = memo(
             {value.map(v => (
               <GalleryItemWrapper
                 showCover={showCover}
+                thumbnailMode={thumbnailMode}
                 hideCoverIfEmpty={hideCoverIfEmpty}
                 visibleProps={visibleProps}
                 wrapContent={wrapContent}

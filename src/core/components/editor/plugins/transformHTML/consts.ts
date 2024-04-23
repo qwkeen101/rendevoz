@@ -6,6 +6,7 @@ export const WrapperNodeNames = [
   'DT',
   'DD',
   'UL',
+  'CITE',
   'OL',
   'PICTURE',
   'SECTION',

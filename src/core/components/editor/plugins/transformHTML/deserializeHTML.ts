@@ -53,6 +53,7 @@ export const deserializeRoot = (root: HTMLElement, opts?: deserializeOptions): D
   switch (root.nodeName) {
     case 'LI':
       return deserializeLi(root)
+    case 'CITE':
     case 'SPAN':
       return deserializeSpan(root)
     case 'MP-COMMON-MPAUDIO':

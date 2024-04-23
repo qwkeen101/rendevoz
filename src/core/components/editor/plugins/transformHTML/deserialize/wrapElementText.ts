@@ -48,7 +48,6 @@ export default (node: HTMLElement) => {
       }
       const res = deserializeText(c, node.nodeName !== 'A')
       if (res) {
-        console.log(res, attributes)
         return recurApplyAttribute(res, attributes)
       }
     })

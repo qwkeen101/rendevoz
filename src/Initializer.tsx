@@ -103,11 +103,11 @@ const Initializer = () => {
       })
     })
 
-    // if (import.meta.env.PROD) {
-    //   console.log = (function (origin) {
-    //     return function () {}
-    //   })(console.log)
-    // }
+    if (import.meta.env.PROD) {
+      console.log = (function (origin) {
+        return function () {}
+      })(console.log)
+    }
     return () => {
       ipcInstance.off('close')
       ipcInstance.off('openObject')

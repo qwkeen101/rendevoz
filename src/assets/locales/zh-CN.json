@@ -1,5 +1,7 @@
 {
   "general": {
+    "All types": "全部类型",
+    "Current list is empty": "当前列表暂无内容",
     "Export as image": "导出为图片",
     "All": "全部",
     "Appear in": "出现于",
@@ -310,7 +312,7 @@
     "noteBlock": "文档块",
     "localFile": "本地文件",
     "Save": "保存",
-    "delete collection and all objects": "删除文件夹与所有实体",
+    "Delete collection and all objects": "删除文件夹与内部实体",
     "default": "默认",
     "Search history": "搜索历史",
     "search documents": "搜索文档",
@@ -673,6 +675,15 @@
     "code-block": "代码块"
   },
   "settings": {
+    "Hide highlights": "隐藏标注",
+    "Expand to fixed height": "允许展开节点到固定高度",
+    "Auto width": "自动宽度",
+    "Sidebar settings": "侧边栏",
+    "Preview library content": "预览标题模式内容",
+    "Preview collection content": "预览收藏夹内容",
+    "Not set": "未设置",
+    "Conflicting with": "冲突",
+    "Custom editor format": "自定义编辑器格式",
     "Automatically add head image": "自动添加题头图",
     "Close other tabs": "关闭其他标签",
     "Close left tabs": "关闭左侧标签",
@@ -741,7 +752,7 @@
     "auto hide label object": "自动隐藏标注实体",
     "show original text": "显示原文",
     "auto copy file when import": "自动复制导入的文件",
-    "auto save layout": "自动保存布局",
+    "Auto save layout": "自动保存布局",
     "drop file auto object": "自动将拖拽进白板的文件转变为实体",
     "copy file desc": "如果允许，您导入的文件会自动复制一份到文件库中，避免可能遇到的文件失效问题",
     "about": "关于",
@@ -777,8 +788,7 @@
     "choose open new tab action": "选择打开新标签行为",
     "open existing tab": "打开已有的标签",
     "always open new tab": "总是打开新标签",
-    "enable all notifications": "开启全部通知",
-    "enable or disable all notifications": "开启或关闭全部通知",
+    "Enable notifications": "开启通知",
     "customize displayed notifications": "自定义显示的通知",
     "choose which notification should be displayed": "选择你想要显示哪些通知",
     "Layout shortcuts": "布局快捷键",
@@ -839,7 +849,7 @@
     "valid url": "地址有效",
     "invalid url": "地址无效",
     "input url": "输入地址",
-    "user file path": "用户文件路径",
+    "user file path": "本地文件存储路径",
     "choose folder": "选择文件夹",
     "reset as default folder": "重置为默认文件夹",
     "file path description": "图片，视频，文档，PDF与备份数据等大文件将被存储在此处",
@@ -871,6 +881,7 @@
     "update": "更新"
   },
   "feed": {
+    "Refresh content": "刷新内容",
     "Podcasts": "播客",
     "RSS feeds": "RSS订阅",
     "Follow new feeds": "添加订阅",
@@ -984,6 +995,7 @@
     "Sort": "排序"
   },
   "whiteboard": {
+    "Expand to fixed height": "展开到固定高度",
     "Paste text": "粘贴文本",
     "Paste image": "粘贴图片",
     "Paste nodes": "粘贴白板节点",
@@ -1042,6 +1054,7 @@
     "Not supported file": "不支持的文件类型!"
   },
   "group": {
+    "Cover image or card content": "封面图片或内容",
     "Enable review": "开启复习",
     "Only show custom properties": "仅显示自定义类型",
     "Available new properties": "可用新类型",

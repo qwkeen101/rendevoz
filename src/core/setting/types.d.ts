@@ -86,6 +86,25 @@ export type IAppearanceSetting = {
     backgroundBlur?: number
   }
 }
+
+export type ISyncSetting = {
+  sync: {
+    enableSync?: boolean
+    S3Config?: {
+      bucket?: string
+      endpoint?: string
+      region?: string
+      ak?: string
+      sk?: string
+    }
+    maxSyncSize?: number
+    displaySyncState?: boolean
+    enableAutoSync?: boolean
+    syncInterval?: '30s' | '1m' | '5m' | '30m' | '1h'
+    syncDirection?: 'from local to remote' | 'from remote to local'
+    localProtection?: boolean
+  }
+}
 export type IShortCutSetting = {
   shortcut: Partial<{
     openSidebar: ShortCut | null
@@ -125,6 +144,11 @@ export type IObjectsAndLinkSetting = {
 }
 
 export type IComponentSetting = {
+  sidebar: {
+    previewTitleMode?: boolean
+    previewCollectionContent?: boolean
+    hideHighlights?: boolean
+  }
   label: {
     showOriginalText: boolean
     customTextBackground: boolean
@@ -132,6 +156,7 @@ export type IComponentSetting = {
   }
   whiteboard: {
     enableMinimap: boolean
+    expandToFixedSize?: boolean
     enableAddLinkBetweenObjectsWhenConnect: boolean
     snapToObject: boolean
     imageResizeKeepRatio: boolean
@@ -144,6 +169,7 @@ export type IComponentSetting = {
   editor: {
     objectAutoBecomeInline: boolean
     addSpacingInReaderMode?: boolean
+    enableFormat?: boolean
   }
   translate: {
     autoGotoHoverText: boolean
@@ -159,6 +185,7 @@ export type IComponentSetting = {
     customRenderBackground?: string
     customRenderFont?: string
     defaultLabelColor: string
+    autoWidth?: boolean
   }
   code: {
     defaultLanguage?: string

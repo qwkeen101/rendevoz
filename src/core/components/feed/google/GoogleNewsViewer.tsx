@@ -12,12 +12,14 @@ import { TabTitle } from '@/core/rendevoz/components'
 import { useTranslation } from 'react-i18next'
 import { useSelectAtomValue } from '@/hooks'
 import EditFeedItem from '@/core/components/feed/components/EditFeedItem'
+import { ObjectStore } from '@/api/stores'
 
 // google news only have webpages
 const GoogleNewsViewer = () => {
   const currentVisiblePage = useSelectAtomValue(FeedStateAtom, s => s.currentVisiblePage)
   const { t } = useTranslation()
-
+  const currItem = useSelectAtomValue(FeedStateAtom, s => s.currentFocusedFeedItemId)
+  const feed = ObjectStore('feed').useValue(currItem)
   useFeedCollectionContent()
   const { renderModal } = useFeedFolder()
   const pageContainerRef = useRef<HTMLDivElement>(null)
@@ -26,7 +28,7 @@ const GoogleNewsViewer = () => {
     <Content fullWidth tabIndex={0} fullHeight flex ref={pageContainerRef}>
       <FeedSidebar />
       <EditFeedItem />
-      <TabTitle title={t('general.Feeds')} icon={<Icon name={'park-broadcast'} />} />
+      <TabTitle title={feed ? feed.title : t('general.Feeds')} icon={<Icon name={'park-broadcast'} />} />
       {renderModal()}
       <Content fullHeight auto flex column>
         {currentVisiblePage === 'feeds' && (

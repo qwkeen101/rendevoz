@@ -21,17 +21,14 @@ import { Tweet } from 'react-tweet'
 import TweetRenderer from '@/core/components/tweet/TweetRenderer'
 
 const FeedContentRenderer = () => {
-  console.log('rerender')
   const currentFocusedFeedItemId = useSelectAtomValue(FeedStateAtom, s => s.currentFocusedFeedItemId)
   const modalOpen = useSelectAtomValue(FeedStateAtom, s => s.modalOpen)
   const setFeedState = useSetAtom(FeedStateAtom)
   const displayMode = KeyvalueStore.useValue('feedOpenMode')
   const currentItem = ObjectStore('feed').useValue(currentFocusedFeedItemId)
   const alreadySaved = useGlobalAtomValue(UrlToWebpageMap).get(currentItem?.link || '')
-  const readLaters = KeyvalueStore.useValue('feedReadLaterIds') || []
-  const alreadyReadLater = currentItem && readLaters.includes(currentItem.id)
+
   const [isLoading, setIsLoading] = useState(false)
-  const [failLoading, setFailLoading] = useState(false)
   const contentCache = currentItem && FEED_CONTENT_CACHE.get(currentItem.id)
   const fakeLoad = useRef(false)
   console.log(displayMode)
@@ -57,6 +54,7 @@ const FeedContentRenderer = () => {
     return contentCache
   }, [currentItem?.link])
   const update = useUpdate()
+
   const memoparse = useMemoizedFn(p => {
     const item = structuredClone(currentItem)
     console.log(p)
@@ -80,26 +78,6 @@ const FeedContentRenderer = () => {
           width: '100%'
         }}
       >
-        {displayMode === 'sidePeek' && (
-          <Icon
-            name={modalOpen ? 'park-double-right' : 'park-double-left'}
-            className={ClassName.flatButton(4, '6px')}
-            size={20}
-            onClick={() => {
-              setFeedState(s => ({ ...s, modalOpen: !s.modalOpen }))
-            }}
-            containerStyle={{
-              position: 'absolute',
-              color: Colors.Font.Transparent,
-              background: Colors.Background.Popover,
-              boxShadow: Colors.Background.BorderBoxShadow,
-              left: -40,
-              top: '20px',
-              transform: 'translateY(-50%)',
-              zIndex: 15
-            }}
-          />
-        )}
         <FeedYoutubeRenderer />
       </Content>
     )
@@ -112,26 +90,6 @@ const FeedContentRenderer = () => {
           width: '100%'
         }}
       >
-        {displayMode === 'sidePeek' && (
-          <Icon
-            name={modalOpen ? 'park-double-right' : 'park-double-left'}
-            className={ClassName.flatButton(4, '6px')}
-            size={20}
-            onClick={() => {
-              setFeedState(s => ({ ...s, modalOpen: !s.modalOpen }))
-            }}
-            containerStyle={{
-              position: 'absolute',
-              background: Colors.Background.Popover,
-              boxShadow: Colors.Background.BorderBoxShadow,
-              color: Colors.Font.Transparent,
-              left: -40,
-              top: '20px',
-              transform: 'translateY(-50%)',
-              zIndex: 15
-            }}
-          />
-        )}
         <FeedPodcastRenderer />
       </Content>
     )
@@ -167,26 +125,6 @@ const FeedContentRenderer = () => {
   if (currentItem && !currentItem.link.includes('news.google.com')) {
     return (
       <>
-        {displayMode === 'sidePeek' && (
-          <Icon
-            name={modalOpen ? 'park-double-right' : 'park-double-left'}
-            className={ClassName.flatButton(4, '6px')}
-            size={20}
-            onClick={() => {
-              setFeedState(s => ({ ...s, modalOpen: !s.modalOpen }))
-            }}
-            containerStyle={{
-              position: 'absolute',
-              background: Colors.Background.Popover,
-              boxShadow: Colors.Background.BorderBoxShadow,
-              color: Colors.Font.Transparent,
-              left: -40,
-              top: '20px',
-              transform: 'translateY(-50%)',
-              zIndex: 15
-            }}
-          />
-        )}
         <Content
           style={{
             height: '100%',
@@ -199,11 +137,6 @@ const FeedContentRenderer = () => {
           <Content fullHeight fullWidth>
             <Webpage
               initialWebpageId={alreadySaved}
-              onFailLoad={() => {
-                if (contentCache) {
-                  setFailLoading(true)
-                }
-              }}
               disableTabTitle={true}
               editorOptions={{
                 on: async e => {
@@ -211,7 +144,18 @@ const FeedContentRenderer = () => {
                     FEED_CONTENT_CACHE.set(currentItem.id, e.value)
                   }
                   if (e.type === 'titleChange') {
-                    ObjectStore('feed').updateOne({ id: currentItem.id, title: e.value, state: { ...currentItem?.state, title: e.value } })
+                    console.log(currentItem?.state, e.value)
+                    if (currentItem?.state?.translatedTitle) {
+                      return
+                    }
+                    ObjectStore('feed').updateOne({
+                      id: currentItem.id,
+                      title: e.value,
+                      state: {
+                        ...currentItem?.state,
+                        translatedTitle: e.value
+                      }
+                    })
                   }
                 },
                 header: {
@@ -223,18 +167,23 @@ const FeedContentRenderer = () => {
               }}
               onStartLoad={() => {
                 setIsLoading(true)
-                setFailLoading(false)
               }}
               onEndLoad={() => {
                 if (isLoading && !fakeLoad.current) {
                   setIsLoading(false)
                 }
-
-                setFailLoading(false)
               }}
               onWebpageParsed={memoparse}
               initialUrl={currentItem.link}
-              state={currentItem.state ? { ...currentItem.state, content: memoedContent } : undefined}
+              state={
+                currentItem.state
+                  ? {
+                      ...currentItem.state,
+                      content: memoedContent,
+                      title: currentItem.title
+                    }
+                  : { title: currentItem.title }
+              }
             />
           </Content>
         </Content>

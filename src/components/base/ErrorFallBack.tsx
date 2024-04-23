@@ -3,10 +3,8 @@ import { css } from '@emotion/css'
 import Content from './Content'
 import errorImg from '@/assets/error.png'
 import { ipcInstance } from '@/electron'
-import { useTheme } from '@/hooks'
 
 const ErrorFallback = ({ error }) => {
-  const { primaryColor, defaultBackGroundColorLightGrey } = useTheme('primaryColor', 'defaultBackGroundColorLightGrey')
   return (
     <Content flex column fullHeight fullWidth centered>
       <img
@@ -20,7 +18,6 @@ const ErrorFallback = ({ error }) => {
       <div
         className={css({
           fontSize: '2rem',
-          color: primaryColor,
           fontWeight: 500,
           marginBottom: 20
         })}

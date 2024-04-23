@@ -10,6 +10,7 @@ import { Rendevoz } from '@/core/rendevoz'
 import { MetaStore, NoteStore, ObjectStore } from '@/api/stores'
 import getVisibleNodeMenuItems from '@/core/components/whiteboard/toolbars/contextMenus/getVisibleNodeMenuItems'
 import { WhiteboardNodeMenuItems } from '@/core/components/whiteboard/toolbars/contextMenus/items'
+import { getSetting } from '@/core'
 
 export default (
   instance: IWhiteboardInstance,
@@ -27,6 +28,7 @@ export default (
   const ifContextMenuOnSingleGroup = selected.length === 1 && selected[0].type === 'group'
   const metaMap = MetaStore.getMetaObjectsMap()
   const menuItems = getVisibleNodeMenuItems(selected)
+  const setting = getSetting()
   const hasWebpageMetas = selected.some(i => i.type === 'metaObject' && i.expanded && metaMap.get(i.metaObjectId)?.type === 'webpage')
   const commonTools: (IMenuLayoutItem | undefined)[] = [
     ...(ifContextMenuOnSingleGroup
@@ -134,26 +136,32 @@ export default (
         instance.toolbarOps?.closeToolbar()
       }
     },
-    canExpandOrFold
-      ? {
-          key: 'expand',
-          type: 'item',
-          text: !showExpandIcon ? t('whiteboard.Fold') : t('whiteboard.Expand'),
-          icon: !showExpandIcon ? 'park-click-to-fold' : 'park-full-screen-one',
-          suffix: WhiteboardDefaultKeyboardShortcut.Expand.text,
-          onSelect: () => {
-            if (showExpandIcon) {
-              instance.nodeOps?.expand(selectedIds)
-            } else {
-              instance.nodeOps?.fold(selectedIds)
+    ...(canExpandOrFold
+      ? [
+          {
+            key: 'expand',
+            type: 'item',
+            text: !showExpandIcon
+              ? t('whiteboard.Fold')
+              : setting.whiteboard.expandToFixedSize
+              ? t('whiteboard.Expand to fixed height')
+              : t('whiteboard.Expand'),
+            icon: !showExpandIcon ? 'park-click-to-fold' : 'park-full-screen-one',
+            suffix: WhiteboardDefaultKeyboardShortcut.Expand.text,
+            onSelect: () => {
+              if (showExpandIcon) {
+                instance.nodeOps?.expand(selectedIds)
+              } else {
+                instance.nodeOps?.fold(selectedIds)
+              }
+              setTimeout(() => {
+                instance.selectOps?.resetSelectionBox()
+              }, 100)
+              instance.toolbarOps?.closeToolbar()
             }
-            setTimeout(() => {
-              instance.selectOps?.resetSelectionBox()
-            }, 100)
-            instance.toolbarOps?.closeToolbar()
           }
-        }
-      : undefined,
+        ].filter(i => i)
+      : []),
     {
       type: 'item',
       key: 'fit-into-content',

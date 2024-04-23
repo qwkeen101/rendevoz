@@ -1,36 +1,40 @@
 import usePdfInstance from '@/core/components/pdf/hooks/usePdfInstance'
 import { assignProperties } from '@/utils'
 import usePdfState from '@/core/components/pdf/hooks/usePdfState'
-import { IPdfDocument } from '~/typings'
-import { ObjectStore } from '@/api/stores'
 import { decreaseLevel, increaseLevel } from '@/core/components/pdf/core/utils/zoom'
 
 export default () => {
   const instance = usePdfInstance()
   const [pdfState, setPdfState] = usePdfState()
-  const updatePdf = async (p: Partial<IPdfDocument>) => {
-    const id = pdfState.pdfId
-    if (id) {
-      await ObjectStore('pdf').updateOne({ id, ...p })
-    }
-  }
   assignProperties(instance, {
     actionOps: {
+      doublePage: () => {
+        const curr = pdfState.state?.doublePage
+        instance.on?.({ type: 'doublePage', value: !curr })
+      },
       zoomIn: () => {
-        const currentZoom = pdfState.document?.scale ?? 1
+        const currentZoom = (pdfState.scaleChanged ? pdfState.state?.scale : pdfState.viewportFitScale) ?? 1
         const nextScale = increaseLevel(currentZoom)
-        updatePdf({ scale: nextScale })
+        setPdfState(s => ({ ...s, scaleChanged: true, state: { ...s.state, scale: nextScale } }))
+        instance.on?.({ type: 'scaleChange', value: nextScale })
       },
       setScale: s => {
-        updatePdf({ scale: s })
+        setPdfState(s => ({ ...s, scaleChanged: true }))
+        instance.on?.({ type: 'scaleChange', value: s })
       },
       fitWidth: () => {
-        updatePdf({ scale: pdfState.viewportFitScale })
+        console.log(pdfState)
+        if (pdfState.viewportFitScale) {
+          console.log('yes')
+          setPdfState(s => ({ ...s, scaleChanged: false }))
+          instance.on?.({ type: 'scaleChange', value: pdfState.viewportFitScale })
+        }
       },
       zoomOut: () => {
-        const currentZoom = pdfState.document?.scale ?? 1
-        const nextScale = decreaseLevel(currentZoom)
-        updatePdf({ scale: nextScale })
+        const currentZoom = (pdfState.scaleChanged ? pdfState.state?.scale : pdfState.viewportFitScale) ?? 1
+        const nextScale = Math.max(pdfState.state?.doublePage ? 0.4 : 0.2, decreaseLevel(currentZoom))
+        setPdfState(s => ({ ...s, scaleChanged: true, state: { ...s.state, scale: nextScale } }))
+        instance.on?.({ type: 'scaleChange', value: nextScale })
       }
     }
   })

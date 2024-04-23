@@ -62,7 +62,9 @@
 }
 .print-editor{
   body{
+    print-color-adjust: exact;
     overflow: visible !important;
+    background-color: var(--global-background);
   }
   *{
     visibility: hidden !important;
@@ -71,8 +73,10 @@
     display: none;
   }
   [role="editor-container"]{
+    background-color: var(--global-background);
     visibility: visible !important;
     display: block !important;
+    print-color-adjust: exact;
     height: fit-content !important;
     padding: 10mm !important;
     overflow: visible !important;

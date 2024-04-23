@@ -421,6 +421,7 @@ const TableCell = ({
       id={String(element.id)}
       colSpan={colSpan}
       style={{
+        whiteSpace: 'normal',
         position: 'relative',
         fontWeight: isHeader ? 700 : undefined,
         verticalAlign: isHeader ? 'middle' : 'top',

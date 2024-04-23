@@ -1,11 +1,13 @@
 import { atom } from 'jotai'
-import { useDb, useSelectGlobalAtomValue } from '@/hooks'
+import { useDb, useGlobalAtomValue, useSelectGlobalAtomValue } from '@/hooks'
 import { globalStore } from '@/api/stores/index'
 import { useEffect } from 'react'
 import { Setting } from '@/core'
 import { MetaFilterGroup, MetaGroup, MetaObject } from '~/typings'
 import { SorterGroup } from '@/core/object/filter/BetterSorter'
 import { ISidebarState } from '@/components/layout/sidebar'
+import { Atom } from 'jotai/vanilla'
+import { selectAtom } from 'jotai/utils'
 
 export type SidebarDatabaseCache = {
   viewMode?: 'title' | 'thumbnail'
@@ -59,8 +61,8 @@ export type CurrentKeyValues = {
   }[]
   showHiddenMetasInSidebar?: boolean
   searchHistory: string[]
-  // [width,height]
-  groupReviewPanelSize?: string[]
+  // [width,height,x,y]
+  groupReviewPanelSize?: number[]
   allWorkspaces: {
     id: number
     name: string
@@ -128,7 +130,8 @@ export type CurrentKeyValues = {
   Record<`sidebarDatabaseCache_${number}`, SidebarDatabaseCache>
 
 const keyvalueAtom = atom<Map<string, any>>(new Map())
-
+// todo: use atom family?
+const keyAtomCache = new Map<string, Atom<any>>()
 const createKeyvalueStore = () => {
   const keyvalueDb = useDb('keypairs')
   return {
@@ -156,7 +159,14 @@ const createKeyvalueStore = () => {
       return keyvalueDb.delete(key)
     },
     useValue: <T extends keyof CurrentKeyValues>(key: T): CurrentKeyValues[T] | undefined => {
-      const v = useSelectGlobalAtomValue(keyvalueAtom, s => s.get(key), [key])
+      if (!keyAtomCache.has(key)) {
+        keyAtomCache.set(
+          key,
+          selectAtom(keyvalueAtom, s => s.get(key))
+        )
+      }
+      const atom = keyAtomCache.get(key)!
+      const v = useGlobalAtomValue(atom)
       useEffect(() => {
         if (!v) {
           keyvalueDb.get(key).then(one => {

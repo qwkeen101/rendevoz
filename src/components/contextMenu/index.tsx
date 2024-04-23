@@ -18,16 +18,15 @@ export interface ContextMenuRef {
   closeContextMenu: () => void
 }
 const ContextMenu = forwardRef<HTMLElement, ContextMenuProps>(
-  ({ position = ['right', 'left'], children, content, onContextMenu, onClose, enableContextMenu = true, boundaryInset }, ref) => {
+  ({ position = ['right', 'left'], children, content, enableContextMenu = true, boundaryInset }, ref) => {
     const memoizedPosition = useRef<number[]>([0, 0])
     const childRef = useRef<HTMLElement | undefined>()
     const [contextMenuOpen, setContextMenuOpen] = useState(false)
     const handleRef = (node: HTMLElement) => {
       childRef.current = node
-    }
-    const closeContextMenu = () => {
-      setContextMenuOpen(false)
-      onClose?.()
+      if (ref) {
+        typeof ref === 'function' ? ref(node) : (ref.current = node)
+      }
     }
     const renderChild = () =>
       cloneElement(children as JSX.Element, {
@@ -51,7 +50,6 @@ const ContextMenu = forwardRef<HTMLElement, ContextMenuProps>(
       <>
         <AnimatePopover
           align="start"
-          innerRef={ref}
           positions={position}
           disableNudge={true}
           onVisiblityChange={s => {

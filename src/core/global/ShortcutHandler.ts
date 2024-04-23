@@ -27,6 +27,7 @@ export default function useGlobalShortcutHandler() {
       e.preventDefault()
     }
     if (isShortcut(e, 'quickCreateObject')) {
+      e.preventDefault()
       GlobalInstance.metaOps?.createObject().then(res => {
         if (res) {
           setTimeout(() => {
@@ -36,33 +37,42 @@ export default function useGlobalShortcutHandler() {
       })
     }
     if (isShortcut(e, 'openObjectPanel')) {
+      e.preventDefault()
       GlobalInstance.metaOps?.toggleDetails()
     }
     if (isShortcut(e, 'closeOtherTabs')) {
+      e.preventDefault()
       GlobalInstance.layoutOps?.closeTabs('others')
     }
     if (isShortcut(e, 'closeRightTabs')) {
+      e.preventDefault()
       GlobalInstance.layoutOps?.closeTabs('right')
     }
     if (isShortcut(e, 'closeLeftTabs')) {
+      e.preventDefault()
       GlobalInstance.layoutOps?.closeTabs('left')
     }
     if (isShortcut(e, 'openSidebar')) {
+      e.preventDefault()
       updateSidebarState(draft => {
         draft.leftOpen = !draft.leftOpen
         draft.leftVisible = draft.leftVisible || 'database'
       })
     }
     if (isShortcut(e, 'openGlobalSearch')) {
+      e.preventDefault()
       GlobalInstance.searchOps?.openSearchPanel()
     }
     if (isShortcut(e, 'switchToPrevTab')) {
+      e.preventDefault()
       GlobalInstance.layoutOps?.switchToTab('prev')
     }
     if (isShortcut(e, 'switchToNextTab')) {
+      e.preventDefault()
       GlobalInstance.layoutOps?.switchToTab('next')
     }
     if (isShortcut(e, 'closeCurrentTab')) {
+      e.preventDefault()
       GlobalInstance.layoutOps?.closeCurrentFocusedTab()
     }
   }

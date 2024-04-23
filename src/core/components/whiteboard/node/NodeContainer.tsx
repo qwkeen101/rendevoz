@@ -2,11 +2,12 @@ import { css } from '@emotion/css'
 import { useWhiteboardNodes } from '../StateHooks'
 import WrapperNode from './WrapperNode'
 import TreeEdgeContainer from '@/core/components/whiteboard/edge/EdgeContainer'
-import { useLayoutEffect, useState } from 'react'
+import { useSelectAtomValue } from '@/hooks'
+import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
 
 const TreeNodeContainer = () => {
   const treeNodes = useWhiteboardNodes()
-
+  const isSelecting = useSelectAtomValue(WhiteboardStateAtom, s => s.isSelecting)
   return (
     <div
       className={css({
@@ -18,6 +19,9 @@ const TreeNodeContainer = () => {
         zIndex: 10,
         pointerEvents: 'none'
       })}
+      style={{
+        pointerEvents: isSelecting ? 'none' : undefined
+      }}
       role="data-container"
     >
       <TreeEdgeContainer />

@@ -92,7 +92,7 @@ export interface MetaGroup extends IBase {
           cardSize?: 'small' | 'medium' | 'large'
           fitImage?: boolean
           thumbnailMode?: boolean
-          cardCover?: 'cover' | 'none' | 'content'
+          cardCover?: 'cover' | 'none' | 'content' | 'cover or content'
           hideCoverIfEmpty?: boolean
         }
       }

@@ -19,6 +19,7 @@ import { Colors } from '@/consts'
 import useIsFullscreen from '@/hooks/utils/useIsFullscreen'
 import useSidebarState from '@/components/layout/sidebar/useSidebarState'
 import updateSidebarState from '@/components/layout/sidebar/updateSidebarState'
+import SyncPanel from '@/core/setting/sync/SyncPanel'
 
 interface DockTabBarProps {
   TabNavList: TabNavListProps
@@ -115,6 +116,7 @@ export const DockTabBar = memo(
         getRef={getRef}
         tabIndex={-1}
         style={{
+          '-webkit-app-region': 'drag',
           paddingLeft: isTopLeft ? (sidebarState.leftOpen ? 8 : os === 'macos' && !isFullscreen ? 36 : 8) : 8,
           background: 'var(--tabs-bg)',
           zIndex: 102,
@@ -136,7 +138,11 @@ export const DockTabBar = memo(
             }}
             alignItems={'center'}
           >
+            <SyncPanel />
             <Icon
+              style={{
+                '-webkit-app-region': 'no-drag'
+              }}
               onClick={() => {
                 updateSidebarState(s => {
                   s.leftOpen = !s.leftOpen
@@ -303,7 +309,11 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast, onDragEnd, is
   return (
     <AnimatePopover
       positions={['bottom']}
-      content={<WithBorder padding={'0.4rem 0'} width={200}>{renderTabContextMenu()}</WithBorder>}
+      content={
+        <WithBorder padding={'0.4rem 0'} width={200}>
+          {renderTabContextMenu()}
+        </WithBorder>
+      }
       onClickOutside={toggleContextMenuVisible}
       padding={10}
       innerRef={tabRef}

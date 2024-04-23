@@ -8,7 +8,6 @@ import { objectIdToMetaObjectIdMapAtom } from '@/api/stores/meta/meta.store'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
 import usePdfInstance from '@/core/components/pdf/hooks/usePdfInstance'
 import { useEffect, useState } from 'react'
-import { XYPosition } from '~/typings'
 
 const LabelToolbarRenderer = () => {
   const [pdfState, setPdfState] = usePdfState()

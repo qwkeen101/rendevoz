@@ -21,6 +21,7 @@ export interface FeedItem extends IBase {
     title?: string
     domain?: string
     author?: string
+    translatedTitle?: string
     // pre parsed / already parsed content, cache it
     content?: import('slate').Descendant[]
   }

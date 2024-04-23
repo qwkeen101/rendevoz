@@ -24,7 +24,7 @@ const SidebarPinned = memo(() => {
         flex
         alignItems="center"
         justifyContent="space-between"
-        style={{ fontSize: 13, color: Colors.Font.Transparent, paddingRight: 8 }}
+        style={{ fontSize: 13, color: Colors.Font.Transparent, padding: '12px 12px 6px 12px' }}
       >
         <div style={{ cursor: 'pointer', userSelect: 'none' }} onClick={toggleCollapsed}>
           {t('sidebar.pinned')}
@@ -32,12 +32,12 @@ const SidebarPinned = memo(() => {
         {totalPinned > 0 ? totalPinned : undefined}
       </Content>
       {!collapsed && (
-        <Content style={{ marginLeft: -4 }}>
+        <Content style={{ padding: '0px 4px' }}>
           {pinnedObjects.map(i => (
             <SidebarObjectItem draggable={false} key={i.id} id={i.id} />
           ))}
           {pinnedCollections.map(i => (
-            <SidebarCollectionItem draggable={false} key={i.id} id={i.id} />
+            <SidebarCollectionItem displayPinned={true} draggable={false} key={i.id} id={i.id} />
           ))}
         </Content>
       )}

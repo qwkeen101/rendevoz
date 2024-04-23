@@ -60,7 +60,7 @@ const writeFile = async (data: string, filePath: string, type?: 'base64' | 'utf8
   checkFileFolderGenerated()
   const folderPath = getRendeFileFolderPath()
   const absolutePath = path.join(folderPath, filePath)
-  const protocolPath = 'rendefile://' + filePath
+  const protocolPath = absolutePath.replace(folderPath, 'rendefile://')
   return new Promise(resolve => {
     fs.writeFile(absolutePath, data, { encoding: type }, () => {
       resolve(protocolPath)
@@ -190,13 +190,38 @@ const readDir = async (directoryPath: string) => {
   })
 }
 
+const readFile = async (filePath: string) => {
+  let p = filePath
+  if (filePath.startsWith('rendefile://')) {
+    const replaced = filePath.replace('rendefile://', '')
+    p = path.join(getRendeFileFolderPath(), replaced)
+  }
+  return new Promise(res => {
+    fs.readFile(p, { encoding: 'utf8' }, (err, data) => {
+      if (err) throw err
+      res(data)
+    })
+  })
+}
+
+const utimes = (filePath: string) => {
+  let p = filePath
+  if (filePath.startsWith('rendefile://')) {
+    const replaced = filePath.replace('rendefile://', '')
+    p = path.join(getRendeFileFolderPath(), replaced)
+  }
+  console.log(p)
+  fs.utimes(p, new Date(), new Date(), () => {})
+}
 const FileService = {
   deleteFile,
+  utimes,
   openLocalFile,
   saveFile,
   readDir,
   saveBuffer,
   copyFile,
+  readFile,
   saveImage,
   writeFile,
   openFolder,

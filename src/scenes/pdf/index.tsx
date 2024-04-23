@@ -5,6 +5,7 @@ import { IPdfInstance } from '~/typings'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import Pdf from '@/core/components/pdf'
 import { Rendevoz } from '@/core/rendevoz'
+import UncontrolledPDF from '@/core/components/pdf/UncontrolledPDF'
 
 const PdfPage: FC<{
   pdfId: number
@@ -22,7 +23,7 @@ const PdfPage: FC<{
         />
       )}
       <Container auto>
-        <Pdf pdfId={pdfId} onInstanceInitialized={onInstanceInitialized} />
+        <UncontrolledPDF id={pdfId} onInstanceInitialized={onInstanceInitialized} />
       </Container>
     </>
   )

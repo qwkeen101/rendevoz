@@ -1,18 +1,17 @@
-import { CollectionStore, MetaStore } from '@/api/stores'
+import { MetaStore } from '@/api/stores'
 import { Content, Icon, WithBorder } from '@/components'
 import { Rendevoz } from '@/core/rendevoz'
-import { Colors } from '@/consts'
 import { ClassName } from 'rendevoz'
 import { DateFormat } from '@/utils'
 import { css } from '@emotion/css'
 import { memo } from 'react'
 import ContextMenu from '@/components/contextMenu'
 import { ObjectActionPopover } from '@/core'
+import InnerContentDisplayer from '@/core/components/group/components/gallery/items/InnerContentDisplayer'
+import { Colors } from '@/consts'
 
 const GalleryItem = memo(({ metaId }: { metaId: number }) => {
-  const collections = CollectionStore.useMetaCollections(metaId)
   const meta = MetaStore.useValue(metaId)
-  const hasCollection = collections.length > 0
   if (!MetaStore.isVisibleMetaObject(meta)) return null
   return (
     <ContextMenu
@@ -25,7 +24,7 @@ const GalleryItem = memo(({ metaId }: { metaId: number }) => {
       <Content
         flex
         column
-        style={{ width: 208, cursor: 'pointer' }}
+        style={{ width: 220, cursor: 'pointer' }}
         className={css({
           ':hover': {
             '.cover': {
@@ -45,34 +44,25 @@ const GalleryItem = memo(({ metaId }: { metaId: number }) => {
             overflow: 'hidden',
             borderRadius: 10,
             justifyContent: 'center',
-            color: Colors.Font.Tertiary,
-            backgroundSize: 'cover',
             transition: 'all 0.2s ease',
-            backgroundPosition: 'center',
             position: 'relative',
             border: '1px solid var(--border-background)',
-            backgroundImage: meta?.coverImgSrc ? 'url(' + meta.coverImgSrc + ')' : Colors.Background.RadialGradient
+            background: Colors.Background.Secondary
           }}
         >
-          {!meta?.coverImgSrc && <Icon size={54} name={Rendevoz.Utils.Object.getMetaObjectIcon(meta.type)} />}
+          <InnerContentDisplayer
+            containerStyle={{ width: '100%', height: '100%', overflow: 'hidden', pointerEvents: 'none' }}
+            metaId={metaId}
+          />
         </div>
         <Content flex column gap={5} auto style={{ paddingTop: 12 }}>
-          <div
-            style={{ fontWeight: 'bold', letterSpacing: '-0.2px', fontSize: 14, lineHeight: '18px', height: 36 }}
-            className={ClassName.ellipsisFont(2)}
-          >
+          <div style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.4 }} className={ClassName.ellipsisFont(3)}>
             {meta.name || meta.placeholderName}
           </div>
 
-          <Content flex justifyContent={'space-between'} style={{ fontSize: '12px' }} gap={10}>
+          <Content flex justifyContent={'space-between'} className={'transparent-font font-size-12'} gap={10}>
             <span style={{ flex: 1 }} className={ClassName.ellipsisFont(1)}>
               {Rendevoz.Utils.Meta.getTypeName(meta.type)}
-              {hasCollection && (
-                <>
-                  <span style={{ margin: '0px 4px' }}>•</span>
-                  <span>{collections[0][collections[0].length - 1].name}</span>
-                </>
-              )}
             </span>
             <span>{DateFormat.formatDistanceToNowStrict(meta.createdAt)}</span>
           </Content>

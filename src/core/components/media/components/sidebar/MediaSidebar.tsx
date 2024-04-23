@@ -60,7 +60,7 @@ const MediaSidebar = memo(() => {
         opacity: sidebarState.rightBarVisible ? 1 : 0,
         visibility: sidebarState.rightBarVisible ? 'visible' : 'hidden',
         position: sidebarState.rightBarVisible ? 'relative' : 'absolute',
-        marginBottom: column ? 24 : 0,
+        marginBottom: column ? 16 : 0,
         overflow: 'hidden'
       }}
     >

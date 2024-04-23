@@ -61,7 +61,7 @@ const WebpageInner = ({
   }, [state])
   const webpageMeta = MetaStore.useObjectToMetaValue(webpageState.currentWebpageId)
   return (
-    <Content fullHeight fullWidth>
+    <>
       {!disableTabTitle && (
         <TabTitle
           icon={<Icon size={16} name={'park-web-page'} />}
@@ -69,7 +69,7 @@ const WebpageInner = ({
         />
       )}
       <WebpageContentRenderer initialHeight={initialHeight} onInstanceInitialized={onInstanceInitialized} editorOptions={editorOptions} />
-    </Content>
+    </>
   )
 }
 const Webpage: FC<IWebpageProps> = props => {

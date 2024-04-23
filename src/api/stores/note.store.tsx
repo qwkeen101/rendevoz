@@ -47,7 +47,7 @@ const createNoteStore = () => {
   }
   const saveNoteAsSearch = async (value: Descendant[], metaId?: number) => {
     if (metaId) {
-      const targetMeta = await MetaStore.getCachedMetaObject(metaId)
+      const targetMeta = MetaStore.getCachedMetaObject(metaId)
       console.log(targetMeta, value)
       if (targetMeta) {
         SearchHelper.insertDocument({

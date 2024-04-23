@@ -1,4 +1,4 @@
-import { AnimatePopover, Button, Icon, IconWithPopover, WithBorder } from '@/components'
+import { AnimatePopover, Button, Icon, IconWithPopover, Menu, WithBorder } from '@/components'
 import { FC, useMemo, useState } from 'react'
 import { Components } from 'rendevoz'
 import { GlobalInstance, useGlobalAtomValue, useToggle } from '@/hooks'
@@ -22,6 +22,8 @@ import KeyvalueStore from '@/api/stores/keyvalue.store'
 import GalleryConfig from '@/scenes/home/GalleryConfig'
 import { MetaStore } from '@/api/stores'
 import Workspace from '@/api/common/workspace'
+import ContextMenu from '@/components/contextMenu'
+import classnames from 'classnames'
 
 const { Content } = Components
 const HomeSearchAtom = atom<string | undefined>(undefined)
@@ -46,26 +48,34 @@ export const HomePage: FC = () => {
         <TabTitle title={t('general.home')} icon="park-home" />
         <Content flex alignItems="center" gap={10} justifyContent="space-between" style={{ margin: '16px 0px' }}>
           <div>
-            <div style={{ fontSize: 13, color: Colors.Font.Transparent, paddingLeft: 8 }}>{t('settings.workspace')}</div>
+            <div className={'transparent-font font-size-13 normal-font'} style={{ paddingLeft: 8 }}>
+              {t('settings.workspace')}
+            </div>
             <AnimatePopover
               align={'start'}
               content={setV => (
-                <WithBorder padding={6} width={180}>
-                  {allWorkspaces.map(i => (
-                    <div
-                      key={i.createdAt}
-                      onClick={async () => {
-                        setV(false)
-                        await KeyvalueStore.updateOne('currentWorkspace', i)
-                        setTimeout(() => {
-                          Workspace.switchWorkspace(i.id)
-                        })
-                      }}
-                      className={css([ClassName.flatButton(), ClassName.ellipsisFont(1)])}
-                    >
-                      {i.name}
-                    </div>
-                  ))}
+                <WithBorder padding={'0.4rem 0'} width={180}>
+                  <Menu.NavigationMenu
+                    layout={[
+                      {
+                        type: 'title',
+                        name: 'All workspaces'
+                      },
+                      // @ts-ignore
+                      ...allWorkspaces.map(i => ({
+                        type: 'item',
+                        key: String(i.id),
+                        text: i.name || 'Unnamed workspace',
+                        onSelect: async () => {
+                          setV(false)
+                          await KeyvalueStore.updateOne('currentWorkspace', i)
+                          setTimeout(() => {
+                            Workspace.switchWorkspace(i.id)
+                          })
+                        }
+                      }))
+                    ]}
+                  />
                 </WithBorder>
               )}
               positions={['bottom']}
@@ -82,36 +92,28 @@ export const HomePage: FC = () => {
               </div>
             </AnimatePopover>
           </div>
-          <Content flex gap={8} alignItems={'center'}>
+          <Content flex gap={8} alignItems={'center'} className={'transparent-font'}>
             <Icon
               name={'park-all-application'}
               size={18}
-              className={ClassName.flatButton(4, 4)}
+              className={classnames(ClassName.flatButton(4, 4), homeMode === 'gallery' && 'active-button')}
               onClick={() => {
                 KeyvalueStore.updateOne('homeDisplayMode', 'gallery')
               }}
-              style={{
-                background: homeMode === 'gallery' ? Colors.Background.ButtonActive : undefined,
-                color: homeMode === 'table' ? Colors.Font.Transparent : undefined
-              }}
             />
             <Icon
-              name={'park-table-file'}
+              name={'custom-list'}
               size={18}
               onClick={() => {
                 KeyvalueStore.updateOne('homeDisplayMode', 'table')
               }}
-              className={ClassName.flatButton(4, 4)}
-              style={{
-                background: homeMode === 'table' ? Colors.Background.ButtonActive : undefined,
-                color: homeMode === 'gallery' ? Colors.Font.Transparent : undefined
-              }}
+              className={classnames(ClassName.flatButton(4, 4), homeMode === 'table' && 'active-button')}
             />
             {homeMode === 'gallery' && (
               <AnimatePopover
                 align={'end'}
                 content={
-                  <WithBorder padding={6} width={200}>
+                  <WithBorder padding={4} width={200}>
                     <GalleryConfig />
                   </WithBorder>
                 }
@@ -216,8 +218,6 @@ const Recent = () => {
     return allItems
   }, [type, all, sortMode, search])
 
-  const [showFilter, toggleShowFilter] = useToggle(false)
-
   return (
     <>
       <Content
@@ -226,9 +226,9 @@ const Recent = () => {
         onPointerLeave={() => toggleShowResizer(false)}
         style={{
           zIndex: 10,
-          marginRight: 50,
           padding: '4px 0px'
         }}
+        className={'transparent-font font-size-14'}
       >
         <div id="name-header" style={{ width: '100%' }}>
           <Select
@@ -237,13 +237,13 @@ const Recent = () => {
             onSelect={v => setType(v[0])}
             closeOnSelect
             style={{
-              fontWeight: 600,
-              width: 200
+              width: 160,
+              fontWeight: 500
             }}
             options={[
               {
                 value: 'all',
-                children: t('general.all'),
+                children: t('general.All types'),
                 icon: 'park-all-application'
               },
               {
@@ -294,7 +294,7 @@ const Recent = () => {
             <Button.IconButton
               spaceBetween
               reverse
-              style={{ flex: 1, whiteSpace: 'nowrap', fontWeight: 600 }}
+              style={{ flex: 1, whiteSpace: 'nowrap', fontWeight: 500 }}
               text={t('general.view at')}
               onClick={() => {
                 setSortMode(sortMode === 'viewDesc' ? 'viewAsc' : 'viewDesc')
@@ -337,7 +337,7 @@ const Recent = () => {
             ></motion.div>
             <Button.IconButton
               spaceBetween
-              style={{ flex: 1, whiteSpace: 'nowrap', fontWeight: 600 }}
+              style={{ flex: 1, whiteSpace: 'nowrap', fontWeight: 500 }}
               reverse
               text={t('general.create at')}
               onClick={() => {
@@ -348,96 +348,96 @@ const Recent = () => {
           </Content>
         </div>
       </Content>
-      <table
-        onScroll={e => {
-          if (e.currentTarget.scrollTop > 0) {
-            toggleShowFilter(true)
-          } else {
-            toggleShowFilter(false)
-          }
-        }}
-        style={{
-          display: 'block',
-          height: 0,
-          flex: 1,
-          margin: '0px -24px',
-          padding: '0px 24px 50px'
-        }}
-      >
-        <colgroup>
-          <col width={ColWidthState.nameWidth} id="name-col" />
-          <col style={{ minWidth: ColWidthState.viewWidth }} width={ColWidthState.viewWidth} id="view-col" />
-          <col style={{ minWidth: ColWidthState.createWidth }} width={ColWidthState.createWidth} id="create-col" />
-          <col style={{ minWidth: 50 }} />
-        </colgroup>
-
-        <tbody
+      {!items?.length ? (
+        <div
           style={{
-            borderTop: '1px solid var(--border-background)'
+            gap: 12,
+            fontSize: 14,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: 'calc(100vh - 200px)',
+            margin: '0px -24px',
+            padding: '0px 24px 50px',
+            flexDirection: 'column'
           }}
         >
-          {items?.slice(0, 100)?.map(i => (
-            <tr
-              onClick={e => {
-                if (!e.defaultPrevented) {
-                  Rendevoz.Actions.Open.Meta.openMetaObject(i.id)
-                }
-              }}
-              key={i.id}
-              className={css([
-                {
-                  userSelect: 'none',
-                  td: {
-                    padding: '6px 8px',
-                    fontWeight: 500,
-                    fontSize: 14
-                  }
-                },
-                ClassName.flatButton()
-              ])}
-            >
-              <td>
+          <Icon size={80} style={{ opacity: 0.3 }} name={'custom-empty'} />
+          <div className={'transparent-font'}>{t('general.Current list is empty')}</div>
+        </div>
+      ) : (
+        <table
+          style={{
+            display: 'block',
+            height: 0,
+            flex: 1,
+            margin: '0px -24px',
+            padding: '0px 24px 50px'
+          }}
+        >
+          <colgroup>
+            <col width={ColWidthState.nameWidth} id="name-col" />
+            <col style={{ minWidth: ColWidthState.viewWidth }} width={ColWidthState.viewWidth} id="view-col" />
+            <col style={{ minWidth: ColWidthState.createWidth }} width={ColWidthState.createWidth} id="create-col" />
+          </colgroup>
+
+          <tbody
+            style={{
+              borderTop: '1px solid var(--border-background)'
+            }}
+          >
+            {items?.slice(0, 100)?.map(i => (
+              <ContextMenu
+                key={i.id}
+                content={setV => (
+                  <WithBorder>
+                    <ObjectActionPopover onClose={() => setV(false)} metaObjectId={i.id} />
+                  </WithBorder>
+                )}
+              >
                 <DraggableElement
                   draggingDetails={{
                     type: 'metaElement',
                     metaId: i.id
                   }}
                 >
-                  <Content flex gap={12} alignItems={'center'}>
-                    {i.coverImgSrc ? (
-                      <img src={i.coverImgSrc} width={36} height={36} style={{ objectFit: 'cover', borderRadius: 4 }} />
-                    ) : (
-                      <Icon size={18} name={getIcon(i.type)} />
-                    )}
-                    <div className={ClassName.ellipsisFont(1)}>{i.name || i.placeholderName}</div>
-                  </Content>
+                  <tr
+                    onClick={e => {
+                      if (!e.defaultPrevented) {
+                        Rendevoz.Actions.Open.Meta.openMetaObject(i.id)
+                      }
+                    }}
+                    className={css([
+                      {
+                        userSelect: 'none',
+                        td: {
+                          padding: '6px 8px',
+                          fontWeight: 500,
+                          fontSize: 14
+                        }
+                      },
+                      ClassName.flatButton()
+                    ])}
+                  >
+                    <td>
+                      <Content style={{ minHeight: 30 }} flex gap={12} alignItems={'center'}>
+                        {i.coverImgSrc ? (
+                          <img src={i.coverImgSrc} width={36} height={36} style={{ objectFit: 'cover', borderRadius: 4 }} />
+                        ) : (
+                          <Icon size={18} name={getIcon(i.type)} />
+                        )}
+                        <div className={ClassName.ellipsisFont(1)}>{i.name || i.placeholderName}</div>
+                      </Content>
+                    </td>
+                    <td>{i.viewAt && DateFormat.formatDistanceToNowStrict(i.viewAt)}</td>
+                    <td>{DateFormat.formatDistanceToNowStrict(i.createdAt)}</td>
+                  </tr>
                 </DraggableElement>
-              </td>
-              <td>{i.viewAt && DateFormat.formatDistanceToNowStrict(i.viewAt)}</td>
-              <td>{DateFormat.formatDistanceToNowStrict(i.createdAt)}</td>
-              <td>
-                <Content flex alignItems="center" justifyContent="center" onClick={e => e.stopPropagation()}>
-                  <IconWithPopover
-                    placement={['right', 'left']}
-                    align="start"
-                    zIndex={Zindexes.PopupMenu}
-                    content={setV => (
-                      <WithBorder>
-                        <ObjectActionPopover onClose={() => setV(false)} metaObjectId={i.id} />
-                      </WithBorder>
-                    )}
-                    name="park-more"
-                    closeOnContentClick
-                    disableIntersection
-                    disableNudge
-                    className={ClassName.circleButton()}
-                  ></IconWithPopover>
-                </Content>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </ContextMenu>
+            ))}
+          </tbody>
+        </table>
+      )}
     </>
   )
 }

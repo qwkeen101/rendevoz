@@ -38,6 +38,7 @@ const Content = forwardRef<HTMLDivElement, ContentProps>(
   ) => {
     return (
       <div
+        {...rest}
         ref={ref}
         className={className}
         style={{
@@ -48,12 +49,10 @@ const Content = forwardRef<HTMLDivElement, ContentProps>(
           justifyContent: style?.justifyContent ?? (centered ? 'center' : justifyContent),
           alignItems: style?.alignItems ?? (centered ? 'center' : alignItems),
           flex: style?.flex ?? (auto ? 'auto' : undefined),
-          flexShrink: style?.flexShrink,
           width: fullWidth ? '100%' : style?.width,
           height: fullHeight ? '100%' : style?.height,
           gap: style?.gap || gap
         }}
-        {...rest}
       >
         {children}
       </div>

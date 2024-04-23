@@ -43,13 +43,6 @@ const PdfLeftSidebar = () => {
       <Tabs
         defaultActiveKey="thumbnail"
         onTabClick={key => setPdfBarState(s => ({ ...s, leftBarActive: key }))}
-        extra={
-          <Icon
-            name="park-close"
-            className={ClassName.circleButton()}
-            onClick={() => setPdfBarState(s => ({ ...s, showLeftBar: false }))}
-          />
-        }
         activeKey={pdfBarState.leftBarActive}
       >
         <TabPane

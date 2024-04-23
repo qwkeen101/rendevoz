@@ -12,11 +12,6 @@ interface SwitchProps {
   value?: boolean
   small?: boolean
 }
-const spring = {
-  type: 'spring',
-  stiffness: 700,
-  damping: 30
-}
 const SwitchClassName = css({
   flexShrink: 0,
   display: 'flex',
@@ -27,7 +22,7 @@ const SwitchClassName = css({
   position: 'relative'
 })
 const Switch: FC<SwitchProps> = ({ onChange, defaultValue = false, value, small }) => {
-  const [on, toggleOn] = useToggle(defaultValue)
+  const [on, toggleOn] = useToggle(value ?? defaultValue)
   const realOn = value !== undefined ? value : on
   const switchStyle: CSSProperties = {
     backgroundColor: realOn ? Colors.Common.SelectColor : '#00000040',

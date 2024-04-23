@@ -1,16 +1,26 @@
-import { globalStore, NoteStore, ObjectStore } from '@/api/stores'
-import { useEffect, useLayoutEffect, useMemo } from 'react'
+import { globalStore, MetaStore, NoteStore, ObjectStore } from '@/api/stores'
+import { useEffect, useLayoutEffect } from 'react'
 import useWebpageState, { IWebpageState } from '@/core/components/webpage/hooks/useWebpageState'
 import { atom } from 'jotai'
 import { useMemoizedFn } from '@/hooks'
 import { Rendevoz } from '@/core/rendevoz'
 import { useLatest } from 'react-use'
+import FileSystem from '@/api/fileSystem'
 
 export const UrlToWebpageMap = atom(new Map<string, number>())
 
 document.addEventListener('DOMContentLoaded', () => {
   const webpagesAtom = ObjectStore('webpage').objectMapAtom
-  ObjectStore('webpage').getAll()
+  ObjectStore('webpage')
+    .fetchAll()
+    .then(data => {
+      console.log(data)
+      const map = new Map()
+      data.forEach(i => {
+        map.set(i.url, i.id)
+      })
+      globalStore.set(UrlToWebpageMap, map)
+    })
   globalStore.sub(webpagesAtom, () => {
     const currentValue = globalStore.get(webpagesAtom)
     const map = new Map()
@@ -46,7 +56,6 @@ const useWebpageContent = (options: {
       options.onEndLoad?.()
       return
     }
-    console.log(webpageState)
     if (webpageState.currentUrl) {
       const url = webpageState.currentUrl
       if (!webpageState.currentWebpageId || (webpageState.currentWebpageId && !webpageState.currentWebpageNoteId)) {
@@ -81,7 +90,7 @@ const useWebpageContent = (options: {
             return
           }
           if (res) {
-            const { content, author, domain, title, favicon } = res
+            const { content, author, domain, title, favicon, image, description } = res
             if (webpageState.currentWebpageId && !currentWebpage?.noteId) {
               const note = await NoteStore.initializeNoteWithValue(content)
               if (note) {
@@ -93,6 +102,15 @@ const useWebpageContent = (options: {
                   name: title,
                   favicon
                 })
+              }
+              const webpageMeta = MetaStore.getMetaObjectByObjectId(webpageState.currentWebpageId)
+              if (webpageMeta && !webpageMeta.name) {
+                let imgPath = undefined
+                if (image) {
+                  const f = await fetch(image).then(i => i.blob())
+                  imgPath = await FileSystem.saveImage(f)
+                }
+                MetaStore.updateMetaObject({ id: webpageMeta.id, name: title, coverImgSrc: imgPath, description })
               }
             }
             setWebpageState(s => ({
@@ -137,8 +155,8 @@ const useWebpageContent = (options: {
     memoedLoadUrl()
   }, [webpageState.currentUrl])
   useEffect(() => {
+    console.log(currentWebpage)
     if (currentWebpage) {
-      console.log(currentWebpage)
       setWebpageState(s => ({
         ...s,
         currentWebpageNoteId: currentWebpage.noteId,
@@ -147,7 +165,7 @@ const useWebpageContent = (options: {
         currentWebpage: {
           favicon: currentWebpage.favicon,
           title: currentWebpage.title || 'Untitled',
-          author: currentWebpage.author || 'Unknown author',
+          author: currentWebpage.author,
           domain: currentWebpage.domain || 'Unknown',
           image: currentWebpage.image
         }
@@ -155,7 +173,7 @@ const useWebpageContent = (options: {
     } else {
       setWebpageState(s => ({
         ...s,
-        loaded: false,
+        loaded: s.externalState?.content ? true : false,
         currentWebpageNoteId: undefined,
         currentWebpage: undefined
       }))

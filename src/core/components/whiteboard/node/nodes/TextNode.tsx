@@ -1,8 +1,9 @@
 import { InnerNodeProps } from '../WrapperNode'
 import { IEditorInstance, IWhiteboardNode } from '~/typings'
 import SimpleEditor from '@/core/components/editor/SimpleEditor'
-import { useRef, memo } from 'react'
+import { useRef, memo, useMemo } from 'react'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
+import { Node } from 'slate'
 const TextNode = ({ node, onClick }: InnerNodeProps & { onClick: VoidFunction }) => {
   const textNode = node as IWhiteboardNode & { type: 'text' }
   const instance = useWhiteboardInstance()
@@ -10,6 +11,11 @@ const TextNode = ({ node, onClick }: InnerNodeProps & { onClick: VoidFunction })
 
   const handleChangeValue = (newValue: string) => {
     instance.updateNode?.(textNode.id, n => ({ ...n, content: newValue }), false)
+  }
+  const initialOkay = useMemo(() => Node.isNodeList(textNode.content), [])
+  if (!initialOkay) {
+    instance.deleteNode?.(node.id!)
+    return null
   }
   return (
     <SimpleEditor

@@ -79,6 +79,10 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
       globalStore.set(objectMapAtom, BaseStore.bulkAdd(data, new Map()))
       return true
     },
+    fetchAll: async () => {
+      const data = await objectsDb.where('specType').equals(type).toArray()
+      return data
+    },
     getAllData: async () => {
       return await initializedLocalStore.getAllData(s => s.specType === type)()
     },
@@ -226,6 +230,7 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
     deleteOneById: adaptStore().deleteOneById,
     getOneById: adaptStore().getOneById,
     getAll: adaptStore().getAll,
+    fetchAll: adaptStore().fetchAll,
     fetchOneById: adaptStore().fetchOneById,
     addOneWithMeta: adaptStore().addOneWithMeta,
     getAllData: adaptStore().getAllData,
@@ -389,14 +394,12 @@ const createWebpageStore = () => {
       if (!('url' in o)) {
         o.url = ''
       }
-      if (!o.noteId) {
-        o.noteId = 123456
-      }
     },
     afterAddMetaProcess: {
       onSuccess: async (obj, meta) => {
         if (obj.url) {
           const result = await Rendevoz.Utils.Web.parseWebpage(obj.url)
+          console.log(obj, meta)
           if (!meta.name) {
             await MetaStore.updateMetaObject(
               { id: meta.id, coverImgSrc: result.image, name: result.title, description: result.description },
@@ -405,8 +408,7 @@ const createWebpageStore = () => {
               }
             )
           }
-
-          if (obj.noteId === 123456) {
+          if (!obj.noteId) {
             const note = await NoteStore.initializeNoteWithValue(result.content)
             if (note) {
               await ObjectStore('webpage').updateOne({
@@ -422,12 +424,6 @@ const createWebpageStore = () => {
       if (!o.url?.startsWith('http://') && !o.url?.startsWith('https://') && o.url?.length) {
         o.url = 'https://' + o.url
       }
-      try {
-        if (o.url) {
-          new URL(o.url)
-          o.noteId = undefined
-        }
-      } catch (e) {}
     }
   })
 }

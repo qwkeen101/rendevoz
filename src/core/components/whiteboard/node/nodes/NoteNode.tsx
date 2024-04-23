@@ -20,9 +20,10 @@ const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange, metaId }) => {
       }}
       initialHeight={useMemo(() => node.height, [])}
       layout={{
-        virtualizer: node.resized ? true : false,
+        virtualizer: true,
         showHeader: false,
         showBottomPadding: true,
+        disableOverscanInReadOnly: false,
         showBlockHandleAdd: false,
         canScrollIntoView: false
       }}
@@ -40,7 +41,7 @@ const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange, metaId }) => {
         bottomPadding: 30,
         pageMinPadding: '0px 30px 0px',
         containerHeight: '100%',
-        containerMaxHeight: '100%',
+        containerMaxHeight: 'inherit',
         containerStyle: {
           width: '520px',
           minHeight: 'max(100%, 50px)',

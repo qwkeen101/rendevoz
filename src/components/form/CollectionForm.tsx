@@ -16,6 +16,7 @@ const CollectionForm: FC<IForm<ICollection>> = ({ onSubmit, onBack, initialObjec
       {
         type: 'nameInput',
         value: collection.name,
+        autoFocus: true,
         onChange: v => setCollection({ ...collection, name: v })
       },
       {

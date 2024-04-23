@@ -64,7 +64,6 @@ const useStoreValue = (options: {
     if (note?.contentId) {
       const noteValue = await getNoteValue(note.contentId)
       if (noteValue) {
-        saveNoteAsSearch(noteValue, options.metaId)
         setFetchedValue(noteValue)
       }
     }

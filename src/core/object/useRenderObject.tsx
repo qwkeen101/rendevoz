@@ -22,6 +22,7 @@ import WholeRenderer, { WholeRendererProps } from '@/core/object/renderer/object
 import OriginalTextRenderer, { OriginalTextRendererProps } from '@/core/object/renderer/object/OriginalTextRenderer'
 import OptionRenderer, { OptionRendererProps } from '@/core/object/renderer/object/OptionRenderer'
 import InlineRenderer, { InlineRendererProps } from '@/core/object/renderer/object/InlineRenderer'
+import UncontrolledPDF from '@/core/components/pdf/UncontrolledPDF'
 
 export const keyboard = {
   ctrl: false
@@ -102,7 +103,7 @@ const useRenderObject = (options: { metaObjectId: number }) => {
     const { objectId } = metaObject
     switch (metaObject?.type) {
       case 'pdf':
-        return <Pdf pdfId={objectId} />
+        return <UncontrolledPDF id={objectId} />
       case 'note':
         return <Editor type="note" titleStyle={editorTitleStyle} id={uniqueId} noteId={objectId} />
       case 'normal':

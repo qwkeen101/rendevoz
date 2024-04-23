@@ -10,6 +10,8 @@ import MediaSubtitleImporter from '@/core/components/media/components/MediaSubti
 import { useState } from 'react'
 import { css } from '@emotion/css'
 import MediaActionsMenu from '@/core/components/media/components/MediaActionsMenu'
+import { useAtomValue } from 'jotai/index'
+import { MediaLayoutAtom } from '@/core/components/media/hooks/useVideoLayout'
 
 const clazz = css({
   borderRadius: `999px !important`,
@@ -19,15 +21,16 @@ const clazz = css({
     backgroundColor: `${Colors.Background.ButtonActive} !important`
   }
 })
-export default () => {
+export default ({ width }: { width: number }) => {
   const [mediaState, setMediaState] = useMediaState()
   const [sidebarState, setSidebarState] = useMediaSidebarState()
   const instance = useMediaInstance()
   const { t } = useTranslation()
+  const columnLayout = useAtomValue(MediaLayoutAtom)
   const [subtitleImporterVisible, setSubtitleImporterVisible] = useState(false)
   return (
     <Content flex column gap={10} fullWidth>
-      {mediaState.mode === 'web' && (
+      {mediaState.mode === 'web' && (!columnLayout || !sidebarState.rightBarVisible) && (
         <div style={{ width: '100%', display: 'flex', gap: 4, alignItems: 'center' }} className={'transparent-font font-size-13'}>
           <Icon name={'park-link-one'} />
           <a

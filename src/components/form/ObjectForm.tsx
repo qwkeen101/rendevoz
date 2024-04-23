@@ -239,6 +239,7 @@ const ObjectForm: FC<
     onSubmit: () => {
       onSubmit?.(object)
       if (originObject) {
+        console.log(originObject)
         ObjectStore(object.type).updateOne({ id: originObject.id, ...originObject })
       }
     },

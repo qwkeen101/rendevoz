@@ -8,9 +8,10 @@ import { useDebounceEffect, useSelectAtomValue } from '@/hooks'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { atom, useAtom } from 'jotai'
-import { useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { IEditorInstance } from '~/typings'
+import classnames from 'classnames'
 
 const EditorSearchAtom = atom<{
   loop: boolean
@@ -22,7 +23,7 @@ const EditorSearchAtom = atom<{
   loop: true
 })
 
-const EditorSearchPanel = () => {
+export default memo(() => {
   const { t } = useTranslation()
   const instance = useEditorInstance()
   const [editorSearchState, setEditorSearchState] = useEditorSearch()
@@ -176,18 +177,17 @@ const EditorSearchPanel = () => {
   return (
     <Content fullHeight fullWidth flex column gap={6} style={{ padding: '8px 8px' }}>
       <input
-        className={ClassName.noStyleInput}
+        className={'border-box-shadow focus-input'}
         value={searchInput}
         onChange={v => setSearchInput(v.target.value)}
         placeholder={t('general.search')}
-        style={{ padding: '4px 8px', border: Colors.Consts.Border, width: '100%', borderRadius: 4, fontSize: 14 }}
+        style={{ padding: '4px 8px', width: '100%', borderRadius: 4, fontSize: 14 }}
       ></input>
       <Content flex gap={8} className={ClassName.description()} alignItems="center" style={{ flexWrap: 'wrap' }}>
         <div style={{ marginRight: 'auto' }}>{`${totalOccur ? currentOccur + 1 : 0} / ${totalOccur}`}</div>
         <Button.IconButton
-          className={ClassName.flatButton(4, '2px 6px')}
+          className={classnames(ClassName.flatButton(4, '2px 6px'), searchState.replaceVisible && 'active-button')}
           icon="park-repair"
-          selected={searchState.replaceVisible === true ? true : undefined}
           text={t('general.replace')}
           onClick={() => {
             setSearchState(s => ({
@@ -216,11 +216,11 @@ const EditorSearchPanel = () => {
       {searchState.replaceVisible && (
         <>
           <input
-            className={ClassName.noStyleInput}
+            className={'border-box-shadow focus-input'}
             value={searchState.replaceInput}
             onChange={v => setSearchState(s => ({ ...s, replaceInput: v.target.value }))}
             placeholder={t('general.replace')}
-            style={{ padding: '4px 8px', border: Colors.Consts.Border, width: '100%', borderRadius: 4, fontSize: 14 }}
+            style={{ padding: '4px 8px', width: '100%', borderRadius: 4, fontSize: 14 }}
           ></input>
           <Content flex gap={10} className={ClassName.description()}>
             <div
@@ -259,7 +259,7 @@ const EditorSearchPanel = () => {
       ></VirtualList>
     </Content>
   )
-}
+})
 
 const ResultItem = ({
   blockId,
@@ -295,4 +295,3 @@ const ResultItem = ({
     </div>
   )
 }
-export default EditorSearchPanel

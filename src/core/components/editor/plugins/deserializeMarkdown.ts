@@ -1,170 +1,12 @@
-import {
-  BlockQuoteNode,
-  CodeBlockNode,
-  defaultNodeTypes,
-  DeserializedNode,
-  HeadingNode,
-  ImageNode,
-  InputNodeTypes,
-  ItalicNode,
-  LinkNode,
-  ListItemNode,
-  MdastNode,
-  OptionType,
-  ParagraphNode,
-  TextNode,
-  ThematicBreakNode
-} from './ast-types'
-import { unified } from 'unified'
-import markdown from 'remark-parse'
-import { Descendant, Node } from 'slate'
-import Id from '@/utils/id'
+import { Descendant } from 'slate'
 import showdown from 'showdown'
-import { deserializeHTML } from '@/core/components/editor/plugins/deserializeHtml'
+import deserializeHTML, { deserializeOptions } from '@/core/components/editor/plugins/transformHTML/deserializeHTML'
 
-const markdownToHTMLConverter = new showdown.Converter()
+const markdownToHTMLConverter = new showdown.Converter({
+  tables: true,
+  simplifiedAutoLink: true
+})
 
-export function deserializeMarkdown<T extends InputNodeTypes>(node: MdastNode, opts?: OptionType<T>) {
-  const types = {
-    ...defaultNodeTypes,
-    ...opts?.nodeTypes,
-    heading: {
-      ...defaultNodeTypes.heading,
-      ...opts?.nodeTypes?.heading
-    }
-  }
-
-  const linkDestinationKey = opts?.linkDestinationKey ?? 'link'
-  const imageSourceKey = opts?.imageSourceKey ?? 'link'
-  const imageCaptionKey = opts?.imageCaptionKey ?? 'caption'
-
-  let children: Array<DeserializedNode<T>> = [{ text: '' }]
-
-  const nodeChildren = node.children
-
-  if (nodeChildren && Array.isArray(nodeChildren) && nodeChildren.length > 0) {
-    children = nodeChildren.flatMap((c: MdastNode) =>
-      deserializeMarkdown(
-        {
-          ...c,
-          ordered: node.ordered || false
-        },
-        opts
-      )
-    )
-  }
-
-  switch (node.type) {
-    case 'heading':
-      return {
-        type: types.heading[node.depth || 1],
-        children,
-        id: Id.getId()
-      } as HeadingNode<T>
-    case 'list': {
-      if (node.ordered) {
-        return children.map(i => ({
-          children: [{ text: Node.string(i) }],
-          type: 'order-list-item',
-          id: Id.getId()
-        }))
-      } else {
-        return children.map(i => ({
-          children: [{ text: Node.string(i) }],
-          type: 'list-item',
-          id: Id.getId()
-        }))
-      }
-    }
-    case 'listItem':
-      return {
-        type: types.listItem,
-        children,
-        id: Id.getId()
-      } as ListItemNode<T>
-    case 'paragraph':
-      return {
-        type: types.paragraph,
-        children,
-        id: Id.getId()
-      } as ParagraphNode<T>
-    case 'link':
-      return {
-        type: types.link,
-        [linkDestinationKey]: node.url,
-        id: Id.getId(),
-        children
-      } as LinkNode<T>
-    case 'image':
-      return {
-        type: types.image,
-        children: [{ text: '' }],
-        id: Id.getId(),
-        url: node.url
-      }
-    case 'blockquote':
-      return {
-        type: types.block_quote,
-        children,
-        id: Id.getId()
-      } as BlockQuoteNode<T>
-    case 'code':
-      return {
-        type: types.code_block,
-        language: node.lang,
-        id: Id.getId(),
-        children: [{ text: node.value }]
-      } as CodeBlockNode<T>
-
-    case 'html':
-      if (node.value?.includes('<br>')) {
-        return {
-          break: true,
-          id: Id.getId(),
-          type: types.paragraph,
-          children: [{ text: node.value?.replace(/<br>/g, '') || '' }]
-        } as ParagraphNode<T>
-      }
-      return {
-        type: 'paragraph',
-        children: [{ text: node.value || '' }],
-        id: Id.getId()
-      }
-
-    case 'emphasis':
-      return {
-        [types.emphasis_mark as string]: true,
-        ...forceLeafNode(children as Array<TextNode>),
-        ...persistLeafFormats(children as Array<MdastNode>)
-      } as unknown as ItalicNode<T>
-    case 'strong':
-      return {
-        [types.strong_mark as string]: true,
-        ...forceLeafNode(children as Array<TextNode>),
-        ...persistLeafFormats(children as Array<MdastNode>)
-      }
-    case 'delete':
-      return {
-        [types.delete_mark as string]: true,
-        ...forceLeafNode(children as Array<TextNode>),
-        ...persistLeafFormats(children as Array<MdastNode>)
-      }
-    case 'inlineCode':
-      return {
-        [types.inline_code_mark as string]: true,
-        text: node.value,
-        ...persistLeafFormats(children as Array<MdastNode>)
-      }
-    case 'thematicBreak':
-      return {
-        type: types.thematic_break,
-        children: [{ text: '' }]
-      } as ThematicBreakNode<T>
-    case 'text':
-    default:
-      return { text: node.value || '' }
-  }
-}
 function textNodesUnder(el: HTMLElement) {
   const children = [] // Type: Node[]
   const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT)
@@ -173,11 +15,7 @@ function textNodesUnder(el: HTMLElement) {
   }
   return children
 }
-export const transformMarkdown = async (file: File): Promise<Descendant[] | undefined> => {
-  if (!file.name.endsWith('md')) {
-    throw new Error('Wrong file type!')
-  }
-  const text = await file.text()
+export const deserializeMarkdown = (text: string, opts?: deserializeOptions): Descendant[] => {
   const html = markdownToHTMLConverter.makeHtml(text)
   const parsed = new DOMParser().parseFromString(html, 'text/html')
   const textNodes = textNodesUnder(parsed.body)
@@ -190,50 +28,14 @@ export const transformMarkdown = async (file: File): Promise<Descendant[] | unde
     }
     span.appendChild(node)
   })
-  const deserialized = deserializeHTML(parsed.body)
+
+  const deserialized = deserializeHTML(parsed.body, opts) || []
   return deserialized
-  // return new Promise(res => {
-  //   unified()
-  //     .use(markdown)
-  //     .use(unifiedMarkdownPlugin)
-  //     .process(buffer, (err, file) => {
-  //       console.log(file)
-  //       res(file?.result)
-  //     })
-  // })
 }
-export function unifiedMarkdownPlugin(opts?: OptionType) {
-  const compiler = (node: { children: Array<MdastNode> }) => {
-    const result = node.children
-      .map(c => {
-        const result = deserializeMarkdown(c, opts)
-        if (Array.isArray(result)) {
-          return [...result]
-        } else {
-          return [result]
-        }
-      })
-      .flat(1)
-    console.log(result, node)
-    return result
+export const deserializeMarkdownFile = async (file: File): Promise<Descendant[] | undefined> => {
+  if (!file.name.endsWith('md')) {
+    throw new Error('Wrong file type!')
   }
-  this.Compiler = compiler
-}
-const forceLeafNode = (children: Array<TextNode>) => ({
-  text: children.map(k => k?.text).join('')
-})
-
-// This function is will take any unknown keys, and bring them up a level
-// allowing leaf nodes to have many different formats at once
-// for example, bold and italic on the same node
-function persistLeafFormats(children: Array<MdastNode>): Omit<MdastNode, 'children' | 'type' | 'text'> {
-  return children.reduce((acc, node) => {
-    ;(Object.keys(node) as Array<keyof MdastNode>).forEach(function (key) {
-      if (key === 'children' || key === 'type' || key === 'text') return
-
-      acc[key] = node[key]
-    })
-
-    return acc
-  }, {})
+  const text = await file.text()
+  return deserializeMarkdown(text)
 }

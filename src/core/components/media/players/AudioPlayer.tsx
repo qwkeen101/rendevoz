@@ -113,7 +113,7 @@ export default () => {
             <Icon size={120} name={'park-music'} theme={'filled'} />
           </Content>
         ))}
-      <Content flex column style={{ width: '100%', maxWidth: columnLayout ? '100%' : 800, padding: floated ? '16px 24px 0px 16px' : 0 }}>
+      <Content flex column gap={4} style={{ width: '100%', maxWidth: columnLayout ? '100%' : 800, padding: floated ? '16px 24px 0px 16px' : 0 }}>
         <div
           className={'video-drag-handle'}
           style={{
@@ -131,7 +131,7 @@ export default () => {
             className={mediaState.styles?.descriptionEllispsis ? ClassName.ellipsisFont(mediaState.styles.descriptionEllispsis) : undefined}
             style={{
               fontSize: 14,
-              flex: '1 1 200px',
+              flex: '1',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               color: Colors.Font.Transparent,

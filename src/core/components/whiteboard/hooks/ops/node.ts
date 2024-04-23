@@ -15,6 +15,7 @@ import cloneNodes from '@/core/components/whiteboard/hooks/ops/cloneNodes'
 import pasteImage from '@/core/components/whiteboard/hooks/ops/paste/pasteImage'
 import pasteNodes from '@/core/components/whiteboard/hooks/ops/paste/pasteNodes'
 import pastePlainText from '@/core/components/whiteboard/hooks/ops/paste/pastePlainText'
+import { getSetting } from '@/core'
 
 const assignNodeOps = (instance: IWhiteboardInstance) => {
   const updateWhiteboard = useUpdateWhiteboard()
@@ -114,12 +115,19 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
         return element
       },
       expand: nodeId => {
+        const setting = getSetting()
         const idArr = Array.isArray(nodeId) ? nodeId : [nodeId]
         updateWhiteboard(w => {
           idArr.forEach(id => {
             const origin = w.nodes?.get(id)
             if (origin && origin.width) {
-              w.nodes?.set(id, { ...origin, expanded: true, height: undefined, resized: false })
+              w.nodes?.set(id, {
+                ...origin,
+                expanded: true,
+                height: undefined,
+                resized: false,
+                fixedExpanded: setting.whiteboard.expandToFixedSize
+              })
             }
           })
         }, true)
@@ -164,6 +172,7 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
         if (!metaObject) {
           return false
         }
+        if (metaObject.type.includes('Label')) return false
         const registered = GlobalInstance.layoutOps?.getRegisteredTabData(metaObject.type)
         if (registered) {
           return true
@@ -288,7 +297,7 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
                     }
                   }
                 } else {
-                  w.nodes?.set(id, { ...origin, resized: false })
+                  w.nodes?.set(id, { ...origin, resized: false, fixedExpanded: false })
                 }
               }
             })

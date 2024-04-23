@@ -118,19 +118,17 @@ const UserPopover = ({ onUpgradePlan, onUpdateUser }: { onUpgradePlan: VoidFunct
   return (
     <WithBorder
       style={{
-        padding: 12,
+        padding: 6,
         display: 'flex',
         flexDirection: 'column',
         minWidth: 220
       }}
     >
-      <div style={{ padding: '0 8px', textTransform: 'none', fontSize: 13 }} className={ClassName.description()}>
-        Email: {user?.email || 'Unknown Email'}
+      <div style={{ padding: '4px 8px' }} className={'font-size-12 transparent-font'}>
+        <div>Email: {user?.email || 'Unknown Email'}</div>
+        <div>UID: {user?.uid || 'Unknown UID'}</div>
       </div>
-      <div style={{ padding: '0 8px', textTransform: 'none', fontSize: 13 }} className={ClassName.description()}>
-        UID: {user?.uid || 'Unknown UID'}
-      </div>
-      <Content style={{ padding: '12px 8px 12px' }} flex column gap={4}>
+      <Content style={{ padding: '6px 8px 8px' }} flex column gap={4}>
         <Content flex alignItems="center" gap={8}>
           {user?.photoURL && <Image width={25} src={user.photoURL} className={css({ borderRadius: 4 })} />}
           <div

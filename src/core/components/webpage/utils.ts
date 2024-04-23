@@ -1,7 +1,5 @@
 import { detectLanguage } from '@/utils/text'
 import getSetting from '../../setting/getSetting'
-import { unified } from 'unified'
-import rehypeParse from 'rehype-parse'
 
 export function isValidHttpUrl(string: string) {
   let url
@@ -81,9 +79,4 @@ export const searchToUrl = (query: string) => {
     }
   }
   return webUrl
-}
-
-export const transformHTML = async (html: string) => {
-  const result = await unified().use(rehypeParse).process(html)
-  return result
 }

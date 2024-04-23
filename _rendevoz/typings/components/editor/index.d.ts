@@ -123,6 +123,7 @@ export interface EditorProps {
     showTitle?: boolean
     showToolbar?: boolean
     showBlockHandle?: boolean
+    overscan?: number
     disableOverscanInReadOnly?: boolean
     showLastSave?: boolean
     showProps?: boolean

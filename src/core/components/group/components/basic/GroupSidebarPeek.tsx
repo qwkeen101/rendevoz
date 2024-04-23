@@ -157,7 +157,7 @@ export default memo(() => {
       style={{
         position: 'absolute',
         zIndex: 50,
-        background: Colors.Background.Global,
+        background: Colors.Background.Popover,
         right: 0,
         boxShadow: Colors.Background.BoxShadow,
         opacity: groupState.sidebarVisible ? 1 : 0,

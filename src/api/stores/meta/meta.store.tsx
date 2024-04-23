@@ -178,9 +178,6 @@ const createMetaStore = () => {
         }
         MetaStore.addMetaLink(link, true)
       }
-      if (setting.object.autoHideLabelObject && initedMetaObject.type?.includes('Label')) {
-        initedMetaObject.hidden = true
-      }
       initedMetaObject.workspace = KeyvalueStore.getOne('currentWorkspace')?.id
       if (!initedMetaObject.name) {
         let initedName = ''
@@ -363,6 +360,7 @@ const createMetaStore = () => {
       temp?: boolean
       deleted?: boolean
       hidden?: boolean
+      hideLabel?: boolean
     }
   ): o is MetaObject {
     if (!o) return false
@@ -370,6 +368,9 @@ const createMetaStore = () => {
       return false
     }
     if (o.deleted && opts?.deleted !== true) {
+      return false
+    }
+    if (opts?.hideLabel && o.type?.includes('Label')) {
       return false
     }
     if (o.hidden && opts?.hidden !== true) {

@@ -1,11 +1,10 @@
 import { Content } from '@/components'
 import { createStore, Provider } from 'jotai'
 import { useEffect, useMemo } from 'react'
-import { PdfViewer } from './PdfViewer'
+import { PdfViewer, PdfViewerProps } from './PdfViewer'
 import PdfRightSidebar from './components/sidebar/PdfRightSidebar'
 import { PdfStateAtom } from './hooks/usePdfState'
 import { globalStore, ObjectStore } from '@/api/stores'
-import { IPdfInstance } from '~/typings'
 import PdfLeftSidebar from './components/sidebar/PdfLeftSidebar'
 import usePdfInstance, { PdfInstanceAtom, useAssignPdfInstance } from './hooks/usePdfInstance'
 import { getAllLabelsOfDocument } from '@/api/stores/document.store'
@@ -13,15 +12,16 @@ import usePdfSelectMode from './hooks/useSelectMode'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
 import PDFOpsAssigner from '@/core/components/pdf/hooks/ops/Assigner'
+import './index.less'
 
 type PdfProps = {
   pdfId: number
-  onInstanceInitialized?: (i: IPdfInstance) => void
 } & {
   transformScale?: number
-}
-const PdfInner = ({ pdfId, onInstanceInitialized, transformScale }: PdfProps) => {
+} & Omit<PdfViewerProps, 'documentId'>
+const PdfInner = ({ pdfId, onInstanceInitialized, on, transformScale, styles, layout, autoWidth, state, fileUrl }: PdfProps) => {
   useAssignPdfInstance(pdfId)
+
   const [, setSelectMode] = usePdfSelectMode()
   useEffect(() => {
     const keydownHandler = (e: KeyboardEvent) => {
@@ -29,7 +29,7 @@ const PdfInner = ({ pdfId, onInstanceInitialized, transformScale }: PdfProps) =>
         setSelectMode(true)
       }
     }
-    const keyupHandler = (e: KeyboardEvent) => {
+    const keyupHandler = () => {
       setSelectMode(false)
     }
     document.addEventListener('keydown', keydownHandler)
@@ -41,26 +41,38 @@ const PdfInner = ({ pdfId, onInstanceInitialized, transformScale }: PdfProps) =>
   }, [])
   const instance = usePdfInstance()
   return (
-    <Content
-      flex
-      column
-      fullHeight
-      fullWidth
-      tabIndex={0}
-      onClick={() => {
-        instance.isFocused = true
-      }}
-      onBlur={() => {
-        instance.isFocused = false
-      }}
-    >
+    <>
       <PDFOpsAssigner />
-      <Content flex centered auto style={{ height: 0 }}>
-        <PdfLeftSidebar />
-        <PdfViewer documentId={pdfId} transformScale={transformScale} onInstanceInitialized={onInstanceInitialized} />
-        <PdfRightSidebar pdfId={pdfId} />
+      <Content
+        tabIndex={0}
+        onClick={() => {
+          instance.isFocused = true
+        }}
+        onBlur={() => {
+          instance.isFocused = false
+        }}
+        flex
+        column={layout?.showHeader === false}
+        centered
+        fullWidth
+        fullHeight
+        style={{ overflow: 'hidden' }}
+      >
+        {layout?.showHeader !== false && <PdfLeftSidebar />}
+        <PdfViewer
+          documentId={pdfId}
+          styles={styles}
+          state={state}
+          fileUrl={fileUrl}
+          autoWidth={autoWidth}
+          on={on}
+          layout={layout}
+          transformScale={transformScale}
+          onInstanceInitialized={onInstanceInitialized}
+        />
+        {layout?.showHeader !== false && <PdfRightSidebar pdfId={pdfId} />}
       </Content>
-    </Content>
+    </>
   )
 }
 
@@ -85,7 +97,10 @@ const Pdf = (props: PdfProps) => {
           store.set(PdfStateAtom, {
             pdfId: pdfId,
             document,
-            autoFitWhenResize: true
+            state: props.state,
+            layout: props.layout,
+            styles: props.styles,
+            autoWidth: props.autoWidth
           })
         }
       })

@@ -185,7 +185,7 @@ export default (opt: { defaultSelected?: number[]; onSelect: (selected: number[]
               type: 'title',
               name: t(`general.${k}`),
               style: {
-                margin: '0.6rem 0'
+                margin: '0.6rem 0 0.3rem'
               }
             })
             v.sort((a, b) => b.contains - a.contains)

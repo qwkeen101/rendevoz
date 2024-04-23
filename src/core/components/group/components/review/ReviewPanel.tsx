@@ -1,4 +1,4 @@
-import { Button, Content, Icon, IconWithPopover, Modal, WithBorder } from '@/components'
+import { Button, Content, Icon, IconWithPopover, Modal, ResizeAndDrag, WithBorder } from '@/components'
 import { Colors } from '@/consts'
 import { memo, useEffect, useState } from 'react'
 import { css } from '@emotion/css'
@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next'
 import { upperFirst } from 'lodash'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { Resizable } from 're-resizable'
+import { createPortal } from 'react-dom'
 
 export default memo(() => {
   const instance = useGroupInstance()
@@ -65,23 +66,49 @@ export default memo(() => {
   assignProperties(instance, {
     reviewOps: {
       open: () => {
-        const first = dueState.inDues[0]
         setPanelState(s => ({ ...s, visible: true }))
       }
     }
   })
 
   const renderMain = () => (
-    <div style={{ padding: '16px' }}>
-      <div
+    <div
+      style={{
+        padding: '16px',
+        zIndex: 1000,
+        boxShadow: Colors.Background.BoxShadow,
+        borderRadius: 8,
+        background: Colors.Background.Popover,
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%,-50%)'
+      }}
+    >
+      <Content
+        flex
         style={{
-          fontWeight: 'bold',
-          fontSize: '1.2rem',
           marginBottom: '12px'
         }}
+        alignItems={'center'}
+        justifyContent={'space-between'}
       >
-        {t('general.Flashcards')}
-      </div>
+        <div
+          style={{
+            fontWeight: 'bold',
+            fontSize: '1.2rem'
+          }}
+        >
+          {t('general.Flashcards')}
+        </div>
+        <Icon
+          className={ClassName.flatButton(4, '4px')}
+          name={'park-close'}
+          onClick={() => {
+            setPanelState(s => ({ ...s, visible: false }))
+          }}
+        />
+      </Content>
       <Content
         className={css({
           '.review_title': {
@@ -255,17 +282,34 @@ export default memo(() => {
     }
   }
   const renderReview = () => (
-    <Resizable
+    <ResizeAndDrag
       onResizeStop={(el, direction, elementRef) => {
-        KeyvalueStore.updateOne('groupReviewPanelSize', [elementRef.clientWidth, elementRef.clientHeight])
+        KeyvalueStore.updateOne('groupReviewPanelSize', [
+          elementRef.clientWidth,
+          elementRef.clientHeight,
+          elementRef.clientLeft,
+          elementRef.clientTop
+        ])
       }}
-      defaultSize={{
+      onDragStop={(e, data) => {
+        const n = data.node
+        const bounding = n.getBoundingClientRect()
+        KeyvalueStore.updateOne('groupReviewPanelSize', [bounding.width, bounding.height, bounding.left, bounding.top])
+      }}
+      default={{
         width: panelSize?.[0] ?? '60vw',
-        height: panelSize?.[1] ?? '80vh'
+        height: panelSize?.[1] ?? '80vh',
+        x: panelSize?.[2] ?? window.innerWidth * 0.2,
+        y: panelSize?.[3] ?? window.innerHeight * 0.1
       }}
+      dragHandleClassName={'drag-handle'}
       style={{
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        zIndex: 1000,
+        boxShadow: Colors.Background.BoxShadow,
+        borderRadius: 8,
+        background: Colors.Background.Popover
       }}
     >
       <Content
@@ -273,9 +317,10 @@ export default memo(() => {
         fullWidth
         alignItems={'center'}
         justifyContent={'space-between'}
-        className={'border-bottom'}
+        className={'border-bottom drag-handle'}
         style={{
-          padding: '8px'
+          padding: '8px',
+          cursor: 'grab'
         }}
       >
         {dueState.inDues.length > 1 && (
@@ -312,7 +357,6 @@ export default memo(() => {
             tooltip={t('general.View original in group')}
             name={'park-back-one'}
             onClick={() => {
-              setPanelState(s => ({ ...s, visible: false }))
               currMeta && instance.bodyOps?.scrollToMeta?.(currMeta.id, true)
             }}
             className={ClassName.flatButton(4, '4px')}
@@ -347,7 +391,7 @@ export default memo(() => {
           <Icon
             size={18}
             name={'park-close'}
-            onClick={() => setPanelState(s => ({ ...s, mode: 'main' }))}
+            onClick={() => setPanelState(s => ({ ...s, visible: false }))}
             className={ClassName.flatButton(4, '4px')}
           />
         </Content>
@@ -362,18 +406,9 @@ export default memo(() => {
       ) : (
         <ReviewCongradulation onBack={() => setPanelState(s => ({ ...s, mode: 'main' }))} />
       )}
-    </Resizable>
+    </ResizeAndDrag>
   )
-  return (
-    <Modal enableClickEvent zIndex={1000} visible={panelState.visible} onClose={() => setPanelState(s => ({ ...s, visible: false }))}>
-      <Content
-        style={{
-          overflow: 'hidden',
-          '--global-background': Colors.Background.Popover
-        }}
-      >
-        {panelState.mode === 'main' ? renderMain() : renderReview()}
-      </Content>
-    </Modal>
-  )
+  if (panelState.visible) {
+    return createPortal(panelState.mode === 'main' ? renderMain() : renderReview(), document.body)
+  }
 })

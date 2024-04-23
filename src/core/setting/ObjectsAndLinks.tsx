@@ -39,21 +39,21 @@ const ObjectsAndLinksSetting = () => {
     //   title: t('settings.enable drop auto generate object'),
     //   children: <Switch value={enableDropAutoGenerateObject} onChange={() => toggleSetting('enableDropAutoGenerateObject')} />
     // },
-    {
-      title: t('settings.auto hide label object'),
-      children: (
-        <Switch
-          value={setting.object.autoHideLabelObject}
-          onChange={() =>
-            setSetting(s =>
-              produce(s, draft => {
-                draft.object.autoHideLabelObject = !draft.object.autoHideLabelObject
-              })
-            )
-          }
-        />
-      )
-    },
+    // {
+    //   title: t('settings.auto hide label object'),
+    //   children: (
+    //     <Switch
+    //       value={setting.object.autoHideLabelObject}
+    //       onChange={() =>
+    //         setSetting(s =>
+    //           produce(s, draft => {
+    //             draft.object.autoHideLabelObject = !draft.object.autoHideLabelObject
+    //           })
+    //         )
+    //       }
+    //     />
+    //   )
+    // },
     {
       title: t('settings.Show custom properties in pages'),
       children: (

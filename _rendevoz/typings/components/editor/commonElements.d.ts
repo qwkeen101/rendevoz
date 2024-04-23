@@ -99,7 +99,7 @@ export interface ImageElement {
   children: EmptyText[]
 }
 
-export interface LinkElement extends CardElement {
+export interface LinkElement {
   type: 'link'
   url: string
   children: Descendant[]

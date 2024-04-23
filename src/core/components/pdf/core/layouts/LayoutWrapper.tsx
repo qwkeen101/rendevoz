@@ -16,22 +16,21 @@ interface LayoutWrapperProps {
   children: (pageSize: PageSize) => ReactElement
 }
 
-const RESERVED_HEIGHT = 30
-const RESERVED_WIDTH = 30
 const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children }) => {
   const [scrollMode] = useScrollMode()
   const layoutWrapperRef = useRef<HTMLDivElement>(null)
   const [ref, { width }] = useMeasure()
   const flooredWidth = Math.floor(width)
   const previousWidth = usePrevious(flooredWidth)
-  const doublePage = useSelectAtomValue(PdfStateAtom, s => s.document?.doublePage)
+  const doublePage = useSelectAtomValue(PdfStateAtom, s => s.state?.doublePage)
   const setPdfState = useSetAtom(PdfStateAtom)
   const [pageSize, setPageSize] = useState<PageSize>({
     height: 0,
     width: 0,
-    scale: defaultScale
+    scale: defaultScale,
+    containerWidth: 0
   })
-  useUpdateEffect(() => {
+  useEffect(() => {
     setPdfState(s => ({ ...s, viewportFitScale: pageSize.scale }))
   }, [pageSize.scale])
   const viewportRef = useRef<{ width: number; height: number }>({
@@ -39,9 +38,9 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children
     height: 0
   })
   const parentEleRef = useRef<HTMLElement>()
-  const [isResizing, setIsResizing] = useState(false)
   const initializedRef = useRef(false)
   const instance = usePdfInstance()
+  const pagePadding = useSelectAtomValue(PdfStateAtom, s => s.styles?.pagePadding) ?? 30
   const pdfScale = useSelectAtomValue(PdfStateAtom, s => s.document?.scale)
   useIsomorphicLayoutEffect(() => {
     initializedRef.current = false
@@ -59,16 +58,16 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children
       if (parentEle) {
         parentEleRef.current = parentEle
         ref(parentEle)
-        const scaleOfWidth = (Math.min(doublePage ? 2800 : 1400, parentEle.clientWidth) - RESERVED_WIDTH) / vw,
-          scaleOfHeight = (parentEle?.clientHeight - RESERVED_HEIGHT) / vh
+        const scaleOfWidth = (parentEle.clientWidth - pagePadding) / vw,
+          scaleOfHeight = (parentEle.clientHeight - pagePadding) / vh
         let scale = defaultScale
         scrollMode === 'vertical' && (scale = scaleOfWidth)
         scrollMode === 'horizontal' && (scale = Math.min(scaleOfHeight, scaleOfWidth))
-
         setPageSize({
           height: vh,
           width: vw,
-          scale: doublePage ? scale / 2 : scale
+          scale: doublePage ? scale / 2 : scale,
+          containerWidth: parentEle.clientWidth
         })
         if (!pdfScale) {
           instance.actionOps?.setScale(doublePage ? scale / 2 : scale)
@@ -84,18 +83,19 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children
     const parentEle = parentEleRef.current
     console.log('handleResizing')
     if (parentEle) {
-      const scaleOfWidth = (Math.min(doublePage ? 2800 : 1400, parentEle.clientWidth) - RESERVED_WIDTH) / vw,
-        scaleOfHeight = (parentEle?.clientHeight - RESERVED_HEIGHT) / vh
+      const scaleOfWidth = (parentEle.clientWidth - pagePadding) / vw,
+        scaleOfHeight = (parentEle.clientHeight - pagePadding) / vh
       let scale = defaultScale
+      console.log(scaleOfWidth)
       scrollMode === 'vertical' && (scale = scaleOfWidth)
       scrollMode === 'horizontal' && (scale = Math.min(scaleOfHeight, scaleOfWidth))
       setPageSize({
         height: vh,
         width: vw,
-        scale: doublePage ? scale / 2 : scale
+        scale: doublePage ? scale / 2 : scale,
+        containerWidth: parentEle.clientWidth
       })
     }
-    setIsResizing(false)
   })
   const { run: debouncedResize } = useDebounceFn(handleResize, { wait: 100 })
   useUpdateEffect(() => {
@@ -105,7 +105,6 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children
     }
     if (flooredWidth !== 0 && previousWidth !== 0) {
       if (initializedRef.current) {
-        setIsResizing(true)
         debouncedResize()
       }
     }
@@ -121,15 +120,7 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children
       <Spinner size={50} />
     </div>
   ) : (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-        overflow: 'hidden'
-      }}
-    >
-      <div style={{ width: '100%', height: '100%' }}>{children(pageSize)}</div>
-    </div>
+    children(pageSize)
   )
 }
 

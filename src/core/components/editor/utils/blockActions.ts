@@ -8,7 +8,7 @@ import { waitFor } from '@/utils/functions'
 import { HeadingToLevel } from '@/core/components/editor/elements/Heading'
 import { Colors } from '@/consts'
 
-export const goToBlock = async (blockId: number, editor: CustomEditor) => {
+export const goToBlock = async (blockId: number, editor: CustomEditor, align: 'start' | 'center' = 'center') => {
   return new Promise(res => {
     let path = ID_TO_PATH_MAP.get(editor)?.get(blockId)
     if (!path) {
@@ -42,7 +42,7 @@ export const goToBlock = async (blockId: number, editor: CustomEditor) => {
       const visibleBlocks = editor.children.filter(i => !(i as CustomElement).hide)
       const blockIndex = visibleBlocks.findIndex(i => (i as CustomElement).id === outermostBlock.id)
       console.log('scrolling')
-      editor.virtualizer.scrollToIndex(blockIndex, { align: 'center' })
+      editor.virtualizer.scrollToIndex(blockIndex, { align: align })
       setTimeout(() => {
         res(null)
       }, 100)
@@ -75,12 +75,12 @@ export const highlightClassName = css({
   borderRadius: '4px !important'
 })
 export const highlightBlock = (blockId: number, editor: CustomEditor) => {
-  const editorNode = ReactEditor.toDOMNode(editor, editor)
-  const block = editorNode.querySelector(`[id='${blockId}']`)
-  if (block) {
-    block.classList.add(highlightClassName)
+  const instance = editor.instance
+  if (instance) {
+    instance.selectOps?.deselectAll()
+    instance.selectBlock?.({ blockId })
     setTimeout(() => {
-      block.classList.remove(highlightClassName)
+      instance.selectOps?.deselectAll()
     }, 5600)
   }
 }

@@ -199,7 +199,7 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
           'BlockCommon',
           type === 'columnList' && styles.ColumnListBlock,
           type === 'column' && styles.ColumnBlock,
-          type?.startsWith('heading') && styles.HeadingBlock,
+          type?.startsWith('heading') && 'HeadingBlock',
           type !== 'column' && type !== 'columnList' && !type?.startsWith('heading') && 'ParagraphBlock',
           isSelectable && 'selectable'
         )}

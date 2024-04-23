@@ -111,7 +111,14 @@ const EditorSetting = () => {
     ]
   }
   return (
-    <Content flex column ref={parentRef} gap={36}>
+    <Content
+      flex
+      column
+      ref={parentRef}
+      gap={36}
+      style={{ padding: '18px', marginTop: -18, borderRadius: 8 }}
+      className={'border-box-shadow'}
+    >
       <SettingGroup
         title={t('general.Reader mode')}
         layout={[

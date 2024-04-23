@@ -8,7 +8,7 @@ import FontSize from '@/consts/font'
 const SidebarFolder = () => {
   const { t } = useTranslation()
   return (
-    <Content fullHeight flex column fullWidth style={{ padding: '12px', overflowY: 'auto' }}>
+    <Content fullHeight flex column fullWidth style={{ overflowY: 'auto' }}>
       <SidebarPinned />
       <SidebarCollection />
     </Content>

@@ -1,11 +1,24 @@
 export default (node: HTMLElement) => {
-  const textContent = node.textContent
-  if (textContent) {
-    // const replaced = textContent.replace(/(?:\r\n|\r|\n|\t)/g, '')
-    const trimed = trimNode(node, textContent)
-    if (trimed.length) {
-      return trimed
+  let text = ''
+  if (node.nodeType === Node.ELEMENT_NODE) {
+    text = node.innerText
+  } else {
+    text = node.textContent || ''
+  }
+  if (text) {
+    if (node.nodeType === Node.TEXT_NODE && text.trim() === '') {
+      return ''
     }
+    console.log(node, text)
+    return text.replace(/[\s\t\r]+/g, function (match) {
+      if (match.includes('\n')) {
+        return '\n'
+      } else {
+        return ' '
+      }
+    })
+    // const trimed = trimNode(node, text)
+    // if (trimed) return trimed
   }
 }
 

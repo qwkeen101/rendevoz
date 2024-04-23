@@ -16,6 +16,7 @@ const PdfHeader = ({ documentId }: { documentId: number }) => {
   const pdfMeta = MetaStore.useObjectToMetaValue(documentId)
   const [barState, setBarState] = usePdfBarState()
   const [pdfState, setPdfState] = usePdfState()
+  const totalPages = pdfState.numPages
   const instance = usePdfInstance()
   const [focused, setFocused] = useState(false)
   const [pageValue, setPageValue] = useState((pdf?.lastReadPage || 0) + 1)
@@ -62,11 +63,7 @@ const PdfHeader = ({ documentId }: { documentId: number }) => {
             name={'custom-left-bar'}
           />
 
-          {width > 600 && (
-            <div className={ClassName.ellipsisFont(1)}>
-              {pdfMeta.name}
-            </div>
-          )}
+          {width > 600 && <div className={ClassName.ellipsisFont(1)}>{pdfMeta.name}</div>}
         </Content>
 
         <div
@@ -95,8 +92,8 @@ const PdfHeader = ({ documentId }: { documentId: number }) => {
                 setPageValue(1)
                 return
               }
-              if (pdf?.totalPageNum && num > pdf?.totalPageNum) {
-                setPageValue(pdf?.totalPageNum)
+              if (totalPages && num > totalPages) {
+                setPageValue(totalPages)
                 return
               }
               setPageValue(num)
@@ -114,13 +111,13 @@ const PdfHeader = ({ documentId }: { documentId: number }) => {
             min={1}
             max={20}
           />
-          / {pdf?.totalPageNum || 0}
+          / {totalPages || 0}
           <Content flex gap={4} style={{ opacity: isInPages || focused ? 1 : 0, transition: 'opacity 0.2s ease', marginLeft: 8 }}>
             <Icon
               name={'park-plus'}
               className={ClassName.flatButton(4, '4px')}
               onClick={() => {
-                const next = Math.min(pageValue + 1, pdf?.totalPageNum || 1)
+                const next = Math.min(pageValue + 1, totalPages || 1)
                 instance.navigateOps?.jumpToPage?.(next - 1)
                 setPageValue(next)
               }}
@@ -172,8 +169,9 @@ const PdfHeader = ({ documentId }: { documentId: number }) => {
                 setPdfState(s => ({ ...s, handDrag: !s.handDrag }))
               }}
               size={16}
-              containerStyle={{
-                background: pdfState.handDrag ? Colors.Common.SelectColorTransparent : undefined
+              style={{
+                color: pdfState.handDrag ? Colors.Common.SelectColor : undefined,
+                background: pdfState.handDrag ? Colors.Common.SelectColorTransparentLight : undefined
               }}
               className={ClassName.flatButton(6, '5px')}
               name={'park-hand-drag'}
@@ -182,12 +180,13 @@ const PdfHeader = ({ documentId }: { documentId: number }) => {
           <Icon
             onClick={() => {
               if (pdf) {
-                ObjectStore('pdf').updateOne({ id: pdf.id, doublePage: !pdf?.doublePage })
+                instance.actionOps?.doublePage()
               }
             }}
             size={16}
-            containerStyle={{
-              background: pdf?.doublePage ? Colors.Common.SelectColorTransparent : undefined
+            style={{
+              color: pdfState.state?.doublePage ? Colors.Common.SelectColor : undefined,
+              background: pdfState.state?.doublePage ? Colors.Common.SelectColorTransparentLight : undefined
             }}
             className={ClassName.flatButton(4, '5px')}
             name={'custom-double-column'}
@@ -227,8 +226,9 @@ const PdfHeader = ({ documentId }: { documentId: number }) => {
             tooltip={<TooltipWithCmd name={'Clip'} cmd={'Cmd+Alt+A'}></TooltipWithCmd>}
             className={ClassName.flatButton(4, '5px')}
             name={'park-screenshot'}
-            containerStyle={{
-              background: pdfState.croppingImage ? Colors.Common.SelectColorTransparent : undefined
+            style={{
+              color: pdfState.croppingImage ? Colors.Common.SelectColor : undefined,
+              background: pdfState.croppingImage ? Colors.Common.SelectColorTransparentLight : undefined
             }}
             onClick={() => {
               setPdfState(s => ({ ...s, croppingImage: !s.croppingImage }))
@@ -243,34 +243,6 @@ const PdfHeader = ({ documentId }: { documentId: number }) => {
               setBarState(s => ({ ...s, showRightBar: !s.showRightBar }))
             }}
           />
-          {/*<Tooltip content={<TooltipWithCmd name={'Search'} cmd={'Cmd+F'} />}>*/}
-          {/*  <Icon*/}
-          {/*    size={16}*/}
-          {/*    className={ClassName.flatButton(6, '5px')}*/}
-          {/*    name={'park-search'}*/}
-          {/*    onClick={() => {*/}
-          {/*      setBarState(s => ({ ...s, rightBarActive: 'search', showRightBar: true }))*/}
-          {/*    }}*/}
-          {/*  />*/}
-          {/*</Tooltip>*/}
-          {/*<Tooltip content={<TooltipWithCmd name={'Labels'} cmd={'Cmd+L'} />}>*/}
-          {/*  <Icon*/}
-          {/*    size={16}*/}
-          {/*    className={ClassName.flatButton(6, '5px')}*/}
-          {/*    name={'park-label'}*/}
-          {/*    onClick={() => {*/}
-          {/*      setBarState(s => ({ ...s, rightBarActive: 'label', showRightBar: true }))*/}
-          {/*    }}*/}
-          {/*  />*/}
-          {/*</Tooltip>*/}
-          {/*<Icon*/}
-          {/*  name={'custom-magic'}*/}
-          {/*  onClick={() => {*/}
-          {/*    setBarState(s => ({ ...s, rightBarActive: 'ai', showRightBar: true }))*/}
-          {/*  }}*/}
-          {/*  size={16}*/}
-          {/*  className={ClassName.flatButton(6, '5px')}*/}
-          {/*/>*/}
         </Content>
       </Content>
     )

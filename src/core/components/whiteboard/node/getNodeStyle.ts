@@ -30,17 +30,14 @@ const getNodeStyle = (
   }
   const getNodeBoxShadow = () => {
     if (nodeState.selected || nodeState.popoverVisible || nodeState.focused || nodeState.locked) {
-      return `0 0 0 calc(2px * var(--zoom-level)) #279EFF`
+      return `0 0 0 calc(2px * var(--zoom-level)) var(--select-color)`
     }
     if ((node.rootId || node.type === 'mindmap') && node.borderType === 'underline') return undefined
     if (transparentBackgroundNodes.includes(node.type) || showBorder) {
       return undefined
     }
     if (mindmapTransparent) return undefined
-    if (!isDarkMode) {
-      return 'var(--border-box-shadow)'
-    }
-    return undefined
+    return '0 0 0 calc(1px * var(--zoom-level)) var(--border-background)'
   }
   let pointerEvents: CSSProperties['pointerEvents'] = 'auto'
   if (node.type === 'freehand') {
@@ -134,9 +131,7 @@ const getNodeStyle = (
         ? Colors.getAdaptColor(node.background)
         : transparentBackgroundNodes.includes(node.type) || mindmapTransparent
         ? 'transparent'
-        : isDarkMode
-        ? Colors.Background.Secondary
-        : 'white',
+        : Colors.Background.Secondary,
     cursor,
     pointerEvents
   }

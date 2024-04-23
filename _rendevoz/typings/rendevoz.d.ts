@@ -216,6 +216,7 @@ declare const WebUtils: {
     description?: string
     image?: string
     author?: string
+    audio?: string
   }>
   // parse webpage as editor content
   parseWebpage: (

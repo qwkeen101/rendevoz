@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next'
 
 const FeedHomepage = () => {
   const { t } = useTranslation()
-  const [tab, setTab] = useState<'all articles' | 'add' | 'google news'>('google news')
   return (
     <Content fullHeight fullWidth flex justifyContent={'center'}>
       <Content

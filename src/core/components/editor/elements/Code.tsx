@@ -41,7 +41,8 @@ const Code: FC<RenderElementProps> = ({ element, attributes, children }) => {
         className={'font-size-13 transparent-font'}
         style={{
           padding: '5px 5px 0px',
-          fontSize: 14
+          fontSize: 14,
+          overflow: 'hidden'
         }}
         onClick={() => ReactEditor.blur(editor)}
       >

@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo, useState } from 'react'
 import { MetaObject } from '~/typings'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { MetaStore } from '@/api/stores'
-import GroupStore from '../../../../api/stores/group.store'
+import GroupStore from '../../../api/stores/group.store'
 import { Content, Icon } from '@/components'
 import { TabTitle } from '@/core/rendevoz/components'
 import MetaGroup from '@/core/components/group/MetaGroup'
@@ -19,7 +19,7 @@ function TypeGroup({ type }: { type: MetaObject['type'] }) {
       ...GroupStore.initializeGroup(),
       hideObjectsInside: false,
       hideGroupsInside: false,
-      autoAddto: 'last'
+      autoAddto: 'first'
     }
   )
   useEffect(() => {

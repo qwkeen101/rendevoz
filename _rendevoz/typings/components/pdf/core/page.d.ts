@@ -1,10 +1,11 @@
-import { ReactElement, RefObject } from "react";
-import { Box } from "~/typings/common";
+import { ReactElement, RefObject } from 'react'
+import { Box } from '~/typings/common'
 
 export interface PageSize {
-  width: number;
-  height: number;
-  scale: number;
+  width: number
+  height: number
+  scale: number
+  containerWidth: number
 }
 
 type SelectedTextEvent = {

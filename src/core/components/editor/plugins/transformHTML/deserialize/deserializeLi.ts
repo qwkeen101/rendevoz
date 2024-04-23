@@ -7,14 +7,14 @@ import { ElementsAvailableInParagraph } from '@/core/components/editor/plugins/t
 import deserializeSpan from '@/core/components/editor/plugins/transformHTML/deserialize/deserializeSpan'
 import normalizeText from '@/core/components/editor/plugins/transformHTML/deserialize/normalizeText'
 import { Text } from 'slate'
-
+// support nested list items
 export default (node: HTMLElement) => {
   let shouldBeFragment = true
   const parentOL = node.parentNode?.nodeName === 'OL'
   // 如果内部有text node就不是fragment，不然就是fragment
   for (const n of node.childNodes) {
     // if children nodes has div or p, be fragment
-    if (['DIV', 'P', 'IMG', 'IFRAME'].includes(n.nodeName)) {
+    if (['DIV', 'P', 'IMG', 'IFRAME', 'OL', 'UL'].includes(n.nodeName)) {
       shouldBeFragment = true
       break
     }

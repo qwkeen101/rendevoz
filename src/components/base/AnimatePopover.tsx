@@ -171,7 +171,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
     }
     if (document.querySelector('[role="click-cover"]')) return
     setTimeout(() => {
-      if (e.defaultPrevented) return
+      if (e.type !== 'contextmenu' && e.defaultPrevented) return
       onClickOutside?.(e)
       if (closeOnClickOutside) {
         timeoutRef.current = setTimeout(() => setIsOpen(false), duration * 1000)

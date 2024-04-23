@@ -1,4 +1,3 @@
-import ClassName from '@/styles/classNames'
 import produce from 'immer'
 import { useTranslation } from 'react-i18next'
 import { AnimatePopover, Button, Content, Switch } from '../../components/base'
@@ -14,7 +13,7 @@ import SettingGroup from '@/core/setting/SettingGroup'
 import BlockColorPicker from '@/core/components/editor/components/BlockColorPicker'
 import { Colors } from '@/consts'
 import { CodeLangs } from '@/core/components/code/CodeHeader'
-import { ObjectStore } from '@/api/stores'
+import EditorSetting from '@/core/setting/Editor'
 
 const ComponentSetting = () => {
   const { t } = useTranslation()
@@ -62,6 +61,12 @@ const ComponentSetting = () => {
       )
     },
     {
+      title: t('settings.Expand to fixed height'),
+      type: 'switch',
+      value: !!setting.whiteboard.expandToFixedSize,
+      onChange: v => setSetting(s => ({ ...s, whiteboard: { ...s.whiteboard, expandToFixedSize: v } }))
+    },
+    {
       title: t('settings.drop file auto object'),
       children: <Switch value={setting.whiteboard.dropFileAutoObject} onChange={() => toggleSetting('whiteboard', 'dropFileAutoObject')} />
     },
@@ -94,9 +99,34 @@ const ComponentSetting = () => {
     {
       title: t('settings.object auto become inline when dragged into editor'),
       children: <Switch value={setting.editor.objectAutoBecomeInline} onChange={() => toggleSetting('editor', 'objectAutoBecomeInline')} />
+    },
+    {
+      title: t('settings.Custom editor format'),
+      type: 'switch',
+      value: !!setting.editor.enableFormat,
+      onChange: v => setSetting(s => ({ ...s, editor: { ...s.editor, enableFormat: !s.editor.enableFormat } }))
     }
   ]
-
+  const sidebarItems: ISettingItem[] = [
+    {
+      type: 'switch',
+      value: !!setting.sidebar.previewTitleMode,
+      title: t('settings.Preview library content'),
+      onChange: v => setSetting(s => ({ ...s, sidebar: { ...s.sidebar, previewTitleMode: !s.sidebar.previewTitleMode } }))
+    },
+    {
+      type: 'switch',
+      value: !!setting.sidebar.previewCollectionContent,
+      title: t('settings.Preview collection content'),
+      onChange: v => setSetting(s => ({ ...s, sidebar: { ...s.sidebar, previewCollectionContent: !s.sidebar.previewCollectionContent } }))
+    },
+    {
+      type: 'switch',
+      value: !!setting.sidebar.hideHighlights,
+      title: t('settings.Hide highlights'),
+      onChange: v => setSetting(s => ({ ...s, sidebar: { ...s.sidebar, hideHighlights: !s.sidebar.hideHighlights } }))
+    },
+  ]
   const codeSettingItems: ISettingItem[] = [
     {
       title: t('settings.Default programming language'),
@@ -150,6 +180,12 @@ const ComponentSetting = () => {
     }
   }, [setting.pdf.renderMode])
   const pdfSettingItems: (ISettingItem | undefined)[] = [
+    {
+      title: t('settings.Auto width'),
+      type: 'switch',
+      value: !!setting.pdf.autoWidth,
+      onChange: v => setSetting(s => ({ ...s, pdf: { ...s.pdf, autoWidth: v } }))
+    },
     {
       title: t('settings.Default PDF label color'),
       children: (
@@ -315,10 +351,12 @@ const ComponentSetting = () => {
   ]
   return (
     <>
+      <SettingGroup title={t('settings.Sidebar settings')} layout={sidebarItems} />
       <SettingGroup title={t('settings.label settings')} layout={labelSettingItems} />
       <SettingGroup title={t('settings.webpage settings')} layout={webpageSettingItems} />
       <SettingGroup title={t('settings.whiteboard settings')} layout={whiteboardSettingItems} />
       <SettingGroup title={t('settings.editor settings')} layout={editorSettingItems} />
+      {setting.editor.enableFormat && <EditorSetting />}
       <SettingGroup title={t('settings.code settings')} layout={codeSettingItems} />
       {/*<SettingGroup title={t('settings.translate settings')} layout={translateSettingItems} />*/}
       <SettingGroup title={t('settings.pdf settings')} layout={pdfSettingItems} />

@@ -177,6 +177,7 @@ export default memo(
       delete layoutItems[i]
     })
     const actions: ((typeof layoutItems)[keyof typeof layoutItems] | undefined)[] = [
+      ...(hasSelected ? [layoutItems['moveTo'], layoutItems['separator']] : []),
       selected?.length && selected.length > 1 ? layoutItems['copyLinkToAll'] : undefined,
       layoutItems['deleteInGroup'],
       layoutItems['deleteObject'],

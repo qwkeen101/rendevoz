@@ -1,4 +1,4 @@
-import { useClickOutside, useMemoizedFn, useSelectAtomValue } from '@/hooks'
+import { useClickOutside, useGlobalAtom, useGlobalAtomValue, useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import Id from '@/utils/id'
 import { FC, memo, MouseEventHandler, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { createEditor, Editor as SlateEditor, Path, Transforms } from 'slate'
@@ -12,7 +12,7 @@ import useIsDragging from './hooks/useIsDragging'
 import { withShortcuts, withCustomComponent, withHtml } from './plugins'
 import { ID_TO_ELEMENTS_MAP } from './weakMaps'
 import { normalizeEditorDragBlocksToGlobalDraggingDetails } from './hooks/drag/useEditorDrag'
-import { useGlobalIsDragging } from '@/core'
+import { enableCustomEditorStateAtom, SettingAtom, useGlobalIsDragging } from '@/core'
 import { createStore } from 'jotai/vanilla'
 import { Provider, useSetAtom } from 'jotai/react'
 import EditorTitle from './EditorTitle'
@@ -39,6 +39,7 @@ import { t } from 'i18next'
 import GetEditorBlockHandle from '@/core/components/editor/hooks/getEditorBlockHandle'
 import { css } from '@emotion/css'
 import './editorStyles.less'
+import { selectAtom } from 'jotai/utils'
 
 // function, get unique id everytime
 const defaultSlateValue = () => [
@@ -62,6 +63,7 @@ const pageWidthToSize = {
  * Can be independent component outside Rendevoz
  * Slate can not be a controlled component, but we can manage to make that happen
  */
+
 export const EditorV1: FC<EditorProps> = memo(
   ({
     id,
@@ -87,7 +89,9 @@ export const EditorV1: FC<EditorProps> = memo(
     const [globalIsDragging] = useGlobalIsDragging()
     const scrollElementRef = useRef<HTMLDivElement>(null)
     const defaultV = useMemo(() => defaultSlateValue(), [])
-    const defaultEditorSetting = KeyvalueStore.useValue('editorSettings') || DefaultEditorSettings
+    const enableCustomFormat = useGlobalAtomValue(enableCustomEditorStateAtom)
+    const userSetting = KeyvalueStore.useValue('editorSettings')
+    const defaultEditorSetting = enableCustomFormat ? userSetting || DefaultEditorSettings : DefaultEditorSettings
     const setBlockHandle = useSetAtom(EditorBlockHandleAtom)
     const DragState = Rendevoz.Actions.State.Drag
     const setEditorState = useSetAtom(EditorStateAtom)
@@ -191,9 +195,12 @@ export const EditorV1: FC<EditorProps> = memo(
         const ele = scrollElementRef.current!
         const p = ele.parentElement!
         document.body.appendChild(ele)
+        const originalTheme = document.documentElement.getAttribute('theme')
+        document.documentElement.setAttribute('theme', 'light')
         document.documentElement.classList.add('print-editor')
         const afterPrint = () => {
           document.documentElement.classList.remove('print-editor')
+          document.documentElement.setAttribute('theme', originalTheme || 'light')
           p.appendChild(ele)
           setEditorState(s => ({ ...s, layout: { ...s.layout, virtualizer: enV } }))
           window.removeEventListener('afterprint', afterPrint)

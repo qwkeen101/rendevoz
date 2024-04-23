@@ -17,8 +17,8 @@ const historyAtom = atom<{
 })
 export default () => {
   const instance = usePdfInstance()
-  const doublePage = useSelectAtomValue(PdfStateAtom, s => s.document?.doublePage)
-  const setPdfState = useSetAtom(PdfStateAtom)
+  const doublePage = useSelectAtomValue(PdfStateAtom, s => s.state?.doublePage)
+  const [pdfState, setPdfState] = useAtom(PdfStateAtom)
   const [pdfHistoryState, setPdfHistoryState] = useAtom(historyAtom)
 
   assignProperties(instance, {
@@ -99,17 +99,9 @@ export default () => {
         if (pageSize && doc) {
           const numPages = doc.numPages
           if (pageIndex >= 0 && pageIndex < numPages) {
-            if (doublePage) {
-              const offset = Math.floor(pageIndex / 2) * pageSize.height * pageSize.scale + Math.floor(pageIndex / 2) * 10
-              console.log(offset, pageSize)
-              instance.navigateOps?.jumpToOffset(offset, {
-                align: 'start'
-              })
-            } else {
-              const offset = pageIndex * pageSize.height * pageSize.scale + pageIndex * 10
-              instance.navigateOps?.jumpToOffset(offset, {
-                align: 'start'
-              })
+            const offset = instance.virtualizer?.getOffsetForIndex(pageIndex, 'start')
+            if (offset !== undefined) {
+              instance.virtualizer?.scrollToOffset(offset[0] - (pdfState.styles?.paddingTop ?? 60))
             }
           }
         }

@@ -27,6 +27,7 @@ import MediaToolbar from '@/core/components/media/components/MediaToolbar'
 import _ from 'lodash'
 import QuickLabelPopover from '@/core/components/media/components/QuickLabelPopover'
 import MediaClipper from '@/core/components/media/components/MediaClipper'
+import useMediaSidebarState from '@/core/components/media/hooks/useMediaSidebarState'
 export interface MediaProps {
   onInstanceInitialized?: (instance: Partial<IMediaInstance>) => void
   onlyCore?: boolean
@@ -39,7 +40,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
   const [playIconVisible, setPlayIconVisible] = useState(false)
   const [, setToolbarState] = useMediaToolbarState()
   const [mediaState, setMediaState] = useMediaState()
-
+  const [sidebarState] = useMediaSidebarState()
   const outerContainerRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const instance = useMediaInstance()
@@ -47,7 +48,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
   const showIcon = mediaState.mode === 'video' && playIconVisible && mediaState.loaded
   const mediaLayout = useAtomValue(MediaLayoutAtom)
   const audioMode = mediaState.mode === 'audio'
-  useChangeVideoLayout(outerContainerRef)
+  const containerWidth = useChangeVideoLayout(outerContainerRef)
 
   const columnLayout = mediaLayout
   const getPopIcon = () => {
@@ -290,7 +291,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
             width: '100%',
             height: columnLayout ? 'fit-content' : '100%',
             overflowY: columnLayout ? undefined : 'auto',
-            padding: '24px 24px 12px',
+            padding: '16px 16px 10px',
             display: 'flex'
           }}
         >
@@ -308,8 +309,10 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
             }}
           >
             {mediaState.floated ? renderFloated() : renderCore()}
-            {!audioMode && <div style={{ fontWeight: 500, fontSize: 18, width: '100%', lineHeight: 1.4 }}>{mediaState.name}</div>}
-            {!audioMode && <MediaToolbar />}
+            {!audioMode && (!columnLayout || !sidebarState.rightBarVisible) && (
+              <div style={{ fontWeight: 500, fontSize: 18, width: '100%', lineHeight: 1.4 }}>{mediaState.name}</div>
+            )}
+            {!audioMode && <MediaToolbar width={containerWidth} />}
           </Content>
         </Content>
         <MediaSidebar />

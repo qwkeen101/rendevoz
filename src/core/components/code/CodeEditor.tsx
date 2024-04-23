@@ -1,7 +1,7 @@
 import CodeMirror from '@uiw/react-codemirror'
 import { css } from '@emotion/css'
 import darkCodeTheme from '@/core/components/code/darkCodeTheme'
-import lightCodeTheme from '@/core/components/code/lightCodeTheme'
+import lightCodeTheme, { githubLightInit } from '@/core/components/code/lightCodeTheme'
 import { langs } from '@uiw/codemirror-extensions-langs'
 import { useSelectGlobalAtomValue } from '@/hooks'
 import { SettingAtom } from '@/core'
@@ -33,7 +33,7 @@ export default ({
         }
       })}
       editable={editable}
-      theme={darkMode ? darkCodeTheme() : lightCodeTheme()}
+      theme={darkMode ? darkCodeTheme() : githubLightInit()}
       basicSetup={true}
       value={value}
       style={{

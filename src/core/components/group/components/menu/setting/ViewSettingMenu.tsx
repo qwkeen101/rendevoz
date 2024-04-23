@@ -150,6 +150,10 @@ export default () => {
                     children: t('general.Card content')
                   },
                   {
+                    value: 'cover or content',
+                    children: t('group.Cover image or card content')
+                  },
+                  {
                     value: 'none',
                     children: t('general.None')
                   }

@@ -69,11 +69,11 @@ const useRenderLabel = (opts: {
         ) : (
           <DraggableElement draggable={draggable} onDragStart={opts.onDragStart}>
             <div
+              className={'font-size-14'}
               style={{
                 cursor: 'pointer',
                 width: 'fit-content',
                 whiteSpace: 'pre-wrap',
-                fontSize: FontSize['13px'],
                 color: labelMeta && !labelMeta.temp ? labelMeta.color || Colors.Common.SelectColor : undefined
               }}
             >

@@ -156,7 +156,6 @@ const Link = ({ element, attributes, children }: RenderElementProps) => {
   return (
     <span {...attributes} style={{ margin: '0 0.1px' }}>
       <Tooltip
-        disable={readOnly}
         padding={5}
         contentTouchable={true}
         delay={500}

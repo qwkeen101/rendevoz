@@ -35,7 +35,7 @@ const FeedList = () => {
     }))
   }
   const currentCollection = ObjectStore('feedCollection').useValue(currentCollectionId)
-  console.log(currentCollectionId)
+
   const [ref, { width }] = useMeasure()
 
   const items = filtererdItems || allItems
@@ -46,7 +46,6 @@ const FeedList = () => {
   })
   const MAX_PAGE = Math.floor(items.length / DEFAULT_CARD_PAG) + 1
 
-  console.log(items)
   if (itemMode === 'magazine') {
     return (
       <Content
@@ -137,8 +136,6 @@ const FeedList = () => {
               const t = p?.scrollTop
               handleNavigate(i)
               if (t !== undefined) {
-                console.log(t)
-
                 setTimeout(() => {
                   p!.scrollTop = t
                 })

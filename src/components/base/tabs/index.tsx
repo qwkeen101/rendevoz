@@ -16,6 +16,7 @@ import styles from './index.module.less'
 import Colors from '@/consts/colors'
 import ClassName from '@/styles/classNames'
 import FontSize from '@/consts/font'
+import classnames from 'classnames'
 
 export interface TabNavListProps {
   defaultActiveKey: string
@@ -41,7 +42,7 @@ const TabNavList: FC<TabNavListProps> = ({ navs, onTabClick, defaultActiveKey, e
       <Content flex alignItems="center" style={{ flexShrink: 1, flexWrap: 'wrap' }} gap={6}>
         {navs.map(nav => (
           <div
-            className={ClassName.flatButton()}
+            className={classnames(ClassName.flatButton(), nav.key === selectedTabKey && 'active-button')}
             onClick={e => {
               onTabClick(nav.key, e)
               setSelectedTabKey(nav.key)
@@ -50,7 +51,6 @@ const TabNavList: FC<TabNavListProps> = ({ navs, onTabClick, defaultActiveKey, e
               userSelect: 'none',
               padding: '2px 8px',
               fontSize: FontSize['13px'],
-              background: nav.key === selectedTabKey ? Colors.Background.ButtonHover : undefined,
               ...style
             }}
             key={nav.key}

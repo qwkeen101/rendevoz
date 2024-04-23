@@ -113,7 +113,7 @@ export default memo(
                       marginTop: 8
                     },
                     titleStyle: {
-                      fontSize: 15
+                      fontSize: 14
                     }
                   },
                   layout: {

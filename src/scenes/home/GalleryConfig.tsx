@@ -61,14 +61,14 @@ const GalleryConfig = () => {
                 }}
               ></CheckBox>
               <div>{t(`general.${l.name}`)}</div>
-              <Icon name={'park-drag'} className={ClassName.flatButton(4, 2)} containerStyle={{ marginLeft: 'auto', cursor: 'grab' }} />
+              <Icon name={'park-drag'} containerStyle={{ marginLeft: 'auto', cursor: 'grab', color: Colors.Font.SuperTransparent }} />
             </Content>
           </Reorder.Item>
         ))}
       </Reorder.Group>
       <ButtonChooser
         buttonSize={12}
-        style={{ borderTop: `1px solid ${Colors.Background.Border}`, padding: '6px 8px 0px', marginTop: 6, fontWeight: 600 }}
+        style={{ borderTop: `1px solid ${Colors.Background.Border}`, padding: '4px 8px 0px', marginTop: 4, color: Colors.Font.Transparent }}
         value={`${rows}`}
         name={'Rows'}
         options={_.range(1, 5).map(i => i.toString())}

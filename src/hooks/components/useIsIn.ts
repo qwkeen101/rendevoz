@@ -1,6 +1,11 @@
 import { RefObject, useEffect, useRef, useState } from 'react'
 
-const useIsIn = (outerRef?: RefObject<HTMLElement>) => {
+const useIsIn = (
+  outerRef?: RefObject<HTMLElement>,
+  opts?: {
+    pointerMove?: boolean
+  }
+) => {
   const [isIn, setIsIn] = useState(false)
   const ref = outerRef || useRef<HTMLElement>(null)
   useEffect(() => {
@@ -15,7 +20,7 @@ const useIsIn = (outerRef?: RefObject<HTMLElement>) => {
     if (container) {
       container.addEventListener('pointerenter', pointerHandler)
       container.addEventListener('pointerleave', pointerHandler)
-      container.addEventListener('pointermove', pointerHandler)
+      opts?.pointerMove !== false && container.addEventListener('pointermove', pointerHandler)
       return () => {
         container.removeEventListener('pointerenter', pointerHandler)
         container.removeEventListener('pointerleave', pointerHandler)

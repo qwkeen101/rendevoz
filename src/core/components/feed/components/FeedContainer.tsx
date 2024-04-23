@@ -1,6 +1,5 @@
 import useFeedState from '@/core/components/feed/hooks/useFeedState'
-import { useState } from 'react'
-import { ColumnResizer, Content, Icon, Modal } from '@/components'
+import { Content, Icon, Modal } from '@/components'
 import FeedList from '@/core/components/feed/components/FeedList'
 import FeedContentRenderer from '@/core/components/feed/components/FeedContentRenderer'
 import { Resizable } from 're-resizable'
@@ -13,6 +12,7 @@ const FeedContainer = () => {
   const [feedState, setFeedState] = useFeedState()
   const feedModalWidth = KeyvalueStore.useValue('feedModalWidth') || 900
   const openMode = KeyvalueStore.useValue('feedOpenMode') || 'rightBar'
+  const modalOpen = feedState.modalOpen
   const instance = useFeedInstance()
   return (
     <Content
@@ -122,7 +122,7 @@ const FeedContainer = () => {
           }}
           defaultSize={{
             height: '100%',
-            width: '40vw'
+            width: '45vw'
           }}
           style={{
             position: 'absolute',
@@ -130,9 +130,30 @@ const FeedContainer = () => {
             right: 0,
             transform: !feedState.modalOpen ? 'translateX(100%)' : undefined,
             zIndex: 100,
-            background: Colors.Background.Global
+            background: Colors.Background.Popover
           }}
         >
+          <div
+            className={'border-box-shadow'}
+            style={{
+              position: 'absolute',
+              background: Colors.Background.Popover,
+              left: -38,
+              top: '22px',
+              transform: 'translateY(-50%)',
+              zIndex: 15,
+              borderRadius: 4
+            }}
+          >
+            <Icon
+              name={modalOpen ? 'park-double-right' : 'park-double-left'}
+              className={ClassName.flatButton(4, '5px')}
+              size={20}
+              onClick={() => {
+                setFeedState(s => ({ ...s, modalOpen: !s.modalOpen }))
+              }}
+            />
+          </div>
           <FeedContentRenderer />
         </Resizable>
       )}

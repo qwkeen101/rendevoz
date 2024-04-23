@@ -11,7 +11,9 @@ export default {
   openFile: async path => {
     ipcInstance.send('openLocalFile', path)
   },
-  readFile: path => {},
+  readFile: async path => {
+    return await ipcInstance.send('readFile', path).then(res => res.data)
+  },
   selectDir: async () => {
     return ipcInstance.send('getSelectedFolderPath').then(res => res.data)
   },

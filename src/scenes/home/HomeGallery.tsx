@@ -52,9 +52,9 @@ const HomeGallery = () => {
 
   const [ref, { width }] = useMeasure()
 
-  const count = Math.round((width - 20) / 228)
+  const count = Math.floor((width - 16) / 240)
   return (
-    <Content ref={ref} fullWidth column flex gap={30}>
+    <Content ref={ref} fullWidth column flex gap={30} style={{ paddingBottom: 100 }}>
       {gallerySettings.visibleLists.map(i => i.visible && <GalleryPanel key={i.name} count={count} panelName={i.name} />)}
     </Content>
   )
@@ -77,20 +77,21 @@ const GalleryPanel = ({ panelName, count }: { panelName: string; count: number }
   useEffect(() => {
     const map = MetaStore.getMetaObjectsMap()
     if (panelName === 'pinned') {
-      setDisplayMetaIds(Array.from(index?.pinnedMetaObjectsSet?.values() || []).map(i => i.id))
+      setDisplayMetaIds(
+        Array.from(index?.pinnedMetaObjectsSet?.values() || [])
+          .filter(i => MetaStore.isVisibleMetaObject(i))
+          .map(i => i.id)
+      )
       return
     }
-    const arrayObjects = Array.from(allObjects.values())
     if (panelName === 'recentlyViewed') {
-      const viewed = arrayObjects.filter(i => i.viewAt && !i.hidden)
-      viewed.sort((b, a) => a.viewAt! - b.viewAt!)
-      setDisplayMetaIds(viewed.map(i => i.id))
+      const viewed = MetaStore.getMetaObjects('view')
+      setDisplayMetaIds(viewed.filter(i => MetaStore.isVisibleMetaObject(i)).map(i => i.id))
       return
     }
     if (panelName === 'recentlyCreated') {
-      const created = arrayObjects.filter(i => !i.hidden)
-      created.sort((b, a) => a.id - b.id)
-      setDisplayMetaIds(created.map(i => i.id))
+      const created = MetaStore.getMetaObjects('create')
+      setDisplayMetaIds(created.filter(i => MetaStore.isVisibleMetaObject(i)).map(i => i.id))
       return
     }
     const objects = Array.from(index?.typeToMetaObjectIdsMap?.get(panelName)?.values() || []).filter(
@@ -101,9 +102,9 @@ const GalleryPanel = ({ panelName, count }: { panelName: string; count: number }
   }, [panelName, allObjects, index])
   if (!displayMetaIds.length) return null
   return (
-    <Content style={{ width: '100%' }}>
-      <Content flex justifyContent={'space-between'}>
-        <div style={{ fontSize: 14, color: Colors.Font.Primary, margin: '10px 0px' }}>{t(`general.${panelName}`)}</div>
+    <Content style={{ width: '100%', padding: '0 8px' }}>
+      <Content className={'transparent-font'} flex justifyContent={'space-between'}>
+        <div style={{ fontSize: 13, margin: '10px 0px', fontWeight: 500 }}>{t(`general.${panelName}`)}</div>
         {pagable && (
           <Content flex gap={10}>
             <Icon

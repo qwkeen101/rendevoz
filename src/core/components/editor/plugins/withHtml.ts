@@ -1,10 +1,10 @@
 import { Transforms } from 'slate'
 import { ReactEditor } from 'slate-react'
 import { CustomEditor } from '~/typings'
-import { deserializeHTML, normalize } from './deserializeHtml'
+import deserializeHTML from './transformHTML/deserializeHTML'
 import Id from '@/utils/id'
 import FileSystem from '@/api/fileSystem'
-const { createMarkdownObjectTable } = import('parse-markdown-table')
+import { deserializeMarkdown } from '@/core/components/editor/plugins/deserializeMarkdown'
 const withHtml = (editor: CustomEditor) => {
   const { insertData } = editor
 
@@ -12,7 +12,6 @@ const withHtml = (editor: CustomEditor) => {
     const html = data.getData('text/html')
     const slateFragment = data.getData('application/x-rendevoz-slate-fragment')
     const plainText = data.getData('text/plain')
-    const url = data.getData('text/uri-list')
     const imageItem = Array.from(data.items).find(i => i.type.startsWith('image'))
     if (imageItem) {
       const blob = imageItem.getAsFile()
@@ -45,15 +44,9 @@ const withHtml = (editor: CustomEditor) => {
     }
     if (html) {
       const parsed = new DOMParser().parseFromString(html, 'text/html')
-      const wrapper = document.createElement('div')
-      Array.from(parsed.body.children).forEach(c => {
-        wrapper.appendChild(c)
-      })
-      parsed.body.appendChild(wrapper)
       const deserialized = deserializeHTML(parsed.body)
-      if (deserialized.length) {
-        const normalized = normalize(deserialized)
-        Transforms.insertFragment(editor, normalized)
+      if (deserialized?.length) {
+        Transforms.insertFragment(editor, deserialized)
         return
       } else {
         if (!plainText?.length) {
@@ -67,30 +60,9 @@ const withHtml = (editor: CustomEditor) => {
       ReactEditor.insertFragmentData(editor, data)
       return
     }
-    const linkPattern =
-      /(^|[\s\n]|<[A-Za-z]*\/?>)((?:https?|ftp):\/\/[\-A-Z0-9+\u0026\u2019@#\/%?=()~_|!:,.]*[\-A-Z0-9+\u0026@#\/%=~()_|])/gi
-
     if (plainText) {
-      const paragraphs = plainText.split(/[\r\n]+/)
-      const texts = paragraphs
-        .filter(i => i)
-        .map(p => {
-          const matched = p.match(linkPattern)
-          if (matched?.length) {
-            return {
-              type: 'paragraph',
-              id: Id.getId(),
-              children: matched.map(i => ({ type: 'link', url: i, children: [{ text: i }] }))
-            }
-          } else {
-            return {
-              type: 'paragraph',
-              id: Id.getId(),
-              children: [{ text: p }]
-            }
-          }
-        })
-      Transforms.insertFragment(editor, texts)
+      Transforms.insertFragment(editor, deserializeMarkdown(plainText))
+      console.log(deserializeMarkdown(plainText), plainText)
       return
     }
     insertData(data)

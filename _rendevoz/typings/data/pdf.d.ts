@@ -7,11 +7,6 @@ export interface IPdfDocument extends IFile {
   description?: string
   metadata?: IPdfMetadata
   lastReadPage?: number
-  lastReadAt?: number
-  totalReadTime?: number
-  readProgress?: number
-  totalPageNum?: number
-  totalNoteNumber?: number
   doublePage?: boolean
   deletedAt?: number
   starred?: boolean

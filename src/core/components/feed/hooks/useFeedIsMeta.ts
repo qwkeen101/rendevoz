@@ -19,7 +19,6 @@ export default (feedItemId: number) => {
       setMetaId(undefined)
       return
     }
-    console.log(urlToTweet, item.link)
     if (
       urlToAudio.has(item.enclosure?.url || '') ||
       urlToAudio.has(item.link) ||

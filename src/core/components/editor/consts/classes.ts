@@ -53,8 +53,7 @@ const DefaultContentClass = css({
     color: Colors.Font.Transparent,
     fontSize: '0.85em',
     padding: 0,
-    display: 'flex',
-    justifyContent: 'center'
+    textAlign: 'center'
   }
 })
 

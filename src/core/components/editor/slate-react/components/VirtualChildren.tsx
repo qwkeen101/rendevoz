@@ -14,11 +14,26 @@ import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import { assignProperties } from '@/utils'
 import { useUpdate } from 'react-use'
+import { selectAtom } from 'jotai/utils'
+import { isEqual } from 'lodash'
+import { useAtomValue } from 'jotai'
 
 /**
  * Children.
  */
 
+const stateAtom = selectAtom(
+  EditorStateAtom,
+  s => ({
+    disableOverscanInReadOnly: s.layout?.disableOverscanInReadOnly,
+    v: s.layout?.virtualizer,
+    overscan: s.layout?.overscan,
+    textareaMode: s.textboxMode,
+    showPaddingBottom: s.layout?.showBottomPadding,
+    bottomPadding: s.styles?.bottomPadding
+  }),
+  isEqual
+)
 const VirtualChildren = memo(
   (props: {
     decorations: Range[]
@@ -45,12 +60,10 @@ const VirtualChildren = memo(
     const visibleChildren = useMemo(() => {
       return children.filter(i => !i.hide)
     }, [children])
-    const disableOverscanInReadOnly = useSelectAtomValue(EditorStateAtom, s => s.layout?.disableOverscanInReadOnly) ?? true
-    const v = useSelectAtomValue(EditorStateAtom, s => s.layout?.virtualizer)
-    const textareaMode = useSelectAtomValue(EditorStateAtom, s => s.textboxMode)
+    const { disableOverscanInReadOnly = true, v, bottomPadding, textareaMode, overscan: o = 5, showPaddingBottom } = useAtomValue(stateAtom)
     const disableVirtualizer = v === false
 
-    const overscan = disableVirtualizer || (readOnly && disableOverscanInReadOnly) ? editor.children.length : 5
+    const overscan = disableVirtualizer || (readOnly && disableOverscanInReadOnly) ? editor.children.length : o
     const instance = useEditorInstance()
 
     assignProperties(instance, {
@@ -90,8 +103,6 @@ const VirtualChildren = memo(
     }
 
     const titleHeight = editor.titleEle?.getBoundingClientRect().height || 0
-    const showPaddingBottom = useSelectAtomValue(EditorStateAtom, s => s.layout?.showBottomPadding)
-    const bottomPadding = useSelectAtomValue(EditorStateAtom, s => s.styles?.bottomPadding)
 
     const virtualizer = useVirtualizer({
       count: visibleChildren.length,

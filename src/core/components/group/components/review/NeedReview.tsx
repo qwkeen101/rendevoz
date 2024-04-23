@@ -43,7 +43,7 @@ export default ({ inDues, list = false, onChange }: { inDues: number[]; list: bo
         maxWidth: list ? '320px' : 'min(90vw, 600px)'
       }}
     >
-      <div style={list ? { fontSize: 13, color: 'var(--transparent-font)', marginLeft: 6 } : { fontSize: 18, fontWeight: 600 }}>
+      <div style={list ? { fontSize: 13, color: 'var(--font-transparent)', marginLeft: 8 } : { fontSize: 18, fontWeight: 600 }}>
         {t('general.Card list')}
       </div>
       <Content

@@ -50,6 +50,12 @@ callback('openDatabaseFolder', async () => {
 callback('readDir', async dirPath => {
   return await FileService.readDir(dirPath)
 })
+callback('readFile', async filePath => {
+  return await FileService.readFile(filePath)
+})
+callback('utimes', async p => {
+  FileService.utimes(p)
+})
 callback('getUserFilePath', async () => {
   return DefaultRendevozDataPath
 })

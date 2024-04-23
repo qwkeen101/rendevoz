@@ -118,7 +118,8 @@ export const Sidebar = ({ direction = 'right' }: { direction: 'left' | 'right' }
             width: '100%',
             height: '38px',
             borderBottom: `1px solid ${panelOpen ? 'var(--box-shadow-border)' : 'transparent'}`,
-            flexShrink: 0
+            flexShrink: 0,
+            '-webkit-app-region': 'drag'
           }}
         ></div>
         <SidebarIcons

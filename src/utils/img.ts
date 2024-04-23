@@ -1,9 +1,6 @@
 import { ipcInstance } from '@/electron'
 import { Size, XYPosition } from '~/typings'
-import ColorThief from 'colorthief'
 import FileSystem from '@/api/fileSystem'
-const colorThief = new ColorThief()
-
 /**
  * Return: saved local path of img
  */
@@ -44,30 +41,6 @@ export const downloadImg = async (imageUrl: string, imageName?: string) => {
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
 }
-
-/**
- * Return: R,G,B
- */
-export const getMainColorOfImage = (image: HTMLImageElement | string): Promise<[number, number, number]> => {
-  return new Promise(res => {
-    if (typeof image === 'string') {
-      const imageEle = new Image()
-      imageEle.src = image
-      imageEle.onload = () => {
-        res(colorThief.getColor(imageEle))
-      }
-    } else {
-      if (image.complete) {
-        res(colorThief.getColor(image))
-      } else {
-        image.onload = () => {
-          res(colorThief.getColor(image))
-        }
-      }
-    }
-  })
-}
-
 export const calculateImageAspectRatio = (srcWidth: number, srcHeight: number, maxWidth: number, maxHeight: number) => {
   const ratio = Math.min(maxWidth / srcWidth, maxHeight / srcHeight)
   return { width: srcWidth * ratio, height: srcHeight * ratio }

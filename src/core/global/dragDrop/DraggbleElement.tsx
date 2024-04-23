@@ -22,6 +22,7 @@ const DraggableElement = forwardRef<
   const pointerHandler = useMemoizedFn((e: PointerEvent) => {
     if (draggable === false) return
     if (e.type === 'pointerdown') {
+      console.log(e)
       if (e.button !== 0) return
       ;(e.target as Element).releasePointerCapture(e.pointerId)
       isPressed.current = true
@@ -49,8 +50,9 @@ const DraggableElement = forwardRef<
     }
     if (e.type === 'pointermove') {
       if (isPressed.current && draggable && Date.now() - pressStartTime.current > shouldPress) {
-        GlobalDragOverlayInstance.startDrag?.()
+        console.log('yesss')
         if (dragStartTriggered.current === false) {
+          GlobalDragOverlayInstance.startDrag?.()
           onDragStart?.()
         }
         e.preventDefault()
@@ -99,11 +101,9 @@ const DraggableElement = forwardRef<
       document.removeEventListener('pointerup', pointerHandler, true)
     }
   })
-  const renderChild = () =>
-    cloneElement(children as JSX.Element, {
-      ref: handleRef
-    })
-  return renderChild()
+  return cloneElement(children, {
+    ref: handleRef
+  })
 })
 
 export default DraggableElement

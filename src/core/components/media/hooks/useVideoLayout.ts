@@ -14,5 +14,6 @@ const useChangeMediaLayout = (containerRef: RefObject<HTMLElement>) => {
       setVideoLayout(false)
     }
   }, [containerSize.width])
+  return containerSize.width || 0
 }
 export default useChangeMediaLayout

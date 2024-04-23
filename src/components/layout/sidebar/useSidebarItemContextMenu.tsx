@@ -1,4 +1,4 @@
-import { AnimatePopover, Button, WithBorder } from '@/components'
+import { AnimatePopover, Button, Menu, WithBorder } from '@/components'
 import Modal from '@/components/base/Modal'
 import CollectionForm from '@/components/form/CollectionForm'
 import ClassName from '@/styles/classNames'
@@ -9,6 +9,7 @@ import { RefObject, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { GlobalInstance } from '@/hooks'
+import { ObjectActionPopover } from '@/core'
 
 const useSidebarItemContextMenu = (
   contextMenuElementRef: RefObject<HTMLElement>,
@@ -17,23 +18,21 @@ const useSidebarItemContextMenu = (
     id: number
   },
   {
-    onPin,
-    onDelete,
-    onEdit,
+    pinned,
     onAddNewSubItem,
+    onPin,
     onRemoveFromCollection,
-    onViewDetails,
     onDeleteWithMeta,
-    pinned
+    onEdit,
+    onDelete
   }: {
     onPin?: VoidFunction
     onDelete?: VoidFunction
-    onEdit?: VoidFunction
-    onViewDetails?: VoidFunction
     onDeleteWithMeta?: VoidFunction
     onRemoveFromCollection?: VoidFunction
     pinned?: boolean
     name?: string
+    onEdit?: VoidFunction
     onAddNewSubItem?: VoidFunction
   } = {}
 ) => {
@@ -84,123 +83,113 @@ const useSidebarItemContextMenu = (
     return () => {
       contextMenuElementRef?.current?.removeEventListener('contextmenu', contextMenuHandler)
     }
-  }, [])
+  })
   const portal = createPortal(
     <AnimatePopover
       visible={contextMenuState.contextMenuVisible}
       disableNudge
-      disableIntersection
       positions={['right']}
       align="start"
+      onVisiblityChange={v => setContextMenuState(s => ({ ...s, contextMenuVisible: v }))}
       onClickOutside={() => setContextMenuState(s => ({ ...s, contextMenuVisible: false }))}
       position={{
         left: contextMenuState.left,
         top: contextMenuState.top
       }}
-      content={
-        <WithBorder
-          onContextMenu={e => {
-            e.preventDefault()
-            e.stopPropagation()
-            if (e.target === e.currentTarget) {
-              setContextMenuState({
-                ...contextMenuState,
-                contextMenuVisible: false
-              })
-            }
-          }}
-          padding={4}
-          width={150}
-          onClick={e => {
-            if (e.target !== e.currentTarget) {
-              e.stopPropagation()
-              setContextMenuState({
-                ...contextMenuState,
-                createVisible: false
-              })
-              setTimeout(() => {
-                setContextMenuState(s => ({
-                  ...s,
-                  contextMenuVisible: false
-                }))
-              })
-            }
-          }}
-        >
-          {item?.type === 'collection' && (
-            <>
-              <Button.IconButton
-                onClick={() => {
-                  setFormState({
-                    newCollectionVisible: true
-                  })
-                }}
-                text={t('general.subcollection')}
-                icon="park-folder-close"
-              />
-              <Button.IconButton
-                onClick={() => {
-                  GlobalInstance.metaOps?.createObjects(
-                    undefined,
-                    m => {
-                      CollectionStore.addItemToCollection({ id: m.id, type: 'meta' }, item.id)
-                      onAddNewSubItem?.()
-                    },
-                    {
-                      parentCollectionId: item.id
-                    }
-                  )
-                }}
-                text={t('general.create')}
-                icon="park-plus"
-              />
-            </>
-          )}
-          {item.type === 'meta' && (
-            <Button.IconButton
-              text={t('general.View details')}
-              icon="park-info"
-              onClick={e => {
-                e.stopPropagation()
-                onViewDetails?.()
-                setContextMenuState({
-                  ...contextMenuState,
-                  contextMenuVisible: false
-                })
-              }}
+      content={setV =>
+        item.type === 'collection' ? (
+          <WithBorder onClick={e => e.stopPropagation()} padding={'0.4rem 0'} width={150}>
+            <Menu.NavigationMenu
+              layout={[
+                {
+                  type: 'item',
+                  key: 'create',
+                  icon: 'park-plus',
+                  text: t('general.create'),
+                  onSelect: () => {
+                    setV(false)
+                    GlobalInstance.metaOps?.createObjects(
+                      undefined,
+                      m => {
+                        CollectionStore.addItemToCollection({ id: m.id, type: 'meta' }, item.id)
+                        onAddNewSubItem?.()
+                      },
+                      {
+                        parentCollectionId: item.id
+                      }
+                    )
+                  }
+                },
+                {
+                  type: 'item',
+                  key: 'sub-collection',
+                  icon: 'park-folder-close',
+                  text: t('general.subcollection'),
+                  onSelect: () => {
+                    setFormState({
+                      newCollectionVisible: true
+                    })
+                    setV(false)
+                  }
+                },
+                {
+                  type: 'item',
+                  key: 'edit',
+                  icon: 'park-edit',
+                  text: t('general.edit'),
+                  onSelect: () => {
+                    setV(false)
+                    onEdit?.()
+                  }
+                },
+                {
+                  type: 'item',
+                  key: 'pin',
+                  icon: 'park-pin',
+                  text: pinned ? t('general.unpin') : t('general.pin'),
+                  onSelect: () => {
+                    setV(false)
+                    setTimeout(() => {
+                      onPin?.()
+                    }, 200)
+                  }
+                },
+                {
+                  type: 'separator'
+                },
+                {
+                  type: 'item',
+                  key: 'delete',
+                  icon: 'park-delete',
+                  text: t('general.delete'),
+                  onSelect: () => {
+                    onDelete?.()
+                    setV(false)
+                  }
+                },
+                {
+                  type: 'item',
+                  key: 'delete-all',
+                  icon: 'park-delete-two',
+                  text: t('general.Delete collection and all objects'),
+                  onSelect: () => {
+                    onDeleteWithMeta?.()
+                    setV(false)
+                  }
+                }
+              ]}
             />
-          )}
-          <Button.IconButton
-            text={t('general.edit')}
-            icon="park-edit"
-            onClick={e => {
-              e.stopPropagation()
-              onEdit?.()
-              setContextMenuState({
-                ...contextMenuState,
-                contextMenuVisible: false
-              })
-            }}
-          />
-          <Button.IconButton text={pinned ? t('general.unpin') : t('general.pin')} icon="park-pin" onClick={onPin} />
-          <Button.IconButton text={t('general.delete')} icon="park-delete" dangerous onClick={onDelete} />
-          {item.type === 'collection' && (
-            <Button.IconButton
-              text={t('general.delete collection and all objects')}
-              icon="park-delete"
-              dangerous
-              onClick={onDeleteWithMeta}
+          </WithBorder>
+        ) : (
+          <WithBorder onClick={e => e.stopPropagation()}>
+            <ObjectActionPopover
+              onRemoveFromCollection={onRemoveFromCollection}
+              visibility={{ deleteFromCollection: true }}
+              onClose={() => setV(false)}
+              metaObjectId={item.id}
             />
-          )}
-          {item.type !== 'collection' && (
-            <Button.IconButton
-              text={t('general.remove from collection')}
-              icon="park-folder-minus"
-              dangerous
-              onClick={onRemoveFromCollection}
-            />
-          )}
-        </WithBorder>
+          </WithBorder>
+        )
       }
     ></AnimatePopover>,
     document.body

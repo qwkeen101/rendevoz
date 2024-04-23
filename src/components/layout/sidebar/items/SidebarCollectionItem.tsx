@@ -1,10 +1,9 @@
 import { AnimatePopover, Content, Icon, Modal } from '@/components'
 import CollectionForm from '@/components/form/CollectionForm'
-import useCollectionStore, { collectionsAtom } from '@/api/stores/collection.store'
+import { collectionsAtom } from '@/api/stores/collection.store'
 import { CollectionStore, globalStore, MetaStore } from '@/api/stores'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
-import { AnimatePresence } from 'framer-motion'
 import { FC, memo, useMemo, useRef } from 'react'
 import { useGlobalAtomValue, useSelectGlobalAtomValue, useToggle } from '@/hooks'
 import { ICollectionItem } from '~/typings/data'
@@ -13,13 +12,13 @@ import useSidebarItemContextMenu from '../useSidebarItemContextMenu'
 import useSidebarItemDrag, { sidebarDraggingState } from '../useSidebarItemDrag'
 import { ISidebarItem } from './type'
 import SidebarObjectItem from './SidebarObjectItem'
-import { metaObjectsAtom } from '@/api/stores/meta/meta.store'
 import FontSize from '@/consts/font'
 import { Rendevoz } from '@/core/rendevoz'
 import { DraggableElement } from '@/core'
+import { droppableItemHovered } from '@/styles/classNames/drag'
 
 const SidebarCollectionItem: FC<ISidebarItem> = memo(
-  ({ id, parentId, parentType, draggable = true, onClick, onlyCollection, selectMode }) => {
+  ({ id, parentId, parentType, draggable = true, onClick, onlyCollection, selectMode, displayPinned = false }) => {
     const { updateCollection, deleteCollection } = CollectionStore
 
     const collection = useSelectGlobalAtomValue(collectionsAtom, c => c.get(id))
@@ -93,14 +92,14 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(
       {
         pinned: collection?.pinned,
         name: collection?.name,
+        onEdit: () => collection && toggleEditModalVisible(true),
         onPin: () => collection && updateCollection({ id: collection.id, pinned: !collection.pinned }),
         onDelete: () => collection && deleteCollection(collection.id, false),
-        onEdit: toggleEditModalVisible,
         onDeleteWithMeta: () => collection && deleteCollection(collection.id, true)
       }
     )
 
-    if (!collection || collection.deleted) return null
+    if (!collection || collection.deleted || (collection.pinned && displayPinned === false)) return null
 
     return (
       <Content
@@ -167,7 +166,7 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(
               }}
               alignItems="center"
               justifyContent="space-between"
-              className={css([ClassName.flatButton(4, '3px 8px 3px 2px'), hovered && ClassName.Drag.droppableItemHovered(droppable)])}
+              className={css([ClassName.flatButton(4, '3px 8px 3px 6px'), hovered && droppableItemHovered(droppable)])}
             >
               <Content flex gap={4}>
                 <Icon
@@ -199,34 +198,33 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(
                   />
                 )}
               </Content>
-              {childrenLength ? <div className={ClassName.description(FontSize['13px'])}>{childrenLength}</div> : undefined}
+              {childrenLength ? <div className={'transparent-font font-size-12'}>{childrenLength}</div> : undefined}
             </Content>
           </DraggableElement>
         </AnimatePopover>
-        <AnimatePresence>
-          {!hideChildren && (
-            <div
-              className={css({
-                paddingLeft: 15,
-                display: 'flex',
-                flexDirection: 'column'
-              })}
-            >
-              {childrenCollections?.map(i => (
-                <SidebarCollectionItem
-                  selectMode={selectMode}
-                  onClick={onClick}
-                  onlyCollection={onlyCollection}
-                  key={i.id}
-                  id={i.id}
-                  parentId={id}
-                  parentType="collection"
-                />
-              ))}
-              {!onlyCollection && childrenMetas.map(i => <SidebarObjectItem key={i.id} id={i.id} parentId={id} parentType="collection" />)}
-            </div>
-          )}
-        </AnimatePresence>
+        {!hideChildren && (
+          <div
+            className={css({
+              paddingLeft: 15,
+              display: 'flex',
+              flexDirection: 'column'
+            })}
+          >
+            {childrenCollections?.map(i => (
+              <SidebarCollectionItem
+                displayPinned={displayPinned}
+                selectMode={selectMode}
+                onClick={onClick}
+                onlyCollection={onlyCollection}
+                key={i.id}
+                id={i.id}
+                parentId={id}
+                parentType="collection"
+              />
+            ))}
+            {!onlyCollection && childrenMetas.map(i => <SidebarObjectItem key={i.id} id={i.id} parentId={id} parentType="collection" />)}
+          </div>
+        )}
       </Content>
     )
   }

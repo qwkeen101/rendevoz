@@ -192,9 +192,7 @@ pre,
 code,
 kbd,
 samp {
-  font-size: 1em;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier,
-    monospace;
+  font-family: inherit;
 }
 code {
   color: #a73832;
@@ -208,12 +206,12 @@ code {
 }
 pre {
   margin-top: 0;
-  margin-bottom: 1em;
+  margin-bottom: 0;
   overflow: auto;
-  color: #e0e3e6;
-  background-color: #1e272f;
+  background-color: var(--background-secondary);
   border-radius: 4px;
   padding: 1.125em;
+  white-space: pre-wrap;
   code {
     color: inherit;
     background-color: transparent;

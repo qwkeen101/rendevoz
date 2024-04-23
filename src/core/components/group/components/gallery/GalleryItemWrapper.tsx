@@ -433,7 +433,7 @@ export default memo(
               />
             </Content>
             {renderIndicator()}
-            {(showCover === 'content' || thumbnailMode) && (
+            {(showCover === 'content' || thumbnailMode || (showCover === 'cover or content' && !meta.coverImgSrc)) && (
               <ContentDisplayer
                 onClick={e => {
                   if (isEditing) return
@@ -444,22 +444,24 @@ export default memo(
                 metaId={meta.id}
               />
             )}
-            {showCover === 'cover' && !thumbnailMode && (isEditing || !hideCoverIfEmpty || meta.coverImgSrc) && (
-              <ImageItem
-                isEditing={isEditing}
-                value={meta.coverImgSrc}
-                onChange={v => {
-                  instance.metaOps?.updateMeta({ id: meta.id, coverImgSrc: v })
-                }}
-                onClick={e => {
-                  if (isEditing) return
-                  if (!meta.coverImgSrc) {
-                    e.preventDefault()
-                    instance.openObject?.(meta.id, rowDetails.rowId)
-                  }
-                }}
-              />
-            )}
+            {(showCover === 'cover' || (showCover === 'cover or content' && meta.coverImgSrc)) &&
+              !thumbnailMode &&
+              (isEditing || !hideCoverIfEmpty || meta.coverImgSrc) && (
+                <ImageItem
+                  isEditing={isEditing}
+                  value={meta.coverImgSrc}
+                  onChange={v => {
+                    instance.metaOps?.updateMeta({ id: meta.id, coverImgSrc: v })
+                  }}
+                  onClick={e => {
+                    if (isEditing) return
+                    if (!meta.coverImgSrc) {
+                      e.preventDefault()
+                      instance.openObject?.(meta.id, rowDetails.rowId)
+                    }
+                  }}
+                />
+              )}
             {(!thumbnailMode || (thumbnailMode && isEditing)) && (
               <div
                 style={{ width: '100%', flex: 1 }}
@@ -509,7 +511,7 @@ export default memo(
                       pointerEvents: 'none'
                     }}
                   >
-                    {meta.name || (showCover === 'content' || showOriginalText ? undefined : meta.placeholderName)}
+                    {meta.name}
                   </div>
                 )}
                 <div

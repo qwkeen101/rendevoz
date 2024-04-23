@@ -35,11 +35,26 @@ type ActionsOps = {
   zoomOut: VoidFunction
   setScale: (s: number) => void
   fitWidth: VoidFunction
+  doublePage: VoidFunction
 }
-
+export type IPDFEvent =
+  | {
+      type: 'doublePage'
+      value: boolean
+    }
+  | {
+      type: 'readProgressChange'
+      readProgress: number
+      lastReadPage: number
+    }
+  | {
+      type: 'scaleChange'
+      value: number
+    }
 export type IPdfInstance = Partial<{
   navigateOps: NavigateOps
   actionOps: ActionsOps
+  on: (e: IPDFEvent) => void
   currentFocusLabelId: number
   getPdfId: () => number
   isFocused?: boolean

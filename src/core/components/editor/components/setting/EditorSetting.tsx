@@ -24,7 +24,7 @@ const EditorSetting = ({ editor }: { editor: CustomEditor }) => {
   }, [])
   return (
     <Content ref={parentRef}>
-      <Content style={{ padding: 4 }} className={'border-bottom'}>
+      <Content style={{ padding: 4 }} className={lastSavedAt ? 'border-bottom' : undefined}>
         {editorState?.header?.display?.translate !== false && (
           <Button.IconButton
             text={t('general.Translate document')}

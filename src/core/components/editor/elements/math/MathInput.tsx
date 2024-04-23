@@ -76,7 +76,7 @@ export default memo(
         />
         <Content
           onClick={e => {
-            const v = e.currentTarget.previousElementSibling?.value
+            const v = e.currentTarget.previousElementSibling?.innerText
             if (v !== undefined) {
               onComplete(v)
             }

@@ -1,11 +1,11 @@
-import { transformMarkdown } from '@/core/components/editor/plugins/deserializeMarkdown'
+import { deserializeMarkdownFile } from '@/core/components/editor/plugins/deserializeMarkdown'
 import { INote } from '~/typings'
 import { NoteStore } from '@/api/stores'
 import { getFilenameWithoutExtension } from '@/utils'
 import { IImportResult } from '~/typings/rendevoz'
 
 const importMarkdown = async (file: File): Promise<IImportResult<INote>> => {
-  const result = await transformMarkdown(file)
+  const result = await deserializeMarkdownFile(file)
   if (result) {
     const contentId = await NoteStore.saveNoteAsBuffer(result)
     const truncatedName = getFilenameWithoutExtension(file.name)

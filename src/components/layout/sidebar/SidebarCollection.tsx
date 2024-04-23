@@ -140,7 +140,7 @@ const SidebarCollection = ({
           alignItems="center"
           justifyContent="space-between"
           className={dropVisible ? ClassName.Drag.droppableItemHovered(true) : undefined}
-          style={{ transition: 'all 0.3s ease', color: Colors.Font.Transparent, fontSize: 13, paddingRight: 2 }}
+          style={{ transition: 'all 0.3s ease', color: Colors.Font.Transparent, fontSize: 13, padding: '2px 6px 6px 12px' }}
         >
           <div
             style={{ cursor: 'pointer', userSelect: 'none' }}
@@ -159,7 +159,7 @@ const SidebarCollection = ({
               onClick={() => {
                 setNewCollectionVisible(true)
               }}
-              className={ClassName.circleButton(2, 4)}
+              className={ClassName.flatButton(4, '3px')}
             />
           </Tooltip>
         </Content>
@@ -171,8 +171,7 @@ const SidebarCollection = ({
           column
           gap={2}
           style={{
-            margin: '0 -10px 0px -12px',
-            padding: '2px 8px 2px 8px'
+            padding: '2px 4px'
           }}
         >
           {sortedCollections.map(i => (

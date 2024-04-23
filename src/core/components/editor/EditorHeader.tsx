@@ -7,6 +7,7 @@ import FontSize from '@/consts/font'
 import { css } from '@emotion/css'
 import { CustomEditor } from '~/typings'
 import EditorSetting from '@/core/components/editor/components/setting/EditorSetting'
+import classnames from 'classnames'
 
 const EditorHeader = ({ title, editor, maxTitleWidth }: { editor: CustomEditor; title: string; maxTitleWidth?: number | string }) => {
   const instance = useEditorInstance()
@@ -53,23 +54,26 @@ const EditorHeader = ({ title, editor, maxTitleWidth }: { editor: CustomEditor; 
         )}
         {header?.display?.search !== false && (
           <Icon
-            data-active={barState.rightBarActive === 'search' && barState.showRightBar === true}
             name={'park-find'}
             onClick={() => instance.searchOps?.toggleSearch()}
-            className={ClassName.flatButton(4, '4px')}
+            className={classnames(
+              ClassName.flatButton(4, '4px'),
+              barState.rightBarActive === 'search' && barState.showRightBar === true && 'active-button'
+            )}
           />
         )}
         {header?.display?.label !== false && (
           <Icon
-            data-active={barState.rightBarActive === 'label' && barState.showRightBar === true}
             name={'park-label'}
             onClick={() => instance.labelOps?.toggleLabel()}
-            className={ClassName.flatButton(4, '4px')}
+            className={classnames(
+              ClassName.flatButton(4, '4px'),
+              barState.rightBarActive === 'label' && barState.showRightBar === true && 'active-button'
+            )}
           />
         )}
         <Icon
-          data-active={barState.rightBarActive === 'ai' && barState.showRightBar === true}
-          name={'custom-magic'}
+          name={'custom-stars'}
           onClick={() => {
             setEditorBarState(s => ({
               ...s,
@@ -77,7 +81,10 @@ const EditorHeader = ({ title, editor, maxTitleWidth }: { editor: CustomEditor; 
               showRightBar: s.rightBarActive === 'ai' ? !s.showRightBar : true
             }))
           }}
-          className={ClassName.flatButton(4, '4px')}
+          className={classnames(
+            ClassName.flatButton(4, '4px'),
+            barState.rightBarActive === 'ai' && barState.showRightBar === true && 'active-button'
+          )}
         />
         <IconWithPopover
           disableNudge={true}

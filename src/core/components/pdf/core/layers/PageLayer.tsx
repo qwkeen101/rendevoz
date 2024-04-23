@@ -24,19 +24,42 @@ interface PageLayerProps {
   renderAnnotation?: (annotation: IAnnotation) => ReactElement
   scrollElement?: MutableRefObject<HTMLDivElement>
   transformScale?: number
+  containerWidth: number
+  pagePadding?: number
+  boxShadowName?: string
+  scaleChanged?: boolean
 }
 interface PageDetails {
   page: PDFPageProxy | null
   viewport: PageViewport | null
-  realHeight?: number
-  realWidth?: number
+  realHeight: number
+  realWidth: number
 }
 // todo: impl page rotation
 const PageLayer: FC<PageLayerProps> = forwardRef(
-  ({ doc, height, scale, width, pageIndex, renderPage, renderAnnotation, scrollElement, transformScale }, ref) => {
+  (
+    {
+      doc,
+      height,
+      boxShadowName = 'var(--box-shadow)',
+      scale,
+      pagePadding,
+      width,
+      pageIndex,
+      renderPage,
+      renderAnnotation,
+      scrollElement,
+      transformScale,
+      scaleChanged,
+      containerWidth
+    },
+    ref
+  ) => {
     const [pageDetails, setPageDetails] = useState<PageDetails>({
       page: null,
-      viewport: null
+      viewport: null,
+      realHeight: 0,
+      realWidth: 0
     })
 
     const [highlightState, setHighlightState] = useState<{
@@ -65,9 +88,18 @@ const PageLayer: FC<PageLayerProps> = forwardRef(
     const getPageDetails = () => {
       getPage(doc, pageIndex).then(page => {
         const viewport = page.getViewport({ scale })
+        let vw = viewport.width
+        let vh = viewport.height
+        if (!scaleChanged && vw >= containerWidth - (pagePadding ?? 0)) {
+          const ratio = (containerWidth - (pagePadding ?? 0)) / vw
+          vh = ratio * vh
+          vw = ratio * vw
+        }
         setPageDetails({
           page,
-          viewport
+          viewport,
+          realWidth: vw,
+          realHeight: vh
         })
       })
     }
@@ -110,9 +142,10 @@ const PageLayer: FC<PageLayerProps> = forwardRef(
         <div
           ref={mergedRef}
           style={{
-            height: pageDetails.viewport?.height || height,
-            width: pageDetails.viewport?.width || width,
-            cursor: isCroppingImage ? 'crosshair' : undefined
+            height: pageDetails.realHeight || height,
+            width: pageDetails.realWidth || width,
+            cursor: isCroppingImage ? 'crosshair' : undefined,
+            '--page-box-shadow': boxShadowName
           }}
           className={styles.pageLayer}
         >
@@ -134,8 +167,8 @@ const PageLayer: FC<PageLayerProps> = forwardRef(
                     transformScale={transformScale}
                     page={pageDetails.page}
                     scale={scale}
-                    width={pageDetails.viewport.width}
-                    height={pageDetails.viewport.height}
+                    width={pageDetails.realWidth}
+                    height={pageDetails.realHeight}
                     viewport={pageDetails.viewport}
                     pageFunctionRef={pageFunctionRef}
                   />
@@ -146,8 +179,8 @@ const PageLayer: FC<PageLayerProps> = forwardRef(
                     page={pageDetails.page}
                     scale={scale}
                     rotation={0}
-                    width={pageDetails.viewport.width}
-                    height={pageDetails.viewport.height}
+                    width={pageDetails.realWidth}
+                    height={pageDetails.realHeight}
                     viewport={pageDetails.viewport}
                     pageFunctionRef={pageFunctionRef}
                     transformScale={transformScale}
@@ -156,15 +189,15 @@ const PageLayer: FC<PageLayerProps> = forwardRef(
                 annotationLayer: (
                   <AnnotationLayer
                     page={pageDetails.page}
-                    width={pageDetails.viewport.width}
-                    height={pageDetails.viewport.height}
+                    width={pageDetails.realWidth}
+                    height={pageDetails.realHeight}
                     scale={scale}
                     viewport={pageDetails.viewport}
                     renderAnnotation={renderAnnotation}
                   />
                 ),
                 pageIndex: pageIndex,
-                pageSize: { width: pageDetails.viewport.width, height: pageDetails.viewport.height, scale },
+                pageSize: { width: pageDetails.realWidth, height: pageDetails.realHeight, scale },
                 pageFunctionRef
               })}
             </div>

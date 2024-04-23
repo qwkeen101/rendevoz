@@ -16,11 +16,6 @@ import { AnimatePopover, Icon, WithBorder } from '@/components'
 import { ClassName } from 'rendevoz'
 import { Rendevoz } from '@/core/rendevoz'
 
-const cursorClass = css({
-  '*': {
-    cursor: 'default !important'
-  }
-})
 const WhiteboardSelect = memo(({ containerRef }: { containerRef: MutableRefObject<HTMLElement | null> }) => {
   const [multiSelectedBox, setMultiSelectedBox] = useState<Box>()
 
@@ -138,11 +133,8 @@ const WhiteboardSelect = memo(({ containerRef }: { containerRef: MutableRefObjec
         if (!isPointerOnContainer(e, instance)) return
         const transformedXY = instance.coordOps?.transformWindowPositionToPosition({ x: e.clientX, y: e.clientY })
         transformedXY && (selectStartPointRef.current = transformedXY)
-        flow.parentContainerEle?.classList.add(cursorClass)
       }
       if (e.type === 'pointerup') {
-        // pointer up, remove disable select class and open float toolbar
-        flow.parentContainerEle?.classList.remove(cursorClass)
         // set timeout here to prevent clear selected nodes state when pointer up
         setTimeout(() => {
           // clear start and end point and box
@@ -427,7 +419,8 @@ const WhiteboardSelect = memo(({ containerRef }: { containerRef: MutableRefObjec
                     w.nodes?.set(n.id, {
                       ...w.nodes?.get(n.id),
                       ...n,
-                      resized: true
+                      resized: true,
+                      fixedExpanded: false
                     })
                   })
                 }, true).then(() => {

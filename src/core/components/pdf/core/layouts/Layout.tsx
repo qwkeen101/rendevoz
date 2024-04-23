@@ -3,7 +3,6 @@ import { FC, memo, ReactElement, useEffect, useRef, useState } from 'react'
 import { defaultRangeExtractor, Range, useVirtualizer } from '@tanstack/react-virtual'
 import { useDebounceFn, useMemoizedFn, useSelectAtomValue, useUpdateEffect } from '@/hooks'
 import PageLayer from '../layers/PageLayer'
-import { useScrollMode } from '../hooks/useScrollMode'
 import PanHelper from '../utils/pan'
 import Id from '@/utils/id'
 import { Box, IPdfViewer, PageSize, RenderPageProps, IAnnotation, TextItem } from '~/typings'
@@ -15,6 +14,7 @@ import { calculateImageAspectRatio, saveImageLocally } from '@/utils'
 import { useSetAtom } from 'jotai'
 import { renderPageInDarkMode, renderPageInNormalMode } from '@/core/components/pdf/core/utils/renderer'
 import usePdfInstance from '@/core/components/pdf/hooks/usePdfInstance'
+import { isEqual } from 'lodash'
 
 interface LayoutProps {
   doc: PDFDocumentProxy
@@ -41,13 +41,40 @@ const Layout: FC<LayoutProps> = ({
   transformScale
 }) => {
   const { numPages } = doc
-  const [scrollMode] = useScrollMode()
   const pagesRef = useRef<HTMLDivElement>(null)
   const visibleRangeRef = useRef([0, 0])
   const [rotation, setRotation] = useState(0)
-  const scale = useSelectAtomValue(PdfStateAtom, s => s.document?.scale) ?? defaultScale
-  const enablePan = useSelectAtomValue(PdfStateAtom, s => s.handDrag)
-  const autoFitWhenResize = false
+  const {
+    autoWidth,
+    scale = defaultScale ?? 1,
+    enablePan,
+    paddingTop = 60,
+    doublePage,
+    paddingEnd = 70,
+    scaleChanged,
+    enableSearch,
+    pageGap = 10,
+    pageBoxShadowName = 'var(--box-shadow)',
+    pagePadding = 30
+  } = useSelectAtomValue(
+    PdfStateAtom,
+    s => ({
+      autoWidth: s.autoWidth,
+      scale: s.document?.scale,
+      enablePan: s.handDrag,
+      paddingTop: s.styles?.paddingTop,
+      paddingEnd: s.styles?.paddingEnd,
+      doublePage: s.state?.doublePage,
+      scaleChanged: s.scaleChanged,
+      enableSearch: s.state?.enableSearch,
+      pageGap: s.styles?.pageGap,
+      pagePadding: s.styles?.pagePadding,
+      pageBoxShadowName: s.styles?.pageBoxShadowName
+    }),
+    { compare: isEqual }
+  )
+  const fitScale = pageSize.scale
+  const finalScale = scaleChanged ? scale : autoWidth ? fitScale || scale : scale
   const setPdfState = useSetAtom(PdfStateAtom)
   const instance = usePdfInstance()
 
@@ -58,7 +85,6 @@ const Layout: FC<LayoutProps> = ({
       page: number
     }[]
   >([])
-  const scaleRef = useRef(pageSize.scale)
   const currentRangeRef = useRef<Range>({
     startIndex: 0,
     endIndex: 0,
@@ -79,54 +105,51 @@ const Layout: FC<LayoutProps> = ({
           w: height
         }
   const result = {
-    height: rect.h * scale,
-    width: rect.w * scale
+    height: rect.h * finalScale,
+    width: rect.w * finalScale
   }
   const estimateSize = () => {
     // return (scrollMode === 'horizontal' ? result.width : result.height) + PAGE_SPACING
-    return scale * pageSize.height + PAGE_SPACING
+    return finalScale * pageSize.height + PAGE_SPACING
   }
 
-  const rangeExtractor = useMemoizedFn(range => {
+  const rangeExtractor = useMemoizedFn((range: Range) => {
     visibleRangeRef.current = [range.startIndex, range.endIndex]
     currentRangeRef.current = range
-    return defaultRangeExtractor(range)
-  })
+    console.log(range.overscan)
+    let start = Math.max(range.startIndex - range.overscan * (doublePage ? 2 : 1), 0)
+    const end = Math.min(range.endIndex + range.overscan * (doublePage ? 2 : 1), range.count - 1)
+    if (doublePage) {
+      if (start % 2 === 1) {
+        start = start - 1
+      }
+    }
+    const arr = []
 
-  const doublePage = useSelectAtomValue(PdfStateAtom, s => s.document?.doublePage)
+    for (let i = start; i <= end; i++) {
+      arr.push(i)
+    }
+
+    return arr
+  })
   const virtualizer = useVirtualizer({
     count: numPages,
+    debug: true,
     getScrollElement: () => pagesRef.current,
     estimateSize,
     rangeExtractor,
-    overscan: 3,
+    overscan: 2,
     lanes: doublePage ? 2 : 1,
-    paddingEnd: 70,
-    paddingStart: 60
+    paddingEnd: paddingEnd,
+    paddingStart: paddingTop
   })
   instance.virtualizer = virtualizer
-  const virtualItems = virtualizer.getVirtualItems()
 
-  useUpdateEffect(() => {
-    const previousScale = scaleRef.current
-    scaleRef.current = scale
-    const pages = pagesRef.current
-    if (!pages) {
-      return
-    }
-    const { scrollTop, scrollLeft } = pages
-    const newOffset = {
-      scrollTop: scrollTop * (scale / previousScale),
-      scrollLeft: scrollLeft * (scale / previousScale)
-    }
-    virtualizer.measure()
-    virtualizer.scrollToOffset(newOffset.scrollTop, { behavior: 'auto' })
-  }, [scale])
+  const virtualItems = virtualizer.getVirtualItems()
 
   const scrollBy = (offset: number) => {
     virtualizer.scrollBy(offset)
   }
-
   const togglePan = () => {}
   const getOutline = async () => {
     const outline = await doc.getOutline()
@@ -202,7 +225,7 @@ const Layout: FC<LayoutProps> = ({
         behavior: 'auto'
       })
     }
-    if (textRef.current.length === 0 && instance) {
+    if (textRef.current.length === 0 && instance && enableSearch !== false) {
       const map = textRef.current
       const currentPage = {
         current: 0
@@ -327,7 +350,7 @@ const Layout: FC<LayoutProps> = ({
         virtualizer.scrollToOffset(offset, { align: 'center' })
       },
       getPageSize: () => ({
-        scale,
+        scale: finalScale,
         height: pageSize.height,
         width: pageSize.width,
         pageSizeScale: pageSize.scale
@@ -388,12 +411,12 @@ const Layout: FC<LayoutProps> = ({
   }
 
   return (
-    <div className={className} ref={pagesRef} style={{ height: '100%', width: '100%', overflow: 'auto', overflowAnchor: 'none' }}>
+    <div className={className} ref={pagesRef} style={{ height: '100%', width: '100%', overflow: 'auto' }}>
       <PanHelper enablePan={enablePan} containerEle={pagesRef.current} />
       <div
         style={{
           height: virtualizer.getTotalSize(),
-          width: doublePage ? result.width * 2 + 20: '100%',
+          width: doublePage ? result.width * 2 + 20 : '100%',
           position: 'relative',
           margin: doublePage ? '0 auto' : undefined
         }}
@@ -404,6 +427,9 @@ const Layout: FC<LayoutProps> = ({
             top: 0,
             left: doublePage ? '50%' : 0,
             width: '100%',
+            display: 'flex',
+            flexDirection: doublePage ? 'row' : 'column',
+            flexWrap: 'wrap',
             transform: virtualItems?.[0] ? `translateY(${virtualItems[0].start}px) ${doublePage ? `translateX(-50%)` : ''}` : undefined
           }}
         >
@@ -413,10 +439,7 @@ const Layout: FC<LayoutProps> = ({
               ref={virtualizer.measureElement}
               style={{
                 width: doublePage ? '50%' : '100%',
-                paddingBottom: 10,
-                position: doublePage ? 'absolute' : 'relative',
-                left: doublePage ? `${(item.index % 2) * 50}%` : undefined,
-                top: doublePage ? `${item.start - virtualItems[0].start}px` : undefined
+                paddingBottom: pageGap
               }}
               key={item.key}
               data-page-index={item.index}
@@ -425,10 +448,14 @@ const Layout: FC<LayoutProps> = ({
                 transformScale={transformScale}
                 scrollElement={pagesRef}
                 renderPage={renderPage}
+                pagePadding={pagePadding}
+                boxShadowName={pageBoxShadowName}
+                containerWidth={doublePage ? pageSize.containerWidth / 2 + pagePadding / 2 : pageSize.containerWidth}
                 doc={doc}
                 height={result.height}
                 pageIndex={item.index}
-                scale={scale}
+                scaleChanged={scaleChanged}
+                scale={finalScale}
                 width={result.width}
                 renderAnnotation={renderAnnotation}
               />

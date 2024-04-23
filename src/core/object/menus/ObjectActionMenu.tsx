@@ -17,11 +17,13 @@ export const ObjectActionPopover: FC<
     onGraphPin: VoidFunction
     onShowRelated: VoidFunction
     onShowGraph: VoidFunction
+    onRemoveFromCollection: VoidFunction
     onEditLink: VoidFunction
     onDeleteLink: VoidFunction
     visibility: {
       showContainsInSidebar?: boolean
       editLink?: boolean
+      deleteFromCollection?: boolean
       deleteLink?: boolean
       jumpToVisible?: boolean
       graphPinVisible?: boolean
@@ -31,7 +33,7 @@ export const ObjectActionPopover: FC<
       showGraph?: boolean
     }
   }> & { metaObjectId: number }
-> = ({ onClose, metaObjectId, visibility, onJump, onEditLink, onDeleteLink, onGraphPin, onShowGraph }) => {
+> = ({ onClose, metaObjectId, visibility, onJump, onRemoveFromCollection, onEditLink, onDeleteLink, onGraphPin, onShowGraph }) => {
   const { updateMetaObject, deleteMetaObject } = MetaStore
   const { t } = useTranslation()
   const metaObject = MetaStore.useValue(metaObjectId)
@@ -264,7 +266,19 @@ export const ObjectActionPopover: FC<
               onClose?.()
             },
             key: 'delete'
-          }
+          },
+          visibility?.deleteFromCollection
+            ? {
+                type: 'item',
+                text: t('general.remove from collection'),
+                icon: 'park-delete-two',
+                onSelect: () => {
+                  onRemoveFromCollection?.()
+                  onClose?.()
+                },
+                key: 'remove-from-collection'
+              }
+            : undefined
         ]}
       />
     </Content>

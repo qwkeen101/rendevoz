@@ -12,6 +12,7 @@ import isHotkey from 'is-hotkey'
 import { css } from '@emotion/css'
 import UseFeedInstance from '@/core/components/feed/hooks/useFeedInstance'
 import { useGlobalAtomValue } from '@/hooks'
+import { fetchMoreItemsForCollection } from '@/core/components/feed/hooks/useFeedCollectionContent'
 
 export default ({ collectionId, parentFolderId }: { collectionId: number; parentFolderId?: number }) => {
   const { t } = useTranslation()
@@ -25,9 +26,19 @@ export default ({ collectionId, parentFolderId }: { collectionId: number; parent
   return (
     <ContextMenu
       content={setV => (
-        <WithBorder padding={'0.4rem 0'} width={160} style={{ fontSize: 14 }}>
+        <WithBorder padding={'0.4rem 0'} width={180} style={{ fontSize: 14 }}>
           <Menu.NavigationMenu
             layout={[
+              {
+                type: 'item',
+                text: t('feed.Refresh content'),
+                key: 'refresh',
+                icon: 'park-refresh',
+                onSelect: () => {
+                  setV(false)
+                  fetchMoreItemsForCollection(collectionId)
+                }
+              },
               {
                 type: 'item',
                 text: t('general.edit'),

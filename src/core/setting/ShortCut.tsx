@@ -10,10 +10,10 @@ import { ISettingItem } from './SettingItem'
 import { useSetting } from '.'
 import { IShortCutSetting } from './types'
 import SettingGroup from '@/core/setting/SettingGroup'
+import { Colors } from '@/consts'
 
 const shortCutNameToTitle = {
   function: {
-    openSidebar: 'Open sidebar',
     openObjectPanel: 'Open object details',
     quickCreateObject: 'Create object',
     openScreenShot: 'open screen shot',
@@ -21,6 +21,7 @@ const shortCutNameToTitle = {
     openGlobalSearch: 'open global text search'
   },
   layout: {
+    openSidebar: 'Open sidebar',
     closeCurrentTab: 'Close current focused tab',
     closeOtherTabs: 'Close other tabs',
     closeRightTabs: 'Close right tabs',
@@ -34,7 +35,11 @@ const shortCutNameToTitle = {
     openMediaSidebar: 'Open sidebar'
   }
 }
-
+const flattened = {
+  ...shortCutNameToTitle.function,
+  ...shortCutNameToTitle.layout,
+  ...shortCutNameToTitle.video
+}
 const ShortCutSetting = () => {
   const { t } = useTranslation()
   const functionItems: ISettingItem[] = Object.entries(shortCutNameToTitle.function).map(entry => ({
@@ -130,12 +135,14 @@ const ShortCutItem = memo(({ shortCutName }: { shortCutName: keyof IShortCutSett
       }
     }
   }, [isSelected, setting])
+  const { t } = useTranslation()
   useEffect(() => {
     const conflictItems = Object.entries(setting.shortcut).filter(([k, v]) => k !== shortCutName && v !== null && _.isEqual(v, shortCut))
     if (conflictItems.length > 0) {
+      console.log(conflictItems)
       setConflictState({
         isConflicted: true,
-        conflictWith: conflictItems.map(i => shortCutNameToTitle[i[0]])
+        conflictWith: conflictItems.map(i => t(`settings.${flattened[i[0]]}`))
       })
     } else {
       setConflictState({
@@ -144,8 +151,8 @@ const ShortCutItem = memo(({ shortCutName }: { shortCutName: keyof IShortCutSett
     }
   }, [shortCut, setting])
   const renderKey = () => {
-    if (!shortCut) return 'Not Set'
-    const { ctrlKey, altKey, shiftKey, key, metaKey, displayKey } = shortCut
+    if (!shortCut) return t('settings.Not set')
+    const { ctrlKey, altKey, shiftKey, key, metaKey } = shortCut
 
     return `${ctrlKey ? 'Ctrl + ' : ''}${metaKey ? 'Meta + ' : ''}${altKey ? 'Alt + ' : ''}${shiftKey ? 'Shift + ' : ''}${key ? key : ''}`
   }
@@ -153,7 +160,7 @@ const ShortCutItem = memo(({ shortCutName }: { shortCutName: keyof IShortCutSett
     <Content flex gap={10} ref={containerRef} alignItems="center">
       {conflictState.isConflicted && conflictState.conflictWith && (
         <div style={{ display: 'flex', gap: 10 }} className={ClassName.description()}>
-          <span>Conflict with :</span>
+          <span>{t('settings.Conflicting with')}:</span>
           {conflictState.conflictWith?.length > 1 ? `${conflictState.conflictWith?.length} Shortcuts` : conflictState.conflictWith[0]}
         </div>
       )}
@@ -165,18 +172,20 @@ const ShortCutItem = memo(({ shortCutName }: { shortCutName: keyof IShortCutSett
           borderRadius: 4,
           padding: '4px 12px',
           width: 'fit-content',
-          background: conflictState.isConflicted ? '#F55050' : '#E9E8E8',
-          color: conflictState.isConflicted ? 'white' : 'black',
+          height: 30,
+          background: conflictState.isConflicted ? Colors.Common.Red : Colors.Background.ButtonHover,
+          color: conflictState.isConflicted ? Colors.Font.White : undefined,
           cursor: 'pointer',
           textTransform: 'capitalize',
-          outline: isSelected ? '1px solid #8590ae' : undefined
+          boxShadow: isSelected ? '0 0 0 1px var(--select-color)' : undefined
         }}
       >
         {renderKey()}
       </div>
-      {isSelected && (
+      {isSelected && shortCut && (
         <Icon
-          className={ClassName.circleButton()}
+          size={16}
+          className={ClassName.flatButton(4, '4px')}
           name="park-delete"
           onClick={() => {
             setSetting(s =>

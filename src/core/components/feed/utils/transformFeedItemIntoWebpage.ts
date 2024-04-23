@@ -1,6 +1,7 @@
 import { FeedItem } from '@/core/components/feed/types'
 import { NoteStore, ObjectStore } from '@/api/stores'
 import { fetchRemoteImageAndSaveLocally } from '@/utils'
+import { FEED_CONTENT_CACHE } from '@/core/components/feed/contentCache'
 
 export default async (item: FeedItem) => {
   let imageSrc: string | undefined = undefined
@@ -14,18 +15,25 @@ export default async (item: FeedItem) => {
       description: item.description
     }
   }
-  const { meta: webpageMeta, one: webpage } = await ObjectStore('webpage').addOneWithMeta(
+  const webpageContent = FEED_CONTENT_CACHE.get(item.id)
+  let noteId = undefined
+  if (webpageContent) {
+    const n = await NoteStore.initializeNoteWithValue(webpageContent)
+    noteId = n.id
+  }
+  console.log(item)
+  const { meta: webpageMeta } = await ObjectStore('webpage').addOneWithMeta(
     {
       url: item.link,
       author: state.author,
-      title: state.title,
-      domain: state.domain
+      title: item.title,
+      domain: state.domain,
+      noteId
     },
     {
       silent: true,
       currentMeta: {
-        name: state.title,
-        description: state.title === item.description ? undefined : item.description,
+        name: item.title,
         coverImgSrc: imageSrc
       }
     }

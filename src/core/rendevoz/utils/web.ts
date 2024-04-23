@@ -1,9 +1,7 @@
 import { Utils } from '~/typings/rendevoz'
-import { deserializeHTML, normalize } from '@/core/components/editor/plugins/deserializeHtml'
+import deserializeHTML from '@/core/components/editor/plugins/transformHTML/deserializeHTML'
 import Id from '@/utils/id'
-import { Node } from 'slate'
 import { getFavicon, getImg } from '@/core/components/webpage/utils/previewWebUrl'
-import { default as PostlightParser } from '@postlight/parser'
 import { Readability } from '@mozilla/readability'
 const domParser = new DOMParser()
 import { getTweet } from 'react-tweet/api'
@@ -58,13 +56,15 @@ const WebUtils: (typeof Utils)['Web'] = {
     const metas = Array.from(head.querySelectorAll('meta').values())
     const title = head.querySelector('title')?.textContent || metas.find(i => i.getAttribute('property') === 'og:title')?.content || ''
     const descriptionMeta = metas.find(i => i.name === 'description' || i.getAttribute('property') === 'og:description')?.content
-    const imageMeta = metas.find(i => i.getAttribute('property') === 'og:image')?.content
+    const imageMeta = metas.find(i => i.getAttribute('property') === 'og:image' || i.getAttribute('property') === 'twitter:image')?.content
     const author = metas.find(i => i.name === 'author')?.content
+    const audio = metas.find(i => i.getAttribute('property') === 'og:audio')?.content || dom.body.querySelector('audio')?.src
     return {
       title,
       description: descriptionMeta,
       image: imageMeta,
-      author
+      author,
+      audio
     }
   },
   parseWebpage: async (url, html) => {
@@ -77,10 +77,6 @@ const WebUtils: (typeof Utils)['Web'] = {
     if (!prefetchedHTML) throw 'Failed to parse webpage!'
     prefetchedHTML = processGithubIssue(url, prefetchedHTML)
     prefetchedHTML = processWeixin(url, prefetchedHTML)
-    console.log(prefetchedHTML)
-    // const res = await PostlightParser.parse(url, {
-    //   html: prefetchedHTML
-    // })
     const r = new Readability(domParser.parseFromString(prefetchedHTML, 'text/html')).parse()
     if (r) {
       const parsedDoc = domParser.parseFromString(r.content, 'text/html')

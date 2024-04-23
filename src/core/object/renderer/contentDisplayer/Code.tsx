@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import Code from '@/core/components/code'
 
-function CodeDisplayer({ id }: { id: number }) {
+function CodeDisplayer({ id, scrollable = false }: { id: number; scrollable?: boolean }) {
   return (
     <Code
       layout={{
@@ -12,7 +12,7 @@ function CodeDisplayer({ id }: { id: number }) {
         contentFontSize: 10,
         contentStyle: {
           padding: '2px 4px',
-          overflow: 'hidden'
+          overflow: scrollable ? 'auto' : 'hidden'
         }
       }}
       id={id}

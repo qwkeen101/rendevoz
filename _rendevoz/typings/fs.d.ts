@@ -1,8 +1,8 @@
 export type ISystemFile = {
   // create time
-  cTime: number
+  ctime: number
   // modify time
-  mTime: number
+  mtime: number
   name: string
   size: number
 }

@@ -1,5 +1,6 @@
 import Dexie from 'dexie'
 import { exportDB, importInto, peakImportFile } from 'dexie-export-import'
+import batchCommit from '@/api/stores/batchCommit'
 
 export const db = new Dexie('rendevozDb')
 db.version(13).stores({
@@ -79,6 +80,41 @@ db.version(17).stores({
   objects: 'id,specType',
   keypairs: '',
   keyvalues: null
+})
+db.version(18).stores({
+  textselection: null,
+  documents: null,
+  notes: null,
+  blocks: null,
+  collections: 'id,parentId',
+  blobs: 'id',
+  labels: null,
+  metaObjects: 'id,keyword',
+  metaLinks: 'id,keyword',
+  metaComments: null,
+  tags: null,
+  whiteboards: null,
+  objects: 'id,specType',
+  keypairs: '',
+  keyvalues: null,
+  sync: ''
+})
+db.use({
+  stack: 'dbcore',
+  create: down => ({
+    ...down,
+    table(name) {
+      const downlevelTable = down.table(name)
+      return {
+        ...downlevelTable,
+        mutate: req => {
+          console.log(req, name)
+          batchCommit(req, name)
+          return downlevelTable.mutate(req)
+        }
+      }
+    }
+  })
 })
 Dexie.on('storagemutated', () => {
   localStorage.setItem('DB_LAST_UPDATE', `${Date.now()}`)

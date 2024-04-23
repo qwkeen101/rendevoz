@@ -3,7 +3,6 @@ import { ISearchableDocument, ISearchQuery, ISearchResult } from '@/api/textSear
 import { useDb } from '@/hooks'
 import loadAllNotes from '@/api/textSearch/loadAllNotes'
 import { MetaObject } from '~/typings'
-import { Node } from 'slate'
 import FileSystem from '@/api/fileSystem'
 import normalizeChildrenToText from '@/core/components/editor/utils/normalize/normalizeChildrenToText'
 

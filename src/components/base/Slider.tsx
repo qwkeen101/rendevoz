@@ -2,6 +2,7 @@ import Colors from '@/consts/colors'
 import { css } from '@emotion/css'
 import classNames from 'classnames'
 import { default as RcSlider, SliderProps } from 'rc-slider'
+import 'rc-slider/assets/index.css'
 
 const Slider = (props: SliderProps & { disableOriginalClass?: boolean }) => {
   return (

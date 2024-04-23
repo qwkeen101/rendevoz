@@ -86,7 +86,7 @@ const BuiltinTypeToRegistered: Record<CustomElement['type'], RegisterdEditorElem
     renderElement: props => (
       <figcaption
         style={{
-          flexWrap: 'wrap',
+          whiteSpace: 'pre-wrap',
           wordBreak: 'break-all'
         }}
       >

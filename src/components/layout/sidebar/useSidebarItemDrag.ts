@@ -1,10 +1,8 @@
-import { useDropObjectArea, useGlobalIsDragging } from '@/core'
+import { useDropObjectArea } from '@/core'
 import { Rendevoz } from '@/core/rendevoz'
-import { GlobalEventHandler } from '@/events/globalEvent'
-import { useMemoizedFn } from '@/hooks'
 import { CollectionStore } from '@/api/stores'
 import useCollectionStore from '@/api/stores/collection.store'
-import { RefObject, useEffect, useRef, useState } from 'react'
+import { RefObject, useState } from 'react'
 import { ICollectionItem } from '~/typings/data'
 
 type giveMeGoodName = Parameters<ReturnType<typeof useCollectionStore>['moveItems']>['0']
@@ -38,11 +36,10 @@ const useSidebarItemDrag = (options: {
   parentId: giveMeGoodName['sourceFromId']
   parentType: giveMeGoodName['sourceFromType']
 }) => {
-  const { id, type, draggableElementRef, droppableElementRef, isInRoot, parentId, parentType } = options
+  const { id, type, droppableElementRef } = options
   const [hovered, setHovered] = useState(false)
   const [droppable, setDroppable] = useState(false)
   const DragState = Rendevoz.Actions.State.Drag
-  const isPressedRef = useRef(false)
   const { findParentCollections, moveItems } = useCollectionStore()
 
   const { isDragging, canDropAsMeta } = useDropObjectArea(droppableElementRef, {

@@ -1,7 +1,7 @@
 import { CSSProperties, Dispatch, memo, ReactNode, SetStateAction, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useFlow } from '../StateHooks'
 import { INodeInnerState, IWhiteboardNode } from '~/typings'
-import { useIsIn, useMemoizedFn, useRafFn, useSelectAtomValue, useSelectGlobalAtomValue } from '@/hooks'
+import { useMemoizedFn, useRafFn, useSelectGlobalAtomValue } from '@/hooks'
 import { Content } from '@/components'
 import { Rnd } from 'react-rnd'
 import MetaObjectNode from './nodes/MetaObjectNode'
@@ -67,7 +67,6 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
   const isDraggingRef = useRef(false)
   const isResizingRef = useRef(false)
 
-  console.log('rerender', node)
   const [nodeState, setNodeState] = useState<NodeInnerState>({
     popoverVisible: false,
     expanded: false,
@@ -390,6 +389,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
       }}
       minWidth={minWidth}
       maxWidth={maxWidth}
+      enableUserSelectHack={false}
       lockAspectRatio={(lockResizeElements.includes(type) || nodeState.keepRatioResize) && shouldKeepRatio}
       disableDragging={
         !!node.rootId ||
@@ -432,6 +432,9 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         updateWhiteboard?.(w => {
           const origin = w.nodes?.get(id)
           if (origin) {
+            const heightResized =
+              origin.resized || (['top', 'bottom', 'topRight', 'topLeft', 'bottomRight', 'bottomLeft'].includes(dir) && delta.height !== 0)
+
             const newOrigin = {
               ...origin,
               x: box.left,
@@ -439,9 +442,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
               widthResized:
                 origin.widthResized ||
                 (['left', 'right', 'topRight', 'topLeft', 'bottomRight', 'bottomLeft'].includes(dir) && delta.width !== 0),
-              resized:
-                origin.resized ||
-                (['top', 'bottom', 'topRight', 'topLeft', 'bottomRight', 'bottomLeft'].includes(dir) && delta.height !== 0),
+              resized: heightResized,
               height: box.height,
               width: box.width
             }
@@ -566,7 +567,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
           fullWidth
           role={'scroll-container'}
           style={{
-            maxHeight: '100%',
+            maxHeight: node.fixedExpanded && !node.resized ? '800px' : '100%',
             '--global-background': nodeStyle.background,
             borderRadius: 'inherit',
             ...containerOverflow

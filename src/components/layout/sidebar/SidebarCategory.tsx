@@ -60,16 +60,16 @@ export default memo(() => {
       }}
     >
       <div
+        className={'font-size-13 transparent-font'}
         style={{
-          fontWeight: 600,
-          padding: '12px 12px 0px'
+          padding: '12px 12px 6px'
         }}
       >
         {t('general.Types')}
       </div>
       <div
         style={{
-          padding: '8px 8px'
+          padding: '0px 4px'
         }}
       >
         {types?.map(i => (
@@ -87,9 +87,9 @@ export default memo(() => {
         ))}
       </div>
       <div
+        className={'font-size-13 transparent-font'}
         style={{
-          fontWeight: 600,
-          padding: '12px 12px 0px'
+          padding: '12px 12px 6px'
         }}
       >
         {t('general.Tags')}
@@ -98,7 +98,7 @@ export default memo(() => {
         flex
         column
         style={{
-          padding: '8px 8px'
+          padding: '0px 4px'
         }}
       >
         {tags.map(
@@ -119,9 +119,9 @@ export default memo(() => {
       {props.length !== 0 && (
         <>
           <div
+            className={'font-size-13 transparent-font'}
             style={{
-              fontWeight: 600,
-              padding: '12px 12px 0px'
+              padding: '12px 12px 6px'
             }}
           >
             {t('general.Properties')}
@@ -130,7 +130,7 @@ export default memo(() => {
             flex
             column
             style={{
-              padding: '8px 8px'
+              padding: '0 4px'
             }}
           >
             {props.map(
@@ -140,8 +140,9 @@ export default memo(() => {
                     onClick={() => {
                       Rendevoz.Actions.Open.Group.openPropGroup(i.prop!.id)
                     }}
+                    icon={i.prop.icon}
                     className={'font-size-14'}
-                    text={`# ${i.prop?.name}`}
+                    text={`${i.prop?.name}`}
                     suffixStr={i.propNum ? `${i.propNum}` : undefined}
                     key={i.prop?.id}
                   ></Button.IconButton>

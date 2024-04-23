@@ -23,7 +23,6 @@ export default defineConfig(() => ({
   resolve: {
     alias: {
       stream: 'stream-browserify',
-      cheerio: path.resolve(__dirname, './node_modules/cheerio'),
       '@': path.join(__dirname, 'src'),
       styles: path.join(__dirname, 'src/assets/styles')
     }

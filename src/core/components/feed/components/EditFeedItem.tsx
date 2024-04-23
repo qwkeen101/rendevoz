@@ -46,7 +46,7 @@ export default memo(() => {
           containerStyle={{
             marginBottom: 16
           }}
-          defaultValue={innerCollection?.name}
+          value={innerCollection?.name}
           className={'font-size-13'}
           onChange={v => {
             setInnerCollection(s => ({ ...s, name: v }))
@@ -55,7 +55,7 @@ export default memo(() => {
         <BorderInput
           placeholder={'URL'}
           style={{ padding: '8px 12px' }}
-          defaultValue={innerCollection?.feedUrl}
+          value={innerCollection?.feedUrl}
           className={'font-size-13'}
           containerStyle={{
             marginBottom: 16

@@ -47,16 +47,16 @@ export default memo(({ tweetId, tweet: outTweet, styles, layout }: { tweetId?: s
               height: styles?.imageSize ?? 40
             },
             border: layout?.showBorder === false ? 'none' : undefined,
-            margin: 0,
-            '--tweet-header-font-size': styles?.titleFontSize ?? '15px',
-            '--tweet-border': styles?.border ?? '1px solid var(--border-background)',
-            '--tweet-body-margin': '0px 0px 6px 0px',
-            '--tweet-body-font-size': styles?.bodyFontSize ?? '17px',
-            '--tweet-info-font-size': styles?.infoFontSize ?? '14px',
-            '--tweet-bg-color': 'transparent',
-            '--tweet-font-color-secondary': 'var(--font-secondary)',
-            '--tweet-font-color': 'var(--font-primary)',
-            '--tweet-bg-color-hover': Colors.Background.ButtonHover
+            margin: `0px !important`,
+            '--tweet-header-font-size': `${styles?.titleFontSize ?? '15px'} !important`,
+            '--tweet-border': `${styles?.border ?? '1px solid var(--border-background)'} !important`,
+            '--tweet-body-margin': '0px 0px 6px 0px !important',
+            '--tweet-body-font-size': `${styles?.bodyFontSize ?? '17px'} !important`,
+            '--tweet-info-font-size': `${styles?.infoFontSize ?? '14px'} !important`,
+            '--tweet-bg-color': 'transparent !important',
+            '--tweet-font-color-secondary': 'var(--font-secondary) !important',
+            '--tweet-font-color': 'var(--font-primary) !important',
+            '--tweet-bg-color-hover': `${Colors.Background.ButtonHover} !important`
           })}
         >
           <TweetHeader

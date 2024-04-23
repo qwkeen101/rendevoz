@@ -197,9 +197,7 @@ export const DockTabs = memo((props: Props) => {
       removeDragStateListener(dragStateHandler)
     }
   }, [props.panelData])
-  console.log(dragIndicator)
   const { activeId } = props.panelData
-  console.log(activeId, props.panelData.tabs)
   return (
     <Tabs activeKey={activeId} onTabClick={onTabClick} renderTabNav={renderTabBar} disableInnerPanes>
       {props.panelData.tabs.map(i => (

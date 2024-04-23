@@ -4,6 +4,7 @@ export type ISidebarItem = {
   id: number
   onlyCollection?: boolean
   selectMode?: boolean
+  displayPinned?: boolean
   onClick?: (e: MouseEvent, item: ICollectionItem) => void
 } & (
   | {

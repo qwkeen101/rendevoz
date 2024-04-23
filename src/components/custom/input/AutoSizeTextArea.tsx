@@ -35,12 +35,22 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLDivElement, TextareaA
 ) => {
   const libRef = React.useRef<HTMLDivElement | null>(null)
   const ref = useMergedRef(libRef, userRef)
+  const blured = useRef(false)
   const edited = useRef(false)
   useEffect(() => {
     if (props.autoFocus) {
-      setTimeout(() => {
-        libRef.current?.focus()
-      }, 100)
+      const interval = setInterval(() => {
+        if (!blured.current) {
+          if (libRef.current !== document.activeElement) {
+            libRef.current?.focus()
+          }
+        } else {
+          clearInterval(interval)
+        }
+      })
+      return () => {
+        clearInterval(interval)
+      }
     }
   }, [])
   const isEditing = useRef(false)
@@ -98,6 +108,7 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLDivElement, TextareaA
         isEditing.current = true
       }}
       onBlur={event => {
+        blured.current = true
         props.onBlur?.(event)
         setTimeout(() => {
           isEditing.current = false

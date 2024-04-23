@@ -222,7 +222,6 @@ export class DockLayout extends DockPortalManager implements DockContext {
    */
   dockMove(source: TabData | PanelData, target: string | TabData | PanelData | BoxData | null, direction: DropDirection) {
     let layout = this.getLayout()
-    console.log('trigger move!')
     if (!source) return
     // source and target all tabs
     if ('content' in source && typeof target === 'object' && target && 'content' in target) {
@@ -346,7 +345,6 @@ export class DockLayout extends DockPortalManager implements DockContext {
         }
 
         layout = Algorithm.fixLayoutData(layout, this.props.groups)
-        console.log(layout, id)
         this.changeLayout(layout, newTab?.id ?? id, 'update')
         this.setLayout(layout)
         return true
@@ -556,7 +554,7 @@ export class DockLayout extends DockPortalManager implements DockContext {
     }
 
     return (
-      <div onClick={() => console.log(layout)} ref={this.getRef} className="dock-layout" style={style}>
+      <div ref={this.getRef} className="dock-layout" style={style}>
         <DockContextProvider value={this}>
           <DockBox size={1} boxData={layout.dockbox} />
           {portals}

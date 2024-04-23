@@ -277,6 +277,12 @@ const GeneralSetting = () => {
   ]
   const OthersItems: ISettingItem[] = [
     {
+      title: t('settings.Enable notifications'),
+      type: 'switch',
+      value: setting.notification.enabled,
+      onChange: v => setSetting(s => ({ ...s, notification: { ...s.notification, enabled: v } }))
+    },
+    {
       title: t('settings.Rebuild search index'),
       description: t('settings.Rebuild search desc'),
       children: (
@@ -309,7 +315,7 @@ const GeneralSetting = () => {
         }
       : undefined,
     {
-      title: t('settings.auto save layout'),
+      title: t('settings.Auto save layout'),
       description: t('settings.Save layout desc'),
       children: (
         <Switch

@@ -12,6 +12,7 @@ import SidebarCategory from '@/components/layout/sidebar/SidebarCategory'
 import ObjectList from '@/core/object/objectList/ObjectList'
 import useSidebarState from '@/components/layout/sidebar/useSidebarState'
 import updateSidebarState from '@/components/layout/sidebar/updateSidebarState'
+import classnames from 'classnames'
 const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
   const panelState = useSidebarState()
   const store = useMemo(() => createStore(), [])
@@ -60,51 +61,59 @@ const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
           paddingRight: 12,
           paddingLeft: os === 'macos' && !fullScreen ? 40 : 8,
           fontSize: 18,
-          marginRight: 1,
           color: Colors.Font.Transparent,
-          borderBottom: `1px solid ${Colors.Background.BoxShadowBorder}`
+          borderBottom: `1px solid ${Colors.Background.BoxShadowBorder}`,
+          '-webkit-app-region': 'drag'
         }}
         alignItems={'center'}
       >
         <Icon
+          style={{
+            '-webkit-app-region': 'no-drag'
+          }}
           name={'custom-card-library'}
-          data-active={panelState.leftVisible === 'database'}
           onClick={() =>
             updateSidebarState(s => {
               s.leftVisible = 'database'
             })
           }
-          className={ClassName.flatButton(4, '4px 6px')}
+          className={classnames(ClassName.flatButton(4, '4px 6px'), panelState.leftVisible === 'database' && 'active-button')}
         />
         <Icon
+          style={{
+            '-webkit-app-region': 'no-drag'
+          }}
           name={'park-folder-close'}
-          data-active={panelState.leftVisible === 'collections'}
           onClick={() =>
             updateSidebarState(s => {
               s.leftVisible = 'collections'
             })
           }
-          className={ClassName.flatButton(4, '4px 6px')}
+          className={classnames(ClassName.flatButton(4, '4px 6px'), panelState.leftVisible === 'collections' && 'active-button')}
         />
         <Icon
+          style={{
+            '-webkit-app-region': 'no-drag'
+          }}
           name={'park-category-management'}
-          data-active={panelState.leftVisible === 'category'}
           onClick={() =>
             updateSidebarState(s => {
               s.leftVisible = 'category'
             })
           }
-          className={ClassName.flatButton(4, '4px 6px')}
+          className={classnames(ClassName.flatButton(4, '4px 6px'), panelState.leftVisible === 'category' && 'active-button')}
         />
         <Icon
+          style={{
+            '-webkit-app-region': 'no-drag'
+          }}
           name={'park-google'}
-          data-active={panelState.leftVisible === 'webSearch'}
           onClick={() =>
             updateSidebarState(s => {
               s.leftVisible = 'webSearch'
             })
           }
-          className={ClassName.flatButton(4, '4px 6px')}
+          className={classnames(ClassName.flatButton(4, '4px 6px'), panelState.leftVisible === 'webSearch' && 'active-button')}
         />
         <Icon
           onClick={() =>
@@ -115,13 +124,20 @@ const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
           name={'custom-left-bar'}
           className={ClassName.flatButton(4, '4px 6px')}
           style={{
-            marginLeft: 'auto'
+            marginLeft: 'auto',
+            '-webkit-app-region': 'no-drag'
           }}
         />
       </Content>
 
       <Provider store={store}>
-        <Tabs disableTabNav={true} activeKey={panelState.leftVisible}>
+        <Tabs
+          disableTabNav={true}
+          activeKey={panelState.leftVisible}
+          style={{
+            zIndex: 10
+          }}
+        >
           <TabPane tab={null} key="database">
             <Content fullHeight fullWidth flex column>
               <Provider store={store}>

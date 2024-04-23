@@ -48,6 +48,7 @@ export type IWhiteboardNode = {
   widthResized?: boolean
   // collapse by node
   collapse?: number | false
+  fixedExpanded?: boolean
   borderType?: 'rect' | 'roundRect' | 'round' | 'underline'
   // border color
   border?: string

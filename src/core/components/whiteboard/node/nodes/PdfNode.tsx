@@ -7,7 +7,7 @@ import { FC, memo, useEffect } from 'react'
 import { IWhiteboardNode } from '~/typings/data'
 import { useFlow } from '../../StateHooks'
 import { InnerNodeProps } from '../WrapperNode'
-import Pdf from '@/core/components/pdf'
+import UncontrolledPDF from '@/core/components/pdf/UncontrolledPDF'
 
 const PdfNode: FC<InnerNodeProps> = memo(
   ({ node }) => {
@@ -38,11 +38,23 @@ const PdfNode: FC<InnerNodeProps> = memo(
           maxWidth: '100%',
           height: '1000px',
           minHeight: '100%',
-          maxHeight: '100%',
+          maxHeight: 'inherit',
           overflow: 'hidden'
         }}
       >
-        <Pdf pdfId={documentId} transformScale={flow.containerTransformScale} />
+        <UncontrolledPDF
+          autoWidth={true}
+          state={{ doublePage: false, enableSearch: false }}
+          id={documentId}
+          styles={{
+            paddingTop: 15,
+            paddingEnd: 15
+          }}
+          layout={{
+            showHeader: false
+          }}
+          transformScale={flow.containerTransformScale}
+        />
       </div>
     )
   },

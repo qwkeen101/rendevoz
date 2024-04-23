@@ -106,7 +106,7 @@ const MediaBottomBar = () => {
               alignItems="center"
               style={{
                 fontSize: FontSize['12px'],
-                textShadow: '0 0 4px rgba(0,0,0,0.45)',
+                textShadow: mediaState.mode !== 'audio' ? '0 0 4px rgba(0,0,0,0.45)' : undefined,
                 padding: '5px 9px',
                 color: mediaState.mode === 'audio' ? Colors.Font.Transparent : Colors.Font.White,
                 lineHeight: 1.3
@@ -363,11 +363,12 @@ const MediaBottomBar = () => {
           )}
           {mediaState.toolbar?.extra !== false && (
             <IconWithPopover
-              padding={0}
+              padding={10}
               renderOnParent={mediaState.fullScreen}
               content={setState => <MediaActionsMenu onClose={() => setState(false)} />}
               name="park-more-four"
               size={20}
+              placement={['right', 'left']}
               className={ClassName.flatButton(4, '5px')}
             ></IconWithPopover>
           )}

@@ -109,7 +109,7 @@ const HeadingTree = ({ editor }: { value: Descendant[]; editor: CustomEditor }) 
               item={i}
               key={i.id}
               onClick={headingId => {
-                goToBlock(headingId, editor).then(() => {
+                goToBlock(headingId, editor, 'start').then(() => {
                   highlightBlock(headingId, editor)
                 })
               }}

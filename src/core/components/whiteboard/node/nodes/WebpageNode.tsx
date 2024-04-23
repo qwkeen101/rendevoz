@@ -2,63 +2,60 @@ import { Content } from '@/components/base'
 import { IWhiteboardNode } from '~/typings/data'
 import Webpage from '@/core/components/webpage/Webpage'
 import { css } from '@emotion/css'
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 
-const WebpageNode = ({ node, webpageId }: { node: IWhiteboardNode; webpageId: number }) => {
+const WebpageNode = memo(({ node, webpageId }: { node: IWhiteboardNode; webpageId: number }) => {
   return (
-    <Content
-      style={{
-        minWidth: '100%',
-        width: '700px',
-        height: '100%',
-        minHeight: 'max(100%, 50px)',
-        maxWidth: '100%',
-        overflow: 'hidden',
-        maxHeight: '100%'
-      }}
-    >
-      <Webpage
-        disableTabTitle={true}
-        initialHeight={useMemo(() => node.height, [])}
-        initialWebpageId={webpageId}
-        editorOptions={{
-          layout: {
-            showHeader: false,
-            showBottomPadding: true,
-            showBlockHandleAdd: false,
-            showProps: false
+    <Webpage
+      disableTabTitle={true}
+      initialHeight={useMemo(() => node.height, [])}
+      initialWebpageId={webpageId}
+      editorOptions={{
+        layout: {
+          virtualizer: true,
+          showHeader: false,
+          disableOverscanInReadOnly: false,
+          overscan: 3,
+          showBottomPadding: true,
+          showBlockHandleAdd: false,
+          showProps: false
+        },
+        title: {
+          titleStyle: {
+            fontSize: '2rem'
           },
-          title: {
-            titleStyle: {
-              fontSize: '2rem'
-            },
-            titleContainerStyle: {
-              padding: '30px 0px 5px',
-              maxWidth: '100%',
-              width: '100%'
-            }
-          },
-
-          styles: {
-            bottomPadding: 100,
-            pageMinPadding: '0px 28px 0px',
-            containerHeight: 'auto',
-            containerMaxHeight: '100%'
-          },
-          state: {
-            fontSize: 17,
-            pageWidth: 'Max'
-          },
-          classNames: {
-            editorContainerClassName: css({
-              fontSize: '1em',
-              width: '100% !important'
-            })
+          titleContainerStyle: {
+            padding: '30px 0px 5px',
+            maxWidth: '100%',
+            width: '100%'
           }
-        }}
-      />
-    </Content>
+        },
+
+        styles: {
+          bottomPadding: 100,
+          pageMinPadding: '0px 30px 0px',
+          containerHeight: 'auto',
+          containerMaxHeight: 'inherit',
+          containerStyle: {
+            width: '520px',
+            minHeight: 'max(100%, 50px)',
+            maxWidth: '100%',
+            minWidth: '100%'
+          }
+        },
+        state: {
+          fontSize: 17,
+          pageWidth: 'Max'
+        },
+        classNames: {
+          editorContainerClassName: css({
+            fontSize: '1em',
+            width: '100% !important'
+          })
+        }
+      }}
+    />
   )
-}
+})
 
 export default WebpageNode

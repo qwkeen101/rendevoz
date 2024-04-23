@@ -86,6 +86,9 @@ const normalizeWebFileToMeta = async (url: string, type: string): Promise<IImpor
   }
   const details = await Rendevoz.Utils.Web.fetchDetails(url)
   console.log(details)
+  if (type === 'audio' && details.audio) {
+    url = details.audio
+  }
   return {
     meta: {
       name: details.title,

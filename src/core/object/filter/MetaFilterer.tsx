@@ -162,7 +162,7 @@ const MetaFilterer = ({
     }
     if (item.type === 'createLinkWebMeta') {
       let url = item.name as string
-      if (!url.startsWith('http://')) {
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
         url = 'http://' + url
       }
       const webpageMeta = await ObjectStore('webpage').addOneWithMeta({ url })

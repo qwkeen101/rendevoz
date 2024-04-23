@@ -35,8 +35,8 @@ const NameEditor = ({
   return (
     <Content
       onClick={e => e.stopPropagation()}
+      className={'border-box-shadow focus-within-input'}
       style={{
-        boxShadow: `0 0 0 2px ${Colors.Common.SelectColor}`,
         padding: '2px 6px 5px',
         borderRadius: 4,
         width: '100%',

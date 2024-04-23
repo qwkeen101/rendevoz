@@ -125,7 +125,7 @@ const PdfRightSidebar = ({ pdfId }: { pdfId: number }) => {
           key="ai"
           tab={
             <Content alignItems="center" flex gap={6}>
-              <Icon name="custom-magic" />
+              <Icon name="custom-stars" />
               {t('general.Ask AI')}
             </Content>
           }

@@ -1,18 +1,14 @@
-import { Segment, useDefault } from 'segmentit'
 import { ISearchableDocument, ISearchEvent, ISearchQuery } from '@/api/textSearch/types'
 import MiniSearch from 'minisearch'
-const segmentit = useDefault(new Segment())
 const createSearchStore = () => {
+  const segmenter = new Intl.Segmenter(undefined, { granularity: 'word' })
   let metaSearch = new MiniSearch({
     fields: ['id', 'name', 'description', 'content'],
     storeFields: ['id', 'name', 'description', 'content', 'docType', 'metaId', 'metaType'],
-    tokenize: str => {
-      const tokens: string[] = []
-      segmentit.doSegment(str).forEach(i => {
-        tokens.push(i.w)
-      })
-      return tokens
-    }
+    tokenize: str =>
+      Array.from(segmenter.segment(str))
+        .filter(i => i.isWordLike)
+        .map(i => i.segment)
   })
 
   const addDocument = async (doc: ISearchableDocument) => {
@@ -51,12 +47,13 @@ const createSearchStore = () => {
         if (!matchFields.has(field)) return
         const value = hit[field] as string
         const tokens: string[] = []
-
-        segmentit.doSegment(value).forEach(seg => {
-          if (allTerms.has(seg.w)) {
-            tokens.push(seg.w)
-          }
-        })
+        Array.from(segmenter.segment(value))
+          .filter(i => i.isWordLike)
+          .forEach(i => {
+            if (allTerms.has(i.segment)) {
+              tokens.push(i.segment)
+            }
+          })
         const regexp = new RegExp('(\\S.{0,30})?(' + [...terms, ...tokens].map(i => regEsc(i)).join('|') + ')(.{0,30}\\S)?', 'ig')
         const testReg = new RegExp([...terms, ...tokens].map(i => regEsc(i)).join('|'), 'gi')
         if (hit[field] && testReg.test(hit[field] as string)) {
@@ -93,13 +90,10 @@ const createSearchStore = () => {
     metaSearch = MiniSearch.loadJSON(json, {
       fields: ['id', 'name', 'description', 'content'],
       storeFields: ['id', 'name', 'description', 'content', 'docType', 'metaId', 'metaType'],
-      tokenize: str => {
-        const tokens: string[] = []
-        segmentit.doSegment(str).forEach(i => {
-          tokens.push(i.w)
-        })
-        return tokens
-      }
+      tokenize: str =>
+        Array.from(segmenter.segment(str))
+          .filter(i => i.isWordLike)
+          .map(i => i.segment)
     })
   }
   const deleteDocument = (id: number) => {

@@ -10,24 +10,27 @@ import ContextMenu from '@/components/contextMenu'
 import ContentDisplayer from '@/core/components/group/components/gallery/items/FixedHeightContentDisplayer'
 import InnerContentDisplayer from '@/core/components/group/components/gallery/items/InnerContentDisplayer'
 import { Colors } from '@/consts'
+import usePreviewItem from '@/components/layout/sidebar/usePreviewItem'
 export const SimpleObject = memo(
   forwardRef(
     (
       {
         metaObjectId,
-        mode = 'thumbnail'
+        mode = 'thumbnail',
+        preview
       }: {
         metaObjectId: number
         descriptionClassName?: string
         mode: 'thumbnail' | 'title'
+        preview?: boolean
       },
       ref
     ) => {
-      const containerRef = useRef<HTMLDivElement>(null)
-      const mergedRef = useMergedRef(containerRef, ref)
+      const { wrapper } = usePreviewItem(!!preview, metaObjectId, ref)
       const { metaObject } = useRenderObject({
         metaObjectId: metaObjectId
       })
+
       if (!metaObject) return null
       const renderContent = () => {
         if (mode === 'thumbnail') {
@@ -126,9 +129,8 @@ export const SimpleObject = memo(
         }
       }
 
-      return (
+      return wrapper(
         <ContextMenu
-          ref={mergedRef}
           content={setV => (
             <WithBorder onClick={e => e.stopPropagation()}>
               <ObjectActionPopover

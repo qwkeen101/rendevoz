@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Button, Content, Icon, IconWithPopover, WithBorder } from '@/components'
+import { Button, Content, Icon, IconWithPopover, Menu, WithBorder } from '@/components'
 import { CollectionStore, MetaStore } from '@/api/stores'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { useSetting } from '@/core'
@@ -13,14 +13,14 @@ import isHotkey from 'is-hotkey'
 import Id from '@/utils/id'
 import { toast } from 'react-hot-toast'
 import Workspace from '@/api/common/workspace'
+import classnames from 'classnames'
 
 const WorkspaceSetting = () => {
   const currentWorkspace = KeyvalueStore.useValue('currentWorkspace')
   const allWorkspaces = KeyvalueStore.useValue('allWorkspaces')
   const [edit, setEdit] = useState<{
-    idx: number
+    id: number
     currentValue: string
-    valid: boolean
   }>()
 
   const { t } = useTranslation()
@@ -48,15 +48,20 @@ const WorkspaceSetting = () => {
       }
     }
   }
-  const handleCreateWorkspace = (name: string) => {
+  const handleCreateWorkspace = () => {
+    const id = Id.getId()
     KeyvalueStore.updateOne('allWorkspaces', [
       ...(allWorkspaces || []),
       {
         createdAt: Date.now(),
-        name,
-        id: Id.getId()
+        name: '',
+        id
       }
     ])
+    setEdit({
+      id,
+      currentValue: ''
+    })
   }
 
   const handleSwitchWorkspace = async (id: number) => {
@@ -65,13 +70,14 @@ const WorkspaceSetting = () => {
 
   const handleRenameWorkspace = () => {
     if (!edit || !allWorkspaces) return
-    if (edit.valid) {
-      const currName = allWorkspaces[edit.idx].name
+    const curr = allWorkspaces.find(i => i.id === edit.id)
+    if (curr) {
+      const currName = curr.name
       if (edit.currentValue === currName) {
         setEdit(undefined)
         return
       }
-      if (currName === currentWorkspace?.name) {
+      if (edit.id === currentWorkspace?.id) {
         const newWorkspace = {
           ...currentWorkspace,
           name: edit.currentValue
@@ -90,39 +96,66 @@ const WorkspaceSetting = () => {
         KeyvalueStore.updateOne(
           'allWorkspaces',
           produce(allWorkspaces, s => {
-            s[edit.idx].name = edit.currentValue
+            const w = s.find(i => i.id === edit.id)
+            if (w) {
+              w.name = edit.currentValue
+            }
           })
         )
       }
-      setEdit(undefined)
-    } else {
-      toast.error(t('settings.Workspace name must be unique') + '!', { duration: 2000 })
     }
   }
 
   return (
     <Content flex column gap={9}>
-      <div className={ClassName.title(FontSize['16px'])}>{t('settings.Current workspace')}</div>
-      <div>{currentWorkspace?.name}</div>
-      <div style={{ marginTop: 10 }} className={ClassName.title(FontSize['16px'])}>
-        {t('settings.All workspaces')}
+      <div
+        style={{
+          paddingBottom: 8
+        }}
+        className={classnames(ClassName.title(FontSize['16px']), 'border-bottom')}
+      >
+        {t('settings.Current workspace')}
       </div>
-      <Content flex column style={{ lineHeight: 1.4 }}>
-        {allWorkspaces?.map((i, idx) => (
+      <div>{currentWorkspace?.name}</div>
+      <Content
+        flex
+        alignItems={'center'}
+        justifyContent={'space-between'}
+        className={'border-bottom'}
+        style={{ marginTop: 10, paddingBottom: 8 }}
+      >
+        <div className={ClassName.title(FontSize['16px'])}>{t('settings.All workspaces')}</div>
+        <div style={{ width: 'fit-content' }} onClick={() => handleCreateWorkspace()} className={ClassName.selectButton()}>
+          {t('settings.Create new workspace')}
+        </div>
+      </Content>
+      <Content flex column style={{ margin: '0px -8px' }}>
+        {allWorkspaces?.map(i => (
           <Content
             flex
             gap={10}
+            onClick={() => {
+              if (edit?.id !== i.id) {
+                handleSwitchWorkspace(i.id)
+              }
+            }}
             justifyContent={'space-between'}
             alignItems={'center'}
-            style={{ borderBottom: `1px solid ${Colors.Background.Border}`, padding: '6px 0px' }}
+            className={i.id === edit?.id ? undefined : ClassName.flatButton()}
+            style={{ padding: '6px 8px' }}
           >
-            {idx === edit?.idx ? (
+            {i.id === edit?.id ? (
               <Content fullWidth flex gap={10}>
                 <input
-                  style={{ width: '100%' }}
-                  className={ClassName.noStyleInput}
+                  spellCheck={'false'}
+                  style={{ width: '100%', borderRadius: 4, padding: '4px 8px' }}
+                  className={'focus-input'}
                   value={edit.currentValue}
                   autoFocus={true}
+                  onBlur={() => {
+                    setEdit(undefined)
+                  }}
+                  placeholder={'Type workspace name...'}
                   onKeyDown={e => {
                     if (isHotkey(KEY.Escape, e)) {
                       setEdit(undefined)
@@ -130,22 +163,15 @@ const WorkspaceSetting = () => {
                     }
                     if (isHotkey(KEY.Enter, e)) {
                       handleRenameWorkspace()
+                      setEdit(undefined)
                     }
                   }}
                   onChange={e => {
                     const v = e.currentTarget.value
                     setEdit(s => ({
                       ...s,
-                      currentValue: v,
-                      valid: !allWorkspaces?.some(o => o.id !== i.id && o.name === v)
+                      currentValue: v
                     }))
-                  }}
-                />
-                <Icon
-                  name={'park-check'}
-                  className={ClassName.circleButton()}
-                  onClick={() => {
-                    handleRenameWorkspace()
                   }}
                 />
               </Content>
@@ -153,52 +179,45 @@ const WorkspaceSetting = () => {
               <div>{i.name}</div>
             )}
             <IconWithPopover
-              closeOnContentClick={true}
               placement={['bottom', 'top']}
               name={'park-more'}
               size={20}
-              className={ClassName.circleButton(2, 4)}
-              onClickOutside={(e, setv) => {
-                setv(false)
-              }}
-              content={
-                <WithBorder padding={6}>
-                  <Button.IconButton
-                    icon={'park-switch'}
-                    text={t('general.Switch workspace')}
-                    onClick={() => {
-                      handleSwitchWorkspace(i.id)
-                    }}
-                  />
-                  <Button.IconButton
-                    icon={'park-edit'}
-                    text={t('general.edit name')}
-                    onClick={() => {
-                      setEdit({ idx, valid: true, currentValue: i.name })
-                    }}
-                  />
-                  <Button.IconButton
-                    dangerous
-                    disabled={!canDelete}
-                    icon={'park-delete'}
-                    text={t('general.delete')}
-                    onClick={() => {
-                      if (canDelete) {
-                        handleDeleteWorkspace(i.id)
+              onClick={e => e.stopPropagation()}
+              className={classnames(ClassName.circleButton(2, 4), 'transparent-font')}
+              content={setV => (
+                <WithBorder onClick={e => e.stopPropagation()} padding={'0.4rem 0'} width={160}>
+                  <Menu.NavigationMenu
+                    layout={[
+                      {
+                        type: 'item',
+                        key: 'edit',
+                        icon: 'park-edit',
+                        text: t('general.edit'),
+                        onSelect: () => {
+                          setV(false)
+                          setEdit({ id: i.id, currentValue: i.name })
+                        }
+                      },
+                      {
+                        type: 'item',
+                        key: 'delete',
+                        disabled: !canDelete,
+                        icon: 'park-delete',
+                        text: t('general.delete'),
+                        onSelect: () => {
+                          setV(false)
+                          if (canDelete) {
+                            handleDeleteWorkspace(i.id)
+                          }
+                        }
                       }
-                    }}
+                    ]}
                   />
                 </WithBorder>
-              }
+              )}
             ></IconWithPopover>
           </Content>
         ))}
-        <Button.IconButton
-          style={{ width: 'fit-content', marginTop: 6 }}
-          onClick={() => handleCreateWorkspace('Workspace_' + Id.getStrId())}
-          icon={'park-plus'}
-          text={t('settings.Create new workspace')}
-        />
       </Content>
     </Content>
   )

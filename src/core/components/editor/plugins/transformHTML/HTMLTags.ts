@@ -9,6 +9,7 @@ export const ELEMENT_TAGS: Record<string, (el: HTMLElement) => any> = {
   H4: () => ({ type: 'heading-four', id: Id.getId() }),
   H5: () => ({ type: 'heading-five', id: Id.getId() }),
   H6: () => ({ type: 'heading-six', id: Id.getId() }),
+  HR: () => ({ type: 'divider', id: Id.getId() }),
   AUDIO: el => ({ type: 'audio', id: Id.getId(), url: el.getAttribute('src') }),
   IMG: el => ({
     type: 'image',

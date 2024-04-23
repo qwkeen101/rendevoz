@@ -305,7 +305,7 @@ const RelatedGroup = ({
             flex
             column
             centered
-            gap={4}
+            gap={6}
             className={'font-size-13 transparent-font'}
             style={{
               margin: 'auto'

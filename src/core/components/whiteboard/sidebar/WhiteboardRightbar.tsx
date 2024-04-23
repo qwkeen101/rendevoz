@@ -77,13 +77,14 @@ const WhiteboardRightbar = () => {
         left: visible
       }}
       defaultSize={{
-        width: '480px',
+        width: '600px',
         height: '100%'
       }}
       onResizeStop={(event, direction, elementRef, delta) => {
         const width = elementRef.getBoundingClientRect().width
         setRightBarState(s => ({ ...s, width: `${width}px` }))
       }}
+      maxWidth={'80%'}
       minWidth={480}
       style={{
         boxShadow: 'var(--box-shadow)',
@@ -95,9 +96,8 @@ const WhiteboardRightbar = () => {
         zIndex: 50,
         pointerEvents: visible ? 'auto' : 'none',
         background: Colors.Background.Popover,
-        paddingTop: 42,
-        '--global-background': 'var(--popover-background)',
-        paddingLeft: 4
+        paddingTop: rightBarState.active === 'outline' ? 12 : 0,
+        paddingLeft: rightBarState.active === 'outline' ? 4 : 0
       }}
       className={
         !visible
@@ -111,19 +111,25 @@ const WhiteboardRightbar = () => {
       }
     >
       {visible && (
-        <Icon
-          size={18}
+        <div
+          className={'border-box-shadow'}
           style={{
             position: 'absolute',
             top: 8,
-            left: 8
+            left: -36,
+            background: Colors.Background.Popover,
+            borderRadius: 4
           }}
-          className={ClassName.flatButton(4, '5px')}
-          onClick={() => {
-            setRightBarState(s => ({ ...s, visible: false }))
-          }}
-          name={'park-double-right'}
-        />
+        >
+          <Icon
+            size={18}
+            className={ClassName.flatButton(4, '5px')}
+            onClick={() => {
+              setRightBarState(s => ({ ...s, visible: false }))
+            }}
+            name={'park-double-right'}
+          />
+        </div>
       )}
       <Tabs disableTabNav activeKey={active}>
         <TabPane tab={null} key={'content'}>

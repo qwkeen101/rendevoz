@@ -1,10 +1,10 @@
-import { Content } from '@/components'
+import { AnimatePopover, Content, WithBorder } from '@/components'
 import { GlobalEventEmitter } from '@/events'
-import { GlobalInstance, useGlobalAtomValue } from '@/hooks'
+import { GlobalInstance, useGlobalAtomValue, useIsIn } from '@/hooks'
 import { CollectionStore, MetaStore } from '@/api/stores'
 import { metaObjectsAtom } from '@/api/stores/meta/meta.store'
 import { selectAtom } from 'jotai/utils'
-import { FC, useMemo, useRef } from 'react'
+import { FC, useEffect, useMemo, useRef, useState } from 'react'
 import { IconNameItem } from '../SidebarCollection'
 import useSidebarItemContextMenu from '../useSidebarItemContextMenu'
 import useSidebarItemDrag from '../useSidebarItemDrag'
@@ -13,14 +13,17 @@ import { toast } from 'react-hot-toast'
 import ClassName from '@/styles/classNames'
 import FontSize from '@/consts/font'
 import { Rendevoz } from '@/core/rendevoz'
-import HoverObjectDetails from '@/core/object/HoverObjectDetails'
-import { DraggableElement } from '@/core'
+import { DraggableElement, previewCollectionContentAtom } from '@/core'
+import InnerContentDisplayer from '@/core/components/group/components/gallery/items/InnerContentDisplayer'
+import { useLatest } from 'react-use'
+import usePreviewItem from '@/components/layout/sidebar/usePreviewItem'
 
 const SidebarObjectItem: FC<ISidebarItem> = ({ parentId, parentType, id, draggable = true }) => {
   const metaObjectAtom = useMemo(() => selectAtom(metaObjectsAtom, m => m.get(id)), [id])
   const metaObject = useGlobalAtomValue(metaObjectAtom)
-  const ref = useRef<HTMLDivElement>(null)
+  const preview = useGlobalAtomValue(previewCollectionContentAtom)
   const icon = Rendevoz.Utils.Object.getMetaObjectIcon(metaObject?.type)
+  const { ref, wrapper } = usePreviewItem(!!preview, id)
   draggable &&
     useSidebarItemDrag({
       id,
@@ -36,9 +39,6 @@ const SidebarObjectItem: FC<ISidebarItem> = ({ parentId, parentType, id, draggab
     { type: 'meta', id },
     {
       pinned: metaObject?.pinned,
-      onViewDetails: () => {
-        metaObject && GlobalInstance.metaOps?.openDetails(metaObject.id)
-      },
       onRemoveFromCollection: () => {
         if (parentType === 'whiteboard') {
           toast.error('You can not remove from whiteboard!')
@@ -69,9 +69,8 @@ const SidebarObjectItem: FC<ISidebarItem> = ({ parentId, parentType, id, draggab
     }
   )
   if (metaObject?.deleted || !metaObject) return null
-  return (
+  return wrapper(
     <DraggableElement
-      ref={ref}
       draggingDetails={{
         type: 'metaElement',
         metaId: metaObject.id
@@ -80,7 +79,9 @@ const SidebarObjectItem: FC<ISidebarItem> = ({ parentId, parentType, id, draggab
       <Content
         flex
         gap={10}
-        onClick={() => Rendevoz.Actions.Open.Meta.openMetaObject(id)}
+        onClick={() => {
+          Rendevoz.Actions.Open.Meta.openMetaObject(id)
+        }}
         className={ClassName.flatButton(4, '3px 8px')}
       >
         {contextMenuPortal}

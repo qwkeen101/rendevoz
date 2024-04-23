@@ -41,6 +41,7 @@ export default function assignViewOps(instance: IGroupInstance) {
                   cardSize: 'medium',
                   wrapColumns: false,
                   fitImage: false,
+                  cardCover: 'cover or content',
                   properties: Object.fromEntries(
                     [...DEFAULT_GROUP_PROPERTIES, ...(groupState.state?.extraProperties || [])].map((i, idx) => [
                       i.id,

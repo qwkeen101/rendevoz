@@ -4,10 +4,8 @@ import { css } from '@emotion/css'
 import { useAtom } from 'jotai/react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import AppearanceSetting from './Appearance'
 import ComponentSetting from './Component'
 import GeneralSetting from './General'
-import NotificationSetting from './Notification'
 import ObjectsAndLinksSetting from './ObjectsAndLinks'
 import ShortCutSetting from './ShortCut'
 import SettingSidebarItem from './SidebarItem'
@@ -21,30 +19,43 @@ import {
   IShortCutSetting,
   IGeneralSetting,
   IObjectsAndLinkSetting,
+  ISyncSetting,
   IComponentSetting,
   IAppearanceSetting,
   IQuickAddSettings,
   IAISettings
 } from './types'
 import WorkspaceSetting from '@/core/setting/Workspace'
-import EditorSetting from '@/core/setting/Editor'
 import { Colors } from '@/consts'
 import { atom } from 'jotai'
 import { useSelectGlobalAtomValue } from '@/hooks'
+import S3 from '@/core/setting/sync/S3'
+import { ClassName } from 'rendevoz'
+import { Icon } from '@/components'
+import { selectAtom } from 'jotai/utils'
 
 enum Settings {
   'general',
-  'AI',
-  'components',
-  'editor',
   'workspace',
+  'components',
   'shortcuts',
   'object and link',
-  'notification',
+  // 'sync',
+  'AI',
   'resource usage'
   // 'about'
 }
-type AvaliableLanguages = 'en-US' | 'zh-CN'
+
+const icons: Record<keyof typeof Settings, string> = {
+  shortcuts: 'park-command',
+  sync: 'custom-cloud',
+  workspace: 'park-app-switch',
+  general: 'park-all-application',
+  components: 'park-components',
+  'resource usage': 'park-dashboard-two',
+  'object and link': 'park-share-one',
+  AI: 'custom-stars'
+}
 export type Setting = INotificationSetting &
   IShortCutSetting &
   IGeneralSetting &
@@ -52,7 +63,8 @@ export type Setting = INotificationSetting &
   IAISettings &
   IComponentSetting &
   IQuickAddSettings &
-  IAppearanceSetting
+  IAppearanceSetting &
+  ISyncSetting
 
 export const defaultSetting: Setting = {
   notification: {
@@ -63,6 +75,10 @@ export const defaultSetting: Setting = {
     editor: true,
     object: true,
     link: true
+  },
+  sync: {},
+  collection: {
+    previewItem: false
   },
   AI: {
     autoGenerateQuestionAfterSummarizing: true,
@@ -116,13 +132,18 @@ export const defaultSetting: Setting = {
     enableAddLinkBetweenObjectsWhenConnect: false,
     imageResizeKeepRatio: false,
     snapToObject: true,
+    expandToFixedSize: false,
     dropFileAutoObject: true,
     defaultLineType: 'curve',
     defaultBackgroundType: 'dot',
     onlyEraseFreeDraw: true
   },
+  sidebar: {
+    previewTitleMode: false,
+    previewCollectionContent: false
+  },
   editor: {
-    objectAutoBecomeInline: true,
+    objectAutoBecomeInline: false,
     addSpacingInReaderMode: true
   },
   object: {
@@ -138,7 +159,8 @@ export const defaultSetting: Setting = {
   background: {},
   pdf: {
     renderMode: 'followTheme',
-    defaultLabelColor: '#ffe082'
+    defaultLabelColor: '#ffe082',
+    autoWidth: true
   },
   label: {
     showOriginalText: true
@@ -154,10 +176,12 @@ export const defaultSetting: Setting = {
 }
 
 export const SettingAtom = atom<Setting>(defaultSetting)
-
+export const enableCustomEditorStateAtom = selectAtom(SettingAtom, s => s.editor.enableFormat)
 export const useSetting = () => useAtom(SettingAtom, { store: globalStore })
+export const previewSidebarTitleAtom = selectAtom(SettingAtom, s => s.sidebar.previewTitleMode)
+export const previewCollectionContentAtom = selectAtom(SettingAtom, s => s.sidebar.previewCollectionContent)
 export const useSelectSetting = <T, Slice>(selector: (s: Setting) => Slice) => useSelectGlobalAtomValue(SettingAtom, selector)
-const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
+const SettingDialog = () => {
   const { t } = useTranslation()
   const [currentSettingPanel, setCurrentSettingPanel] = useState<keyof typeof Settings>('general')
   const [user] = useUser()
@@ -169,18 +193,14 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
         return <GeneralSetting />
       case 'AI':
         return <AISetting />
-      case 'notification':
-        return <NotificationSetting />
       case 'shortcuts':
         return <ShortCutSetting />
-      case 'editor':
-        return <EditorSetting />
       case 'object and link':
         return <ObjectsAndLinksSetting />
       case 'components':
         return <ComponentSetting />
-      case 'appearance':
-        return <AppearanceSetting />
+      case 'sync':
+        return <S3 />
       case 'resource usage':
         return user ? <UsageSetting /> : null
       case 'workspace':
@@ -198,6 +218,7 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
       }
     }
   }
+  const [settings] = useSetting()
   return (
     <Content
       flex
@@ -208,20 +229,29 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
         minHeight: 600,
         maxHeight: 'calc(100vh - 100px)',
         overflow: 'hidden',
-        borderRadius: 6
+        borderRadius: 12
       }}
     >
-      <Content
-        className={css({
-          borderRight: `1px solid ${Colors.Background.Border}`,
-          width: '200px',
-          padding: '36px 12px 0px',
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          width: '220px',
+          padding: '12px 4px',
           overflowY: 'auto',
-          fontWeight: 500
-        })}
-        flex
-        column
+          flexShrink: 0,
+          fontSize: 14,
+          background: settings.general.darkMode ? 'rgba(255,255,255,0.03)' : 'rgb(251, 251, 250)'
+        }}
       >
+        <div
+          className={'transparent-font font-size-12 bold-font'}
+          style={{
+            margin: '0px 0px 6px 12px'
+          }}
+        >
+          {t('general.Settings')}
+        </div>
         {[...Object.keys(Settings), ...registeredPanels.keys()]
           .filter(i => isNaN(Number(i)))
           .filter(i => {
@@ -231,11 +261,24 @@ const SettingDialog = ({ onClose }: { onClose: VoidFunction }) => {
             return true
           })
           .map(i => (
-            <SettingSidebarItem onClick={() => setCurrentSettingPanel(i)} key={i} isSelected={i === currentSettingPanel}>
-              <div style={{ textTransform: 'capitalize' }}>{t(`settings.${i}`)}</div>
-            </SettingSidebarItem>
+            <Content
+              flex
+              alignItems={'center'}
+              gap={10}
+              className={ClassName.flatButton(4, '4px 12px')}
+              onClick={() => setCurrentSettingPanel(i)}
+              key={i}
+              style={{
+                background: currentSettingPanel === i ? Colors.Background.ButtonHover : undefined,
+                textTransform: 'capitalize',
+                fontWeight: currentSettingPanel === i ? 500 : undefined
+              }}
+            >
+              {icons[i] && <Icon name={icons[i]} />}
+              <div>{t(`settings.${i}`)}</div>
+            </Content>
           ))}
-      </Content>
+      </div>
       <Content style={{ padding: '32px 60px', overflowY: 'auto' }} fullHeight fullWidth flex column gap={36}>
         {renderContent()}
       </Content>

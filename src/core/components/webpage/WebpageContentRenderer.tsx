@@ -77,11 +77,9 @@ const WebpageContentRenderer = ({
   onInstanceInitialized: IWebpageProps['onInstanceInitialized']
 }) => {
   const editorId = useMemo(() => Id.getStrId(), [])
-  const [webpageState, setWebpageState] = useWebpageState()
+  const [webpageState] = useWebpageState()
   const [isReadOnly, setIsReadOnly] = useState(true)
-  const editorSetting = KeyvalueStore.useValue('editorSettings') || DefaultEditorSettings
   const editorInstanceRef = useRef<IEditorInstance>()
-  const hasWebpageMeta = !!MetaStore.useObjectToMetaValue(webpageState.currentWebpageId || 0)
   const currentWepbage = ObjectStore('webpage').useValue(webpageState.currentWebpageId)
   const webpageInstance = useWebpageInstance()
   const webpageMeta = MetaStore.useObjectToMetaValue(webpageState.currentWebpageId)
@@ -90,107 +88,38 @@ const WebpageContentRenderer = ({
   const isLoading = webpageState.isLoading
   const failLoading = webpageState.failLoading
 
-  const webpageEditorOnHandler = async (e: IEditorEvent & { editor: CustomEditor }) => {
-    editorOptions?.on?.(e)
-    if (e.type === 'stateChange') {
-      const event = e.event
-      switch (event.type) {
-        case 'fontSize': {
-          if (isReadOnly) {
-            KeyvalueStore.updateOne('editorSettings', {
-              ...editorSetting,
-              readerMode: {
-                ...editorSetting.readerMode,
-                fontSize: event.fontSize
-              }
-            })
-          } else {
-            KeyvalueStore.updateOne('editorSettings', {
-              ...editorSetting,
-              editMode: {
-                ...editorSetting.editMode,
-                fontSize: event.fontSize
-              }
-            })
-          }
-          break
-        }
-        case 'lineSpacing': {
-          if (isReadOnly) {
-            KeyvalueStore.updateOne('editorSettings', {
-              ...editorSetting,
-              readerMode: {
-                ...editorSetting.readerMode,
-                lineSpacing: event.lineSpacing
-              }
-            })
-          } else {
-            KeyvalueStore.updateOne('editorSettings', {
-              ...editorSetting,
-              editMode: {
-                ...editorSetting.editMode,
-                lineSpacing: event.lineSpacing
-              }
-            })
-          }
-          break
-        }
-        case 'pageWidth': {
-          if (isReadOnly) {
-            KeyvalueStore.updateOne('editorSettings', {
-              ...editorSetting,
-              readerMode: {
-                ...editorSetting.readerMode,
-                pageWidth: event.width
-              }
-            })
-          } else {
-            KeyvalueStore.updateOne('editorSettings', {
-              ...editorSetting,
-              editMode: {
-                ...editorSetting.editMode,
-                pageWidth: event.width
-              }
-            })
-          }
-          break
-        }
-        case 'typeface': {
-          if (isReadOnly) {
-            KeyvalueStore.updateOne('editorSettings', {
-              ...editorSetting,
-              readerMode: {
-                ...editorSetting.readerMode,
-                typeface: event.typeface
-              }
-            })
-          } else {
-            KeyvalueStore.updateOne('editorSettings', {
-              ...editorSetting,
-              editMode: {
-                ...editorSetting.editMode,
-                typeface: event.typeface
-              }
-            })
-          }
-          break
-        }
+  const getWebpageMeta = async (editor: CustomEditor) => {
+    let m = webpageMeta
+    let id = webpageState.currentWebpageId
+    if (!m) {
+      const state = webpageState.externalState || webpageState.currentWebpage
+      console.log(webpageState)
+      if (!state) {
+        throw ''
+      }
+      const result = await addWebpageAsMeta({ ...state, url: webpageState.currentUrl }, editor.children)
+      m = result.meta
+      id = result.one.id
+      return {
+        meta: m,
+        id
       }
     }
+    return {
+      meta: m,
+      id
+    }
+  }
+  const webpageEditorOnHandler = async (e: IEditorEvent & { editor: CustomEditor }) => {
+    editorOptions?.on?.(e)
     switch (e.type) {
       case 'AI summarize': {
-        let m = webpageMeta
-        let p = webpageState.currentWebpageId
-        if (!m) {
-          const stateWebpage = webpageState.currentWebpage || webpageState.externalState
-          if (!stateWebpage) return true
-          const result = await addWebpageAsMeta({ ...stateWebpage, url: webpageState.currentUrl }, e.editor.children)
-          m = result.meta
-          p = result.one.id
-        }
-        if (p) {
-          const questions = await Promise.all(e.questions.map(async i => await ObjectStore('question').addOne({ ...i, parentObjectId: p })))
-          AIStore.updateMetaAI(m.id, {
+        const { meta, id } = await getWebpageMeta(e.editor)
+        if (id) {
+          const questions = await Promise.all(
+            e.questions?.map(async i => await ObjectStore('question').addOne({ ...i, parentObjectId: id })) || []
+          )
+          AIStore.updateMetaAI(meta.id, {
             summary: e.summary,
             questions: questions
           })
@@ -198,16 +127,10 @@ const WebpageContentRenderer = ({
         return true
       }
       case 'copyLink': {
-        let m = webpageMeta
-        if (!m) {
-          const stateWebpage = webpageState.currentWebpage || webpageState.externalState
-          if (!stateWebpage) return true
-          const result = await addWebpageAsMeta({ ...stateWebpage, url: webpageState.currentUrl }, e.editor.children)
-          m = result.meta
-        }
-        if (m) {
-          const links = e.blocks.map(i => `rendevoz://object/${m.id}?blockId=${i.id}`).join('\n')
-          const html = e.blocks.map(i => `<p><a href="rendevoz://object/${m.id}?blockid=${i.id}">${i.text}</a></p>`).join('')
+        const { meta } = await getWebpageMeta(e.editor)
+        if (meta) {
+          const links = e.blocks.map(i => `rendevoz://object/${meta.id}?blockId=${i.id}`).join('\n')
+          const html = e.blocks.map(i => `<p><a href="rendevoz://object/${meta.id}?blockid=${i.id}">${i.text}</a></p>`).join('')
           const content = [
             new ClipboardItem({
               'text/html': new Blob([html], { type: 'text/html' }),
@@ -248,17 +171,11 @@ const WebpageContentRenderer = ({
         return true
       }
       case 'addLabel': {
-        let webpage = currentWepbage
-        if (!hasWebpageMeta) {
-          const stateWebpage = webpageState.currentWebpage || webpageState.externalState
-          if (!stateWebpage) return
-          webpage = (await addWebpageAsMeta({ ...stateWebpage, url: webpageState.currentUrl }, e.afterAddValue)).one
-        }
-        if (!webpage) {
-          return
-        }
-        const label = await ObjectStore('webpageLabel').addOne({ ...e.currentLabel, specType: 'webpageLabel', parentObjectId: webpage.id })
-        await ObjectStore('webpage').updateOne({ id: webpage.id, labels: [...(webpage.labels || []), label.id] })
+        const { id } = await getWebpageMeta(e.editor)
+        const label = await ObjectStore('webpageLabel').addOne({ ...e.currentLabel, specType: 'webpageLabel', parentObjectId: id })
+        const webpage = await ObjectStore('webpage').getOneById(id)
+        if (!webpage) return
+        await ObjectStore('webpage').updateOne({ id: id, labels: [...(webpage.labels || []), label.id] })
         return label
       }
       case 'deleteLabel': {
@@ -285,6 +202,7 @@ const WebpageContentRenderer = ({
   }
   const { t } = useTranslation()
   useLayoutEffect(() => {
+    console.log(webpageState)
     if (webpageState.loaded) {
       editorInstanceRef.current?.scrollToPosition?.(0)
     }
@@ -300,80 +218,76 @@ const WebpageContentRenderer = ({
   const renderer = () => {
     return (
       <>
-        <div style={{ width: '100%', height: '100%', opacity: isLoading || (failLoading && !webpageState.externalState?.content) ? 0 : 1 }}>
-          <NoteEditor
-            {...editorOptions}
-            initialHeight={initialHeight}
-            labelType={'webpageLabel'}
-            onInstanceInitialized={i => {
-              editorInstanceRef.current = i
-              webpageInstance.editorInstance = i
-              onInstanceInitialized?.(webpageInstance)
-            }}
-            ai={{
-              summary: webpageMeta?.properties?.[AI_SUMMARY_PROP_ID]?.value,
-              questions: webpageMeta?.properties?.[AI_QUESTION_PROP_ID]?.value
-            }}
-            defaultValue={webpageState.externalState?.content || webpageState.currentParsedContent}
-            id={editorId}
-            noteId={webpageState.currentWebpageNoteId}
-            layout={{
-              showLastSave: false,
-              showProps: !!webpageMeta,
-              propsMetaId: webpageMeta?.id,
-              ...editorOptions?.layout
-            }}
-            state={{
-              lineSpacing:
-                editorOptions?.state?.lineSpacing ||
-                (isReadOnly ? editorSetting.readerMode.lineSpacing : editorSetting.editMode.lineSpacing),
-              pageWidth:
-                editorOptions?.state?.pageWidth || (isReadOnly ? editorSetting.readerMode.pageWidth : editorSetting.editMode.pageWidth),
-              fontSize:
-                editorOptions?.state?.fontSize || (isReadOnly ? editorSetting.readerMode.fontSize : editorSetting.editMode.fontSize),
-              typeface: editorOptions?.state?.typeface || (isReadOnly ? editorSetting.readerMode.typeface : editorSetting.editMode.typeface)
-            }}
-            header={{
-              ...editorOptions?.header,
-              rightExtra: (
-                <>
-                  {editorOptions?.header?.rightExtra}
-                  <Tooltip content={t('general.Show original webpage')}>
-                    <Icon
-                      className={ClassName.flatButton(4, '4px')}
-                      onClick={() => {
-                        if (currentWepbage) {
-                          ObjectStore('webpage').updateOne({ id: currentWepbage.id, showOriginal: !realShowOriginal })
-                        }
-                        setShowOriginal(!realShowOriginal)
-                      }}
-                      name={'park-web-page'}
-                    />
-                  </Tooltip>
-                </>
-              )
-            }}
-            metaId={webpageMeta?.id}
-            labelIds={currentWepbage?.labels || []}
-            on={webpageEditorOnHandler}
-            stringTitle={webpageMeta?.name || webpageState.externalState?.title || webpageState.currentWebpage?.title || 'Untitled'}
-            readOnly={isReadOnly}
-            onReadOnlyChange={v => setIsReadOnly(v)}
-            title={{
-              customTitleRenderer: () => (
-                <WebpageTitle
-                  url={webpageState.currentUrl}
-                  {...webpageState.currentWebpage}
-                  {...webpageState.externalState}
-                  title={webpageMeta?.name || webpageState.externalState?.title || webpageState.currentWebpage?.title}
-                />
-              ),
-              titleContainerStyle: {
-                padding: '20px 0px'
-              }
-            }}
-          />
-        </div>
+        <NoteEditor
+          {...editorOptions}
+          initialHeight={initialHeight}
+          labelType={'webpageLabel'}
+          styles={{
+            ...editorOptions?.styles,
+            containerStyle: {
+              ...editorOptions?.styles?.containerStyle,
+              opacity: isLoading || (failLoading && !webpageState.externalState?.content) ? 0 : 1
+            }
+          }}
+          onInstanceInitialized={i => {
+            editorInstanceRef.current = i
+            webpageInstance.editorInstance = i
+            onInstanceInitialized?.(webpageInstance)
+          }}
+          ai={{
+            summary: webpageMeta?.properties?.[AI_SUMMARY_PROP_ID]?.value,
+            questions: webpageMeta?.properties?.[AI_QUESTION_PROP_ID]?.value
+          }}
+          defaultValue={webpageState.externalState?.content || webpageState.currentParsedContent}
+          id={editorId}
+          noteId={webpageState.currentWebpageNoteId}
+          layout={{
+            showLastSave: false,
+            showProps: !!webpageMeta,
+            propsMetaId: webpageMeta?.id,
+            ...editorOptions?.layout
+          }}
+          state={editorOptions?.state}
+          header={{
+            ...editorOptions?.header,
+            rightExtra: (
+              <>
+                {editorOptions?.header?.rightExtra}
+                <Tooltip content={t('general.Show original webpage')}>
+                  <Icon
+                    className={ClassName.flatButton(4, '4px')}
+                    onClick={() => {
+                      if (currentWepbage) {
+                        ObjectStore('webpage').updateOne({ id: currentWepbage.id, showOriginal: !realShowOriginal })
+                      }
+                      setShowOriginal(!realShowOriginal)
+                    }}
+                    name={'park-web-page'}
+                  />
+                </Tooltip>
+              </>
+            )
+          }}
+          metaId={webpageMeta?.id}
+          labelIds={currentWepbage?.labels || []}
+          on={webpageEditorOnHandler}
+          stringTitle={webpageMeta?.name || webpageState.externalState?.title || webpageState.currentWebpage?.title || 'Untitled'}
+          readOnly={isReadOnly}
+          onReadOnlyChange={v => setIsReadOnly(v)}
+          title={{
+            customTitleRenderer: () => (
+              <WebpageTitle
+                url={webpageState.currentUrl}
+                {...webpageState.currentWebpage}
+                {...webpageState.externalState}
+                title={webpageMeta?.name || webpageState.externalState?.title || webpageState.currentWebpage?.title}
+              />
+            ),
+            titleContainerStyle: {
+              padding: '20px 0px'
+            }
+          }}
+        />
         {(isLoading || (failLoading && !webpageState.externalState?.content)) && (
           <Content
             style={{ margin: 'auto', zIndex: 100, position: 'absolute', inset: 0 }}

@@ -1,5 +1,5 @@
 import Id from '@/utils/id'
-import { Editor, Element as SlateElement, Node, Path, Point, Range, Transforms } from 'slate'
+import { Editor, Element as SlateElement, Node, Path, Point, Range, Text, Transforms } from 'slate'
 import { ReactEditor } from 'slate-react'
 import { CustomEditor, CustomElement } from '~/typings'
 import { Positions } from '../utils/positions'
@@ -39,9 +39,28 @@ const withCustomComponent = (editor: CustomEditor) => {
         match: n => Editor.isBlock(editor, n)
       })
       const p = Editor.point(editor, position)
-      if (above && Editor.isStart(editor, p, above[1]) && Editor.isEnd(editor, p, above[1])) {
-        insertFragment(nodes)
-        Transforms.setNodes(editor, { ...above[0] }, { at: above[1] })
+      console.log(nodes)
+      if (nodes[0]?.type === 'paragraph') {
+        if (above && Editor.isStart(editor, p, above[1]) && Editor.isEnd(editor, p, above[1])) {
+          insertFragment(nodes)
+          Transforms.setNodes(editor, { ...above[0] }, { at: above[1] })
+          return
+        }
+      } else if (above) {
+        Transforms.insertNodes(
+          editor,
+          {
+            type: 'paragraph',
+            id: Id.getId(),
+            children: [{ text: '' }]
+          },
+          {
+            at: Path.next(above[1])
+          }
+        )
+        insertFragment(nodes, {
+          at: Path.next(above[1])
+        })
         return
       }
     }

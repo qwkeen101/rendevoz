@@ -20,7 +20,7 @@ function TagGroup({ id }: { id: number }) {
       ...GroupStore.initializeGroup(),
       hideObjectsInside: false,
       hideGroupsInside: false,
-      autoAddto: 'last'
+      autoAddto: 'first'
     }
   )
   useEffect(() => {

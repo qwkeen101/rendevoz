@@ -1,5 +1,5 @@
 import { Content, Icon, TabPane, Tabs } from '@/components'
-import EditorSearchPanel from '@/core/components/editor/components/EditorSearchPanel'
+import EditorSearch from '@/core/components/editor/components/EditorSearch'
 import { useTranslation } from 'react-i18next'
 import useEditorBarState from '../hooks/useEditorBarState'
 import { Resizable } from 're-resizable'
@@ -107,7 +107,7 @@ const EditorRightBar = () => {
             </Content>
           }
         >
-          <EditorSearchPanel />
+          <EditorSearch />
         </TabPane>
         <TabPane
           key="label"

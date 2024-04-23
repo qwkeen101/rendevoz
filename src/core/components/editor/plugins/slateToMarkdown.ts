@@ -1,8 +1,9 @@
 import { CustomElement } from 'rendevoz'
-import { Element, Node, Text } from 'slate'
+import { Node, Text } from 'slate'
 import { globalStore } from '@/api/stores'
 import { metaObjectsAtom } from '@/api/stores/meta/meta.store'
 import { getSetting } from '@/core'
+import { TableRowElement } from '~/typings'
 
 export const slateToMarkdown = (value: CustomElement[]) => {
   let content = ''
@@ -14,7 +15,7 @@ export const slateToMarkdown = (value: CustomElement[]) => {
 }
 
 const parseNode = (idx: number, eles: CustomElement[]) => {
-  const ele = eles[idx]
+  const ele = eles[idx] as CustomElement
   let str = ''
   if (ele.type === 'columnList') {
     ele.children.forEach(i => {
@@ -23,6 +24,32 @@ const parseNode = (idx: number, eles: CustomElement[]) => {
           const s = parseNode(_idx, i.children)
           str += s
         })
+      }
+    })
+    return str
+  }
+  if (ele.type === 'table') {
+    const rows = ele.children
+    const transformRow = (row: TableRowElement) => {
+      let s = '|'
+      row.children.forEach(cell => {
+        s += ' ' + Node.string(cell) + ' |'
+      })
+      return s
+    }
+    rows.forEach((row, idx) => {
+      const s = transformRow(row)
+      str += `${s}\n`
+      if (idx === 0) {
+        str += '|'
+        row.children.forEach(i => {
+          const s = Node.string(i)
+          Array.from(Array(Math.max(3, s.length + 2))).forEach(i => {
+            str += '-'
+          })
+          str += '|'
+        })
+        str += '\n'
       }
     })
     return str

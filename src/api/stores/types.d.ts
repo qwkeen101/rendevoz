@@ -15,6 +15,7 @@ export interface IStore<T> {
   fetchOneById: (id: number) => Promise<T | undefined>
   getAll: () => Promise<boolean>
   getAllData: () => Promise<T[]>
+  fetchAll: () => Promise<T[]>
   getOneById: (id: number) => Promise<T | undefined>
   getMultipleByIds: (id: number[], cache?: boolean) => Promise<T[]>
   deleteOneById: (

@@ -22,7 +22,7 @@ const PdfThumbnail = () => {
 
   const virtualizerRef = useRef<Virtualizer<any, any>>()
   useEffect(() => {
-    if (pdf && pdf.lastReadPage !== undefined) {
+    if (pdf && showLeftBar && pdf.lastReadPage !== undefined) {
       try {
         setTimeout(() => {
           virtualizerRef.current?.scrollToIndex(pdf.lastReadPage)
@@ -31,7 +31,7 @@ const PdfThumbnail = () => {
         console.log(e)
       }
     }
-  }, [pdf?.lastReadPage, showLeftBar])
+  }, [showLeftBar])
   useEffect(() => {
     viewer.getDocument?.().then(i => {
       const p = i.numPages
@@ -45,15 +45,15 @@ const PdfThumbnail = () => {
       column
       gap={12}
       style={{
-        overflowX: 'hidden',
+        overflow: 'hidden',
         height: '100%'
       }}
     >
       <VirtualList
         ref={virtualizerRef}
         items={Utils.range(0, pages - 1)}
-        estimateSize={300}
-        overscan={5}
+        estimateSize={150}
+        overscan={10}
         renderItem={(item, idx) => (
           <Content
             flex
@@ -77,7 +77,8 @@ const PdfThumbnail = () => {
           width: '100%',
           height: '100%',
           padding: '16px',
-          paddingTop: 0
+          paddingTop: 0,
+          overflowAnchor: 'none'
         }}
       />
     </Content>
@@ -109,7 +110,7 @@ const ThumbnailItem = ({ pageIndex, lastReadPage }: { pageIndex: number; lastRea
         src={imgUrl}
         style={{
           cursor: 'pointer',
-          boxShadow: pageIndex === lastReadPage ? `0 0 0 3px ${Colors.Common.SelectColor}` : Colors.Background.BoxShadow,
+          boxShadow: pageIndex === lastReadPage ? `0 0 0 3px ${Colors.Common.SelectColor}` : 'var(--border-box-shadow)',
           width: 'min(180px, 100%)',
           borderRadius: 6,
           marginTop: 2
@@ -126,8 +127,10 @@ const ThumbnailItem = ({ pageIndex, lastReadPage }: { pageIndex: number; lastRea
         justifyContent: 'center',
         boxShadow: Colors.Background.BoxShadow,
         borderRadius: 6,
+        color: Colors.Common.SelectColor,
+        fontSize: 20,
         marginTop: 2,
-        paddingBottom: '140%'
+        height: 200
       }}
     >
       <Icon name={'park-loading-four'} spin />

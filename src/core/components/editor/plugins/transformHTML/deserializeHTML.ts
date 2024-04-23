@@ -15,7 +15,7 @@ import { normalize } from './normalizeParsed'
 import { isInline } from '@/core/components/editor/utils'
 import wrapElementText from '@/core/components/editor/plugins/transformHTML/deserialize/wrapElementText'
 import deserializePre from '@/core/components/editor/plugins/transformHTML/deserialize/deserializePre'
-const NoNestedNodeNames = ['A', 'H1', 'H2', 'H3', 'HR', 'LI', 'H4', 'H5', 'H6', 'PRE', 'SUP', 'FIGCAPTION', 'BLOCKQUOTE']
+const NoNestedNodeNames = ['A', 'H1', 'H2', 'H3', 'HR', 'LI', 'H4', 'H5', 'H6', 'PRE', 'SUP', 'CITE', 'FIGCAPTION', 'BLOCKQUOTE']
 
 function removeCommonPrefix(a: string, b: string) {
   // 确定两个字符串中较短的一个，避免索引越界

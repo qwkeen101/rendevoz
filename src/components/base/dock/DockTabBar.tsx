@@ -116,7 +116,6 @@ export const DockTabBar = memo(
         getRef={getRef}
         tabIndex={-1}
         style={{
-          '-webkit-app-region': 'drag',
           paddingLeft: isTopLeft ? (sidebarState.leftOpen ? 8 : os === 'macos' && !isFullscreen ? 36 : 8) : 8,
           background: 'var(--tabs-bg)',
           zIndex: 102,

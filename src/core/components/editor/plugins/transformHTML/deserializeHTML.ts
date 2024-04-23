@@ -17,6 +17,22 @@ import wrapElementText from '@/core/components/editor/plugins/transformHTML/dese
 import deserializePre from '@/core/components/editor/plugins/transformHTML/deserialize/deserializePre'
 const NoNestedNodeNames = ['A', 'H1', 'H2', 'H3', 'HR', 'LI', 'H4', 'H5', 'H6', 'PRE', 'SUP', 'FIGCAPTION', 'BLOCKQUOTE']
 
+function removeCommonPrefix(a: string, b: string) {
+  // 确定两个字符串中较短的一个，避免索引越界
+  let minLength = Math.min(a.length, b.length)
+  let i = 0
+
+  // 比较两个字符串，找到相同前缀的结束位置
+  for (; i < minLength; i++) {
+    if (a[i] !== b[i]) {
+      break
+    }
+  }
+
+  // 截取b字符串中除去相同前缀后的部分
+  return b.slice(i)
+}
+
 export const deserializeRoot = (root: HTMLElement, opts?: deserializeOptions): Descendant[] | null => {
   // deserialize text node
   if (root.nodeType === Node.TEXT_NODE) {
@@ -129,7 +145,7 @@ export const normalizeResult = (result: Descendant[], url?: string) => {
           } else if (ele.url.startsWith(window.location.origin)) {
             const originU = new URL(ele.url)
             if (!originU.host) {
-              const replaced = ele.url.replace(window.location.origin, '')
+              const replaced = removeCommonPrefix(ele.url, window.location.href)
               const newU = new URL(replaced, origin)
               ele.url = newU.toString()
             } else {

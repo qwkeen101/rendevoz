@@ -145,7 +145,7 @@ export const normalizeResult = (result: Descendant[], url?: string) => {
           } else if (ele.url.startsWith(window.location.origin)) {
             const originU = new URL(ele.url)
             if (!originU.host) {
-              const replaced = removeCommonPrefix(ele.url, window.location.href)
+              const replaced = removeCommonPrefix(window.location.href, ele.url)
               const newU = new URL(replaced, origin)
               ele.url = newU.toString()
             } else {

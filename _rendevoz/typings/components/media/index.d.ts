@@ -37,6 +37,7 @@ export type IMediaExternalState = {
     showAudioThumbnail?: boolean
     showDescription?: boolean
     showProgressPins?: boolean
+    showTitle?: boolean
   }
   styles?: {
     progressHeight?: number

@@ -222,7 +222,7 @@ const normalizeLabel = async (
   const labelMeta = MetaStore.getMetaObjectByObjectId(labelId)
   const db = useDb('objects')
   const parentObject = await db.get(label.parentObjectId)
-  if (parentObject.specType) {
+  if (parentObject?.specType) {
     const realParent = await ObjectStore(parentObject.specType).getOneById(label.parentObjectId)
     if (realParent) {
       const parentMeta = await retrieveMetaObjectByObjectId(realParent.id, realParent.specType)

@@ -75,7 +75,6 @@ const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subt
             if (aI >= 0 && fI >= 0) {
               const endOffset = (focus.textContent?.length || 0) - r.endOffset
               setTimeout(() => {
-                console.log('gt here')
                 setAddLabelState({
                   visible: true,
                   anchorIdx: aI,

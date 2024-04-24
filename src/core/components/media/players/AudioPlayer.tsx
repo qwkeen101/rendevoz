@@ -113,19 +113,30 @@ export default () => {
             <Icon size={120} name={'park-music'} theme={'filled'} />
           </Content>
         ))}
-      <Content flex column gap={4} style={{ width: '100%', maxWidth: columnLayout ? '100%' : 800, padding: floated ? '16px 24px 0px 16px' : 0 }}>
-        <div
-          className={'video-drag-handle'}
-          style={{
-            fontWeight: 600,
-            fontSize: floated ? 14 : columnMode ? 18 : 30,
-            cursor: floated ? 'grab' : 'unset',
-            width: 'fit-content',
-            ...mediaState.styles?.titleStyle
-          }}
-        >
-          <div className={floated ? 'ellipsis-font-1' : undefined}>{mediaState.name}</div>
-        </div>
+      <Content
+        flex
+        column
+        gap={4}
+        style={{
+          width: '100%',
+          maxWidth: columnLayout ? '100%' : 800,
+          padding: floated ? '16px 24px 0px 16px' : 0
+        }}
+      >
+        {mediaState.layout?.showTitle !== false && (
+          <div
+            className={'video-drag-handle'}
+            style={{
+              fontWeight: 600,
+              fontSize: floated ? 14 : columnMode ? 18 : 30,
+              cursor: floated ? 'grab' : 'unset',
+              width: 'fit-content',
+              ...mediaState.styles?.titleStyle
+            }}
+          >
+            <div className={'ellipsis-font-1'}>{mediaState.name}</div>
+          </div>
+        )}
         {!floated && !(columnLayout && sidebarOpen) && mediaState.layout?.showDescription !== false && (
           <div
             className={mediaState.styles?.descriptionEllispsis ? ClassName.ellipsisFont(mediaState.styles.descriptionEllispsis) : undefined}
@@ -141,7 +152,13 @@ export default () => {
             {mediaState.description}
           </div>
         )}
-        <div ref={containerRef} style={{ width: '100%', marginTop: mediaState.layout?.showProgressPins ? 25 : 16 }}>
+        <div
+          ref={containerRef}
+          style={{
+            width: '100%',
+            marginTop: mediaState.layout?.showProgressPins ? 25 : 16
+          }}
+        >
           <MediaBottomBar />
         </div>
 
@@ -157,10 +174,16 @@ export default () => {
             setMediaState(s => ({ ...s, paused: true }))
           }}
           onTimeUpdate={e => {
-            setMediaState(s => ({ ...s, currentTime: e.currentTarget.currentTime }))
+            setMediaState(s => ({
+              ...s,
+              currentTime: e.currentTarget.currentTime
+            }))
           }}
           onDurationChange={e => {
-            setMediaState(s => ({ ...s, totalTime: e.currentTarget.duration }))
+            setMediaState(s => ({
+              ...s,
+              totalTime: e.currentTarget.duration
+            }))
           }}
           ref={audioRef}
           src={mediaState.url}

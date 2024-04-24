@@ -97,6 +97,7 @@ const MediaSubtitleSidebar = memo(() => {
     if (!searchState.visible) {
       if (isIn || !subtitleFollow) return
     }
+    if (!currentSubtitles?.length) return
     if (subtitleMode === 'list') {
       const virtualizer = virtualizerRef.current
       if (virtualizer && !isIn && subtitleFollow) {
@@ -109,7 +110,7 @@ const MediaSubtitleSidebar = memo(() => {
     }
     if (subtitleMode === 'article') {
       const el = containerRef.current?.querySelector(`[data-subtitle-index="${currentSelectedIndex}"]`) as HTMLElement | undefined
-      if (el) {
+      if (el && el.parentElement) {
         el.parentElement.scrollTop = el.offsetTop - el.parentElement.clientHeight / 2 + el.offsetHeight / 2
       }
     }
@@ -334,24 +335,26 @@ const MediaSubtitleSidebar = memo(() => {
         className={'border-top'}
       >
         {subtitleMode === 'list' ? (
-          <VirtualList
-            rangeExtractor={r => rangeExtractor(r)}
-            paddingEnd={200}
-            style={{ width: '100%', height: '100%' }}
-            estimateSize={30}
-            items={currentSubtitles}
-            ref={virtualizerRef}
-            renderItem={(s, idx) => (
-              <SubtitleItem
-                showTrans={showTranslation}
-                currentTime={currentTime}
-                index={idx}
-                subtitle={s}
-                key={s.id}
-                selected={idx === currentSelectedIndex}
-              />
-            )}
-          />
+          currentSubtitles?.length ? (
+            <VirtualList
+              rangeExtractor={r => rangeExtractor(r)}
+              paddingEnd={200}
+              style={{ width: '100%', height: '100%' }}
+              estimateSize={30}
+              items={currentSubtitles}
+              ref={virtualizerRef}
+              renderItem={(s, idx) => (
+                <SubtitleItem
+                  showTrans={showTranslation}
+                  currentTime={currentTime}
+                  index={idx}
+                  subtitle={s}
+                  key={s.id}
+                  selected={idx === currentSelectedIndex}
+                />
+              )}
+            />
+          ) : null
         ) : (
           <Content style={{ height: '100%', overflowY: 'auto', paddingBottom: 100 }}>
             {currentSubtitles?.map((i, idx) => (

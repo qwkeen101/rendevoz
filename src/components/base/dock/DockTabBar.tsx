@@ -306,90 +306,85 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast, onDragEnd, is
   }, [isSelected])
   const isLastAndHasGlobalExtra = isLast && dockContext.getLayout().global.globalPanelExtra && !isDragging
   return (
-    <AnimatePopover
-      positions={['bottom']}
-      content={
-        <WithBorder padding={'0.4rem 0'} width={200}>
-          {renderTabContextMenu()}
-        </WithBorder>
-      }
-      onClickOutside={toggleContextMenuVisible}
-      padding={10}
-      innerRef={tabRef}
-      visible={contextMenuVisible}
-    >
-      <Reorder.Item
-        onContextMenu={() => {
-          toggleContextMenuVisible()
-          const tab = Rendevoz.Actions.Layout.getTabById(item.key)
-          if (tab) {
-            const objectId = tab.objectId
-            if (objectId) {
-              const meta = MetaStore.getMetaObjectByObjectId(objectId)
-              if (meta) {
-                setCurrentTabMetaId(meta.id)
+    <>
+      <AnimatePopover
+        positions={['bottom']}
+        content={
+          <WithBorder padding={'0.4rem 0'} width={200}>
+            {renderTabContextMenu()}
+          </WithBorder>
+        }
+        onClickOutside={toggleContextMenuVisible}
+        padding={10}
+        innerRef={tabRef}
+        visible={contextMenuVisible}
+      >
+        <Reorder.Item
+          onContextMenu={() => {
+            toggleContextMenuVisible()
+            const tab = Rendevoz.Actions.Layout.getTabById(item.key)
+            if (tab) {
+              const objectId = tab.objectId
+              if (objectId) {
+                const meta = MetaStore.getMetaObjectByObjectId(objectId)
+                if (meta) {
+                  setCurrentTabMetaId(meta.id)
+                }
               }
             }
-          }
-        }}
-        onDragEnd={event => {
-          const p = tabRef.current?.closest('.dock-panel')
-          const b = tabRef.current?.closest('.dock-box')
-          if (p && b) {
-            ;(p as HTMLDivElement).style.removeProperty('z-index')
-            ;(b as HTMLDivElement).style.removeProperty('z-index')
-          }
-          onDragEnd(event)
-        }}
-        onDragStart={e => {
-          const p = tabRef.current?.closest('.dock-panel')
-          const b = tabRef.current?.closest('.dock-box')
-          if (p && b) {
-            ;(p as HTMLDivElement).style.zIndex = '100001'
-            ;(b as HTMLDivElement).style.zIndex = '99999'
-          }
-          onDragStart?.(e)
-        }}
-        onDrag={onDrag}
-        transition={{
-          duration: isDragging ? 0.2 : 0
-        }}
-        whileDrag={{
-          boxShadow: '0 0 0 2px var(--select-color)',
-          borderRadius: 4,
-          pointerEvents: 'none',
-          overflow: 'hidden',
-          opacity: 0.9
-        }}
-        // exit={{ opacity: 0, transition: { duration: 0.3 } }}
-        onClick={onClick}
-        value={item}
-        drag={true}
-        role="tab-reorder-item"
-        as="div"
-        id={item.key}
-        className={classNames(styles.tab, isSelected && styles.active, isLast && styles.isLast)}
-        style={{
-          paddingRight: isLastAndHasGlobalExtra ? 30 : undefined
-        }}
-      >
-        <div role={'tab-reorder-content'} className={classNames(styles.tabContent, isSelected && styles.active)}>
-          {item.tab}
-        </div>
-        {isLastAndHasGlobalExtra && (
-          <div
-            style={{
-              position: 'absolute',
-              right: 0,
-              top: 0,
-              bottom: 0,
-              background: isSelected ? 'var(--tabs-bg)' : 'transparent'
-            }}
-          >
-            {dockContext.getLayout().global.globalPanelExtra(null, null)}
+          }}
+          onDragEnd={event => {
+            const p = tabRef.current?.closest('.dock-panel')
+            const b = tabRef.current?.closest('.dock-box')
+            if (p && b) {
+              ;(p as HTMLDivElement).style.removeProperty('z-index')
+              ;(b as HTMLDivElement).style.removeProperty('z-index')
+            }
+            onDragEnd(event)
+          }}
+          onDragStart={e => {
+            const p = tabRef.current?.closest('.dock-panel')
+            const b = tabRef.current?.closest('.dock-box')
+            if (p && b) {
+              ;(p as HTMLDivElement).style.zIndex = '100001'
+              ;(b as HTMLDivElement).style.zIndex = '99999'
+            }
+            onDragStart?.(e)
+          }}
+          onDrag={onDrag}
+          transition={{
+            duration: isDragging ? 0.2 : 0
+          }}
+          whileDrag={{
+            boxShadow: '0 0 0 2px var(--select-color)',
+            borderRadius: 4,
+            pointerEvents: 'none',
+            overflow: 'hidden',
+            opacity: 0.9
+          }}
+          onClick={onClick}
+          value={item}
+          drag={true}
+          role="tab-reorder-item"
+          as="div"
+          id={item.key}
+          className={classNames(styles.tab, isSelected && styles.active, isLast && styles.isLast)}
+        >
+          <div role={'tab-reorder-content'} className={classNames(styles.tabContent, isSelected && styles.active)}>
+            {item.tab}
           </div>
-        )}
-      </Reorder.Item>
-    </AnimatePopover>
+        </Reorder.Item>
+      </AnimatePopover>
+      {isLastAndHasGlobalExtra && (
+        <div
+          style={{
+            height: '100%',
+            background: isSelected ? 'var(--tabs-bg)' : 'transparent'
+          }}
+        >
+          {dockContext.getLayout().global.globalPanelExtra(null, null)}
+        </div>
+      )}
+    </>
   )
 }

@@ -180,7 +180,6 @@ const MetaObjectNode: FC<InnerNodeProps & { containerRef: RefObject<HTMLElement>
         style={{
           fontSize: 14
         }}
-        autoPlay
         showAudio
         showVideo={nodeState?.focused}
         metaId={metaObjectId}

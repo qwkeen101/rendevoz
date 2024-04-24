@@ -24,8 +24,6 @@ type Props<T> = {
   scrollMargin?: number
   canReorder?: boolean
   onReorder?: (items: T[]) => void
-  gridMode?: boolean
-  gridColBreakPoint?: number
   getKey?: (item: T) => string | number
 }
 
@@ -41,8 +39,6 @@ function VirtualList<T>(
     itemStyle,
     itemClassname,
     itemContainerClassname,
-    gridColBreakPoint,
-    gridMode,
     estimateSize,
     style,
     rangeExtractor,
@@ -80,7 +76,6 @@ function VirtualList<T>(
     const itemz = virtualizer.getVirtualItems()
     const length = items.length
     const keydownHandler = useMemoizedFn((e: KeyboardEvent) => {
-      console.log(e)
       if (e.defaultPrevented) return
       if (isHotkey(KEY.Enter, e) && withKeyboardNavigation) {
         e.preventDefault()

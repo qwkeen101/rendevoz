@@ -1,11 +1,11 @@
-import KeyvalueStore from '@/api/stores/keyvalue.store'
+import { atomWithStorage } from 'jotai/utils'
+import { useGlobalAtom, useGlobalAtomValue } from '@/hooks'
 
+export const sidebarStateAtom = atomWithStorage('sidebarState', {
+  leftOpen: false,
+  leftWidth: 240,
+  leftVisible: 'database'
+})
 export default () => {
-  return (
-    KeyvalueStore.useValue('sidebarState') || {
-      leftOpen: false,
-      leftWidth: 240,
-      leftVisible: 'database'
-    }
-  )
+  return useGlobalAtomValue(sidebarStateAtom)
 }

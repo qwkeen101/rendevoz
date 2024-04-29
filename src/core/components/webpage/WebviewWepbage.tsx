@@ -47,7 +47,7 @@ export default ({
       }
     }
     if (webviewRef.current) {
-      webviewRef.current.allowpopups = true
+      webviewRef.current.allowpopups = 'true'
       webviewRef.current.useragent = userAgent
     }
     webviewRef.current?.addEventListener('will-navigate', evnHandler)
@@ -122,7 +122,7 @@ export default ({
         }}
       />
       <webview
-        allowpopups={true}
+        allowpopups={'true'}
         useragent={userAgent}
         src={url}
         disablewebsecurity={true}

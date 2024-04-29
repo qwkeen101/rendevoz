@@ -8,7 +8,6 @@ import ComponentSetting from './Component'
 import GeneralSetting from './General'
 import ObjectsAndLinksSetting from './ObjectsAndLinks'
 import ShortCutSetting from './ShortCut'
-import SettingSidebarItem from './SidebarItem'
 import UsageSetting from './Usage'
 import AISetting from './AI'
 import { useUser } from '@/api/services/login.service'
@@ -29,7 +28,7 @@ import WorkspaceSetting from '@/core/setting/Workspace'
 import { Colors } from '@/consts'
 import { atom } from 'jotai'
 import { useSelectGlobalAtomValue } from '@/hooks'
-import S3 from '@/core/setting/sync/S3'
+import SyncSetting from './Sync'
 import { ClassName } from 'rendevoz'
 import { Icon } from '@/components'
 import { selectAtom } from 'jotai/utils'
@@ -40,7 +39,7 @@ enum Settings {
   'components',
   'shortcuts',
   'object and link',
-  // 'sync',
+  'sync',
   'AI',
   'resource usage'
   // 'about'
@@ -200,7 +199,7 @@ const SettingDialog = () => {
       case 'components':
         return <ComponentSetting />
       case 'sync':
-        return <S3 />
+        return <SyncSetting />
       case 'resource usage':
         return user ? <UsageSetting /> : null
       case 'workspace':

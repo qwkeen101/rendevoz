@@ -7,6 +7,7 @@ import { useMeasure } from 'react-use'
 import { Colors } from '@/consts'
 import { ClassName } from 'rendevoz'
 import { useTranslation } from 'react-i18next'
+import { isEqual } from 'lodash'
 
 const HomeGallery = () => {
   const objectIndex = MetaStore.useIndexedMetaObjects()
@@ -42,10 +43,13 @@ const HomeGallery = () => {
           }
         })
         newVisibleList = newVisibleList.concat(Array.from(allTypes.values()).map(i => ({ visible: true, name: i })))
-        KeyvalueStore.updateOne('homeGallery', {
-          ...gallerySettings,
-          visibleLists: newVisibleList
-        })
+        const currList = KeyvalueStore.getOne('homeGallery')
+        if (!isEqual(currList?.visibleLists, newVisibleList)) {
+          KeyvalueStore.updateOne('homeGallery', {
+            ...gallerySettings,
+            visibleLists: newVisibleList
+          })
+        }
       }
     }
   }, [objectIndex])

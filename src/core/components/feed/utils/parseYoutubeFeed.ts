@@ -22,7 +22,7 @@ const parseYoutubeFeed = (item: {
     return item
   }
   return {
-    id: item.id,
+    id: Id.getId(),
     title: item.title,
     link: item.link,
     image: item['media:group']['media:thumbnail'][0].$.url,

@@ -11,7 +11,9 @@ callback('openLocalFile', async (filePath: string) => {
 callback('deleteLocalFile', async (filePath: string) => {
   return await FileService.deleteFile(filePath)
 })
-
+callback('stat', async (p: string) => {
+  return await FileService.stat(p)
+})
 callback('deleteRendefile', async (filePath: string) => {
   return await FileService.deleteFile(filePath)
 })

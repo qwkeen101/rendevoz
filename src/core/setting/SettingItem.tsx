@@ -25,6 +25,7 @@ export type ISettingItem = {
   | {
       type: 'input'
       value?: string
+      width?: number
       placeholder?: string
       onChange?: (v: string) => void
     }
@@ -76,7 +77,9 @@ const SettingItem: FC<ISettingItem> = ({ title, description, column = false, tit
           className={'focus-input border-box-shadow'}
           style={{
             borderRadius: 4,
-            padding: '3px 8px'
+            padding: '4px 8px',
+            fontSize: 13,
+            width: rest.width ?? 240
           }}
         />
       )

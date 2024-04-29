@@ -6,7 +6,7 @@ import { Resizable } from 're-resizable'
 import ClassName from '@/styles/classNames'
 import EditorLabelController from './EditorLabelController'
 import Colors from '@/consts/colors'
-import { useEffect, useState, memo, useMemo } from 'react'
+import { useEffect, useState, memo, useMemo, useRef } from 'react'
 import { useSetAtom } from 'jotai'
 import { EditorSearchAtom } from '../hooks/useEditorSearch'
 import { useSelectAtomValue } from '@/hooks'
@@ -34,11 +34,16 @@ const EditorRightBar = () => {
     }
   }, [barState])
   const e = instance.getSlateEditor?.()?.children
+  const openAi = useRef(false)
+  if (barState.rightBarActive === 'ai') {
+    openAi.current === true
+  }
   const normalized = useMemo(() => {
+    if (barState.rightBarActive !== 'ai' && openAi.current === false) return
     if (e) {
       return JSON.stringify(normalizeAsAi(e))
     }
-  }, [e])
+  }, [e, barState.rightBarActive])
   const editor = instance.getSlateEditor?.()
 
   return (
@@ -129,63 +134,65 @@ const EditorRightBar = () => {
             </Content>
           }
         >
-          <AskAIPanel
-            questions={ai?.questions}
-            summary={ai?.summary}
-            onSummarized={e => {
-              if (!editor) return
-              const getBlockStr = (id: number) => {
-                const path = instance.getElementPathById?.(id)
-                if (path) {
-                  const n = Editor.node(editor, path)[0]
-                  return Node.string(n)
-                }
-              }
-              const questions: Partial<IQuestion>[] = e.questions
-                .map(i => {
-                  if (i.answerType === 'pointer') {
-                    return {
-                      ...i,
-                      answerPointers: i.answerPointers.map(id => ({
-                        pointerType: 'documentBlock',
-                        blockId: id,
-                        blockStr: getBlockStr(id),
-                        id: Id.getId()
-                      }))
-                    } as Partial<IQuestion>
+          {(barState.rightBarActive === 'ai' || openAi.current) && (
+            <AskAIPanel
+              questions={ai?.questions}
+              summary={ai?.summary}
+              onSummarized={e => {
+                if (!editor) return
+                const getBlockStr = (id: number) => {
+                  const path = instance.getElementPathById?.(id)
+                  if (path) {
+                    const n = Editor.node(editor, path)[0]
+                    return Node.string(n)
                   }
-                })
-                .filter(i => i) as Partial<IQuestion>[]
-              console.log(e, questions)
-              editor?.on?.({
-                type: 'AI summarize',
-                ...e,
-                questions
-              })
-            }}
-            on={e => {
-              switch (e.type) {
-                case 'questionGotoOriginalPlace': {
-                  instance.scrollToBlock?.({
-                    blockId: e.originalId,
-                    highlight: true
-                  })
-                  return true
                 }
-                case 'getOriginalText': {
-                  const editor = instance.getSlateEditor?.()
-                  const path = instance.getElementPathById?.(e.originalId)
-                  if (path && editor) {
-                    const node = Editor.node(editor, path)
-                    if (node) {
-                      return Node.string(node[0])
+                const questions: Partial<IQuestion>[] = e.questions
+                  .map(i => {
+                    if (i.answerType === 'pointer') {
+                      return {
+                        ...i,
+                        answerPointers: i.answerPointers.map(id => ({
+                          pointerType: 'documentBlock',
+                          blockId: id,
+                          blockStr: getBlockStr(id),
+                          id: Id.getId()
+                        }))
+                      } as Partial<IQuestion>
+                    }
+                  })
+                  .filter(i => i) as Partial<IQuestion>[]
+                console.log(e, questions)
+                editor?.on?.({
+                  type: 'AI summarize',
+                  ...e,
+                  questions
+                })
+              }}
+              on={e => {
+                switch (e.type) {
+                  case 'questionGotoOriginalPlace': {
+                    instance.scrollToBlock?.({
+                      blockId: e.originalId,
+                      highlight: true
+                    })
+                    return true
+                  }
+                  case 'getOriginalText': {
+                    const editor = instance.getSlateEditor?.()
+                    const path = instance.getElementPathById?.(e.originalId)
+                    if (path && editor) {
+                      const node = Editor.node(editor, path)
+                      if (node) {
+                        return Node.string(node[0])
+                      }
                     }
                   }
                 }
-              }
-            }}
-            content={normalized}
-          />
+              }}
+              content={normalized}
+            />
+          )}
         </TabPane>
       </Tabs>
     </Resizable>

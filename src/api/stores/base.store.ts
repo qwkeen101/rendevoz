@@ -190,7 +190,7 @@ type ILocalStore<T> = {
   deleteOneById: (onSuccess?: (silent: boolean) => void, onFail?: (silent: boolean) => void) => IStore<T>['deleteOneById']
   getAll: (filterer?: (obj: T) => boolean, cacheFilter?: (obj: T) => boolean) => IStore<T>['getAll']
   getAllData: (filterer?: (obj: T) => boolean) => IStore<T>['getAllData']
-  getOneById: (opts?: { onBeforeCache: (obj: T) => T | undefined }) => IStore<T>['getOneById']
+  getOneById: (opts?: { onBeforeCache: (obj: T) => T | undefined; forceRefresh?: boolean }) => IStore<T>['getOneById']
   getMultipleByIds: () => (ids: number[], cache?: boolean) => Promise<T[]>
   updateOne: (onSuccess?: (obj: T, silent: boolean) => void, onFail?: (silent: boolean) => void) => IStore<T>['updateOne']
 }
@@ -267,10 +267,10 @@ export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, dat
         }
         return arr as T[]
       },
-    getOneById: (opts?: { onBeforeCache?: (v: T) => T | undefined }) => id => {
+    getOneById: opts => id => {
       return new Promise(res => {
         const atomOne = globalStore.get(atom).get(id)
-        if (atomOne) {
+        if (!opts?.forceRefresh && atomOne) {
           res(atomOne)
         } else {
           database.get(id).then(one => {

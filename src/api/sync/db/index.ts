@@ -1,7 +1,9 @@
-import commit from '@/api/sync/db/commit'
+import commit from './commitDbActions'
+import pull from './pull'
 
 const DatabaseSync = {
-  commit: commit
+  commit,
+  pull
 }
 
 export default DatabaseSync

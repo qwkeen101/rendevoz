@@ -679,6 +679,7 @@
     "code-block": "Code block"
   },
   "settings": {
+    "sync": "Sync",
     "Hide highlights": "Hide highlights",
     "Expand to fixed height": "Allow expanding node to fixed height",
     "Auto width": "Auto width",

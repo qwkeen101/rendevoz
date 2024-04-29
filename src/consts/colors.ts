@@ -69,6 +69,7 @@ export const Common = {
   FocusBoxShadow: '--focus-box-shadow',
   Red: '--red',
   Pink: '--pink',
+  RedTransparentLight: '--red-transparent-light',
   SelectColorTransparent: '--select-color-transparent',
   SelectColor: '--select-color',
   SelectColorTransparentLight: '--select-color-transparent-light'

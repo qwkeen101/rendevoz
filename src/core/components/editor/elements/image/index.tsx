@@ -5,22 +5,24 @@ import { useEffect, useRef, useState } from 'react'
 import { Icon, Tooltip } from '@/components'
 import { Path, Transforms } from 'slate'
 import useReadOnlyEditor from '../../hooks/useReadOnly'
-import { fetchRemoteImageAndSaveLocally } from '@/utils/img'
 import Id from '@/utils/id'
-import { Resizable } from 're-resizable'
-import { useIsIn, useSelectAtomValue } from '@/hooks'
 import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
 import ResizableWrapper from '../ResizeWrapper'
+import FileSystem from '@/api/fileSystem'
+import { selectAtom } from 'jotai/utils'
+import { useAtomValue } from 'jotai'
+import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 
+const saveImageLocallyAtom = selectAtom(EditorStateAtom, s => s.state?.saveImgLocally)
 const Image = ({ element, children }: RenderElementProps) => {
   const imageEle = element as ImageElement
   const imageContainerRef = useRef<HTMLDivElement>(null)
   const [maskVisible, setMaskVisible] = useState(false)
   const readOnly = useReadOnlyEditor()
   const editor = useSlateStatic()
-  const { ref, isIn } = useIsIn()
-  const shouldSaveImageLocally = useSelectAtomValue(EditorStateAtom, s => s.state?.saveImgLocally) ?? false
-  console.log(shouldSaveImageLocally)
+  const instance = useEditorInstance()
+  const shouldSaveImageLocally = useAtomValue(saveImageLocallyAtom, { store: instance.values.editorLevelStore }) ?? false
+
   useEffect(() => {
     if (imageEle.url?.startsWith('http')) {
       // if remote can be touched, don't save and remove
@@ -28,7 +30,7 @@ const Image = ({ element, children }: RenderElementProps) => {
         fetch(imageEle.url).then(res => {
           if (res.ok) {
             if (shouldSaveImageLocally) {
-              fetchRemoteImageAndSaveLocally(imageEle.url).then(path => {
+              FileSystem.saveImage(imageEle.url).then(path => {
                 Transforms.setNodes(
                   editor,
                   {
@@ -183,30 +185,4 @@ const toolbarContainerClazz = css({
       borderLeft: '1px solid rgba(255,255,255,0.2)'
     }
   }
-})
-
-const leftResizerClazz = css({
-  position: 'absolute',
-  left: 0,
-  top: 0,
-  width: 15,
-  height: '100%',
-  cursor: 'col-resize',
-  zIndex: 1,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center'
-})
-
-const rightResizerClazz = css({
-  position: 'absolute',
-  right: 0,
-  top: 0,
-  width: 15,
-  height: '100%',
-  cursor: 'col-resize',
-  zIndex: 1,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center'
 })

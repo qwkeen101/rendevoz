@@ -1,8 +1,6 @@
 import { Button, WithBorder } from '@/components'
 import { Rendevoz } from '@/core/rendevoz'
-import { MetaStore, ObjectStore } from '@/api/stores'
 import { normalizeSecondsToTime } from '@/core/components/media/utils'
-import { saveImageLocally } from '@/utils'
 import { useTranslation } from 'react-i18next'
 import useMediaState from '@/core/components/media/hooks/useMediaState'
 import { useMediaInstance } from '@/core/components/media/hooks/useMediaInstance'

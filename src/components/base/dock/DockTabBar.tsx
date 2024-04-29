@@ -19,7 +19,7 @@ import { Colors } from '@/consts'
 import useIsFullscreen from '@/hooks/utils/useIsFullscreen'
 import useSidebarState from '@/components/layout/sidebar/useSidebarState'
 import updateSidebarState from '@/components/layout/sidebar/updateSidebarState'
-import SyncPanel from '@/core/setting/sync/SyncPanel'
+import TabBarSyncStatus from '@/api/sync/components/TabBarSyncStatus'
 
 interface DockTabBarProps {
   TabNavList: TabNavListProps
@@ -137,7 +137,7 @@ export const DockTabBar = memo(
             }}
             alignItems={'center'}
           >
-            <SyncPanel />
+            <TabBarSyncStatus />
             <Icon
               style={{
                 '-webkit-app-region': 'no-drag'

@@ -20,6 +20,7 @@ import addCallback from '@/api/stores/object/addCallback'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import createReviewStore from '@/api/stores/object/custom/ReviewCardStore'
 import updateCallback from '@/api/stores/object/updateCallback'
+import createWhiteboardStore from '@/api/stores/object/custom/WhiteboardStore'
 export type ObjectFamily = CustomTypes['Object']
 
 export const ObjectFamilyAtom = atomFamily(() => atom(new Map<number, ObjectFamily[keyof ObjectFamily]>()))
@@ -89,10 +90,11 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
     getMultipleByIds: async (id, cache) => {
       return (await initializedLocalStore.getMultipleByIds()(id, cache)).filter(i => i)
     },
-    getOneById: async id => {
+    getOneById: async (id, opt) => {
       try {
         const result = await initializedLocalStore.getOneById({
-          onBeforeCache: options?.afterGetOneProcess?.onBeforeCache
+          onBeforeCache: options?.afterGetOneProcess?.onBeforeCache,
+          forceRefresh: opt?.forceRefresh
         })(id)
         if (result) {
           options?.afterGetOneProcess?.onSuccess?.(result, true)
@@ -292,7 +294,6 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
 }
 
 export const storeMap = new Map<keyof ObjectFamily, any>()
-
 export const objectStore = <T extends keyof ObjectFamily>(type: T): ObjectStore<T, ObjectFamily[T]> => {
   const store = storeMap.get(type)
   if (store) {
@@ -462,27 +463,6 @@ const createFeedFolderStore = () => {
     }
   })
 }
-const createWhiteboardStore = () => {
-  return createObjectStore('whiteboard', {
-    afterGetOneProcess: {
-      onSuccess: whiteboard => {
-        if (Array.isArray(whiteboard.edges) || Array.isArray(whiteboard.nodes)) {
-          globalStore.set(
-            ObjectStore('whiteboard').objectMapAtom,
-            BaseStore.update(
-              {
-                ...whiteboard,
-                edges: new Map((whiteboard.edges as unknown as IWhiteboardEdge[])?.map(e => [e.id, e])),
-                nodes: new Map((whiteboard.nodes as unknown as IWhiteboardNode[])?.map(e => [e.id, e]))
-              } as IWhiteboard,
-              globalStore.get(ObjectStore('whiteboard').objectMapAtom)
-            )
-          )
-        }
-      }
-    }
-  })
-}
 
 const createTagStore = () => {
   return createObjectStore('tag', {
@@ -554,4 +534,12 @@ export const getObjectById = <T extends keyof ObjectFamily>(id: number): Promise
   const objectsDb = useDb('objects')
   return objectsDb.get(id)
 }
+export const refreshValueFromDB = async (key: number) => {
+  const value = await getObjectById(key)
+  if (value) {
+    const store = ObjectStore(value.specType)
+    store.getOneById(key, { forceRefresh: true })
+  }
+}
+
 export default createObjectStore

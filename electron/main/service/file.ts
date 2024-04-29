@@ -56,7 +56,7 @@ const openLocalFile = async (filePath: string) => {
   await shell.openPath(realPath)
 }
 
-const writeFile = async (data: string, filePath: string, type?: 'base64' | 'utf8' | 'binary') => {
+const writeFile = async (data: string, filePath: string, type: 'base64' | 'utf8' | 'binary') => {
   checkFileFolderGenerated()
   const folderPath = getRendeFileFolderPath()
   const absolutePath = path.join(folderPath, filePath)
@@ -197,7 +197,7 @@ const readFile = async (filePath: string) => {
     p = path.join(getRendeFileFolderPath(), replaced)
   }
   return new Promise(res => {
-    fs.readFile(p, { encoding: 'utf8' }, (err, data) => {
+    fs.readFile(p, (err, data) => {
       if (err) throw err
       res(data)
     })
@@ -213,9 +213,28 @@ const utimes = (filePath: string) => {
   console.log(p)
   fs.utimes(p, new Date(), new Date(), () => {})
 }
+const stat = async (filePath: string) => {
+  let p = filePath
+  if (filePath.startsWith('rendefile://')) {
+    const replaced = filePath.replace('rendefile://', '')
+    p = path.join(getRendeFileFolderPath(), replaced)
+  }
+  return new Promise(res => {
+    fs.stat(p, (err, data) => {
+      if (err) throw err
+      res({
+        mtime: data.mtime.getTime(),
+        ctime: data.ctime.getTime(),
+        size: data.size,
+        name: path.basename(p)
+      })
+    })
+  })
+}
 const FileService = {
   deleteFile,
   utimes,
+  stat,
   openLocalFile,
   saveFile,
   readDir,

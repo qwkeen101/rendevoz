@@ -80,7 +80,6 @@ export const BuiltInSidebarItems: Record<string, RegisteredSidebarItem> = {
 export type ISidebarVisibleItems = 'database' | 'collections' | 'webSearch' | 'category'
 
 export type ISidebarState = {
-  visible: Set<ISidebarVisibleItems>
   leftOpen?: boolean
   leftWidth: number
   leftVisible: ISidebarVisibleItems

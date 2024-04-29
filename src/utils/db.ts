@@ -1,8 +1,22 @@
 import Dexie from 'dexie'
 import { exportDB, importInto, peakImportFile } from 'dexie-export-import'
-import batchCommit from '@/api/stores/batchCommit'
 
 export const db = new Dexie('rendevozDb')
+export const syncDB = new Dexie('sync')
+let SyncAPI: undefined | (typeof import('@/api/sync'))['default'] = undefined
+
+syncDB.version(1).stores({
+  sync: ''
+})
+syncDB.version(2).stores({
+  sync: '',
+  modify: ''
+})
+syncDB.version(3).stores({
+  sync: '',
+  modify: '',
+  state: ''
+})
 db.version(13).stores({
   textselection: 'id,documentId',
   documents: 'id',
@@ -99,6 +113,24 @@ db.version(18).stores({
   keyvalues: null,
   sync: ''
 })
+db.version(19).stores({
+  textselection: null,
+  documents: null,
+  notes: null,
+  blocks: null,
+  collections: 'id,parentId',
+  blobs: 'id',
+  labels: null,
+  metaObjects: 'id,keyword',
+  metaLinks: 'id,keyword',
+  metaComments: null,
+  tags: null,
+  whiteboards: null,
+  objects: 'id,specType',
+  keypairs: '',
+  keyvalues: null,
+  sync: null
+})
 db.use({
   stack: 'dbcore',
   create: down => ({
@@ -108,8 +140,14 @@ db.use({
       return {
         ...downlevelTable,
         mutate: req => {
-          console.log(req, name)
-          batchCommit(req, name)
+          if (SyncAPI) {
+            SyncAPI.database.commit(req, name)
+          } else {
+            import('@/api/sync').then(res => {
+              SyncAPI = res.default
+              res.default.database.commit(req, name)
+            })
+          }
           return downlevelTable.mutate(req)
         }
       }

@@ -27,11 +27,20 @@ export default {
   copyFile: async (from, to) => {
     return await ipcInstance.send('copyFile', from, to).then(res => res.data)
   },
-  writeFile: async (data, path, type) => {
-    let binaryData = data instanceof Blob ? await (type === 'binary' ? data.arrayBuffer() : data.text()) : data
-    if (type === 'binary') {
-      binaryData = new Uint8Array(binaryData)
-    }
-    return await ipcInstance.send('writeFile', binaryData, path, type).then(res => res.data)
+  stat: async path => {
+    return await ipcInstance.send('stat', path).then(res => res.data)
+  },
+  writeFile: async (data, path) => {
+    let str = ''
+    const b = data instanceof Blob ? data : new Blob([data])
+    const reader = new FileReader()
+    reader.readAsDataURL(b)
+    str = await new Promise(res => {
+      reader.onload = () => {
+        res(reader.result)
+      }
+    })
+    if (!str) return
+    return await ipcInstance.send('writeFile', str.split(';base64,')[1], path, 'base64').then(res => res.data)
   }
 } as IFileSystem

@@ -8,12 +8,13 @@ export type ISystemFile = {
 }
 
 export type IFileSystem = {
+  stat: (path: string) => Promise<ISystemFile>
   getLatestBackup: (lastUpdated?: string) => Promise<string>
   readFile: (filePath: string) => Promise<string>
   /**
    * @return the uri where the file was written into
    */
-  writeFile: (data: string | Blob, path: string, type?: 'base64' | 'utf8' | 'binary') => Promise<string>
+  writeFile: (data: string | Blob | Uint8Array, path: string) => Promise<string>
   deleteFile: (path: string) => Promise<void>
   getMachineId: () => Promise<string>
   readdir: (path: string) => Promise<{

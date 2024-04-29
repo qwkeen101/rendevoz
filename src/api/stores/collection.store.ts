@@ -347,7 +347,14 @@ const useCollectionStore = () => {
   const getCachedCollectionById = (id: number) => {
     return globalStore.get(collectionsAtom).get(id)
   }
+  const refreshFromDB = async (id: number) => {
+    const v = await database.get(id)
+    if (v) {
+      globalStore.set(collectionsAtom, BaseStore.update(v, globalStore.get(collectionsAtom)))
+    }
+  }
   return {
+    refreshFromDB,
     getCachedCollectionById,
     findParentCollections,
     addItemToCollection,

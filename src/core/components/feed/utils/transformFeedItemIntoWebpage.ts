@@ -1,12 +1,12 @@
 import { FeedItem } from '@/core/components/feed/types'
 import { NoteStore, ObjectStore } from '@/api/stores'
-import { fetchRemoteImageAndSaveLocally } from '@/utils'
 import { FEED_CONTENT_CACHE } from '@/core/components/feed/contentCache'
+import FileSystem from '@/api/fileSystem'
 
 export default async (item: FeedItem) => {
   let imageSrc: string | undefined = undefined
   if (item.image) {
-    imageSrc = await fetchRemoteImageAndSaveLocally(item.image)
+    imageSrc = await FileSystem.saveImage(item.image)
   }
   let state = item.state
   if (!state) {

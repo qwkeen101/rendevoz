@@ -25,11 +25,6 @@ export const imageToDataUrl = (img: HTMLImageElement) => {
   return canvas.toDataURL('image/png')
 }
 
-/**
- * Return: local img path
- */
-export const fetchRemoteImageAndSaveLocally = FileSystem.fetchRemoteImageAndSaveLocally
-
 export const downloadImg = async (imageUrl: string, imageName?: string) => {
   const data = await (await fetch(imageUrl, { method: 'GET', referrer: '' })).blob()
   const url = URL.createObjectURL(data)

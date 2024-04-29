@@ -100,7 +100,7 @@ export type ISyncSetting = {
     maxSyncSize?: number
     displaySyncState?: boolean
     enableAutoSync?: boolean
-    syncInterval?: '30s' | '1m' | '5m' | '30m' | '1h'
+    syncInterval?: '10s' | '30s' | '1m' | '5m' | '30m' | '1h'
     syncDirection?: 'from local to remote' | 'from remote to local'
     localProtection?: boolean
   }

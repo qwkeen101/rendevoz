@@ -5,6 +5,7 @@ import { useDebounceFn, useMemoizedFn } from '@/hooks'
 import { NoteStore, ObjectStore } from '@/api/stores'
 import { Rendevoz } from '@/core/rendevoz'
 import { isEqual } from 'lodash'
+import SyncAPI from '@/api/sync'
 
 const useStoreValue = (options: {
   onContentLoaded?: VoidFunction
@@ -20,7 +21,7 @@ const useStoreValue = (options: {
   const [fetchedValue, setFetchedValue] = useState<Descendant[]>()
   const globalEmitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const handler = Rendevoz.Events.Emit.useEventHandler('editor')
-  const saveValueToNote = (value: Descendant[]) => {
+  const saveValueToNote = async (value: Descendant[]) => {
     if (!noteId) return
     if (!shouldSaveRef.current) return
     if (note && note.contentId) {
@@ -30,7 +31,7 @@ const useStoreValue = (options: {
           noteId
         }
       })
-      saveNoteAsBuffer(value, note.contentId)
+      await saveNoteAsBuffer(value, note.contentId)
       saveNoteAsSearch(value, options.metaId)
       ObjectStore('note').updateOne({ id: noteId, lastSavedAt: Date.now() })
     }
@@ -41,7 +42,11 @@ const useStoreValue = (options: {
       if (!instance) return
       const value = instance?.getSlateEditor?.().children
       if (value) {
-        saveValueToNote(value)
+        saveValueToNote(value).then(() => {
+          if (noteId) {
+            SyncAPI.note.commit(noteId)
+          }
+        })
       }
     },
     { wait: 1000 }
@@ -56,6 +61,12 @@ const useStoreValue = (options: {
   handler.on('valueSaved', data => {
     if (data.noteId === noteId) {
       shouldSaveRef.current = false
+    }
+  })
+  handler.on('refreshFromValue', data => {
+    const instance = instanceRef.current
+    if (noteId && instance && data.noteId.includes(noteId)) {
+      fetchValue()
     }
   })
   handler.on('operationApplied', handleOperationApplied)

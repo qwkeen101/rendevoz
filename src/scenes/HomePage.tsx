@@ -1,6 +1,5 @@
-import { AnimatePopover, Button, Icon, IconWithPopover, Menu, WithBorder } from '@/components'
+import { AnimatePopover, Button, Icon, Menu, WithBorder, Content } from '@/components'
 import { FC, useMemo, useState } from 'react'
-import { Components } from 'rendevoz'
 import { GlobalInstance, useGlobalAtomValue, useToggle } from '@/hooks'
 import { useTranslation } from 'react-i18next'
 import TabTitle from '@/components/layout/TabTitle'
@@ -12,8 +11,6 @@ import DateFormat from '@/utils/dateFormat'
 import { css } from '@emotion/css'
 import { motion } from 'framer-motion'
 import { DraggableElement, ObjectActionPopover } from '@/core'
-import { Zindexes } from '@/consts'
-import Colors from '@/consts/colors'
 import { atom, useAtomValue } from 'jotai'
 import fuzzysort from 'fuzzysort'
 import { Rendevoz } from '@/core/rendevoz'
@@ -25,7 +22,6 @@ import Workspace from '@/api/common/workspace'
 import ContextMenu from '@/components/contextMenu'
 import classnames from 'classnames'
 
-const { Content } = Components
 const HomeSearchAtom = atom<string | undefined>(undefined)
 export const HomePage: FC = () => {
   const { t } = useTranslation()

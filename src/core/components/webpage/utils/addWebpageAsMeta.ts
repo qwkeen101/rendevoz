@@ -1,7 +1,7 @@
-import { IWebpageState, WebpageState } from '@/core/components/webpage/hooks/useWebpageState'
+import { WebpageState } from '@/core/components/webpage/hooks/useWebpageState'
 import { NoteStore, ObjectStore } from '@/api/stores'
-import { fetchRemoteImageAndSaveLocally } from '@/utils'
 import { MetaObject } from '~/typings'
+import FileSystem from '@/api/fileSystem'
 
 export default async (webpageState: WebpageState, value: import('slate').Descendant[], meta?: Partial<MetaObject>) => {
   const note = await NoteStore.initializeNoteWithValue(value)
@@ -18,7 +18,7 @@ export default async (webpageState: WebpageState, value: import('slate').Descend
         ...meta,
         name: webpageState.title,
         description: meta?.description === webpageState.title ? undefined : meta?.description,
-        coverImgSrc: webpageState.image ? await fetchRemoteImageAndSaveLocally(webpageState.image) : undefined
+        coverImgSrc: webpageState.image ? await FileSystem.saveImage(webpageState.image) : undefined
       }
     }
   )

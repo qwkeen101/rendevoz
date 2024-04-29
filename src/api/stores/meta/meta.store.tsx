@@ -625,7 +625,22 @@ const createMetaStore = () => {
       }
     }
   }
+  const refreshFromDB = async (type: 'object' | 'link', key: number) => {
+    if (type === 'object') {
+      const value = await metaObjectDb.get(key)
+      if (value) {
+        globalStore.set(metaObjectsAtom, BaseStore.update(value, globalStore.get(metaObjectsAtom)))
+      }
+    }
+    if (type === 'link') {
+      const value = await metaLinkDb.get(key)
+      if (value) {
+        globalStore.set(metaLinksAtom, BaseStore.update(value, globalStore.get(metaLinksAtom)))
+      }
+    }
+  }
   return {
+    refreshFromDB,
     addNewProp,
     useDeletedObjectsSet,
     addMetaAsAttachment,

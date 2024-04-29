@@ -54,6 +54,7 @@
     "driver.js": "^1.2.1",
     "electron-updater": "^6.1.7",
     "events": "^3.3.0",
+    "fflate": "^0.8.2",
     "framer-motion": "^10.18.0",
     "franc": "^6.1.0",
     "fsrs.js": "^1.2.2",
@@ -125,7 +126,6 @@
     "yjs": "^13.5.41"
   },
   "devDependencies": {
-    "cross-env": "7.0.3",
     "@babel/runtime": "^7.24.0",
     "@emotion/eslint-plugin": "^11.10.0",
     "@rollup/plugin-commonjs": "^25.0.4",
@@ -158,6 +158,7 @@
     "@typescript-eslint/parser": "latest",
     "@typescript-eslint/typescript-estree": "latest",
     "@vitejs/plugin-react": "latest",
+    "cross-env": "7.0.3",
     "electron": "^29.1.5",
     "electron-builder": "^25.0.0-alpha.5",
     "electron-builder-notarize": "^1.5.1",

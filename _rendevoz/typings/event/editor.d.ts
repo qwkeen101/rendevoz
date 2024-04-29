@@ -27,6 +27,9 @@ export interface TurnSyncBlockEvent {
 interface ValueSavedEvent {
   noteId: number
 }
+interface RefreshFromValueEvent {
+  noteId: number[]
+}
 export interface EditorEventMap {
   /**
    * These are scoped event
@@ -40,6 +43,7 @@ export interface EditorEventMap {
    */
   operationApplied: OperationAppliedEvent
   valueSaved: ValueSavedEvent
+  refreshFromValue: RefreshFromValueEvent
   turnElementsToSyncBlock: TurnSyncBlockEvent
 }
 

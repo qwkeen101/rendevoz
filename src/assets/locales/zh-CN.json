@@ -675,6 +675,7 @@
     "code-block": "代码块"
   },
   "settings": {
+    "sync": "数据同步",
     "Hide highlights": "隐藏标注",
     "Expand to fixed height": "允许展开节点到固定高度",
     "Auto width": "自动宽度",

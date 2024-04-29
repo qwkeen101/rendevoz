@@ -4,44 +4,20 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { css } from '@emotion/css'
 import { Icon } from '.'
 import Colors from '@/consts/colors'
-import { useEffect, useRef, useState } from 'react'
-import { throttle } from 'lodash'
 
 const Notification = () => {
   const { toasts, handlers } = useToaster({
     duration: 4000
   })
-  const [isIn, setIsIn] = useState(false)
-  const { startPause, endPause, calculateOffset, updateHeight } = handlers
-  const containerRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    if (isIn) {
-      startPause()
-      const throttledCheck = throttle((e: PointerEvent) => {
-        if (!containerRef.current?.contains(e.target) && !(e.target as HTMLElement).closest(`[role='object-popover-panel']`)) {
-          setIsIn(false)
-        }
-      }, 100)
-      document.addEventListener('pointermove', throttledCheck)
-      return () => {
-        document.removeEventListener('pointermove', throttledCheck)
-      }
-    } else {
-      endPause()
-    }
-  }, [isIn])
+  const { calculateOffset, updateHeight } = handlers
   return (
     <motion.div
-      ref={containerRef}
       style={{
         position: 'fixed',
         top: 60,
         right: 60,
         zIndex: Zindexes.Notification,
         fontSize: 14
-      }}
-      onPointerEnter={() => {
-        setIsIn(true)
       }}
     >
       <AnimatePresence>

@@ -1,7 +1,6 @@
 import { MetaStore, ObjectStore } from '@/api/stores'
 import Media, { MediaProps } from '@/core/components/media'
 import { saveImageLocally } from '@/utils'
-import { normalizeSecondsToTime } from '@/core/components/media/utils'
 import useMediaEventHandlerWrapper from '@/core/components/media/wrappers/eventHandler'
 import useRealId from '@/core/components/media/wrappers/useRealId'
 

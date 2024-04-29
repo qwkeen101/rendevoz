@@ -22,8 +22,10 @@ export type IFileTransaction = {
       type: 'delete'
     }
 )
-export type IDBOperation = {
+export type ISyncOperation = {
   timestamp: number
-  databaseTranscations: IDBTransaction[]
-  fileTransactions: IFileTransaction[]
+  deviceId: string
+  noteUpdateIds?: number[]
+  databaseTranscations?: IDBTransaction[]
+  fileTransactions?: IFileTransaction[]
 }

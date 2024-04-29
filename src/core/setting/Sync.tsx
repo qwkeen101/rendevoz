@@ -9,30 +9,35 @@ export default () => {
     {
       title: 'Access key',
       type: 'input',
+      width: 300,
       value: setting.sync.S3Config?.ak,
       onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, S3Config: { ...s.sync.S3Config, ak: v } } }))
     },
     {
       title: 'Secert key',
       type: 'input',
+      width: 300,
       value: setting.sync.S3Config?.sk,
       onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, S3Config: { ...s.sync.S3Config, sk: v } } }))
     },
     {
       title: 'Endpoint',
       type: 'input',
+      width: 300,
       value: setting.sync.S3Config?.endpoint,
       onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, S3Config: { ...s.sync.S3Config, endpoint: v } } }))
     },
     {
       title: 'Region',
       type: 'input',
+      width: 300,
       value: setting.sync.S3Config?.region,
       onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, S3Config: { ...s.sync.S3Config, region: v } } }))
     },
     {
       title: 'Bucket',
       type: 'input',
+      width: 300,
       value: setting.sync.S3Config?.bucket,
       onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, S3Config: { ...s.sync.S3Config, bucket: v } } }))
     }
@@ -56,12 +61,13 @@ export default () => {
               setSetting(s => ({ ...s, sync: { ...s.sync, enableAutoSync: v } }))
             }
           },
-          setting.sync.enableAutoSync
+          setting.sync.enableAutoSync ?? true
             ? {
                 type: 'select',
                 title: 'Sync interval',
-                value: setting.sync.syncInterval || '5m',
+                value: setting.sync.syncInterval || '30s',
                 options: [
+                  { value: '10s', children: '10 seconds' },
                   { value: '30s', children: '30 seconds' },
                   { value: '1m', children: '1 minute' },
                   { value: '5m', children: '5 minutes' },
@@ -98,7 +104,8 @@ export default () => {
             : undefined,
           {
             type: 'input',
-            title: 'Max sync file size (MB)',
+            title: 'Max upload file size (MB)',
+            width: 100,
             value: setting.sync.maxSyncSize,
             onChange: v => {
               setSetting(s => ({ ...s, sync: { ...s.sync, maxSyncSize: v } }))

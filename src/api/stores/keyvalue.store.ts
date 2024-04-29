@@ -1,10 +1,9 @@
 import { atom } from 'jotai'
-import { useDb, useGlobalAtomValue, useSelectGlobalAtomValue } from '@/hooks'
+import { useDb, useGlobalAtomValue } from '@/hooks'
 import { globalStore } from '@/api/stores/index'
 import { useEffect } from 'react'
 import { Setting } from '@/core'
 import { MetaFilterGroup, MetaGroup, MetaObject } from '~/typings'
-import { SorterGroup } from '@/core/object/filter/BetterSorter'
 import { ISidebarState } from '@/components/layout/sidebar'
 import { Atom } from 'jotai/vanilla'
 import { selectAtom } from 'jotai/utils'
@@ -24,7 +23,6 @@ export type CurrentKeyValues = {
     name: string
     createdAt: number
   }
-  sidebarState?: ISidebarState
   filePickerType: 'local' | 'web' | 'baidudisk'
   moveToShowInvisible?: boolean
   // workspace to cache
@@ -157,6 +155,12 @@ const createKeyvalueStore = () => {
     },
     deleteOne: <T extends keyof CurrentKeyValues>(key: T) => {
       return keyvalueDb.delete(key)
+    },
+    freshOne: async <T extends keyof CurrentKeyValues>(key: T) => {
+      const value = await keyvalueDb.get(key)
+      const map = new Map(globalStore.get(keyvalueAtom))
+      map.set(key, value)
+      globalStore.set(keyvalueAtom, map)
     },
     useValue: <T extends keyof CurrentKeyValues>(key: T): CurrentKeyValues[T] | undefined => {
       if (!keyAtomCache.has(key)) {

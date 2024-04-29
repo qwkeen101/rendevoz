@@ -2,17 +2,9 @@ import { MetaStore, ObjectStore } from '@/api/stores'
 import { useEffect } from 'react'
 import { MetaObject } from '~/typings'
 import { transformTextContentToNameAndDescription } from './utils'
-import { getFilenameWithoutExtension } from '@/utils/file'
-import { Regexp } from '@/utils'
 import FileSystem from '@/api/fileSystem'
 import { Rendevoz } from '@/core/rendevoz'
 import toast from 'react-hot-toast'
-
-function isUrlImage(url: string) {
-  return fetch(url, { method: 'HEAD' }).then(res => {
-    return res.headers.get('Content-Type')?.startsWith('image')
-  })
-}
 
 export const ObjectDragState: {
   dragFrom?: 'webpage'
@@ -65,53 +57,6 @@ export const checkDropCanBeMeta = (e: DragEvent) => {
   return false
 }
 
-export const fetchHead = async (url: string) => {
-  const res = await fetch(url)
-  const text = await res.text()
-  const parser = new DOMParser()
-  const dom = parser.parseFromString(text, 'text/html')
-  const head = dom.head
-  const title = head.querySelector('title')?.textContent
-  const metas = Array.from(head.querySelectorAll('meta').values())
-  const descriptionMeta = metas.find(i => i.name === 'description' || i.getAttribute('property') === 'og:description')?.content
-  const imageMeta = metas.find(i => i.getAttribute('property') === 'og:image')?.content
-  const coverImgSrc = imageMeta && (await FileSystem.fetchRemoteImageAndSaveLocally(imageMeta))
-  return {
-    title,
-    description: descriptionMeta,
-    coverImgSrc
-  }
-}
-export const fetchHeadAndUpdateWebpage = async (url: string, webpageId: number) => {
-  const res = await fetch(url)
-  const text = await res.text()
-  const parser = new DOMParser()
-  const dom = parser.parseFromString(text, 'text/html')
-  const head = dom.head
-  const title = head.querySelector('title')?.textContent
-  const icon = Array.from(head.querySelectorAll('link').values())
-    .find(i => i.rel.includes('icon'))
-    ?.href.replace('http://localhost:7777', '')
-  const urlRoot = new URL(url).host
-  const realIcon = icon ? (Regexp.isValidWebUrl(icon) ? icon : `https://${urlRoot}${icon}`) : undefined
-  const metas = Array.from(head.querySelectorAll('meta').values())
-  const descriptionMeta = metas.find(i => i.name === 'description' || i.getAttribute('property') === 'og:description')?.content
-  const imageMeta = metas.find(i => i.getAttribute('property') === 'og:image')?.content
-  const coverImgSrc = imageMeta && (await FileSystem.fetchRemoteImageAndSaveLocally(imageMeta))
-  const iconSrc = realIcon && (await FileSystem.fetchRemoteImageAndSaveLocally(realIcon))
-  ObjectStore('webpage').updateOne({ id: webpageId, favicon: iconSrc, title })
-  setTimeout(() => {
-    const webpageMeta = MetaStore.getMetaObjectByObjectId(webpageId)
-    if (webpageMeta) {
-      MetaStore.updateMetaObject({
-        id: webpageMeta.id,
-        description: webpageMeta.description || descriptionMeta,
-        coverImgSrc: webpageMeta.coverImgSrc || coverImgSrc,
-        name: title || webpageMeta.name
-      })
-    }
-  }, 1000)
-}
 const useDropObject = () => {
   const documentDropHandler = () => {
     setTimeout(() => {
@@ -159,19 +104,10 @@ const useDropObject = () => {
         const doc = parser.parseFromString(htmlData, 'text/html')
         const imgEle = doc.querySelector('img')
         const linkEle = doc.querySelector('a')
-        console.log(doc)
         if (imgEle && imgEle.src) {
-          const imageBlob = await (
-            await fetch(imgEle.src, {
-              method: 'GET',
-              referrer: ''
-            })
-          ).blob()
-
-          const imageFilePath = await FileSystem.saveImage(imageBlob, {
+          const imageFilePath = await FileSystem.saveImage(imgEle.src, {
             compress: false
           })
-
           const imageObject = await ObjectStore('image').addOne({
             url: imageFilePath
           })
@@ -187,17 +123,14 @@ const useDropObject = () => {
         }
         if (linkEle && linkEle.href && uriData) {
           const link = linkEle.href
-          const webpageTitle = linkEle.textContent
           const webpageObject = await ObjectStore('webpage').addOne({
-            title: webpageTitle || link,
             url: link
           })
-          fetchHeadAndUpdateWebpage(link, webpageObject.id)
           Object.assign(normalizedMetaObject, {
             fromObject: from,
             type: 'webpage',
             objectId: webpageObject.id,
-            name: webpageObject.title
+            name: linkEle.textContent
           } as MetaObject)
           return normalizedMetaObject
         }
@@ -228,15 +161,13 @@ const useDropObject = () => {
         const link = plainLinkData
         const webpageTitle = plainLinkData
         const webpageObject = await ObjectStore('webpage').addOne({
-          title: webpageTitle || link,
           url: link
         })
-        fetchHeadAndUpdateWebpage(link, webpageObject.id)
         Object.assign(normalizedMetaObject, {
           fromObject: from,
           type: 'webpage',
           objectId: webpageObject.id,
-          name: webpageObject.title
+          name: webpageTitle
         } as MetaObject)
         return normalizedMetaObject
       }

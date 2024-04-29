@@ -16,7 +16,6 @@ import music from '@/assets/images/music.png?url'
 import question from '@/assets/images/question.png?url'
 import localfile from '@/assets/images/localfile.png?url'
 import twitter from '@/assets/images/twitter.png?url'
-import { fetchRemoteImageAndSaveLocally } from '@/utils'
 import { BaidudiskInstance } from '@/components/fileImporter/baidudisk/BaidudiskDisplayer'
 import { ObjectStore } from '@/api/stores'
 import { Rendevoz } from '@/core/rendevoz'
@@ -30,6 +29,7 @@ import { useCallback, useEffect } from 'react'
 import handleImportNestedCollections from '@/components/fileImporter/handleImportNestedCollections'
 import { Colors } from '@/consts'
 import isHotkey from 'is-hotkey'
+import FileSystem from '@/api/fileSystem'
 
 const keyToCreateType: Record<string, string> = {
   1: 'note',
@@ -240,7 +240,7 @@ const FileImporter = ({
           createHandler?.(m)
         }
         BaidudiskInstance.onChooseFile = async file => {
-          const thumb = await fetchRemoteImageAndSaveLocally(file.thumbs.url3)
+          const thumb = await FileSystem.saveImage(file.thumbs.url3)
           if (file.category === 1) {
             if (file) {
               ObjectStore('video')

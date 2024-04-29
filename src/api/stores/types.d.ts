@@ -16,7 +16,7 @@ export interface IStore<T> {
   getAll: () => Promise<boolean>
   getAllData: () => Promise<T[]>
   fetchAll: () => Promise<T[]>
-  getOneById: (id: number) => Promise<T | undefined>
+  getOneById: (id: number, opt?: { forceRefresh?: boolean }) => Promise<T | undefined>
   getMultipleByIds: (id: number[], cache?: boolean) => Promise<T[]>
   deleteOneById: (
     id: number,

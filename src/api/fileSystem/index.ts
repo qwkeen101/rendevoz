@@ -1,12 +1,10 @@
-import FileSystemAdapter from '@/api/fileSystem/adapter'
-import { deleteFileLocally, saveFileLocally, saveImageLocally, fetchRemoteImageAndSaveLocally } from './services'
+import { saveFileLocally, saveImageLocally } from './services'
+import electron from './electron'
 
 const FileSystem = {
-  fs: FileSystemAdapter(),
+  fs: electron,
   saveImage: saveImageLocally,
-  copyFile: saveFileLocally,
-  deleteFile: deleteFileLocally,
-  fetchRemoteImageAndSaveLocally
+  copyFile: saveFileLocally
 }
 
 export default FileSystem

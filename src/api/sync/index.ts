@@ -5,11 +5,12 @@ import commitSyncOp from './commitSyncOp'
 import pull from './pull'
 import cloudClient from './cloudClient'
 import { atom } from 'jotai/index'
-
+import restoreFromDB from './restoreFromDB'
 const SyncAPI = {
   database: DatabaseSync,
   file: FileSync,
   note: NoteSync,
+  restoreFromDB,
   commitSyncOp,
   cloudClient,
   pull,

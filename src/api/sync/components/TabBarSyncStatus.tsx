@@ -196,6 +196,7 @@ export default memo(() => {
           )}
           <div onClick={() => SyncAPI.file.syncLocalFiles()}>sync files</div>
           <div onClick={() => SyncAPI.pull()}>pull</div>
+          <div onClick={() => SyncAPI.restoreFromDB()}>restore</div>
           <div onClick={() => pushFakeChange()}>push</div>
           {renderUploading()}
           {renderDownloading()}

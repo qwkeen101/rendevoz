@@ -10,6 +10,7 @@ export type ICloudSyncClient = {
       onProgress?: (type: 'finish' | 'start', path: string, size?: number) => void
     }
   ) => Promise<void>
+  getFileAsBuffer: (filePath: string) => Promise<ArrayBuffer | undefined>
   uploadFile: (
     filePath: string | string[],
     opts?: {

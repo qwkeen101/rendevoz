@@ -6,28 +6,40 @@ let videoElement = null
 let wrapperElement = null
 
 ipcRenderer.on('videoEvent', (e, payload) => {
-  if (!videoElement) return
-  const v = videoElement
+  const v = videoElement || window.document.body.querySelector('video')
   switch (payload.type) {
     case 'stop': {
-      v.pause()
+      v && v.pause()
       break
     }
     case 'play': {
-      v.play()
+      v && v.play()
       break
     }
     case 'jump': {
-      v.currentTime = Number(payload.time)
+      if (v) {
+        v.currentTime = Number(payload.time)
+      }
       break
     }
     case 'captureSnapshot': {
-      if (videoElement) {
-        captureVideoFrame(videoElement).then(res => {
+      if (v) {
+        try {
+          const res = captureVideoFrame(v)
           ipcRenderer.sendToHost('event', {
             type: 'captureImage',
             url: res
           })
+        } catch (e) {
+          ipcRenderer.sendToHost('event', {
+            type: 'captureImage',
+            url: ''
+          })
+        }
+      } else {
+        ipcRenderer.sendToHost('event', {
+          type: 'captureImage',
+          url: ''
         })
       }
       break
@@ -41,18 +53,15 @@ const captureVideoFrame = (
     height: 720
   }
 ) => {
-  return new Promise(res => {
-    const canvas = window.document.createElement('canvas')
-    const realHeight = (video.videoHeight / video.videoWidth) * Number(size.width)
-    canvas.height = realHeight
-    canvas.width = Number(size.width)
-    const ctx = canvas.getContext('2d')
-    ctx?.drawImage(video, 0, 0, canvas.width, canvas.height)
-    const dataUrl = canvas.toDataURL()
-    res(dataUrl)
-  })
+  const canvas = window.document.createElement('canvas')
+  const realHeight = (video.videoHeight / video.videoWidth) * size.width
+  canvas.height = realHeight
+  canvas.width = size.width
+  const ctx = canvas.getContext('2d')
+  ctx?.drawImage(video, 0, 0, canvas.width, canvas.height)
+  const dataUrl = canvas.toDataURL()
+  return dataUrl
 }
-
 
 window.addEventListener('DOMContentLoaded', () => {
   interval = setInterval(() => {
@@ -103,6 +112,9 @@ window.addEventListener('DOMContentLoaded', () => {
 })
 const prepareVideo = () => {
   if (videoElement) {
+    if (videoElement.src.startsWith('http://') || videoElement.src.startsWith('https://')) {
+      window.location.href = videoElement.src
+    }
     const d = videoElement.duration
     if (d) {
       ipcRenderer.sendToHost('event', {

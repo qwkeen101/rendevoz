@@ -72,7 +72,6 @@ const startElectron = async () => {
     }
   }
   app.commandLine.appendSwitch('disable-site-isolation-trials')
-
   protocol.registerSchemesAsPrivileged([
     {
       scheme: 'rendefile',
@@ -145,6 +144,7 @@ const startElectron = async () => {
     if (params.webpreferences.includes('video')) {
       console.log(videoAboPath)
       webPreferences.preload = videoAboPath
+      webPreferences.webSecurity = false
       return
     }
   })

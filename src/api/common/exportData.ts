@@ -1,5 +1,5 @@
 import worker from './exportWorker?worker'
-export default async (): Promise<Blob> => {
+export default async (): Promise<string> => {
   const w = new worker()
   w.postMessage('')
   return await new Promise(res => {

@@ -124,6 +124,14 @@ const WebdavSync: ICloudSyncClient & {
       })
     )
   },
+  getFileAsBuffer: async filePath => {
+    const client = getClient()
+    filePath = addLeading(filePath)
+    try {
+      const res = (await client.getFileContents(filePath, { format: 'binary' })) as ArrayBuffer
+      return res
+    } catch (e) {}
+  },
   listFolder: async (dirName, startAfter) => {
     const client = getClient()
     dirName = addLeading(dirName)

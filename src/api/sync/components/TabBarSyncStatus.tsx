@@ -208,7 +208,8 @@ export default memo(() => {
         centered
         style={{
           width: 26,
-          height: '26px'
+          height: '26px',
+          'app-region': 'no-drag'
         }}
         className={ClassName.flatButton(4, '4px')}
       >

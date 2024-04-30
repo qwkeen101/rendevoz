@@ -42,6 +42,9 @@ const WebVideoPlayer = () => {
         }
       }
       const readyListener = () => {
+        if (webReady.current === false) {
+          setMediaState(s => ({ ...s, loaded: true }))
+        }
         webReady.current = true
       }
       const destoryListener = () => {
@@ -137,6 +140,7 @@ const WebVideoPlayer = () => {
       sandbox="allow-top-navigation allow-same-origin allow-forms allow-scripts"
       webpreferences="video"
       src={url}
+      disablewebsecurity={true}
       httpreferrer={'https://www.youtube.com'}
       style={{
         width: '100%',

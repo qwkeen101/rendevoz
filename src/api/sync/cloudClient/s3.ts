@@ -75,6 +75,16 @@ const S3Sync: ICloudSyncClient & {
         lastModified: i.LastModified?.getTime?.()
       }))
   },
+  getFileAsBuffer: async filePath => {
+    const { client, bucket } = getClient()
+    const res = await client.getObject({
+      Bucket: bucket,
+      Key: filePath
+    })
+    if (res.Body) {
+      return (await res.Body.transformToByteArray()).buffer
+    }
+  },
   uploadData: async (path, data) => {
     const { client, bucket } = getClient()
     await client.putObject({

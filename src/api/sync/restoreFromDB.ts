@@ -1,15 +1,18 @@
 import SyncAPI from '@/api/sync/index'
 import { importRendevozDb } from '@/utils'
-
+import { unzip, strToU8, strFromU8 } from 'fflate'
 export default async () => {
   const client = SyncAPI.cloudClient()
   if (client) {
-    const file = await client.getFile('all-data')
+    const file = await client.getFileAsBuffer('all-data.zip')
     if (file) {
-      const ds = new DecompressionStream('gzip')
-      const stream = new Blob([file]).stream().pipeThrough(ds)
-      const data = await new Response(stream).blob()
-      await importRendevozDb(data)
+      unzip(new Uint8Array(file), (err, f) => {
+        const u8 = f['all-data.json']
+        if (u8) {
+          const str = JSON.parse(strFromU8(u8))
+          importRendevozDb(new Blob([str], { type: 'application/json' }))
+        }
+      })
     }
   }
 }

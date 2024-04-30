@@ -4,6 +4,7 @@ import SyncAPI from '@/api/sync/index'
 import { syncDB } from '@/utils'
 import FileSystem from '@/api/fileSystem'
 import { globalStore } from '@/api/stores'
+import { strFromU8, decompressSync, decompress } from 'fflate'
 
 export default async () => {
   const client = SyncAPI.cloudClient()
@@ -15,8 +16,19 @@ export default async () => {
     if (all) {
       const deviceId = await FileSystem.fs.getMachineId()
       const data = (
-        (await Promise.all(all.map(async k => await client.getFile(k.key)))).filter(i => i).map(i => JSON.parse(i)) as ISyncOperation[]
-      ).filter(i => i.deviceId !== deviceId)
+        await Promise.all(
+          all.map(async k => {
+            const buffer = await client.getFileAsBuffer(k.key)
+            if (buffer) {
+              return await new Promise<ISyncOperation>(res => {
+                decompress(new Uint8Array(buffer), (err, data) => {
+                  res(JSON.parse(strFromU8(data)))
+                })
+              })
+            }
+          })
+        )
+      ).filter(i => i) as ISyncOperation[]
       // reverse here
       // const now = Date.now()
       // const needDelete = all.filter(i => !i.LastModified || now - i.LastModified.getTime() > 10 * 1000)

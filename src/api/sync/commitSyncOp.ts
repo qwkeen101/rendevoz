@@ -7,7 +7,7 @@ import SyncAPI from '@/api/sync/index'
 import { syncDB } from '@/utils'
 import exportData from '@/api/common/exportData'
 import cloud from '@/components/custom/icons/Cloud'
-
+import { compressSync, strToU8 } from 'fflate'
 let cache: Omit<ISyncOperation, 'timestamp' | 'deviceId'> = {
   databaseTranscations: [],
   fileTransactions: [],
@@ -54,10 +54,10 @@ const debounceUpload = debounce(async () => {
     }
     cloudClient.uploadData(
       `commits/${Date.now()}`,
-      JSON.stringify({ ...cache, timestamp: Date.now(), deviceId: await FileSystem.fs.getMachineId() })
+      new Blob([compressSync(strToU8(JSON.stringify({ ...cache, timestamp: Date.now(), deviceId: await FileSystem.fs.getMachineId() })))])
     )
     const data = await exportData()
-    cloudClient.uploadData('all-data', data)
+    cloudClient.uploadData('all-data.zip', data)
     cache = {
       databaseTranscations: [],
       fileTransactions: [],

@@ -65,7 +65,12 @@ const WebdavSync: ICloudSyncClient & {
     const client = getClient()
     filePath = addLeading(filePath)
     await checkDirCreated(filePath)
-    const res = (await client.getFileContents(filePath, { format: 'text' })) as string
+    const res = (await client.getFileContents(filePath, {
+      format: 'text',
+      headers: {
+        'Cache-Control': 'no-cache'
+      }
+    })) as string
     return res
   },
   deleteFile: async filePath => {
@@ -116,7 +121,12 @@ const WebdavSync: ICloudSyncClient & {
           const newP = addLeading(p)
           const state = await client.stat(newP)
           opts?.onProgress?.('start', p, state?.size)
-          const file = await client.getFileContents(newP, { format: 'text' })
+          const file = await client.getFileContents(newP, {
+            format: 'text',
+            headers: {
+              'Cache-Control': 'no-cache'
+            }
+          })
           await FileSystem.fs.writeFile(file, p)
         } finally {
           opts?.onProgress?.('finish', p)
@@ -128,7 +138,12 @@ const WebdavSync: ICloudSyncClient & {
     const client = getClient()
     filePath = addLeading(filePath)
     try {
-      const res = (await client.getFileContents(filePath, { format: 'binary' })) as ArrayBuffer
+      const res = (await client.getFileContents(filePath, {
+        format: 'binary',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      })) as ArrayBuffer
       return res
     } catch (e) {}
   },

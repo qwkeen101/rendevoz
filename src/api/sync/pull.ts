@@ -1,5 +1,5 @@
 import S3Sync from '@/api/sync/methods/s3'
-import { ISyncOperation } from '@/api/sync/db/types'
+import { IFileTransaction, ISyncOperation } from '@/api/sync/db/types'
 import SyncAPI from '@/api/sync/index'
 import { syncDB } from '@/utils'
 import FileSystem from '@/api/fileSystem'
@@ -43,8 +43,15 @@ export default async () => {
         .map(i => i.databaseTranscations?.map(t => ({ ...t, timestamp: i.timestamp })))
         .flat()
         .reverse()
+      const fileTransactions = data
+        .map(i => i.fileTransactions)
+        .flat()
+        .filter(i => i) as IFileTransaction[]
       if (dbTransactions?.length) {
         SyncAPI.database.pull(dbTransactions)
+      }
+      if (fileTransactions.length) {
+        SyncAPI.file.pull(fileTransactions)
       }
     }
   }

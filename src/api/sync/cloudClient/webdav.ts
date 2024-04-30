@@ -157,6 +157,8 @@ const WebdavSync: ICloudSyncClient & {
       const idx = res.findIndex(i => i.filename > startAfter)
       if (idx >= 0) {
         res = res.slice(idx)
+      } else {
+        res = []
       }
     }
     return res.map(i => ({

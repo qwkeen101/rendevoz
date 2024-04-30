@@ -27,7 +27,7 @@ export default async () => {
             }
           })
         )
-      ).filter(i => i && i.deviceId !== deviceId) as ISyncOperation[]
+      ).filter(i => i) as ISyncOperation[]
       // reverse here
       // const now = Date.now()
       // const needDelete = all.filter(i => !i.LastModified || now - i.LastModified.getTime() > 10 * 1000)

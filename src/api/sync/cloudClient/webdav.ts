@@ -153,7 +153,8 @@ const WebdavSync: ICloudSyncClient & {
     await checkDirCreated(dirName, true)
     let res = (await client.getDirectoryContents(dirName, { includeSelf: false })) as FileStat[]
     if (startAfter) {
-      const idx = res.findIndex(i => i.filename.includes(startAfter))
+      res.sort((a, b) => (a.filename > b.filename ? 1 : -1))
+      const idx = res.findIndex(i => i.filename > startAfter)
       if (idx >= 0) {
         res = res.slice(idx)
       }

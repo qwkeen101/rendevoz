@@ -165,7 +165,7 @@ export const exportRendevozDb = async () => {
 export const importRendevozDb = async (blob?: Blob) => {
   if (!blob) return false
   const importMeta = await peakImportFile(blob)
-
+  console.log(importMeta)
   if (importMeta.formatName !== 'dexie' || importMeta.data.databaseName !== 'rendevozDb') {
     return false
   }

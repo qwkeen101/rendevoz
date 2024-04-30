@@ -9,7 +9,7 @@ export default async () => {
       unzip(new Uint8Array(file), (err, f) => {
         const u8 = f['all-data.json']
         if (u8) {
-          const str = JSON.parse(strFromU8(u8))
+          const str = strFromU8(u8)
           importRendevozDb(new Blob([str], { type: 'application/json' }))
         }
       })

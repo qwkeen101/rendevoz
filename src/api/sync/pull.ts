@@ -11,7 +11,6 @@ export default async () => {
   if (client) {
     const lastSynced = await syncDB.table('state').get('lastSynced')
     const all = await client.listFolder('commits', lastSynced ? `commits/${lastSynced}` : undefined)
-    syncDB.table('state').put(Date.now(), 'lastSynced')
     globalStore.set(S3Sync.stateAtom, { ...globalStore.get(S3Sync.stateAtom), lastSynced: Date.now() })
     if (all) {
       const deviceId = await FileSystem.fs.getMachineId()
@@ -60,6 +59,7 @@ export default async () => {
       if (noteIds.length) {
         SyncAPI.note.pull(noteIds)
       }
+      syncDB.table('state').put(Date.now(), 'lastSynced')
     }
   }
 }

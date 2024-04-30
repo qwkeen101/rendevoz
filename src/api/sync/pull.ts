@@ -57,7 +57,7 @@ export default async () => {
         SyncAPI.database.pull(dbTransactions)
       }
       if (noteIds.length) {
-        SyncAPI.note.pull(noteIds)
+        SyncAPI.note.pull(Array.from(new Set(noteIds).values()))
       }
       syncDB.table('state').put(Date.now(), 'lastSynced')
     }

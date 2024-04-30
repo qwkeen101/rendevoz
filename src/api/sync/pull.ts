@@ -47,11 +47,11 @@ export default async () => {
         .map(i => i.fileTransactions)
         .flat()
         .filter(i => i) as IFileTransaction[]
+      if (fileTransactions.length) {
+        await SyncAPI.file.pull(fileTransactions)
+      }
       if (dbTransactions?.length) {
         SyncAPI.database.pull(dbTransactions)
-      }
-      if (fileTransactions.length) {
-        SyncAPI.file.pull(fileTransactions)
       }
     }
   }

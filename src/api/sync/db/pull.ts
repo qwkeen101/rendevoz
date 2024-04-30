@@ -15,7 +15,7 @@ export default (dbTransactions: IDBTransaction[]) => {
       dbKeys.add(t.key)
       finalDbTransactions.push(t)
     }
-    if ('value' in t) {
+    if ('value' in t && typeof t.value === 'object') {
       if ('id' in t.value) {
         if (dbKeys.has(t.value.id)) return
         dbKeys.add(t.value.id)

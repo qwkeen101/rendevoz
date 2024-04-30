@@ -28,7 +28,7 @@ export default async () => {
             }
           })
         )
-      ).filter(i => i) as ISyncOperation[]
+      ).filter(i => i && i.deviceId !== deviceId) as ISyncOperation[]
       // reverse here
       // const now = Date.now()
       // const needDelete = all.filter(i => !i.LastModified || now - i.LastModified.getTime() > 10 * 1000)
@@ -47,6 +47,7 @@ export default async () => {
         .map(i => i.fileTransactions)
         .flat()
         .filter(i => i) as IFileTransaction[]
+      console.log(fileTransactions)
       if (fileTransactions.length) {
         await SyncAPI.file.pull(fileTransactions)
       }

@@ -122,7 +122,7 @@ const WebdavSync: ICloudSyncClient & {
           const state = await client.stat(newP)
           opts?.onProgress?.('start', p, state?.size)
           const file = await client.getFileContents(newP, {
-            format: 'text',
+            format: 'binary',
             headers: {
               'Cache-Control': 'no-cache'
             }

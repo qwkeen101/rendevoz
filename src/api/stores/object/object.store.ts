@@ -3,7 +3,7 @@ import useDb from '@/hooks/stores/useDb'
 import { Atom, atom, PrimitiveAtom } from 'jotai'
 import { atomFamily, selectAtom } from 'jotai/utils'
 import { useMemo } from 'react'
-import { IRegisterdObject, IWhiteboard, IWhiteboardEdge, IWhiteboardNode, MetaObject } from '~/typings'
+import { IRegisterdObject, MetaObject } from '~/typings'
 import { globalStore, GroupStore, MetaStore, NoteStore, ObjectStore } from '../index'
 import BaseStore, { initializeLocalStore } from '../base.store'
 import { objectIdToMetaObjectIdMapAtom, tagToMetaObjectIdsMapAtom, TypeToRegisteredMetaObject } from '../meta/meta.store'
@@ -14,16 +14,20 @@ import { CustomTypes } from 'rendevoz'
 import { DEFAULT_BACKGROUND_COLORS } from '@/components/picker/colorPicker'
 import _ from 'lodash'
 import { Rendevoz } from '@/core/rendevoz'
-import WebpageStore from '@/api/stores/webpage.store'
 import deleteCallback from '@/api/stores/object/deleteCallback'
 import addCallback from '@/api/stores/object/addCallback'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import createReviewStore from '@/api/stores/object/custom/ReviewCardStore'
 import updateCallback from '@/api/stores/object/updateCallback'
 import createWhiteboardStore from '@/api/stores/object/custom/WhiteboardStore'
+import { UrlToWebpageMap } from '@/core/components/webpage/hooks/useWebpageContent'
 export type ObjectFamily = CustomTypes['Object']
 
-export const ObjectFamilyAtom = atomFamily(() => atom(new Map<number, ObjectFamily[keyof ObjectFamily]>()))
+const ObjectStoreKeys = new Set<string>()
+export const ObjectFamilyAtom = atomFamily(p => {
+  ObjectStoreKeys.add(p)
+  return atom(new Map<number, ObjectFamily[keyof ObjectFamily]>())
+})
 
 export const TypeToRegisteredObject = new Map<string, IRegisterdObject>()
 
@@ -38,7 +42,6 @@ type ObjectStore<T extends keyof ObjectFamily, V extends ObjectFamily[T]> = {
 const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[T], S extends IStore<V>>(
   type: T,
   options?: {
-    toastEnabled?: keyof INotificationSetting['notification']
     beforeAddProcess?: (o: Partial<V>, opts: Parameters<S['addOne']>[1]) => Promise<boolean | void>
     beforeAddMetaProcss?: (obj: Partial<V>, currentMeta?: Partial<MetaObject>) => Promise<MetaObject | undefined>
     beforeUpdateProcess?: (o: Partial<V>, opts: Parameters<S['updateOne']>[1]) => void
@@ -382,9 +385,9 @@ const createWebpageStore = () => {
   return createObjectStore('webpage', {
     beforeAddMetaProcss: async obj => {
       if (obj.url) {
-        const already = WebpageStore.getWebpageByUrl(obj.url)
+        const already = globalStore.get(UrlToWebpageMap).get(obj.url)
         if (already) {
-          const meta = MetaStore.getMetaObjectByObjectId(already.id)
+          const meta = MetaStore.getMetaObjectByObjectId(already)
           if (meta) {
             return meta
           }
@@ -541,5 +544,22 @@ export const refreshValueFromDB = async (key: number) => {
     store.getOneById(key, { forceRefresh: true })
   }
 }
-
+export const bulkRefreshValue = () => {
+  const db = useDb('objects')
+  const keys = Array.from(ObjectStoreKeys.values())
+  keys.forEach(async k => {
+    const atom = ObjectFamilyAtom(k)
+    const v = globalStore.get(atom)
+    const valueKeys = Array.from(v.keys())
+    const values = await db.bulkGet(valueKeys)
+    globalStore.set(atom, BaseStore.bulkAdd(values, new Map()))
+  })
+}
+export const clearAllAtoms = () => {
+  const keys = Array.from(ObjectStoreKeys.values())
+  keys.forEach(k => {
+    const atom = ObjectFamilyAtom(k)
+    globalStore.set(atom, new Map())
+  })
+}
 export default createObjectStore

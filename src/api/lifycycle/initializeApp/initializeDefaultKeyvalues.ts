@@ -1,12 +1,11 @@
 import { CurrentKeyValues } from '@/api/stores/keyvalue.store'
-import { DefaultEditorSettings } from '@/api/lifycycle/startup/initializeSettings'
+import { DefaultEditorSettings } from '@/api/lifycycle/initializeApp/initializeSettings'
 import { useDb } from '@/hooks'
 
-const defaultSidebarItems = ['home', 'database', 'collections', 'feeds', 'search', 'recycleBin', 'graph', 'settings']
+const defaultSidebarItems = ['home', 'database', 'search', 'recycleBin', 'graph', 'settings']
 export default async () => {
   const defaultKeyvalues: Partial<CurrentKeyValues> = {
     searchHistory: [],
-    currentWorkspace: 'default',
     homeDisplayMode: 'table',
     editorSettings: DefaultEditorSettings,
     webpageShowOriginal: false,
@@ -21,7 +20,7 @@ export default async () => {
     homeGalleryRows: 1
   }
   const kvDb = useDb('keypairs')
-  const all = await kvDb.toCollection()
+  const all = kvDb.toCollection()
   const allKeys = new Set(await all.keys())
   await Promise.all(
     Object.keys(defaultKeyvalues).map(async key => {

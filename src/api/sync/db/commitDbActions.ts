@@ -1,9 +1,8 @@
 import { DBCoreMutateRequest } from 'dexie'
 import { IDBTransaction } from '@/api/sync/db/types'
-import { globalStore } from '@/api/stores'
-import { initializedAtom } from '@/Initializer'
 import { syncDB } from '@/utils'
 import SyncAPI from '@/api/sync'
+import GlobalStates from '@/api/global/states'
 
 let opsToCommit: IDBTransaction[] = []
 
@@ -14,7 +13,7 @@ const updateLocalSyncTimestamp = (key: string | number) => {
 }
 export const needSkipKeys = new Set<string | number>()
 export default (op: DBCoreMutateRequest, dbName: string) => {
-  const initialized = globalStore.get(initializedAtom)
+  const initialized = GlobalStates.getValue('initialized')
   if (!initialized) return
   if (op.type === 'delete') {
     op.keys.forEach(k => {

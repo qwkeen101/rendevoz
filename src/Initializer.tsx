@@ -10,8 +10,8 @@ import LoginService, { cacheUserDetails, userAtom } from './api/services/login.s
 import { globalStore } from './api/stores'
 import { Rendevoz } from '@/core/rendevoz'
 import '@/api/lifycycle/close/close'
-import initializeApp from '@/api/lifycycle/startup/initializeApp'
-export const initializedAtom = atom(false)
+import initializeApp from '@/api/lifycycle/startup/initialize'
+import GlobalStates from '@/api/global/states'
 export const updateInfoAtom = atom<
   | {
       version: string
@@ -23,7 +23,6 @@ let autoLogined = false
 const Initializer = () => {
   const [loginState] = useGlobalAtom(loginStateAtom)
   const [, setUser] = useGlobalAtom(userAtom)
-  const setIntialized = useGlobalSetAtom(initializedAtom)
   const { t } = useTranslation()
   const setting = useGlobalAtomValue(SettingAtom)
   useEffect(() => {
@@ -48,7 +47,6 @@ const Initializer = () => {
   useEffect(() => {
     ipcInstance.on('openObject', data => {
       if (data.url) {
-        console.log(data.url)
         Rendevoz.Actions.Open.openRendevozLink(data.url)
       }
     })
@@ -92,7 +90,7 @@ const Initializer = () => {
 
     initializeApp().then(() => {
       setTimeout(() => {
-        setIntialized(true)
+        GlobalStates.setState('initialized', true)
       }, 1000)
     })
 

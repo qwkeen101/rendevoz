@@ -34,12 +34,11 @@ export type ISettingItem = {
       children?: ReactNode
     }
 )
-const SettingItem: FC<ISettingItem> = ({ title, description, column = false, titleSize = 15, childrenContainerStyle, ...rest }) => {
+const SettingItem: FC<ISettingItem> = ({ title, description, column = false, titleSize = 14, childrenContainerStyle, ...rest }) => {
   if (rest.type === 'title') {
     return (
       <div
         style={{
-          fontWeight: 500,
           fontSize: titleSize
         }}
       >
@@ -91,28 +90,28 @@ const SettingItem: FC<ISettingItem> = ({ title, description, column = false, tit
       column={column}
       alignItems={!column ? 'center' : undefined}
       justifyContent={!column ? 'space-between' : undefined}
-      gap={column ? 6 : 30}
+      gap={column ? 6 : '10%'}
       className={css({
         userSelect: 'none',
-        maxHeight: '100%'
+        maxHeight: '100%',
+        minHeight: 30
       })}
     >
       <div>
         {title && (
           <div
             style={{
-              fontWeight: 500,
               fontSize: titleSize
             }}
           >
             {title}
           </div>
         )}
-        {description && <div className={ClassName.description('12px')}>{description}</div>}
+        {description && <div className="font-size-12 transparent-font">{description}</div>}
       </div>
-      <Content flex centered={!column} style={{ fontSize: 14, flexShrink: 0, ...childrenContainerStyle }}>
+      <div style={{ fontSize: 14, display: 'flex', flexDirection: column ? 'column' : 'row', flexShrink: 0, ...childrenContainerStyle }}>
         {renderChildren()}
-      </Content>
+      </div>
     </Content>
   )
 }

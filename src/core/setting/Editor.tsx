@@ -1,6 +1,6 @@
 import { AnimatePopover, Content, WithBorder } from '@/components/base'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
-import { DefaultEditorSettings } from '@/api/lifycycle/startup/initializeSettings'
+import { DefaultEditorSettings } from '@/api/lifycycle/initializeApp/initializeSettings'
 import { useTranslation } from 'react-i18next'
 import { ClassName } from 'rendevoz'
 import { ButtonChooser, Icon, Switch } from '@/components'

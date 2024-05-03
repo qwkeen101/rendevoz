@@ -1,6 +1,5 @@
 import Dexie from 'dexie'
 import { exportDB, importInto, peakImportFile } from 'dexie-export-import'
-
 export const db = new Dexie('rendevozDb')
 export const syncDB = new Dexie('sync')
 let SyncAPI: undefined | (typeof import('@/api/sync'))['default'] = undefined
@@ -155,7 +154,9 @@ db.use({
   })
 })
 Dexie.on('storagemutated', () => {
-  localStorage.setItem('DB_LAST_UPDATE', `${Date.now()}`)
+  if (localStorage) {
+    localStorage.setItem('DB_LAST_UPDATE', `${Date.now()}`)
+  }
 })
 export const exportRendevozDb = async () => {
   const blob = (await exportDB(db)) as Blob
@@ -165,7 +166,6 @@ export const exportRendevozDb = async () => {
 export const importRendevozDb = async (blob?: Blob) => {
   if (!blob) return false
   const importMeta = await peakImportFile(blob)
-  console.log(importMeta)
   if (importMeta.formatName !== 'dexie' || importMeta.data.databaseName !== 'rendevozDb') {
     return false
   }

@@ -2,6 +2,7 @@ import { ICloudSyncClient } from '@/api/sync/cloudClient/types'
 import * as webdav from 'webdav'
 import { AuthType, FileStat, WebDAVClient } from 'webdav'
 import FileSystem from '@/api/fileSystem'
+import { getSetting } from '@/core'
 
 const getClient = () => {
   if (!WebdavSync.client) throw 'Client is not registered!'
@@ -78,11 +79,20 @@ const WebdavSync: ICloudSyncClient & {
     const client = getClient()
     await Promise.all(
       arr.map(async p => {
-        p = addLeading(p)
-        await checkDirCreated(p)
-        await client.deleteFile(p)
+        try {
+          p = addLeading(p)
+          await client.deleteFile(p)
+        } catch (e) {}
       })
     )
+  },
+  statFile: async filePath => {
+    const client = getClient()
+    const res = (await client.stat(addLeading(filePath))) as FileStat
+    return {
+      size: res.size,
+      lastModified: new Date(res.lastmod).getTime()
+    }
   },
   uploadData: async (filePath, data) => {
     const client = getClient()
@@ -94,10 +104,18 @@ const WebdavSync: ICloudSyncClient & {
     const client = getClient()
     const arr = Array.isArray(filePath) ? filePath : [filePath]
     const needCheckDir = new Set(arr.map(p => transformToDirPath(p)))
+    const maxSize = getSetting().sync.maxSyncSize
     await Promise.all(Array.from(needCheckDir.values()).map(async p => await checkDirCreated(p, true)))
     await Promise.all(
       arr.map(async p => {
         try {
+          if (maxSize && opts?.skipSetting !== true) {
+            const stat = await FileSystem.fs.stat('rendefile://' + p)
+            if (stat.size / (1024 * 1024) > maxSize) {
+              opts?.onProgress?.('skipped', p, stat.size)
+              return
+            }
+          }
           const file = await FileSystem.fs.readFile(`rendefile://` + p)
           if (file) {
             opts?.onProgress?.('start', p, file.length)
@@ -146,6 +164,15 @@ const WebdavSync: ICloudSyncClient & {
       })) as ArrayBuffer
       return res
     } catch (e) {}
+  },
+  isConnected: async () => {
+    try {
+      const client = getClient()
+      await client.exists('/')
+      return true
+    } catch (e) {
+      return false
+    }
   },
   listFolder: async (dirName, startAfter) => {
     const client = getClient()

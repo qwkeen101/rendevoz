@@ -14,7 +14,7 @@ const LabelStore = {
           )
       )
     )
-    await GlobalInstance.metaOps?.copyLink(labelMetas.filter(i => i).map(i => i.id))
+    GlobalInstance.metaOps?.copyLink(labelMetas.filter(i => i).map(i => i.id))
   }
 }
 

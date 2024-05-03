@@ -19,10 +19,32 @@ const normalizeMetaToDoc = (meta: MetaObject) => {
     description: meta.description
   }
 }
-export const initializeSearch = async () => {
+export const initializeSearch = async (force?: boolean) => {
   worker.postMessage({
     event: 'initialize'
   })
+  if (force) {
+    metaDb.toArray().then(docs => {
+      worker.postMessage({
+        event: 'insertDocuments',
+        documents: docs.map(i => normalizeMetaToDoc(i))
+      })
+      loadAllNotes().then(values => {
+        console.log(values)
+        const normalizedDocuments = values
+          .filter(i => i)
+          .map(i => ({
+            ...normalizeMetaToDoc(i.targetMeta),
+            content: normalizeChildrenToText(i.value)
+          }))
+        worker.postMessage({
+          event: 'updateDocuments',
+          documents: normalizedDocuments
+        })
+      })
+    })
+    return
+  }
   fetch('rendefile:///meta-search-index.json', {
     cache: 'no-cache'
   })

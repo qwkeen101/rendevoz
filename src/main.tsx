@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client'
 import initI18n from './config/i18n'
 import { Provider } from 'jotai'
 import { Utils, Hooks } from 'rendevoz'
-import LoadingPage from '@/components/loadingPage'
 import App from './App'
 enableMapSet()
 enablePatches()
@@ -45,7 +44,6 @@ const root = createRoot(document.getElementById('root')!)
 
 root.render(
   <Provider store={Hooks.globalStore}>
-    <LoadingPage />
     <App />
   </Provider>
 )

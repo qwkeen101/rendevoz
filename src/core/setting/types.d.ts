@@ -90,16 +90,25 @@ export type IAppearanceSetting = {
 export type ISyncSetting = {
   sync: {
     enableSync?: boolean
+    syncMode?: 's3' | 'webdav'
     S3Config?: {
       bucket?: string
       endpoint?: string
       region?: string
       ak?: string
       sk?: string
+      defaultFolder?: string
+    }
+    webdavConfig?: {
+      username?: string
+      url?: string
+      password?: string
+      defaultFolder?: string
     }
     maxSyncSize?: number
     displaySyncState?: boolean
     enableAutoSync?: boolean
+    conflictResolved?: boolean
     syncInterval?: '10s' | '30s' | '1m' | '5m' | '30m' | '1h'
     syncDirection?: 'from local to remote' | 'from remote to local'
     localProtection?: boolean

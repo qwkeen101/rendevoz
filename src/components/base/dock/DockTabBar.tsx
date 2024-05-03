@@ -137,7 +137,6 @@ export const DockTabBar = memo(
             }}
             alignItems={'center'}
           >
-            <TabBarSyncStatus />
             <Icon
               style={{
                 '-webkit-app-region': 'no-drag'
@@ -151,6 +150,7 @@ export const DockTabBar = memo(
               name={'custom-left-bar'}
               className={ClassName.flatButton(4, '4px 6px')}
             />
+            <TabBarSyncStatus />
           </Content>
         )}
         <Reorder.Group

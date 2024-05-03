@@ -353,7 +353,11 @@ const useCollectionStore = () => {
       globalStore.set(collectionsAtom, BaseStore.update(v, globalStore.get(collectionsAtom)))
     }
   }
+  const clearAtomData = () => {
+    globalStore.set(collectionsAtom, new Map())
+  }
   return {
+    clearAtomData,
     refreshFromDB,
     getCachedCollectionById,
     findParentCollections,

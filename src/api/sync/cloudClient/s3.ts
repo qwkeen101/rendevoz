@@ -1,12 +1,7 @@
 import { _Object, S3 } from '@aws-sdk/client-s3'
 import FileSystem from '@/api/fileSystem'
-import { importRendevozDb, syncDB } from '@/utils'
-import exportData from '@/api/common/exportData'
-import { atom } from 'jotai'
-import { globalStore } from '@/api/stores'
 import { getSetting } from '@/core'
 import { ICloudSyncClient } from '@/api/sync/cloudClient/types'
-import SyncAPI from '@/api/sync'
 
 const getClient = () => {
   const client = S3Sync.client
@@ -25,8 +20,8 @@ const S3Sync: ICloudSyncClient & {
   bucket?: string
 } = {
   registerClient: opt => {
-    const { ak, sk, region, endpoint, bucket } = opt
-    const client = new S3({ region: region, endpoint: endpoint, credentials: { accessKeyId: ak, secretAccessKey: sk } })
+    const { ak, sk, endpoint, bucket, region } = opt
+    const client = new S3({ credentials: { accessKeyId: ak, secretAccessKey: sk }, endpoint, region })
     S3Sync.client = client
     S3Sync.bucket = bucket
   },
@@ -39,6 +34,14 @@ const S3Sync: ICloudSyncClient & {
         Objects: paths.map(i => ({ Key: i }))
       }
     })
+  },
+  statFile: async filePath => {
+    const { client, bucket } = getClient()
+    const res = await client.headObject({ Bucket: bucket, Key: filePath })
+    return {
+      size: res.ContentLength,
+      lastModified: res.LastModified?.getTime()
+    }
   },
   getFile: async fileName => {
     const { client, bucket } = getClient()
@@ -93,7 +96,7 @@ const S3Sync: ICloudSyncClient & {
       Bucket: bucket
     })
   },
-  downloadFile: async filePath => {
+  downloadFile: async (filePath, opts) => {
     const { client, bucket } = getClient()
     const paths = Array.isArray(filePath) ? filePath : [filePath]
     if (paths.length) {
@@ -105,40 +108,47 @@ const S3Sync: ICloudSyncClient & {
             ResponseCacheControl: 'no-cache'
           })
           if (res.Body) {
-            SyncAPI.file.changeState('downloading', p, 0, res.ContentLength)
+            opts?.onProgress?.('start', p, res.ContentLength ?? 0)
             const arr = await res.Body.transformToByteArray()
             await FileSystem.fs.writeFile(arr, p)
-            SyncAPI.file.writeFileSyncState(p, 'download')
-            SyncAPI.file.changeState('downloading', p, 1)
+            opts?.onProgress?.('finish', p)
           }
         })
       )
     }
   },
+  isConnected: async () => {
+    try {
+      const client = getClient()
+      await client.client.listObjectsV2({ Bucket: client.bucket, MaxKeys: 0 })
+      return true
+    } catch (e) {
+      return false
+    }
+  },
   // do not need rendefile
-  uploadFile: async (filePath, skipSetting) => {
+  uploadFile: async (filePath, opts) => {
     const { client, bucket } = getClient()
     const paths = Array.isArray(filePath) ? filePath : [filePath]
     if (paths.length) {
       const maxSize = getSetting().sync.maxSyncSize
       await Promise.all(
         paths.map(async p => {
-          if (maxSize && skipSetting !== true) {
+          if (maxSize && opts?.skipSetting !== true) {
             const stat = await FileSystem.fs.stat('rendefile://' + p)
             if (stat.size / (1024 * 1024) > maxSize) {
-              SyncAPI.file.changeState('uploading', p, 0, stat.size, true)
+              opts?.onProgress?.('skipped', p, stat.size)
               return
             }
           }
           const file = await FileSystem.fs.readFile('rendefile:///' + p)
-          SyncAPI.file.changeState('uploading', p, 0, file.length)
+          opts?.onProgress?.('start', p, file.length)
           await client.putObject({
             Bucket: bucket,
             Key: p,
             Body: file
           })
-          SyncAPI.file.changeState('uploading', p, 1)
-          await SyncAPI.file.writeFileSyncState(p, 'upload')
+          opts?.onProgress?.('finish', p)
         })
       )
     }

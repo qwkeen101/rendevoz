@@ -153,6 +153,9 @@ const createKeyvalueStore = () => {
     fetchOne: async <T extends keyof CurrentKeyValues>(key: T): Promise<CurrentKeyValues[T] | undefined> => {
       return await keyvalueDb.get(key)
     },
+    clearAtomData: () => {
+      globalStore.set(keyvalueAtom, new Map())
+    },
     deleteOne: <T extends keyof CurrentKeyValues>(key: T) => {
       return keyvalueDb.delete(key)
     },

@@ -1,4 +1,4 @@
-import { ITag, MetaObject } from '~/typings'
+import { ITag, IWhiteboardNode, MetaObject } from '~/typings'
 import { MetaStore, ObjectStore } from '@/api/stores'
 
 export type ContainResult = {
@@ -29,7 +29,13 @@ export default async (m: MetaObject, realtime = false): Promise<MetaObject[] | u
       if (m.objectId) {
         const whiteboard = await ObjectStore('whiteboard').fetchOneById(m.objectId)
         if (whiteboard) {
-          const metas = Array.from(whiteboard.nodes?.values() || [])
+          const metas = (
+            (whiteboard.nodes && whiteboard.nodes instanceof Map
+              ? Array.from(whiteboard.nodes.values())
+              : Array.isArray(whiteboard.nodes)
+              ? whiteboard.nodes
+              : []) || []
+          )
             .filter(i => i.type === 'metaObject')
             .map(i => i.metaObjectId)
             .filter(id => isAvailable(id))

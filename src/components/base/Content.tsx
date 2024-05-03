@@ -42,13 +42,13 @@ const Content = forwardRef<HTMLDivElement, ContentProps>(
         ref={ref}
         className={className}
         style={{
+          flex: style?.flex ?? (auto ? 'auto' : undefined),
           ...style,
           position: style?.position ?? position,
           display: style?.display ?? (flex ? 'flex' : undefined),
           flexDirection: style?.flexDirection ?? (column ? 'column' : 'row'),
           justifyContent: style?.justifyContent ?? (centered ? 'center' : justifyContent),
           alignItems: style?.alignItems ?? (centered ? 'center' : alignItems),
-          flex: style?.flex ?? (auto ? 'auto' : undefined),
           width: fullWidth ? '100%' : style?.width,
           height: fullHeight ? '100%' : style?.height,
           gap: style?.gap || gap

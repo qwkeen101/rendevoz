@@ -1,17 +1,30 @@
-import S3Sync from '@/api/sync/methods/s3'
 import { IFileTransaction, ISyncOperation } from '@/api/sync/db/types'
 import SyncAPI from '@/api/sync/index'
 import { syncDB } from '@/utils'
 import FileSystem from '@/api/fileSystem'
 import { globalStore } from '@/api/stores'
-import { strFromU8, decompressSync, decompress } from 'fflate'
-
+import { strFromU8, decompress } from 'fflate'
+import { debounce } from 'lodash'
+const debounceDeleteCommits = debounce(async () => {
+  const lastSynced = await syncDB.table('state').get('lastSynced')
+  if (lastSynced) {
+    const commits = await SyncAPI.cloudClient()?.listFolder('commits')
+    if (commits) {
+      const date = new Date(lastSynced)
+      date.setMinutes(date.getMinutes() - 5)
+      const time = date.getTime()
+      const needDeleteCommits = commits.filter(a => (a.lastModified ?? 0) < time)
+      await Promise.all(needDeleteCommits.map(async c => SyncAPI.cloudClient()?.deleteFile(c.key)))
+    }
+  }
+}, 60 * 1000)
 export default async () => {
   const client = SyncAPI.cloudClient()
   if (client) {
+    debounceDeleteCommits()
     const lastSynced = await syncDB.table('state').get('lastSynced')
     const all = await client.listFolder('commits', lastSynced ? `commits/${lastSynced}` : undefined)
-    globalStore.set(S3Sync.stateAtom, { ...globalStore.get(S3Sync.stateAtom), lastSynced: Date.now() })
+    globalStore.set(SyncAPI.stateAtom, { ...globalStore.get(SyncAPI.stateAtom), lastSynced: Date.now() })
     if (all) {
       const deviceId = await FileSystem.fs.getMachineId()
       const data = (

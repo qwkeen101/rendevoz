@@ -639,9 +639,14 @@ const createMetaStore = () => {
       }
     }
   }
+  const clearAtomData = () => {
+    globalStore.set(metaObjectsAtom, new Map())
+    globalStore.set(metaLinksAtom, new Map())
+  }
   return {
     refreshFromDB,
     addNewProp,
+    clearAtomData,
     useDeletedObjectsSet,
     addMetaAsAttachment,
     getMetaObjectById,

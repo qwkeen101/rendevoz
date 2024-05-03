@@ -1,39 +1,51 @@
 import DatabaseSync from './db'
 import FileSync from './file'
 import NoteSync from './note'
-import commitSyncOp from './commitSyncOp'
+import commitSyncOp, { commitManually } from './commitSyncOp'
 import pull from './pull'
 import cloudClient from './cloudClient'
 import { atom } from 'jotai/index'
 import restoreFromDB from './restoreFromDB'
+import resolveConflict from './cloudClient/resolveConflict'
+const Colors = {
+  green: 'rgb(117,195,58)',
+  red: 'rgb(255, 86, 86)',
+  yellow: 'rgb(255,189,86)',
+  grey: 'var(--font-s-transparent)'
+}
+type Connection = 'connected' | 'unconnected' | 'wrong config' | 'syncing'
 const SyncAPI = {
   database: DatabaseSync,
   file: FileSync,
   note: NoteSync,
+  resolveConflict,
   restoreFromDB,
   commitSyncOp,
   cloudClient,
+  commitLocalTransactions: commitManually,
   pull,
+  colors: Colors,
+  connectionToText: {
+    connected: 'Connected',
+    syncing: 'Syncing',
+    unconnected: 'Unconnected',
+    'wrong config': 'Wrong config'
+  } as Record<Connection, string>,
+  connectionToColors: {
+    connected: Colors['green'],
+    syncing: Colors['yellow'],
+    unconnected: Colors['red'],
+    'wrong config': Colors['grey']
+  } as Record<Connection, string>,
   stateAtom: atom<{
-    needDownload: number
-    downloaded: number
     uploading: Record<string, { name: string; size: number; progress: number; skiped?: boolean }>
     downloading: Record<string, { name: string; size: number; progress: number }>
-    needUpload: number
-    synced: boolean
-    uploaded: number
-    connected: boolean
+    connection: Connection
     lastSynced?: number
   }>({
-    needDownload: 0,
-    downloaded: 0,
     uploading: {},
     downloading: {},
-    needUpload: 0,
-    uploaded: 0,
-    synced: false,
-    connected: false
+    connection: 'unconnected'
   })
 }
-
 export default SyncAPI

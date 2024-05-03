@@ -11,7 +11,6 @@ interface WithBorderProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivElemen
   className?: string
   onClick?: MouseEventHandler
   contentEditable?: boolean
-  disableClosePopover?: boolean
   padding?: CSSProperties['padding']
   blur?: boolean
   width?: number
@@ -19,20 +18,7 @@ interface WithBorderProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivElemen
 }
 
 const WithBorder: FC<PropsWithChildren<WithBorderProps>> = (
-  {
-    borderRadius = 8,
-    width,
-    borderBoxShadow,
-    disableClosePopover = false,
-    blur,
-    children,
-    style,
-    onClick,
-    className,
-    contentEditable,
-    padding,
-    ...rest
-  },
+  { borderRadius = 8, width, borderBoxShadow, blur, children, style, onClick, className, contentEditable, padding, ...rest },
   ref
 ) => {
   const DefaultBorder: CSSProperties = {
@@ -51,7 +37,6 @@ const WithBorder: FC<PropsWithChildren<WithBorderProps>> = (
   }
   return (
     <div
-      data-disable-close-popover={disableClosePopover}
       ref={ref}
       {...rest}
       onClick={handleClick}

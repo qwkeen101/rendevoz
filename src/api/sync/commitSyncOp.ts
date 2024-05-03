@@ -2,26 +2,27 @@
 import { IDBTransaction, ISyncOperation } from '@/api/sync/db/types'
 import { debounce } from 'lodash'
 import FileSystem from '@/api/fileSystem'
-import S3Sync from '@/api/sync/methods/s3'
 import SyncAPI from '@/api/sync/index'
 import { syncDB } from '@/utils'
 import exportData from '@/api/common/exportData'
-import cloud from '@/components/custom/icons/Cloud'
 import { compressSync, strToU8 } from 'fflate'
+import { getSetting } from '@/core'
 let cache: Omit<ISyncOperation, 'timestamp' | 'deviceId'> = {
   databaseTranscations: [],
   fileTransactions: [],
   noteUpdateIds: []
 }
-// commit to s3 default
 export default async (operation: Partial<ISyncOperation>) => {
   cache.databaseTranscations = [...(cache.databaseTranscations || []), ...(operation.databaseTranscations || [])]
   cache.fileTransactions = [...(cache.fileTransactions || []), ...(operation.fileTransactions || [])]
   cache.noteUpdateIds = [...(cache.noteUpdateIds || []), ...(operation.noteUpdateIds || [])]
-  debounceUpload()
+  const setting = getSetting()
+  if (setting.sync.enableSync && setting.sync.conflictResolved && setting.sync.enableAutoSync) {
+    debounceUpload()
+  }
 }
 
-const debounceUpload = debounce(async () => {
+export const commitManually = async () => {
   const cloudClient = SyncAPI.cloudClient()
   if (cloudClient) {
     const lastUpload = await syncDB.table('state').get('lastUploaded')
@@ -64,7 +65,8 @@ const debounceUpload = debounce(async () => {
       noteUpdateIds: []
     }
   }
-}, 2000)
+}
+const debounceUpload = debounce(commitManually, 2000)
 const removeRepeatNoteIds = () => {
   cache.noteUpdateIds = Array.from(new Set(cache.noteUpdateIds).values())
 }

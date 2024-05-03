@@ -1,5 +1,5 @@
 export type ICloudSyncClient = {
-  deleteFile: (filePath: string) => Promise<void>
+  deleteFile: (filePath: string | string[]) => Promise<void>
   // return string data
   getFile: (filePath: string) => Promise<string | undefined>
   listFolder: (dirName: string, startAfter?: string) => Promise<{ key: string; lastModified?: number; size?: number }[]>
@@ -10,12 +10,14 @@ export type ICloudSyncClient = {
       onProgress?: (type: 'finish' | 'start', path: string, size?: number) => void
     }
   ) => Promise<void>
+  statFile: (filePath: string) => Promise<{ size?: number; lastModified?: number } | undefined>
   getFileAsBuffer: (filePath: string) => Promise<ArrayBuffer | undefined>
   uploadFile: (
     filePath: string | string[],
     opts?: {
-      onProgress?: (type: 'finish' | 'start', path: string, size?: number) => void
+      onProgress?: (type: 'finish' | 'start' | 'skipped', path: string, size?: number) => void
       skipSetting?: boolean
     }
   ) => Promise<void>
+  isConnected: () => Promise<boolean>
 }

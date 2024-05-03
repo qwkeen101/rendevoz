@@ -10,12 +10,11 @@ import { Rendevoz } from '@/core/rendevoz'
 import { getOS } from '@/App'
 import TitleBar from '@/components/titlebar'
 import * as Serializer from '../base/dock/Serializer'
-import { GlobalInstance, useGlobalAtom, useGlobalAtomValue } from '@/hooks'
-import { initializedAtom } from '@/Initializer'
+import { GlobalInstance, useGlobalAtom } from '@/hooks'
 import { atom } from 'jotai'
 import assignGlobalLayoutOps from '@/components/layout/assignLayoutOps'
 import registerTabs from '@/api/lifycycle/startup/registerTabs'
-import { ITabData } from '~/typings/rendevoz'
+import GlobalStates from '@/api/global/states'
 
 const initialLayout: LayoutData = {
   global: {
@@ -94,7 +93,7 @@ const Layout = () => {
     const restored = restoreSavedTab(tab)
     return restored || tab
   }
-  const initialized = useGlobalAtomValue(initializedAtom)
+  const initialized = GlobalStates.useValue('initialized')
   useEffect(() => {
     if (initialized) {
       registerTabs()

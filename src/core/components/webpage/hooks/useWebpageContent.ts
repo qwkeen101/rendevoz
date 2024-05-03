@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
   ObjectStore('webpage')
     .fetchAll()
     .then(data => {
-      console.log(data)
       const map = new Map()
       data.forEach(i => {
         map.set(i.url, i.id)

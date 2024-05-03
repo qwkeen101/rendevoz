@@ -1,12 +1,10 @@
 import commit from './commit'
 import pull from './pull'
-import sync from './sync'
 import listNeedUpload from './listNeedUpload'
 import uploadModifiedLocalFiles from './uploadModifiedLocalFiles'
 import { syncDB } from '@/utils'
 import FileSystem from '@/api/fileSystem'
 import { globalStore } from '@/api/stores'
-import S3Sync from '@/api/sync/methods/s3'
 import syncBetweenLocalFolderAndCloudFolder from '@/api/sync/cloudClient/syncBetweenLocalFolderAndCloudFolder'
 import SyncAPI from '@/api/sync'
 
@@ -15,8 +13,8 @@ export type FileSyncState = {
   lastUpload: number
 }
 const changeState = (type: 'downloading' | 'uploading', name: string, progress: number, size?: number, skiped?: boolean) => {
-  const currState = globalStore.get(S3Sync.stateAtom)
-  globalStore.set(S3Sync.stateAtom, {
+  const currState = globalStore.get(SyncAPI.stateAtom)
+  globalStore.set(SyncAPI.stateAtom, {
     ...currState,
     [type]: {
       ...currState[type],
@@ -49,6 +47,7 @@ const writeFileSyncState = async (name: string, type: 'download' | 'upload') => 
 
 const syncLocalFiles = async () => {
   const client = SyncAPI.cloudClient()
+  if (!client) return
   const imgRes = await syncBetweenLocalFolderAndCloudFolder('imgs')
   if (imgRes) {
     imgRes.filesToDownload.length && (await client.downloadFile(imgRes.filesToDownload))

@@ -1,7 +1,6 @@
 // pull remote transactions and replace local
 import { syncDB } from '@/utils'
-import S3Sync from '@/api/sync/methods/s3'
-import { IDBTransaction, ISyncOperation } from '@/api/sync/db/types'
+import { IDBTransaction } from '@/api/sync/db/types'
 import { useDb } from '@/hooks'
 import { needSkipKeys } from '@/api/sync/db/commitDbActions'
 import refreshLocalFromDB from '@/api/stores/refreshLocalFromDB'

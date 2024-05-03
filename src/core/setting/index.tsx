@@ -222,11 +222,10 @@ const SettingDialog = () => {
     <Content
       flex
       style={{
-        width: 1100,
+        width: 1150,
         maxWidth: 'calc(100vw - 100px)',
-        height: '50vh',
-        minHeight: 600,
-        maxHeight: 'calc(100vh - 100px)',
+        height: 'calc(100vh - 100px)',
+        maxHeight: '715px',
         overflow: 'hidden',
         borderRadius: 12
       }}

@@ -1,6 +1,6 @@
 import '@icon-park/react/styles/index.less'
 import './styles/common.less'
-import Initializer, { initializedAtom } from './Initializer'
+import Initializer from './Initializer'
 import './styles/global.less'
 import './styles/font.less'
 import { GlobalDragOverlay, GlobalScreenShot, SettingAtom } from '@/core'
@@ -44,6 +44,8 @@ import GlobalDialog from '@/core/global/GlobalDialog'
 import { ChineseFormats, DateFormat, EnglishFormats } from '@/utils'
 import useGlobalShortcutHandler from '@/core/global/ShortcutHandler'
 import ObjectEditForm from '@/core/global/components/ObjectEditForm'
+import GlobalStates from '@/api/global/states'
+import LoadingPage from '@/components/loadingPage'
 
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
@@ -94,7 +96,7 @@ const App = () => {
     GlobalPluginManager.registerPlugin(BuiltinEditorPlugin)
     executed.current = true
   }
-  const initialized = useAtomValue(initializedAtom)
+  const initialized = GlobalStates.useValue('initialized')
   useEffect(() => {
     i18n.changeLanguage(lang)
     const currentLang = i18n.language
@@ -129,6 +131,7 @@ const App = () => {
         <Initializer />
         <ThemeSwitcher />
         <Notification />
+        <LoadingPage />
         <>
           <GlobalDownloadIndicator />
           <TextSearch />
@@ -143,7 +146,7 @@ const App = () => {
           <GlobalObjectCreator />
           <GlobalObjectDetails />
           <GlobalTranslateResult />
-          {initialized && <AuthenticatedLayout />}
+          <AuthenticatedLayout />
           <GlobalDragOverlay />
           <ImagePreviewer />
           <FileImporter />

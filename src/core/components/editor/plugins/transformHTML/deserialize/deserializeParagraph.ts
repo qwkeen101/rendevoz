@@ -1,11 +1,6 @@
-import { ELEMENT_TAGS, TEXT_TAGS } from '@/core/components/editor/plugins/transformHTML/HTMLTags'
-import deserializeText from '@/core/components/editor/plugins/transformHTML/deserialize/deserializeText'
 import { jsx } from 'slate-hyperscript'
 import Id from '@/utils/id'
 import { deserializeHTMLChildren, deserializeRoot } from '@/core/components/editor/plugins/transformHTML/deserializeHTML'
-import { ElementsAvailableInParagraph } from '@/core/components/editor/plugins/transformHTML/consts'
-import deserializeSpan from '@/core/components/editor/plugins/transformHTML/deserialize/deserializeSpan'
-import normalizeText from '@/core/components/editor/plugins/transformHTML/deserialize/normalizeText'
 import { Text } from 'slate'
 
 export default (node: HTMLElement, type = 'paragraph') => {

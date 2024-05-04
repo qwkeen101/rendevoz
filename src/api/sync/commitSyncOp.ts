@@ -53,6 +53,7 @@ export const commitManually = async () => {
         cache.fileTransactions = changedFiles.map(i => ({ type: 'put', name: i }))
       }
     }
+    console.log(cache)
     cloudClient.uploadData(
       `commits/${Date.now()}`,
       new Blob([compressSync(strToU8(JSON.stringify({ ...cache, timestamp: Date.now(), deviceId: await FileSystem.fs.getMachineId() })))])

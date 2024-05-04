@@ -15,6 +15,7 @@ export const needSkipKeys = new Set<string | number>()
 export default (op: DBCoreMutateRequest, dbName: string) => {
   const initialized = GlobalStates.getValue('initialized')
   if (!initialized) return
+  console.log(needSkipKeys)
   if (op.type === 'delete') {
     op.keys.forEach(k => {
       if (needSkipKeys.has(k)) {
@@ -31,6 +32,7 @@ export default (op: DBCoreMutateRequest, dbName: string) => {
   if (op.type === 'add' || op.type === 'put') {
     if (op.keys) {
       op.keys.forEach((k, idx) => {
+        updateLocalSyncTimestamp(k)
         if (needSkipKeys.has(k)) {
           needSkipKeys.delete(k)
           return
@@ -43,11 +45,13 @@ export default (op: DBCoreMutateRequest, dbName: string) => {
             key: k,
             database: dbName
           })
-          updateLocalSyncTimestamp(k)
         }
       })
     } else {
       op.values.forEach(value => {
+        if ('id' in value && value.id) {
+          updateLocalSyncTimestamp(value.id)
+        }
         if (needSkipKeys.has(value.id)) {
           needSkipKeys.delete(value.id)
           return
@@ -57,9 +61,6 @@ export default (op: DBCoreMutateRequest, dbName: string) => {
           value,
           database: dbName
         })
-        if ('id' in value && value.id) {
-          updateLocalSyncTimestamp(value.id)
-        }
       })
     }
   }

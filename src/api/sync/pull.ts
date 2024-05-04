@@ -23,6 +23,7 @@ export default async () => {
   if (client) {
     debounceDeleteCommits()
     const lastSynced = await syncDB.table('state').get('lastSynced')
+    syncDB.table('state').put(Date.now(), 'lastSynced')
     const all = await client.listFolder('commits', lastSynced ? `commits/${lastSynced}` : undefined)
     globalStore.set(SyncAPI.stateAtom, { ...globalStore.get(SyncAPI.stateAtom), lastSynced: Date.now() })
     if (all) {
@@ -72,7 +73,6 @@ export default async () => {
       if (noteIds.length) {
         SyncAPI.note.pull(Array.from(new Set(noteIds).values()))
       }
-      syncDB.table('state').put(Date.now(), 'lastSynced')
     }
   }
 }

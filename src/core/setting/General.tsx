@@ -14,7 +14,7 @@ import Select from '@/components/base/select'
 import { SelectOptionProps } from '../../components/base/select/SelectOption'
 import produce from 'immer'
 import { useGlobalAtomValue } from '@/hooks/jotai'
-import { updateInfoAtom } from '@/Initializer'
+import { updateInfoAtom } from '@/api/components/Initializer'
 import { ipcInstance } from '@/electron'
 import semver from 'semver'
 import Colors from '@/consts/colors'
@@ -290,7 +290,7 @@ const GeneralSetting = () => {
           text={t('settings.Rebuild')}
           icon={'park-refresh'}
           onClick={() => {
-            FileSystem.deleteFile('rendefile:///meta-search-index.json').then(() => {
+            FileSystem.fs.deleteFile('rendefile:///meta-search-index.json').then(() => {
               initializeSearch()
             })
           }}

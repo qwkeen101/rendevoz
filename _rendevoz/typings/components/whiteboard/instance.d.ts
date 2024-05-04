@@ -88,6 +88,7 @@ export type INodeInnerFuncs = {
   getNodeDOM: () => HTMLElement
   setNodeState: Dispatch<SetStateAction<INodeInnerState>>
   drawMindmapEdges?: VoidFunction
+  focusText?: VoidFunction
   checkMindmapDrag?: (
     targetNode:
       | {

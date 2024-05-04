@@ -1,12 +1,8 @@
-import { IPdfInstance } from '~/typings'
-import { useEffect, useState } from 'react'
-import usePdfInstance from '@/core/components/pdf/hooks/usePdfInstance'
+import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 import { assignProperties } from '@/utils'
-import { useSelectAtomValue } from '@/hooks'
 import { PdfStateAtom } from '@/core/components/pdf/hooks/usePdfState'
 import { ObjectStore } from '@/api/stores'
-import { PAGE_SPACING } from '@/core/components/pdf/core/layouts/Layout'
-import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai'
+import { atom, useAtom, useAtomValue } from 'jotai'
 
 const historyAtom = atom<{
   offsetArr: number[]
@@ -16,13 +12,23 @@ const historyAtom = atom<{
   currIdx: -1
 })
 export default () => {
-  const instance = usePdfInstance()
-  const doublePage = useSelectAtomValue(PdfStateAtom, s => s.state?.doublePage)
+  const instance = usePDFInstance()
   const [pdfState, setPdfState] = useAtom(PdfStateAtom)
   const [pdfHistoryState, setPdfHistoryState] = useAtom(historyAtom)
 
   assignProperties(instance, {
     navigateOps: {
+      scrollByPercent: percent => {
+        const pageSize = instance.getPageSize?.()
+        if (pageSize) {
+          const realHeight = pageSize.height * pageSize.scale
+          instance.navigateOps?.scrollBy?.(realHeight * percent)
+        }
+      },
+      scrollBy: y => {
+        console.log(y)
+        instance.virtualizer?.scrollBy?.(y, { behavior: 'auto' })
+      },
       useHistory: () => {
         const h = useAtomValue(historyAtom)
         return {
@@ -58,31 +64,46 @@ export default () => {
         const label = await ObjectStore('pdfLabel').getOneById(labelId)
         if (!label) return
         setPdfState(s => ({ ...s, currentHighlightLabelId: labelId }))
-        const pageIdx = doublePage ? Math.floor(label.page / 2) : label.page
+        setTimeout(
+          () =>
+            setPdfState(s => ({
+              ...s,
+              currentHighlightLabelId: s.currentHighlightLabelId === labelId ? undefined : s.currentHighlightLabelId
+            })),
+          1500
+        )
+        const pageIdx = label.page
+        if (pageIdx === undefined) return
+        const scale = pdfState.finalScale
+        if (!scale) return
+        let percent = 0
         switch (label.type) {
           case 'crop': {
-            const percentageTop = label.rect.top
-            const realOffset =
-              pageSize.height * pageSize.scale * pageIdx +
-              percentageTop * pageSize.height * pageSize.scale +
-              PAGE_SPACING * pageIdx -
-              pageSize.height * 0.5
-            instance.navigateOps?.jumpToOffset(realOffset, { align: 'start' })
-            return
+            percent = label.rect.top + label.rect.height / 2
+            break
           }
           case 'highlight': {
             const labelPercentTop = 'rect' in label ? label.rect![1] : 'rects' in label ? label.rects?.[0].percentageTop : undefined
-            if (labelPercentTop !== undefined) {
-              const realOffset =
-                pageSize.height * pageSize.scale * pageIdx +
-                labelPercentTop * pageSize.height * pageSize.scale +
-                PAGE_SPACING * pageIdx -
-                pageSize.height * 0.5
-              instance.navigateOps?.jumpToOffset(realOffset, { align: 'start' })
+            let percentHeight = 0
+            if ('rect' in label) {
+              percentHeight = label.rect![3]
             }
-            return
+            if ('rects' in label && label.rects) {
+              const last = label.rects[label.rects.length - 1]
+              percentHeight = last.percentageTop! + last.percentageHeight! - label.rects[0].percentageTop!
+            }
+            if (labelPercentTop !== undefined) {
+              percent = labelPercentTop + percentHeight / 2
+            }
+            break
           }
         }
+        let pageOffset = percent * pageSize.height * pageSize.scale
+        const scrollEleHeight = instance.virtualizer?.scrollElement?.clientHeight
+        if (scrollEleHeight) {
+          pageOffset -= scrollEleHeight / 2
+        }
+        instance.navigateOps?.jumpToPage(pageIdx, 'start', pageOffset)
       },
       jumpToOffset: (offset, opts) => {
         const virtualizer = instance.virtualizer
@@ -93,7 +114,7 @@ export default () => {
           }
         }
       },
-      jumpToPage: async pageIndex => {
+      jumpToPage: async (pageIndex, align, outOffset) => {
         const doc = await instance.getDocument?.()
         const pageSize = instance.getPageSize?.()
         if (pageSize && doc) {
@@ -101,7 +122,7 @@ export default () => {
           if (pageIndex >= 0 && pageIndex < numPages) {
             const offset = instance.virtualizer?.getOffsetForIndex(pageIndex, 'start')
             if (offset !== undefined) {
-              instance.virtualizer?.scrollToOffset(offset[0] - (pdfState.styles?.paddingTop ?? 60))
+              instance.virtualizer?.scrollToOffset(offset[0] + (outOffset ?? 0) - (pdfState.styles?.paddingTop ?? 60), { align })
             }
           }
         }

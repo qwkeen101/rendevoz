@@ -1,4 +1,4 @@
-import usePdfInstance from '@/core/components/pdf/hooks/usePdfInstance'
+import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 import { useEffect } from 'react'
 import isHotkey from 'is-hotkey'
 import { useSetAtom } from 'jotai'
@@ -7,7 +7,7 @@ import { PdfStateAtom } from '@/core/components/pdf/hooks/usePdfState'
 import { KEY } from '@/consts'
 
 export default () => {
-  const instance = usePdfInstance()
+  const instance = usePDFInstance()
   const setBarState = useSetAtom(PdfBarStateAtom)
   const setPdfState = useSetAtom(PdfStateAtom)
   useEffect(() => {

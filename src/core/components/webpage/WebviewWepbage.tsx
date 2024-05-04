@@ -3,9 +3,9 @@ import { Content } from '@/components'
 import WebpageNavigation from '@/core/components/webpage/WebpageNavigation'
 import { useEffect, useRef, useState } from 'react'
 import { useGlobalAtomValue } from '@/hooks'
-import { UrlToWebpageMap } from '@/core/components/webpage/hooks/useWebpageContent'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
 import { Rendevoz } from '@/core/rendevoz'
+import { urlToIdMap } from '@/api/indexData/urlToId'
 
 export default ({
   url,
@@ -20,7 +20,7 @@ export default ({
 }) => {
   const [currentUrl, setCurrentUrl] = useState()
   const [isLoading, setIsLoading] = useState(false)
-  const isSaved = useGlobalAtomValue(UrlToWebpageMap).has(url)
+  const isSaved = useGlobalAtomValue(urlToIdMap).has(url)
   const webviewRef = useRef<
     {
       goBack: VoidFunction

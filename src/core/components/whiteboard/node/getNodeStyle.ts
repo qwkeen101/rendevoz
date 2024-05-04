@@ -1,10 +1,10 @@
 import { CSSProperties } from 'react'
 import { IWhiteboardInstance, IWhiteboardNode } from '~/typings'
 import { NodeInnerState } from '@/core/components/whiteboard/node/WrapperNode'
-import Colors from '../../../../consts/colors'
-import { getSetting } from '@/core'
+import Colors from '@/consts/colors'
 import tinycolor from 'tinycolor2'
 
+const colorToDarken: Record<string, string> = {}
 const transparentBackgroundNodes = ['text', 'freehand']
 const getNodeStyle = (
   node: IWhiteboardNode,
@@ -21,7 +21,6 @@ const getNodeStyle = (
     }
   }
 ): CSSProperties => {
-  const isDarkMode = getSetting().general.darkMode
   let mindmapTransparent = false
   if (node.type === 'mindmap') {
     if (!node.nodeType || transparentBackgroundNodes.includes(node.nodeType)) {
@@ -99,15 +98,8 @@ const getNodeStyle = (
       break
   }
 
-  let showBorder = false
-
-  if (node.rootId || node.type === 'mindmap') {
-    showBorder = true
-  }
-  if (node.borderType === 'underline') {
-    showBorder = false
-  }
-  if (!node.border) {
+  let showBorder = true
+  if (node.type === 'group' || node.borderType === 'underline' || !node.border) {
     showBorder = false
   }
   let opacity = 1
@@ -117,12 +109,21 @@ const getNodeStyle = (
   if (node.rootId && node.x === 0 && node.y === 0 && !node.height) {
     opacity = 0
   }
+  let borderColor = ''
+  if (showBorder && node.border) {
+    let c = colorToDarken[node.border]
+    if (!c) {
+      c = tinycolor(node.border).darken(30).toHexString()
+      colorToDarken[node.border] = c
+    }
+    borderColor = c
+  }
   return {
     boxShadow: getNodeBoxShadow(),
     opacity,
     borderRadius: borderRadius,
     zIndex,
-    border: showBorder ? `3px solid ${tinycolor(node.border).darken(30).toHexString()}` : undefined,
+    border: showBorder ? `3px solid ${borderColor}` : undefined,
     userSelect: nodeState.focused || nodeState.focused ? 'auto' : 'none',
     background:
       node.type === 'group'

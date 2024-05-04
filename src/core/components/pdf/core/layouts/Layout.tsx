@@ -1,20 +1,17 @@
 import { PDFDocumentProxy } from 'pdfjs-dist'
-import { FC, memo, ReactElement, useEffect, useRef, useState } from 'react'
-import { defaultRangeExtractor, Range, useVirtualizer } from '@tanstack/react-virtual'
-import { useDebounceFn, useMemoizedFn, useSelectAtomValue, useUpdateEffect } from '@/hooks'
+import { FC, memo, ReactElement, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Range, useVirtualizer } from '@tanstack/react-virtual'
+import { useDebounceFn, useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import PageLayer from '../layers/PageLayer'
 import PanHelper from '../utils/pan'
-import Id from '@/utils/id'
-import { Box, IPdfViewer, PageSize, RenderPageProps, IAnnotation, TextItem } from '~/typings'
-import { PAGE_INDEX_TO_PAGE_FUNCTION, PAGE_INDEX_TO_TEXT_LAYER, PDF_TO_DOC } from '../weakMaps'
+import { PageSize, RenderPageProps, IAnnotation, IPDFInstance } from '~/typings'
+import { PAGE_INDEX_TO_PAGE_FUNCTION } from '../weakMaps'
 import { waitFor } from '@/utils/functions'
-import { normalizeText } from '../utils/search'
 import { PdfStateAtom } from '../../hooks/usePdfState'
-import { calculateImageAspectRatio, saveImageLocally } from '@/utils'
 import { useSetAtom } from 'jotai'
-import { renderPageInDarkMode, renderPageInNormalMode } from '@/core/components/pdf/core/utils/renderer'
-import usePdfInstance from '@/core/components/pdf/hooks/usePdfInstance'
+import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 import { isEqual } from 'lodash'
+import makeDocumentSearchable from '@/core/components/pdf/core/layouts/makeDocumentSearchable'
 
 interface LayoutProps {
   doc: PDFDocumentProxy
@@ -76,15 +73,10 @@ const Layout: FC<LayoutProps> = ({
   const fitScale = pageSize.scale
   const finalScale = scaleChanged ? scale : autoWidth ? fitScale || scale : scale
   const setPdfState = useSetAtom(PdfStateAtom)
-  const instance = usePdfInstance()
-
-  const textRef = useRef<
-    {
-      id: number
-      str: string
-      page: number
-    }[]
-  >([])
+  useLayoutEffect(() => {
+    setPdfState(s => ({ ...s, finalScale }))
+  }, [finalScale])
+  const instance = usePDFInstance()
   const currentRangeRef = useRef<Range>({
     startIndex: 0,
     endIndex: 0,
@@ -116,7 +108,6 @@ const Layout: FC<LayoutProps> = ({
   const rangeExtractor = useMemoizedFn((range: Range) => {
     visibleRangeRef.current = [range.startIndex, range.endIndex]
     currentRangeRef.current = range
-    console.log(range.overscan)
     let start = Math.max(range.startIndex - range.overscan * (doublePage ? 2 : 1), 0)
     const end = Math.min(range.endIndex + range.overscan * (doublePage ? 2 : 1), range.count - 1)
     if (doublePage) {
@@ -134,7 +125,6 @@ const Layout: FC<LayoutProps> = ({
   })
   const virtualizer = useVirtualizer({
     count: numPages,
-    debug: true,
     getScrollElement: () => pagesRef.current,
     estimateSize,
     rangeExtractor,
@@ -146,58 +136,6 @@ const Layout: FC<LayoutProps> = ({
   instance.virtualizer = virtualizer
 
   const virtualItems = virtualizer.getVirtualItems()
-
-  const scrollBy = (offset: number) => {
-    virtualizer.scrollBy(offset)
-  }
-  const togglePan = () => {}
-  const getOutline = async () => {
-    const outline = await doc.getOutline()
-    return outline
-  }
-  const search = (s: string) => {
-    if (textRef.current) {
-      const results: {
-        searchText: string
-        pageIndex: number
-      }[] = []
-      const text = textRef.current
-      const search = normalizeText(s).replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&')
-      const reg = new RegExp(search, 'gi')
-      const quickFilter = text.filter(i => i.str.match(reg))
-      quickFilter.forEach(i => {
-        const reg = new RegExp(search, 'gi')
-        const indexes = ([...i.str.matchAll(reg)].map(i => i.index).filter(i => i !== undefined) as number[]).reduce((prev, curr, idx) => {
-          if (idx === 0) {
-            prev.push(curr)
-          } else {
-            const last = prev[prev.length - 1]
-            if (curr - last > 80 + search.length) {
-              prev.push(curr)
-            }
-          }
-          return prev
-        }, [] as number[])
-        // five results per page
-        indexes.slice(0, 5).forEach(index => {
-          let cropStr = i.str.slice(Math.max(0, index - 80), Math.min(index + search.length + 80, i.str.length)).replace(reg, '<em>$&</em>')
-          const appendBefore = index - 80 > 0
-          const appendAfter = index + search.length + 80 < i.str.length
-          if (appendBefore) {
-            cropStr = '...' + cropStr
-          }
-          if (appendAfter) {
-            cropStr = cropStr + '...'
-          }
-          results.push({
-            searchText: cropStr,
-            pageIndex: i.page
-          })
-        })
-      })
-      return results
-    }
-  }
 
   const { run: handleScroll } = useDebounceFn(
     e => {
@@ -225,59 +163,22 @@ const Layout: FC<LayoutProps> = ({
         behavior: 'auto'
       })
     }
-    if (textRef.current.length === 0 && instance && enableSearch !== false) {
-      const map = textRef.current
-      const currentPage = {
-        current: 0
-      }
-      instance.getDocument?.().then(doc => {
-        const asyncLoopTextContent = () => {
-          if (currentPage.current === doc.numPages) return
-          doc
-            .getPage(currentPage.current + 1)
-            .then(page => page.getTextContent())
-            .then(item => {
-              const hasStrTexts = item.items.filter(i => (i as TextItem).str) as TextItem[]
-              const str = hasStrTexts
-                .map(i => {
-                  if (i.hasEOL) {
-                    return i.str + ' '
-                  }
-                  return i.str
-                })
-                .join('')
-              const normalized = normalizeText(str)
-
-              const id = Id.getId()
-              map.push({
-                id,
-                str: normalized,
-                page: currentPage.current
-              })
-              currentPage.current += 1
-              requestIdleCallback(() => asyncLoopTextContent())
-            })
-        }
-        asyncLoopTextContent()
-      })
+    let abort: VoidFunction | undefined = undefined
+    if (instance.values.texts.length === 0 && instance && enableSearch !== false) {
+      abort = makeDocumentSearchable(doc, instance)
     }
     const pages = pagesRef.current
     if (pages) {
       pages.addEventListener('scroll', handleScroll)
     }
     return () => {
+      abort?.()
       pages?.removeEventListener('scroll', handleScroll)
     }
   }, [doc])
 
   if (instance) {
     Object.assign(instance, {
-      togglePan,
-      getOutline,
-      getTextOfPages: () => {
-        return textRef.current
-      },
-      search,
       highlightText: (str, pageIndex) => {
         return new Promise(res => {
           waitFor(
@@ -294,60 +195,6 @@ const Layout: FC<LayoutProps> = ({
             }
           )
         })
-      },
-      scrollBy,
-      capturePageImage: (page: number, box: Box) => {
-        return new Promise(res => {
-          doc.getPage(page + 1).then(p => {
-            const c = document.createElement('canvas')
-            const viewport = p.getViewport({ scale: 1.5 })
-            const resolution = window.devicePixelRatio
-            c.width = viewport.width * resolution
-            c.height = viewport.height * resolution
-            renderPageInDarkMode()
-            const r = p.render({ canvasContext: c.getContext('2d')!, viewport, transform: [resolution, 0, 0, resolution, 0, 0] })
-            r.promise.then(() => {
-              renderPageInNormalMode()
-              if (box) {
-                const newCanvas = document.createElement('canvas')
-                const originalWidth = viewport.width * box.width * resolution
-                const originalHeight = viewport.height * box.height * resolution
-                const { width, height } = calculateImageAspectRatio(originalWidth, originalHeight, 1200, 1200)
-                newCanvas.width = width
-                newCanvas.height = height
-                newCanvas
-                  .getContext('2d')
-                  ?.drawImage(
-                    c,
-                    viewport.width * box.left * resolution,
-                    viewport.height * box.top * resolution,
-                    viewport.width * box.width * resolution,
-                    viewport.height * box.height * resolution,
-                    0,
-                    0,
-                    width,
-                    height
-                  )
-                const dataURL = newCanvas.toDataURL()
-                saveImageLocally(dataURL, {
-                  compress: false
-                }).then(s => {
-                  res(s)
-                })
-              } else {
-                const dataURL = c.toDataURL()
-                saveImageLocally(dataURL, {
-                  compress: false
-                }).then(s => {
-                  res(s)
-                })
-              }
-            })
-          })
-        })
-      },
-      scrollToOffset: offset => {
-        virtualizer.scrollToOffset(offset, { align: 'center' })
       },
       getPageSize: () => ({
         scale: finalScale,
@@ -374,44 +221,12 @@ const Layout: FC<LayoutProps> = ({
             }
           )
         })
-      },
-      getDocument: () => {
-        return new Promise(res => {
-          if (PDF_TO_DOC.has(instance)) {
-            res(PDF_TO_DOC.get(instance)!)
-          } else {
-            instance.onDocumentLoaded = doc => {
-              PDF_TO_DOC.set(instance, doc)
-              res(doc)
-            }
-          }
-        })
-      },
-      getTextLayerInstance: idx => {
-        return new Promise(res => {
-          if (!PAGE_INDEX_TO_TEXT_LAYER.has(instance)) {
-            PAGE_INDEX_TO_TEXT_LAYER.set(instance, new Map())
-          }
-
-          const map = PAGE_INDEX_TO_TEXT_LAYER.get(instance)
-          if (map?.has(idx)) {
-            res(map.get(idx)!)
-          } else {
-            instance.navigateOps?.jumpToPage?.(idx)
-            instance.onTextLayerRendered = (pageIdx, ins) => {
-              map?.set(pageIdx, ins)
-              if (idx === pageIdx) {
-                res(ins)
-              }
-            }
-          }
-        })
       }
-    } as IPdfViewer)
+    } as IPDFInstance)
   }
 
   return (
-    <div className={className} ref={pagesRef} style={{ height: '100%', width: '100%', overflow: 'auto' }}>
+    <div className={className} ref={pagesRef} style={{ height: '100%', width: '100%', overflow: 'auto', overflowAnchor: 'none' }}>
       <PanHelper enablePan={enablePan} containerEle={pagesRef.current} />
       <div
         style={{

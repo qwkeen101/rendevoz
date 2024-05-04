@@ -9,7 +9,7 @@ import {
   ILabel,
   ILayoutTab,
   IMediaInstance,
-  IPdfInstance,
+  IPDFInstance,
   IWebpageInstance,
   IWhiteboardEdge,
   IWhiteboardInstance,
@@ -32,7 +32,7 @@ export type InstanceRecord = {
   whiteboard: IWhiteboardInstance
   editor: IEditorInstance
   webpage: IWebpageInstance
-  pdf: IPdfInstance
+  pdf: IPDFInstance
   group: IGroupInstance
   video: IMediaInstance
   audio: IMediaInstance

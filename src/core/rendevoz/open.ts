@@ -1,5 +1,5 @@
 import { toast } from 'react-hot-toast'
-import { GlobalInstances, IEditorInstance, IMediaInstance, IWebpageInstance, IPdfInstance, MetaObject } from '~/typings'
+import { GlobalInstances, IEditorInstance, IMediaInstance, IWebpageInstance, IPDFInstance, MetaObject } from '~/typings'
 import { globalStore, MetaStore, ObjectStore } from '../../api/stores'
 import { metaObjectsAtom, objectIdToMetaObjectIdMapAtom, TypeToRegisteredMetaObject } from '../../api/stores/meta/meta.store'
 import { ipcInstance } from '@/electron'
@@ -328,13 +328,13 @@ const openNoteBlock = async (blockId: number) => {
   }
 }
 
-const openPdf = (pdfId: number): Promise<IPdfInstance> => {
+const openPdf = (pdfId: number): Promise<IPDFInstance> => {
   return new Promise(res => {
     Rendevoz.Actions.Layout.openNewTab?.({
       data: {
         type: 'pdf',
         objectId: pdfId,
-        onInstanceInitialized: (i: IPdfInstance) => res(i)
+        onInstanceInitialized: (i: IPDFInstance) => res(i)
       }
     })
     updateViewAt(pdfId)

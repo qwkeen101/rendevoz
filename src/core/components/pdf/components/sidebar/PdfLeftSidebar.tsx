@@ -33,7 +33,6 @@ const PdfLeftSidebar = () => {
         position: pdfBarState.showLeftBar ? 'relative' : 'absolute',
         left: 0,
         zIndex: pdfBarState.showLeftBar ? 20 : -1,
-        padding: 10,
         marginRight: 5,
         background: Colors.Background.Global,
         borderRight: '1px solid var(--border-background)',
@@ -44,11 +43,11 @@ const PdfLeftSidebar = () => {
         defaultActiveKey="thumbnail"
         onTabClick={key => setPdfBarState(s => ({ ...s, leftBarActive: key }))}
         activeKey={pdfBarState.leftBarActive}
+        tabNavContainerStyle={{
+          padding: '10px'
+        }}
       >
         <TabPane
-          style={{
-            paddingTop: 20
-          }}
           tab={
             <Content alignItems="center" flex gap={6}>
               <Icon name="park-pic" />
@@ -58,13 +57,10 @@ const PdfLeftSidebar = () => {
           key="thumbnail"
         >
           <ErrorBoundary fallback={<div></div>}>
-            <PdfThumbnail/>
+            <PdfThumbnail />
           </ErrorBoundary>
         </TabPane>
         <TabPane
-          style={{
-            paddingTop: 20
-          }}
           tab={
             <Content alignItems="center" flex gap={6}>
               <Icon name="park-view-list" />

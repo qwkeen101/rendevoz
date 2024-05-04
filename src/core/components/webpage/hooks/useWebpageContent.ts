@@ -6,29 +6,7 @@ import { useMemoizedFn } from '@/hooks'
 import { Rendevoz } from '@/core/rendevoz'
 import { useLatest } from 'react-use'
 import FileSystem from '@/api/fileSystem'
-
-export const UrlToWebpageMap = atom(new Map<string, number>())
-
-document.addEventListener('DOMContentLoaded', () => {
-  const webpagesAtom = ObjectStore('webpage').objectMapAtom
-  ObjectStore('webpage')
-    .fetchAll()
-    .then(data => {
-      const map = new Map()
-      data.forEach(i => {
-        map.set(i.url, i.id)
-      })
-      globalStore.set(UrlToWebpageMap, map)
-    })
-  globalStore.sub(webpagesAtom, () => {
-    const currentValue = globalStore.get(webpagesAtom)
-    const map = new Map()
-    currentValue.forEach(i => {
-      map.set(i.url, i.id)
-    })
-    globalStore.set(UrlToWebpageMap, map)
-  })
-})
+import { urlToIdMap } from '@/api/indexData/urlToId'
 /**
  * 三种情况：1 为实体，有noteId， 2 没有实体，url变化时重新获取 3 没有实体，但是添加为实体
  */
@@ -59,7 +37,7 @@ const useWebpageContent = (options: {
       const url = webpageState.currentUrl
       if (!webpageState.currentWebpageId || (webpageState.currentWebpageId && !webpageState.currentWebpageNoteId)) {
         // check if already has this webpage registered
-        const map = globalStore.get(UrlToWebpageMap)
+        const map = globalStore.get(urlToIdMap)
         if (map.has(url)) {
           const id = map.get(url)
           const wp = await ObjectStore('webpage').getOneById(id)

@@ -1,6 +1,7 @@
 import { IBase } from '../../data/base'
 import { ICollectionItem } from '../../data/collection'
 import { IWhiteboardInstance } from '~/typings'
+import { Descendant } from 'slate'
 
 export type IWhiteboardEdge = {
   id: number
@@ -107,7 +108,7 @@ export type IWhiteboardNode = {
   | {
       type: 'text'
       fontSize?: 'middle' | 'large' | 'small' | 'super large'
-      content: string | any[]
+      content: Descendant[]
     }
   | {
       type: 'freehand'

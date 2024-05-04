@@ -6,8 +6,7 @@ import PdfRightSidebar from './components/sidebar/PdfRightSidebar'
 import { PdfStateAtom } from './hooks/usePdfState'
 import { globalStore, ObjectStore } from '@/api/stores'
 import PdfLeftSidebar from './components/sidebar/PdfLeftSidebar'
-import usePdfInstance, { PdfInstanceAtom, useAssignPdfInstance } from './hooks/usePdfInstance'
-import { getAllLabelsOfDocument } from '@/api/stores/document.store'
+import usePDFInstance, { PdfInstanceAtom, useAssignPdfInstance } from './hooks/usePDFInstance'
 import usePdfSelectMode from './hooks/useSelectMode'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
@@ -39,7 +38,7 @@ const PdfInner = ({ pdfId, onInstanceInitialized, on, transformScale, styles, la
       document.removeEventListener('keyup', keyupHandler)
     }
   }, [])
-  const instance = usePdfInstance()
+  const instance = usePDFInstance()
   return (
     <>
       <PDFOpsAssigner />
@@ -80,19 +79,21 @@ const Pdf = (props: PdfProps) => {
   const pdfAtom = ObjectStore('pdf').createAtom(props.pdfId)
   const store = useMemo(() => {
     const store = createStore()
-    store.set(PdfInstanceAtom, {})
+    store.set(PdfInstanceAtom, {
+      values: {
+        texts: []
+      }
+    })
     const { pdfId } = props
     ObjectStore('pdf')
       .getOneById(pdfId)
       .then(document => {
         if (document) {
           if (document.labels === undefined) {
-            getAllLabelsOfDocument(pdfId).then(labels =>
-              ObjectStore('pdf').updateOne({
-                id: pdfId,
-                labels: labels.map(i => i.id) || []
-              })
-            )
+            ObjectStore('pdf').updateOne({
+              id: pdfId,
+              labels: []
+            })
           }
           store.set(PdfStateAtom, {
             pdfId: pdfId,
@@ -130,5 +131,4 @@ const Pdf = (props: PdfProps) => {
 export default Pdf
 
 export { PdfViewer } from './PdfViewer'
-export * from './weakMaps'
 export { default as usePdfViewer } from './core/hooks/useViewer'

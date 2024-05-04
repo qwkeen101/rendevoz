@@ -1,4 +1,4 @@
-import loginBaidudisk from '@/components/fileImporter/baidudisk/loginBaidudisk'
+import loginBaidudisk from '@/api/components/fileImporter/baidudisk/loginBaidudisk'
 
 const getAllFilesAndFolders = async (currentPath = '/', category?: number) => {
   if (localStorage.getItem('bda')) {

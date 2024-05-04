@@ -11,8 +11,8 @@ import { PdfStateAtom } from '@/core/components/pdf/hooks/usePdfState'
 import AskAIPanel from '@/core/ai/components/AskAIPanel'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { AI_QUESTION_PROP_ID, AI_SUMMARY_PROP_ID } from '@/api/stores/meta/meta.store'
-import usePdfInstance from '@/core/components/pdf/hooks/usePdfInstance'
-import { useEffect, useMemo, useState } from 'react'
+import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useUpdate } from 'react-use'
 import { truncate } from 'lodash'
 import { IQuestion } from '~/typings'
@@ -22,8 +22,8 @@ const PdfRightSidebar = ({ pdfId }: { pdfId: number }) => {
   const pdfMeta = MetaStore.useObjectToMetaValue(pdfId)
   const [pdfBarState, setPdfBarState] = usePdfBarState()
   const { t } = useTranslation()
-  const instance = usePdfInstance()
-  const content = useMemo(() => instance.getTextOfPages?.(), [pdfBarState.showRightBar])
+  const instance = usePDFInstance()
+  const content = instance.values.texts
   const update = useUpdate()
   useEffect(() => {
     const inter = setInterval(() => {
@@ -39,21 +39,18 @@ const PdfRightSidebar = ({ pdfId }: { pdfId: number }) => {
     start?: number
     end?: number
   }>({ start: undefined, end: undefined })
-  const [stringContent, setStringContent] = useState<string>('')
-  useDebounceEffect(
-    () => {
-      if (content?.length) {
-        if (onlySummarize.start && onlySummarize.end) {
-          const c = content.map(i => ({ id: i.id, text: i.str })).slice(onlySummarize.start - 1, onlySummarize.end)
-          setStringContent(JSON.stringify(c))
-        } else {
-          setStringContent(JSON.stringify(content.map(i => ({ id: i.id, text: i.str }))))
-        }
+
+  const [aiOpened, setAiOpened] = useState(false)
+  const stringContent = useMemo(() => {
+    if (aiOpened && content.length) {
+      if (onlySummarize.start && onlySummarize.end) {
+        const c = content.map(i => ({ id: i.id, text: i.str })).slice(onlySummarize.start - 1, onlySummarize.end)
+        return JSON.stringify(c)
+      } else {
+        return JSON.stringify(content.map(i => ({ id: i.id, text: i.str })))
       }
-    },
-    [content?.length, onlySummarize],
-    { wait: 500 }
-  )
+    }
+  }, [aiOpened, content.length, onlySummarize])
 
   return (
     <Resizable
@@ -97,7 +94,12 @@ const PdfRightSidebar = ({ pdfId }: { pdfId: number }) => {
         tabNavContainerStyle={{
           padding: '12px 12px 0px'
         }}
-        onTabClick={key => setPdfBarState(s => ({ ...s, rightBarActive: key }))}
+        onTabClick={key => {
+          if (key === 'ai') {
+            setAiOpened(true)
+          }
+          setPdfBarState(s => ({ ...s, rightBarActive: key }))
+        }}
       >
         <TabPane
           tab={
@@ -130,7 +132,7 @@ const PdfRightSidebar = ({ pdfId }: { pdfId: number }) => {
             </Content>
           }
         >
-          {pdfMeta && stringContent && (
+          {pdfMeta && stringContent && aiOpened && (
             <AskAIPanel
               questions={pdfMeta.properties?.[AI_QUESTION_PROP_ID]?.value}
               summary={pdfMeta.properties?.[AI_SUMMARY_PROP_ID]?.value}

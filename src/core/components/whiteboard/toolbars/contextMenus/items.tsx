@@ -43,6 +43,7 @@ export const WhiteboardNodeMenuItems = (instance: IWhiteboardInstance, selected:
               ].map(i => (
                 <Icon
                   onClick={() => {
+                    instance.toolbarOps?.closeToolbar()
                     instance.updateWhiteboard?.(w => {
                       selected.forEach(n => {
                         if (n.type === 'mindmap') {
@@ -69,6 +70,7 @@ export const WhiteboardNodeMenuItems = (instance: IWhiteboardInstance, selected:
             </div>
             <ColorPicker
               onPick={v => {
+                instance.toolbarOps?.closeToolbar()
                 instance.updateWhiteboard?.(w => {
                   selected.forEach(n => {
                     if (n.type === 'mindmap') {
@@ -117,38 +119,45 @@ export const WhiteboardNodeMenuItems = (instance: IWhiteboardInstance, selected:
                   text: t('whiteboard.Round border'),
                   key: 'round'
                 },
-                {
-                  icon: 'custom-border-bottom',
-                  text: t('whiteboard.Underline border'),
-                  key: 'underline'
-                }
-              ].map(i => (
-                <Icon
-                  size={22}
-                  className={ClassName.flatButton(4, '3px')}
-                  name={i.icon}
-                  key={i.text}
-                  onClick={() => {
-                    instance.updateWhiteboard?.(w => {
-                      selected.forEach(n => {
-                        const o = w.nodes?.get(n.id)
-                        if (o) {
-                          w.nodes?.set(o.id, {
-                            ...o,
-                            borderType: i.key
+                selected.some(i => i.type === 'mindmap' || i.rootId)
+                  ? {
+                      icon: 'custom-border-bottom',
+                      text: t('whiteboard.Underline border'),
+                      key: 'underline'
+                    }
+                  : undefined
+              ].map(
+                i =>
+                  i && (
+                    <Icon
+                      size={22}
+                      className={ClassName.flatButton(4, '3px')}
+                      name={i.icon}
+                      key={i.text}
+                      onClick={() => {
+                        instance.toolbarOps?.closeToolbar()
+                        instance.updateWhiteboard?.(w => {
+                          selected.forEach(n => {
+                            const o = w.nodes?.get(n.id)
+                            if (o) {
+                              w.nodes?.set(o.id, {
+                                ...o,
+                                borderType: i.key
+                              })
+                            }
                           })
-                        }
-                      })
-                    }, true)
-                  }}
-                />
-              ))}
+                        }, true)
+                      }}
+                    />
+                  )
+              )}
             </Content>
             <div style={{ paddingTop: 8, paddingBottom: 3 }} className={'font-size-12 transparent-font'}>
               {t('whiteboard.Border color')}
             </div>
             <ColorPicker
               onPick={v => {
+                instance.toolbarOps?.closeToolbar()
                 instance.updateWhiteboard?.(w => {
                   selected.forEach(n => {
                     const o = w.nodes?.get(n.id)

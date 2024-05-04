@@ -7,7 +7,7 @@ import { useMousePositionWithRef } from '@/hooks/utils/useMousePositionRef'
 import { Point } from '../types/point'
 import { TextContentBound, TextItem, TextRect } from '../types/text'
 import isHotkey from 'is-hotkey'
-import { useMemoizedFn, useUnMount } from '@/hooks'
+import { useMemoizedFn, useUnMount, useUpdateEffect } from '@/hooks'
 import { ITextLayerInstance, PageFunctionRef } from '~/typings'
 import useSelectingText from '../hooks/useIsSelectingText'
 import useScopedEventEmitter from '@/events/useEventEmitter'
@@ -15,16 +15,9 @@ import { Rect } from '@/types'
 import { useEventHandler } from '@/events'
 import usePdfjs from '@/hooks/utils/usePdfjs'
 import { usePdfViewer } from '@/core'
-import {
-  deleteTextContent,
-  getTextContent,
-  PAGE_INDEX_TO_PAGE_FUNCTION,
-  PAGE_INDEX_TO_TEXT_LAYER,
-  PDF_IS_SELECTING
-} from '../weakMaps'
+import { deleteTextContent, getTextContent, PAGE_INDEX_TO_PAGE_FUNCTION, PAGE_INDEX_TO_TEXT_LAYER, PDF_IS_SELECTING } from '../weakMaps'
 import { CanvasOriginFillRect } from './CanvasLayer'
 import { NormalizedMapObject, normalizeText } from '../utils/search'
-import { PAGE_SPACING } from '../layouts/Layout'
 
 interface TextLayerProps {
   page: PDFPageProxy
@@ -223,7 +216,7 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
       }
     }
   })
-  useEffect(() => {
+  useUpdateEffect(() => {
     emptyTextLayer()
   }, [globalSelectingText.emptyAll])
   useEffect(() => {

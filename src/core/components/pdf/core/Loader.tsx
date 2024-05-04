@@ -2,10 +2,7 @@ import Spinner from '@/components/base/Spinner'
 import usePdfjs from '@/hooks/utils/usePdfjs'
 import { PDFDocumentProxy } from 'pdfjs-dist'
 import { FC, useEffect, useRef, useState } from 'react'
-import usePdfViewer from './hooks/useViewer'
-import { PDF_TO_DOC, PDF_TO_THUMBNAIL } from './weakMaps'
-import { renderPageInDarkMode } from './utils/renderer'
-import { calculateImageAspectRatio } from '@/utils'
+import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 
 interface LoaderProps {
   file: string | Uint8Array
@@ -18,12 +15,11 @@ enum LoadingState {
   Loading
 }
 const Loader: FC<LoaderProps> = ({ file, children, onDocumentLoaded }) => {
-  const docRef = useRef<PDFDocumentProxy | null>(null)
-  const viewer = usePdfViewer()
+  const instance = usePDFInstance()
   const [loadingState, setLoadingState] = useState(LoadingState.Loading)
 
   useEffect(() => {
-    docRef.current = null
+    instance.values.document = undefined
     const params = Object.assign('string' === typeof file ? { url: file } : { data: file })
     const loadingTask = usePdfjs().getDocument({
       ...params,
@@ -31,10 +27,8 @@ const Loader: FC<LoaderProps> = ({ file, children, onDocumentLoaded }) => {
       cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.8.162/cmaps/'
     })
     loadingTask.promise.then(doc => {
-      docRef.current = doc
+      instance.values.document = doc
       onDocumentLoaded?.(doc)
-      PDF_TO_DOC.set(viewer, doc)
-      viewer?.onDocumentLoaded?.(doc)
       setLoadingState(LoadingState.Complete)
     })
 
@@ -42,8 +36,8 @@ const Loader: FC<LoaderProps> = ({ file, children, onDocumentLoaded }) => {
       loadingTask.destroy()
     }
   }, [file])
-  if (loadingState === LoadingState.Complete && docRef.current) {
-    return children(docRef.current)
+  if (loadingState === LoadingState.Complete && instance.values.document) {
+    return children(instance.values.document)
   }
   return <Spinner size={50} />
 }

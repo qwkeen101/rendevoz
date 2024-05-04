@@ -1,19 +1,19 @@
 import { memo, useEffect, useRef, useState } from 'react'
-import getAllFilesAndFolders from '@/components/fileImporter/baidudisk/getAllFilesAndFolders'
+import getAllFilesAndFolders from '@/api/components/fileImporter/baidudisk/getAllFilesAndFolders'
 import { Button, Content, Icon, IconWithPopover, Modal, WithBorder } from '@/components'
 import { ClassName } from 'rendevoz'
 import FontSize from '@/consts/font'
 import { assignProperties, DateFormat } from '@/utils'
 import { Colors } from '@/consts'
 import { IBaidudiskInstance, MetaObject } from '~/typings'
-import searchFiles from '@/components/fileImporter/baidudisk/searchFiles'
+import searchFiles from '@/api/components/fileImporter/baidudisk/searchFiles'
 import { useDebounceEffect } from '@/hooks'
 import {
   categorizeFilesByPath,
   handleImportAllAndCreateCollections,
   normalizeGroupToCollections
-} from '@/components/fileImporter/baidudisk/handleImportAllAndCreateCollections'
-import loginBaidudisk from '@/components/fileImporter/baidudisk/loginBaidudisk'
+} from '@/api/components/fileImporter/baidudisk/handleImportAllAndCreateCollections'
+import loginBaidudisk from '@/api/components/fileImporter/baidudisk/loginBaidudisk'
 
 type BaiduFile = {
   category: number

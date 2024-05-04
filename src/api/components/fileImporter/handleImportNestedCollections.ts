@@ -1,4 +1,4 @@
-import { categorizeFilesByPath } from '@/components/fileImporter/baidudisk/handleImportAllAndCreateCollections'
+import { categorizeFilesByPath } from '@/api/components/fileImporter/baidudisk/handleImportAllAndCreateCollections'
 import { GlobalImporterInstance } from '@/core/global/components/FileImportProcessor'
 import { MetaObject } from '~/typings'
 

@@ -20,6 +20,7 @@
          "@emotion"
      ],
     "rules": {
+        "no-restricted-imports": ["error","rendevoz/typings"],
         "prefer-const": "off",
         "semi": ["error","never"],
         "prettier/prettier": [

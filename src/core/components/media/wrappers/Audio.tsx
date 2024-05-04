@@ -1,10 +1,10 @@
 import { MetaStore, ObjectStore } from '@/api/stores'
 import Media, { MediaProps } from '../index'
-import useRealId from '@/core/components/media/wrappers/useRealId'
 import useMediaEventHandlerWrapper from '@/core/components/media/wrappers/eventHandler'
+import { useURLToId } from '@/api/indexData'
 
 export default ({ audioId, ...rest }: { audioId?: number } & MediaProps) => {
-  const realId = useRealId('audio', rest.mediaState?.url, audioId)
+  const realId = useURLToId(rest.mediaState?.url, audioId)
   const audio = ObjectStore('audio').useValue(realId)
   const audioMeta = MetaStore.useValue(MetaStore.useObjectToMetaValue(realId)?.id)
   console.log(audio, rest)

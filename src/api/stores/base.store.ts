@@ -4,11 +4,11 @@ import produce, { createDraft, finishDraft, Patch } from 'immer'
 import { Atom, PrimitiveAtom } from 'jotai/vanilla'
 import { orderBy } from 'lodash'
 import { IBase } from '~/typings/data'
-import { globalStore } from './index'
+import { Hooks } from 'rendevoz'
 import { type PartialWithId } from '@/types'
 import { immerWithDatabase } from '@/api/stores/immerWithDatabase'
 import { IStore } from '~/typings'
-
+const globalStore = Hooks.globalStore
 const ATOM_QUEUE_MAP = new Map<Atom<any>, StoreDispatchEvent<any>[]>()
 
 let historyStore: typeof import('./history.store') | undefined = undefined
@@ -21,6 +21,7 @@ type StoreDispatchEvent<T> = {
 } & (
   | {
       type: 'add'
+      onBeforeCache?: (o: T) => T
       onSuccess?: (o: T, silent?: boolean) => void
     }
   | {
@@ -45,12 +46,11 @@ const handleQueue = () => {
     const atomValue = globalStore.get(k)
     const draft = createDraft(atomValue)
     v.forEach(i => {
-      const { type, data, onSuccess, onFail } = i as StoreDispatchEvent<any>
-      console.log(i)
+      const { data, onFail } = i as StoreDispatchEvent<any>
       switch (i.type) {
         case 'add':
           draft.set(data.id, data)
-          setTimeout(() => onSuccess?.(data))
+          setTimeout(() => i.onSuccess?.(data))
           return
         case 'update': {
           // first get from atom, if not exist, get from database
@@ -63,12 +63,12 @@ const handleQueue = () => {
             updatedAt: Date.now()
           })
           draft.set(data.id, newObj)
-          setTimeout(() => onSuccess?.(newObj))
+          setTimeout(() => i.onSuccess?.(newObj))
           return
         }
         case 'forceRemove': {
           draft.delete(data.id)
-          setTimeout(() => onSuccess?.())
+          setTimeout(() => i.onSuccess?.())
           return
         }
         case 'remove': {
@@ -79,7 +79,7 @@ const handleQueue = () => {
             const newObj = Object.assign({}, origin, { deleted: true, deletedAt: Date.now() })
             draft.set(data.id, newObj)
           }
-          setTimeout(() => onSuccess?.())
+          setTimeout(() => i.onSuccess?.())
           return
         }
       }
@@ -189,22 +189,27 @@ type ILocalStore<T> = {
   addOne: (onSuccess?: (obj: T, silent: boolean) => void, onFail?: (silent: boolean) => void) => IStore<T>['addOne']
   deleteOneById: (onSuccess?: (silent: boolean) => void, onFail?: (silent: boolean) => void) => IStore<T>['deleteOneById']
   getAll: (filterer?: (obj: T) => boolean, cacheFilter?: (obj: T) => boolean) => IStore<T>['getAll']
-  getAllData: (filterer?: (obj: T) => boolean) => IStore<T>['getAllData']
-  getOneById: (opts?: { onBeforeCache: (obj: T) => T | undefined; forceRefresh?: boolean }) => IStore<T>['getOneById']
+  getOneById: (opts?: { forceRefresh?: boolean }) => IStore<T>['getOneById']
   getMultipleByIds: () => (ids: number[], cache?: boolean) => Promise<T[]>
   updateOne: (onSuccess?: (obj: T, silent: boolean) => void, onFail?: (silent: boolean) => void) => IStore<T>['updateOne']
 }
-export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, database: Table) {
-  const { dispatch, initBaseObject, bulkAdd } = BaseStore
+export function initializeLocalStore<T>(
+  atom: PrimitiveAtom<Map<number, T>>,
+  database: Table,
+  outOptions: {
+    transformData?: (o: T) => T | undefined
+  }
+) {
   const store: ILocalStore<T> = {
     addOne: (onSuccess, onFail) => (obj, options) => {
       return new Promise(res => {
-        const initedObj = initBaseObject(obj)
-        dispatch<T>({
+        const initedObj = BaseStore.initBaseObject(obj)
+        BaseStore.dispatch<T>({
           type: 'add',
           data: initedObj,
           database,
           atom,
+          onBeforeCache: outOptions?.transformData,
           onSuccess: o => {
             res(o)
             onSuccess?.(o, options?.silent ?? false)
@@ -218,7 +223,7 @@ export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, dat
     },
     deleteOneById: (onSuccess, onFail) => (id, options) => {
       return new Promise(res => {
-        dispatch({
+        BaseStore.dispatch({
           type: options?.force ? 'forceRemove' : 'remove',
           data: { id },
           database,
@@ -234,24 +239,22 @@ export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, dat
     },
     getAll: (filterer, cacheFilter) => async () => {
       const arr = await database.toArray()
-      const filtered = filterer ? arr.filter(i => filterer(i)) : arr
+      const filtered = (filterer ? arr.filter(i => filterer(i)) : arr).map(o =>
+        outOptions?.transformData ? outOptions.transformData(o) : o
+      )
       if (cacheFilter) {
         globalStore.set(
           atom,
-          bulkAdd(
+          BaseStore.bulkAdd(
             filtered.filter(o => cacheFilter(o)),
             globalStore.get(atom)
           )
         )
       } else {
-        globalStore.set(atom, bulkAdd(filtered, globalStore.get(atom)))
+        globalStore.set(atom, BaseStore.bulkAdd(filtered, globalStore.get(atom)))
       }
 
       return filtered
-    },
-    getAllData: filterer => async () => {
-      const arr = await (filterer ? database.filter(filterer).toArray() : database.toArray())
-      return arr
     },
     getMultipleByIds:
       () =>
@@ -261,9 +264,9 @@ export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, dat
         if (allInCache) {
           return ids.map(id => map.get(id)) as T[]
         }
-        const arr = await database.bulkGet(ids)
+        const arr = (await database.bulkGet(ids)).map(i => (outOptions?.transformData ? outOptions.transformData(i) : i))
         if (cache) {
-          globalStore.set(atom, bulkAdd(arr, globalStore.get(atom)))
+          globalStore.set(atom, BaseStore.bulkAdd(arr, globalStore.get(atom)))
         }
         return arr as T[]
       },
@@ -275,13 +278,12 @@ export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, dat
         } else {
           database.get(id).then(one => {
             if (one) {
-              if (opts?.onBeforeCache) {
-                one = opts.onBeforeCache(one)
-                if (!one) {
-                  res(undefined)
-                  return
-                }
+              one = outOptions?.transformData ? outOptions?.transformData?.(one) : one
+              if (!one) {
+                res(undefined)
+                return
               }
+              console.log(one)
               globalStore.set(atom, BaseStore.add(one, globalStore.get(atom)))
               res(one)
             } else {
@@ -294,7 +296,7 @@ export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, dat
     updateOne: (onSuccess, onFail) => (obj, options) => {
       return new Promise(res => {
         if (globalStore.get(atom).has(obj.id)) {
-          dispatch({
+          BaseStore.dispatch({
             type: 'update',
             data: obj,
             atom,
@@ -308,7 +310,7 @@ export function initializeLocalStore<T>(atom: PrimitiveAtom<Map<number, T>>, dat
         } else {
           database.get(obj.id).then(data => {
             globalStore.set(atom, BaseStore.add(data, globalStore.get(atom)))
-            dispatch({
+            BaseStore.dispatch({
               type: 'update',
               data: obj,
               atom,

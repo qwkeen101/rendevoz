@@ -1,4 +1,4 @@
-import useDb from '@/hooks/stores/useDb'
+import getLocalTable from '@/api/stores/getLocalTable'
 import Id from '@/utils/id'
 import { Descendant, Node } from 'slate'
 import { IEditorInstance, ILayoutTab, INote } from '~/typings'
@@ -9,7 +9,7 @@ import { Rendevoz } from '@/core/rendevoz'
 import normalizeChildrenToText from '@/core/components/editor/utils/normalize/normalizeChildrenToText'
 
 const createNoteStore = () => {
-  const blobDb = useDb('blobs')
+  const blobDb = getLocalTable('blobs')
   const saveNoteAsBuffer = async (value: Descendant[], id?: number) => {
     const realId = id || Id.getId()
 

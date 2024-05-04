@@ -48,7 +48,8 @@ const PdfNode: FC<InnerNodeProps> = memo(
           id={documentId}
           styles={{
             paddingTop: 15,
-            paddingEnd: 15
+            paddingEnd: 15,
+            pdfMaxWidth: 999999
           }}
           layout={{
             showHeader: false

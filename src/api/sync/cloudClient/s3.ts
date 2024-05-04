@@ -142,13 +142,18 @@ const S3Sync: ICloudSyncClient & {
             }
           }
           const file = await FileSystem.fs.readFile('rendefile:///' + p)
-          opts?.onProgress?.('start', p, file.length)
-          await client.putObject({
-            Bucket: bucket,
-            Key: p,
-            Body: file
-          })
-          opts?.onProgress?.('finish', p)
+          if (file) {
+            try {
+              opts?.onProgress?.('start', p, file.length)
+              await client.putObject({
+                Bucket: bucket,
+                Key: p,
+                Body: file
+              })
+            } finally {
+              opts?.onProgress?.('finish', p)
+            }
+          }
         })
       )
     }

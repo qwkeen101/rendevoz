@@ -21,19 +21,18 @@ interface CanvasLayerProps {
   pageIndex: number
   pageFunctionRef: RefObject<PageFunctionRef>
 }
-// todo: canvas change render text & background color
 export const CanvasOriginFillRect = CanvasRenderingContext2D.prototype.fillRect
 export const CanvasOriginFillText = CanvasRenderingContext2D.prototype.fillText
 export const CanvasOriginFill = CanvasRenderingContext2D.prototype.fill
 
-const CanvasLayer: FC<CanvasLayerProps> = ({ page, width, height, viewport, transformScale = 1, pageIndex, pageFunctionRef }) => {
+const CanvasLayer: FC<CanvasLayerProps> = ({ page, width, height, viewport, pageIndex, pageFunctionRef }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const renderTaskRef = useRef<RenderTask>()
   const finalScaleRef = useRef<number>()
   const viewer = usePdfViewer()
   const renderedRef = useRef(false)
 
-  const renderCanvas = useMemoizedFn((canvasEle?: HTMLCanvasElement, onRendered?: VoidFunction) => {
+  const renderCanvas = useMemoizedFn((canvasEle?: HTMLCanvasElement, onRendered?: VoidFunction, resized?: boolean) => {
     renderTaskRef.current?.cancel()
     if (canvasEle && viewer) {
       const outputScale = Math.max(window.devicePixelRatio || 2, 2)
@@ -46,9 +45,15 @@ const CanvasLayer: FC<CanvasLayerProps> = ({ page, width, height, viewport, tran
       const ctx = canvasEle.getContext('2d', { alpha: false })
       canvasEle.style.height = `${height}px`
       canvasEle.style.width = `${width}px`
-      finalScaleRef.current = finalScale
 
-      resizeCanvas(ctx, width * finalScale, height * finalScale)
+      finalScaleRef.current = finalScale
+      if (resized) {
+        resizeCanvas(ctx, width * finalScale, height * finalScale)
+      } else {
+        canvasEle.width = width * finalScale
+        canvasEle.height = height * finalScale
+      }
+
       if (!renderedRef.current) {
         canvasEle.hidden = true
       }
@@ -103,18 +108,21 @@ const CanvasLayer: FC<CanvasLayerProps> = ({ page, width, height, viewport, tran
     }
   }, [])
 
-  // do we need to rerender the whole canvas each time viewport change?
-  // maybe some canvas libraies can do the resize / zoom without rerendering?
   useUpdateIsomorphicLayoutEffect(() => {
     const canvasEle = canvasRef.current
     if (canvasEle) {
-      renderCanvas(canvasEle, () => {
-        setTimeout(() => {
-          if (canvasEle.width && canvasEle.height) {
-            pageFunctionRef.current?.onCanvasRendered?.()
-          }
-        })
-      })
+      console.log('resizing')
+      renderCanvas(
+        canvasEle,
+        () => {
+          setTimeout(() => {
+            if (canvasEle.width && canvasEle.height) {
+              pageFunctionRef.current?.onCanvasRendered?.()
+            }
+          })
+        },
+        true
+      )
     }
   }, [viewport])
   const canvasLayerInstance = useMemo(() => {

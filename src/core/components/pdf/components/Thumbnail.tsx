@@ -11,7 +11,7 @@ import usePdfState from '@/core/components/pdf/hooks/usePdfState'
 import { ObjectStore } from '@/api/stores'
 import { Virtualizer } from '@tanstack/react-virtual'
 import { Utils } from 'rendevoz'
-import usePdfInstance from '@/core/components/pdf/hooks/usePdfInstance'
+import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 
 const PdfThumbnail = () => {
   const viewer = usePdfViewer()
@@ -33,11 +33,13 @@ const PdfThumbnail = () => {
     }
   }, [showLeftBar])
   useEffect(() => {
-    viewer.getDocument?.().then(i => {
-      const p = i.numPages
-      console.log(p)
-      setPages(p)
-    })
+    if (showLeftBar) {
+      viewer.getDocument?.().then(i => {
+        const p = i.numPages
+        console.log(p)
+        setPages(p)
+      })
+    }
   }, [showLeftBar])
   return (
     <Content
@@ -76,7 +78,7 @@ const PdfThumbnail = () => {
         style={{
           width: '100%',
           height: '100%',
-          padding: '16px',
+          padding: '16px 16px',
           paddingTop: 0,
           overflowAnchor: 'none'
         }}
@@ -87,7 +89,7 @@ const PdfThumbnail = () => {
 
 const ThumbnailItem = ({ pageIndex, lastReadPage }: { pageIndex: number; lastReadPage?: number }) => {
   const [imgUrl, setImgUrl] = useState<string>()
-  const instance = usePdfInstance()
+  const instance = usePDFInstance()
   useEffect(() => {
     const url: {
       current: string | undefined
@@ -97,10 +99,13 @@ const ThumbnailItem = ({ pageIndex, lastReadPage }: { pageIndex: number; lastRea
     instance.getThumbnail?.(pageIndex).then(s => {
       url.current = s
       setImgUrl(s)
+      console.log(s)
     })
     return () => {
       if (url.current) {
         URL.revokeObjectURL(url.current)
+        url.current = undefined
+        setImgUrl(undefined)
       }
     }
   }, [])
@@ -111,7 +116,7 @@ const ThumbnailItem = ({ pageIndex, lastReadPage }: { pageIndex: number; lastRea
         style={{
           cursor: 'pointer',
           boxShadow: pageIndex === lastReadPage ? `0 0 0 3px ${Colors.Common.SelectColor}` : 'var(--border-box-shadow)',
-          width: 'min(180px, 100%)',
+          width: 'min(240px, 100%)',
           borderRadius: 6,
           marginTop: 2
         }}
@@ -121,7 +126,7 @@ const ThumbnailItem = ({ pageIndex, lastReadPage }: { pageIndex: number; lastRea
   return (
     <div
       style={{
-        width: 'min(180px, 100%)',
+        width: 'min(240px, 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

@@ -1,7 +1,7 @@
 import { ObjectFamily } from '@/api/stores/object/object.store'
 import FileSystem from '@/api/fileSystem'
 import { MetaStore, ObjectStore } from '@/api/stores'
-import useDb from '../../../hooks/stores/useDb'
+import getLocalTable from '../getLocalTable'
 import { deleteRendefile } from '@/utils'
 import { INote, MetaGroup } from '~/typings'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
@@ -30,7 +30,7 @@ export default async (o: ObjectFamily[keyof ObjectFamily], force: boolean) => {
     const handleRemoveNote = async (note: INote) => {
       console.log(note)
       const contentId = note.contentId
-      const blobDb = useDb('blobs')
+      const blobDb = getLocalTable('blobs')
       const url = await blobDb.get(contentId)
       await blobDb.delete(contentId)
       if (typeof url?.fileUrl === 'string') {

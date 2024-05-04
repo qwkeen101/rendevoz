@@ -10,7 +10,7 @@ export type ISystemFile = {
 export type IFileSystem = {
   stat: (path: string) => Promise<ISystemFile>
   getLatestBackup: (lastUpdated?: string) => Promise<string>
-  readFile: (filePath: string) => Promise<string>
+  readFile: (filePath: string) => Promise<string | Uint8Array>
   /**
    * @return the uri where the file was written into
    */

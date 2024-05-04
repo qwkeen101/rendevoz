@@ -34,7 +34,7 @@ interface DockTabBarProps {
 
 export const DockTabBar = memo(
   forwardRef((props: DockTabBarProps, outerRef) => {
-    const { TabNavList, onReorder, dragIndicator, ...restProps } = props
+    const { TabNavList, onReorder, dragIndicator } = props
 
     const ref = React.useRef<HTMLDivElement>()
     const mergedRef = useMergedRef(ref, outerRef)
@@ -139,7 +139,7 @@ export const DockTabBar = memo(
           >
             <Icon
               style={{
-                '-webkit-app-region': 'no-drag'
+                appRegion: 'no-drag'
               }}
               onClick={() => {
                 updateSidebarState(s => {

@@ -6,7 +6,7 @@ import { defaultBgColor } from '@/components/picker/colorPicker'
 import { Rendevoz } from '@/core/rendevoz'
 import { objectIdToMetaObjectIdMapAtom } from '@/api/stores/meta/meta.store'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
-import usePdfInstance from '@/core/components/pdf/hooks/usePdfInstance'
+import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 import { useEffect, useState } from 'react'
 
 const LabelToolbarRenderer = () => {
@@ -21,7 +21,7 @@ const LabelToolbarRenderer = () => {
   }, [pdfState.currentFocusedLabel])
 
   const currentLabel = ObjectStore('pdfLabel').useValue(pdfState.currentFocusedLabel?.labelId)
-  const instance = usePdfInstance()
+  const instance = usePDFInstance()
   let layout: string[] = []
 
   if (currentLabel && pdfState.currentFocusedLabel?.position) {

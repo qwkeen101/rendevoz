@@ -12,6 +12,7 @@ type IPdfState = {
     labelId?: number
     position: XYPosition
   }
+  finalScale?: number
   scaleChanged?: boolean
   currentHighlightLabelId?: number
   numPages?: number

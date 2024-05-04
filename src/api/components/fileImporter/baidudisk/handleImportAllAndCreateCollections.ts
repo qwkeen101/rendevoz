@@ -2,7 +2,7 @@
 import { request } from '@/utils/request'
 import { CollectionStore, ObjectStore } from '@/api/stores'
 import { MetaObject } from '~/typings'
-import { BaidudiskInstance } from '@/components/fileImporter/baidudisk/BaidudiskDisplayer'
+import { BaidudiskInstance } from '@/api/components/fileImporter/baidudisk/BaidudiskDisplayer'
 
 export const handleImportAllAndCreateCollections = async (
   currentFolder = '/',

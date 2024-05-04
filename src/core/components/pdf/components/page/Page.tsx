@@ -13,7 +13,7 @@ import { objectIdToMetaObjectIdMapAtom } from '@/api/stores/meta/meta.store'
 import { useContextmenu } from '@/hooks'
 import { useTranslation } from 'react-i18next'
 import { Rendevoz } from '@/core/rendevoz'
-import usePdfInstance from '../../hooks/usePdfInstance'
+import usePDFInstance from '../../hooks/usePDFInstance'
 import CropLabel from '@/core/components/pdf/components/label/CropLabel'
 
 interface PdfPageProps extends RenderPageProps {
@@ -51,7 +51,7 @@ const PdfPage: React.FC<PdfPageProps> = ({
 
   const viewer = usePdfViewer()
 
-  const instance = usePdfInstance()
+  const instance = usePDFInstance()
 
   const { contextMenuState, closeContextmenu } = useContextmenu(containerRef.current)
 
@@ -73,7 +73,6 @@ const PdfPage: React.FC<PdfPageProps> = ({
       })
     }
   }
-  console.log(transformScale)
   const { t } = useTranslation()
   return (
     <>

@@ -5,6 +5,8 @@ import indexData from '@/api/lifycycle/indexData'
 import initializeApp from '@/api/lifycycle/initializeApp'
 import postProcess from '@/api/lifycycle/postProcess'
 import startupSync from '@/api/sync/lifecycle/startup'
+import autoSync from '@/api/sync/autoSync'
+import { subDataChange } from '@/api/stores'
 
 export default async () => {
   await recoverFromBackup()
@@ -15,4 +17,6 @@ export default async () => {
   ipcInstance.send('appOk')
   postProcess()
   startupSync()
+  autoSync()
+  subDataChange()
 }

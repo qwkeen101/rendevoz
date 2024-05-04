@@ -1,13 +1,12 @@
 import { Viewer } from './core'
 import { FC, memo, useCallback, useEffect, useRef, useState } from 'react'
 import PdfPage from './components/page/Page'
-import { IAnnotation, IPDFEvent, IPdfInstance, RenderPageProps } from '~/typings'
+import { IAnnotation, IPDFEvent, IPDFInstance, RenderPageProps } from '~/typings'
 import { PDFDocumentProxy } from 'pdfjs-dist'
 import { useMemoizedFn } from '@/hooks'
 import { Range } from '@tanstack/react-virtual'
 import Link from './components/annotation/Link'
 import usePdfDrag from './hooks/usePdfDrag'
-import { ID_TO_LABEL_MAP } from './weakMaps'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { waitFor } from '@/utils/functions'
 import DownloadRemotePdf from '@/core/components/pdf/core/utils/downloadRemotePdf'
@@ -16,14 +15,14 @@ import { Content } from '@/components'
 import { Colors } from '@/consts'
 import PdfHeader from '@/core/components/pdf/components/PdfHeader'
 import LabelToolbarRenderer from '@/core/components/pdf/components/label/LabelToolbarRenderer'
-import usePdfInstance from '@/core/components/pdf/hooks/usePdfInstance'
+import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 import { useSetAtom } from 'jotai'
 import { PdfStateAtom } from '@/core/components/pdf/hooks/usePdfState'
 
 export interface PdfViewerProps {
   documentId: number
   transformScale?: number
-  onInstanceInitialized?: (i: IPdfInstance) => void
+  onInstanceInitialized?: (i: IPDFInstance) => void
   autoWidth?: boolean
   fileUrl?: string
   styles?: {
@@ -31,6 +30,7 @@ export interface PdfViewerProps {
     pagePadding?: number
     paddingEnd?: number
     pageGap?: number
+    pdfMaxWidth?: number
     pageBoxShadowName?: string
   }
   state?: {
@@ -49,7 +49,7 @@ export const PdfViewer: FC<PdfViewerProps> = memo(
   ({ documentId, transformScale, onInstanceInitialized, layout, styles: outerStyles, autoWidth, on, state, fileUrl }) => {
     const document = ObjectStore('pdf').useValue(documentId)
     const documentMeta = MetaStore.useObjectToMetaValue(documentId)
-    const viewer = usePdfInstance()
+    const viewer = usePDFInstance()
     viewer.on = on
     const [downloadState, setDownloadState] = useState<DownloadProgress>()
     const setPDFState = useSetAtom(PdfStateAtom)
@@ -78,7 +78,6 @@ export const PdfViewer: FC<PdfViewerProps> = memo(
           setDownloadState(undefined)
         })
       }
-      ID_TO_LABEL_MAP.set(viewer, new Map())
       waitFor(
         () => !!viewer.getPageSize,
         () => {

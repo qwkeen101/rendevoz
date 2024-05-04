@@ -1,5 +1,5 @@
-import usePdfInstance from '../../hooks/usePdfInstance'
+import usePDFInstance from '../../hooks/usePDFInstance'
 
-const usePdfViewer = () => usePdfInstance();
+const usePdfViewer = () => usePDFInstance();
 
 export default usePdfViewer;

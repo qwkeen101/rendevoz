@@ -21,6 +21,7 @@ declare module 'i18next' {
 
 declare module 'react' {
   interface CSSProperties {
+    appRegion?: string | undefined
     // For inline css variables
     [key: `--${string}`]: string | number | undefined
   }

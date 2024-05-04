@@ -5,7 +5,7 @@
 import { ReactElement } from 'react'
 import { GlobalInstances } from './globalInstances'
 import { ILayoutTab, OpenTabOptions, TabData } from './layout'
-import { IWebpageInstance, IVideoInstance, IPdfInstance, IEditorInstance, IWhiteboardInstance } from './components'
+import { IWebpageInstance, IVideoInstance, IPDFInstance, IEditorInstance, IWhiteboardInstance } from './components'
 import { EditorEventMap, GlobalEventMap, IEventEmitter, IEventHandler, PdfEventMap, WhiteboardEventMap } from './event'
 import { NoteStore } from './stores'
 import { SearchStore } from './stores/search.store'
@@ -75,7 +75,7 @@ declare const Open: {
   }
   openSidebarObjectDetails: (metaId: number) => void
   Pdf: {
-    openPdf: (id: number) => Promise<IPdfInstance>
+    openPdf: (id: number) => Promise<IPDFInstance>
     openPdfLabel: (id: number) => Promise<void>
     openPdfPage: (pageIndex: number, id: number) => Promise<void>
   }

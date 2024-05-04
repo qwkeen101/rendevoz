@@ -1,10 +1,10 @@
-import usePdfInstance from '@/core/components/pdf/hooks/usePdfInstance'
+import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 import { assignProperties } from '@/utils'
 import usePdfState from '@/core/components/pdf/hooks/usePdfState'
 import { decreaseLevel, increaseLevel } from '@/core/components/pdf/core/utils/zoom'
 
 export default () => {
-  const instance = usePdfInstance()
+  const instance = usePDFInstance()
   const [pdfState, setPdfState] = usePdfState()
   assignProperties(instance, {
     actionOps: {

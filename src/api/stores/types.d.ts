@@ -1,20 +1,9 @@
 import { PartialWithId } from '@/types'
 import { INote, IWebpage, MetaObject } from '~/typings'
 
-export interface IStoreDeprecated<T> {
-  fetchOneById: (id: number) => Promise<T | undefined>
-  getAll: () => Promise<boolean>
-  getAllData: () => Promise<T[]>
-  getOneById: (id: number) => Promise<T | undefined>
-  deleteOneById: (id: number, silent?: boolean, force?: boolean) => Promise<boolean>
-  addOne: (one: Partial<T>, silent?: boolean, overPremium?: boolean) => Promise<T>
-  updateOne: (one: Partial<T> & { id: number }, silent?: boolean) => Promise<T | undefined>
-}
-
 export interface IStore<T> {
   fetchOneById: (id: number) => Promise<T | undefined>
   getAll: () => Promise<boolean>
-  getAllData: () => Promise<T[]>
   fetchAll: () => Promise<T[]>
   getOneById: (id: number, opt?: { forceRefresh?: boolean }) => Promise<T | undefined>
   getMultipleByIds: (id: number[], cache?: boolean) => Promise<T[]>

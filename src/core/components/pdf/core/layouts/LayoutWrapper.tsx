@@ -7,7 +7,7 @@ import { useScrollMode } from '../hooks/useScrollMode'
 import { PageSize } from '~/typings'
 import { getPage } from '../utils/pages'
 import { PdfStateAtom } from '@/core/components/pdf/hooks/usePdfState'
-import usePdfInstance from '@/core/components/pdf/hooks/usePdfInstance'
+import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 import { useSetAtom } from 'jotai'
 
 interface LayoutWrapperProps {
@@ -22,6 +22,7 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children
   const [ref, { width }] = useMeasure()
   const flooredWidth = Math.floor(width)
   const previousWidth = usePrevious(flooredWidth)
+  const maxWidth = useSelectAtomValue(PdfStateAtom, s => s.styles?.pdfMaxWidth) ?? 1200
   const doublePage = useSelectAtomValue(PdfStateAtom, s => s.state?.doublePage)
   const setPdfState = useSetAtom(PdfStateAtom)
   const [pageSize, setPageSize] = useState<PageSize>({
@@ -39,7 +40,7 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children
   })
   const parentEleRef = useRef<HTMLElement>()
   const initializedRef = useRef(false)
-  const instance = usePdfInstance()
+  const instance = usePDFInstance()
   const pagePadding = useSelectAtomValue(PdfStateAtom, s => s.styles?.pagePadding) ?? 30
   const pdfScale = useSelectAtomValue(PdfStateAtom, s => s.document?.scale)
   useIsomorphicLayoutEffect(() => {
@@ -58,7 +59,7 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children
       if (parentEle) {
         parentEleRef.current = parentEle
         ref(parentEle)
-        const scaleOfWidth = (parentEle.clientWidth - pagePadding) / vw,
+        const scaleOfWidth = (Math.min(parentEle.clientWidth, doublePage ? maxWidth * 2 : maxWidth) - pagePadding) / vw,
           scaleOfHeight = (parentEle.clientHeight - pagePadding) / vh
         let scale = defaultScale
         scrollMode === 'vertical' && (scale = scaleOfWidth)
@@ -83,7 +84,7 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children
     const parentEle = parentEleRef.current
     console.log('handleResizing')
     if (parentEle) {
-      const scaleOfWidth = (parentEle.clientWidth - pagePadding) / vw,
+      const scaleOfWidth = (Math.min(parentEle.clientWidth, doublePage ? maxWidth * 2 : maxWidth) - pagePadding) / vw,
         scaleOfHeight = (parentEle.clientHeight - pagePadding) / vh
       let scale = defaultScale
       console.log(scaleOfWidth)

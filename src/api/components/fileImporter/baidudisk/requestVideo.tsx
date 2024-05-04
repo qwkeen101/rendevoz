@@ -1,6 +1,6 @@
 import { request } from '@/utils/request'
 import { toast } from 'react-hot-toast'
-import loginBaidudisk from '@/components/fileImporter/baidudisk/loginBaidudisk'
+import loginBaidudisk from '@/api/components/fileImporter/baidudisk/loginBaidudisk'
 
 const requestBaiduVideo = async (path: string, quality: 480 | 720 | 1080 = 720) => {
   const bda = localStorage.getItem('bda')

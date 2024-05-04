@@ -1,19 +1,22 @@
 import { IWhiteboardEdge, IWhiteboardNode } from '~/typings'
 import createObjectStore from '@/api/stores/object/object.store'
 
-export default function createWhiteboardStore() {
+export default () => {
   return createObjectStore('whiteboard', {
-    afterGetOneProcess: {
-      onBeforeCache: whiteboard => {
-        if (Array.isArray(whiteboard.edges) || Array.isArray(whiteboard.nodes)) {
-          return {
-            ...whiteboard,
-            edges: new Map((whiteboard.edges as unknown as IWhiteboardEdge[])?.map(e => [e.id, e])),
-            nodes: new Map((whiteboard.nodes as unknown as IWhiteboardNode[])?.map(e => [e.id, e]))
-          }
-        }
-        return whiteboard
+    transformData: whiteboard => {
+      return {
+        ...whiteboard,
+        edges: Array.isArray(whiteboard.edges)
+          ? new Map((whiteboard.edges as unknown as IWhiteboardEdge[])?.map(e => [e.id, e]))
+          : whiteboard.edges instanceof Map
+          ? whiteboard.edges
+          : new Map(),
+        nodes: Array.isArray(whiteboard.nodes)
+          ? new Map((whiteboard.nodes as unknown as IWhiteboardNode[])?.map(e => [e.id, e]))
+          : whiteboard.nodes instanceof Map
+          ? whiteboard.nodes
+          : new Map()
       }
-    },
+    }
   })
 }

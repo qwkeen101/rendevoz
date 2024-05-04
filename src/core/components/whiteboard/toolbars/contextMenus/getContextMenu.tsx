@@ -121,6 +121,7 @@ export default (instance: IWhiteboardInstance, t: TFunction<'translation', undef
             const nodeFuncs = instance.nodeOps?.getNodeFuncs(nodeId)
             if (nodeFuncs) {
               nodeFuncs.setNodeState(s => ({ ...s, selected: true, focused: true }))
+              nodeFuncs.focusText?.()
             }
           }, 200)
           instance.toolbarOps?.closeToolbar()

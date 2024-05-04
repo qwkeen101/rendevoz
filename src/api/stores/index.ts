@@ -1,13 +1,6 @@
 import { debounce } from 'lodash'
 import { Hooks } from 'rendevoz'
-import {
-  handleMetaGroupRules,
-  handleMetaLinksChange,
-  handleMetaObjectsChange,
-  handleMetaOptionChange,
-  metaLinksAtom,
-  metaObjectsAtom
-} from './meta/meta.store'
+import { handleMetaOptionChange, metaLinksAtom, metaObjectsAtom } from './meta/meta.store'
 import ObjectStore from '@/api/stores/object/object.store'
 import metaGroupRuleHandler from '@/api/stores/meta/metaGroupRuleHandler'
 import metaObjectChangeHandler from '@/api/stores/meta/metaObjectChangeHandler'
@@ -54,9 +47,13 @@ export { default as QuestionStore } from './question.store'
 export * from '@/api/textSearch/createSearchIndex'
 export * as StoreUtils from './utils.store'
 
-window.addEventListener('DOMContentLoaded', () => {
+export const subDataChange = () => {
+  metaObjectChangeHandler()
+  metaGroupRuleHandler()
+  metaLinkChangeHandler()
+  handleMetaOptionChange()
   globalStore.sub(metaObjectsAtom, debounce(metaObjectChangeHandler, 600))
   globalStore.sub(metaObjectsAtom, debounce(metaGroupRuleHandler, 2000))
   globalStore.sub(metaLinksAtom, debounce(metaLinkChangeHandler, 600))
   globalStore.sub(ObjectStore('metaPropSelectOption').objectMapAtom, handleMetaOptionChange)
-})
+}

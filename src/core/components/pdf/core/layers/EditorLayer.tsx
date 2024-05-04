@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { Canvas } from '@/components'
 import { drawQuadraticBezierCurve } from '@/components/base/canvas/draw'
 import { getBoundsOfPoints } from '@/utils'
-import usePdfInstance from '@/core/components/pdf/hooks/usePdfInstance'
+import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 import useThrottleFn from '@/hooks/utils/useThrottleFn'
 
 const EditorLayer = ({ pageIndex, pageSize }: { pageIndex: number; pageSize: any }) => {
@@ -12,7 +12,7 @@ const EditorLayer = ({ pageIndex, pageSize }: { pageIndex: number; pageSize: any
   const pointsRef = useRef([])
   const beginPointRef = useRef()
   const isDrawingRef = useRef(false)
-  const instance = usePdfInstance()
+  const instance = usePDFInstance()
   const thottledDraw = useThrottleFn(
     (relative, ctx) => {
       allPointsRef.current.push(relative)

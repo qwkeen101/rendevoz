@@ -9,5 +9,3 @@ export default async function autoSync() {
   // auto sync after 5 seconds
   setTimeout(() => autoSync(), 5 * 1000)
 }
-
-autoSync()

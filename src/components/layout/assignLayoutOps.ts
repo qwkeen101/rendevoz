@@ -9,7 +9,7 @@ import {
   ILabel,
   ILayoutTab,
   IMediaInstance,
-  IPdfInstance,
+  IPDFInstance,
   IWebpageInstance,
   OpenTabOptions,
   TabData
@@ -90,7 +90,7 @@ export default function assignGlobalLayoutOps(layoutRef: RefObject<DockLayout>) 
                 console.log(parentInstance, m)
                 switch (m.type) {
                   case 'pdfLabel':
-                    ;(parentInstance as IPdfInstance).navigateOps?.jumpToLabel(objectId)
+                    ;(parentInstance as IPDFInstance).navigateOps?.jumpToLabel(objectId)
                     break
                   case 'videoLabel':
                   case 'audioLabel':

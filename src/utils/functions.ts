@@ -5,6 +5,7 @@ export const waitFor = (
     timeout?: number
     checkDelay?: number
     checkTime?: number
+    onTimeout?: (timeUsed: number) => void
     // check mutiple times and every time should be true, if false, retry
     checkEnsure?: number
     requestAnimationFrame?: boolean
@@ -14,12 +15,13 @@ export const waitFor = (
     checkEnsure: 1
   }
 ) => {
-  const { timeout = 5000, checkDelay = 0, checkEnsure = 1 } = options
+  const { timeout = 5000, checkDelay = 0, checkEnsure = 1, onTimeout } = options
   let ensured = 0
   const start = Date.now()
   const loop = () => {
     const curr = Date.now()
     if (curr - start > timeout) {
+      onTimeout?.(curr - start)
       return
     }
     if (condition()) {

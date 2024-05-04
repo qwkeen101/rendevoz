@@ -2,7 +2,7 @@ import { MetaStore, ObjectStore } from '@/api/stores'
 import { IPdfLabel, PageSize } from '~/typings'
 import { ResizeAndDrag } from '@/components'
 import { deleteLocalFile } from '@/utils'
-import usePdfInstance from '@/core/components/pdf/hooks/usePdfInstance'
+import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 import { useSetAtom } from 'jotai'
 import { PdfStateAtom } from '@/core/components/pdf/hooks/usePdfState'
 import { useEffect, useRef } from 'react'
@@ -13,7 +13,7 @@ import LabelNoteRenderer from '@/core/components/pdf/components/label/LabelNoteR
 
 const CropLabel = ({ labelId, pageSize, scale }: { labelId: number; pageSize: PageSize; scale?: number }) => {
   const label = ObjectStore('pdfLabel').useValue(labelId) as (IPdfLabel & { type: 'crop' }) | undefined
-  const instance = usePdfInstance()
+  const instance = usePDFInstance()
   const labelMeta = MetaStore.useObjectToMetaValue(labelId)
   const setPdfState = useSetAtom(PdfStateAtom)
   const dragInitPos = useRef({ x: 0, y: 0 })
@@ -92,12 +92,10 @@ const CropLabel = ({ labelId, pageSize, scale }: { labelId: number; pageSize: Pa
         style={{
           pointerEvents: selectMode ? 'none' : 'auto',
           borderRadius: 6,
-          boxShadow: `0 0 0 2px ${label.color}`,
+          boxShadow: `0 0 0 2px ${label.color === 'rgba(39, 158, 255)' ? 'rgba(39, 158, 255)' : Colors.getAdaptColor(label.color)}`,
           background: currentHighlightLabelId === labelId ? Colors.Common.SelectColorTransparent : undefined
         }}
-      >
-        <LabelNoteRenderer labelId={labelId} />
-      </ResizeAndDrag>
+      ></ResizeAndDrag>
     )
   }
 

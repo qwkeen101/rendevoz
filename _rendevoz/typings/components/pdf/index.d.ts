@@ -9,9 +9,17 @@ type NavigateOps = {
   back: VoidFunction
   forward: VoidFunction
   insertHistory: (offset: number) => void
-  jumpToPage: (pageIndex: number) => void
+  // percent: 0 - 1
+  jumpToPage: (
+    pageIndex: number,
+    align?: 'start' | 'center',
+    offset?: number
+  ) => void
   jumpToLabel: (labelId: number) => Promise<void>
   jumpToDest: (dest: string | any[]) => Promise<void>
+  scrollBy: (y: number) => void
+  // percent 0 - 1
+  scrollByPercent: (percent: number) => void
   jumpToOffset: (
     offset: number,
     opts?: {
@@ -21,10 +29,6 @@ type NavigateOps = {
     }
   ) => void
   useHistory: () => {
-    canBack: boolean
-    canForward: boolean
-  }
-  getHistory: () => {
     canBack: boolean
     canForward: boolean
   }
@@ -51,14 +55,13 @@ export type IPDFEvent =
       type: 'scaleChange'
       value: number
     }
-export type IPdfInstance = Partial<{
+export type IPDFInstance = Partial<{
   navigateOps: NavigateOps
   actionOps: ActionsOps
   on: (e: IPDFEvent) => void
   currentFocusLabelId: number
   getPdfId: () => number
   isFocused?: boolean
-  getTextOfPages: () => { page: number; str: string; id: number }[]
   virtualizer: Virtualizer<HTMLDivElement, Element>
   search: (word: string) =>
     | {
@@ -67,7 +70,7 @@ export type IPdfInstance = Partial<{
       }[]
     | undefined
   // image path, box: relative rect
-  capturePageImage: (pageIndex: number, box?: Box) => Promise<string>
+  capturePageImage: (pageIndex: number, box?: Box) => Promise<string | undefined>
   jumpToLabelInSidebar: (labelId: number) => void
   highlightText: (str: string, pageIndex: number) => Promise<void>
   highlightArea: (
@@ -75,34 +78,22 @@ export type IPdfInstance = Partial<{
     // all percentage
     rect: Box
   ) => Promise<void>
-  scrollBy: (offset: number) => void
-  scrollToOffset: (offset: number, canBack?: boolean) => void
   getPageSize: () => PageSize & { pageSizeScale: number }
-  getOutline: () => Promise<
-    {
-      title: string
-      bold: boolean
-      italic: boolean
-      color: Uint8ClampedArray
-      dest: string | any[] | null
-      url: string | null
-      unsafeUrl: string | undefined
-      newWindow: boolean | undefined
-      count: number | undefined
-      items: any[]
-    }[]
-  >
+  getOutline: () => Promise<Awaited<ReturnType<PDFDocumentProxy['getOutline']>> | undefined>
   // return: thumbnail url, created by URL.createObjectURL
   getThumbnail?: (pageIdx: number) => Promise<string | undefined>
   onLabelRendered?: (labelId: number) => void
-  getTextLayerInstance?: (pageIndex: number) => Promise<ITextLayerInstance>
-  onDocumentLoaded?: (doc: PDFDocumentProxy) => void
   onThumbnailRendered?: VoidFunction
   getDocument?: () => Promise<PDFDocumentProxy>
   onTextLayerRendered?: (pageIndex: number, instance: ITextLayerInstance) => void
   insertLabel: (label: Partial<IPdfLabel>) => Promise<void>
   deleteLabel: (labelId: number) => Promise<void>
-}>
+}> & {
+  values: {
+    texts: { page: number; str: string; id: number }[]
+    document?: PDFDocumentProxy
+  }
+}
 
 export * from './core/annotation'
 export * from './core/layout'

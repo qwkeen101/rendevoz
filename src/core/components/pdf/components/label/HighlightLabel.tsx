@@ -2,17 +2,13 @@ import { DraggableElement, DraggingElement, SettingAtom } from '@/core'
 import { useMergedRef, useSelectAtomValue, useSelectGlobalAtomValue } from '@/hooks'
 import { PageSize } from '~/typings'
 import { ObjectStore } from '@/api/stores'
-import { CSSProperties, FC, forwardRef, memo, useEffect, useMemo, useRef, useState } from 'react'
+import { CSSProperties, FC, forwardRef, memo, useEffect, useRef, useState } from 'react'
 import { ILabel } from '~/typings/data'
-import usePdfViewer from '@/core/components/pdf/core/hooks/useViewer'
 import useClickOutside from '@/hooks/utils/useClickOutside'
-import tinycolor from 'tinycolor2'
-import { ID_TO_LABEL_MAP } from '../../weakMaps'
 import { Rect } from '@/types'
 import usePdfSelectMode from '../../hooks/useSelectMode'
 import { useSetAtom } from 'jotai'
 import { PdfStateAtom } from '@/core/components/pdf/hooks/usePdfState'
-import LabelNoteRenderer from '@/core/components/pdf/components/label/LabelNoteRenderer'
 import { Colors } from '@/consts'
 
 interface HighlightLabelProps {
@@ -141,10 +137,9 @@ const Highlights = forwardRef((props, ref) => {
   useEffect(() => {
     if (currentHighlightLabelId === labelId) {
       setFocused(true)
-      setTimeout(() => {
+      return () => {
         setFocused(false)
-        setPdfState(s => ({ ...s, currentHighlightLabelId: undefined }))
-      }, 1500)
+      }
     }
   }, [currentHighlightLabelId])
 
@@ -169,7 +164,6 @@ const Highlights = forwardRef((props, ref) => {
       ref={mergedRef}
       onClick={onClick}
     >
-      <LabelNoteRenderer labelId={labelId} />
       {highlight.rects?.map((rect, idx) => (
         <div
           key={idx}

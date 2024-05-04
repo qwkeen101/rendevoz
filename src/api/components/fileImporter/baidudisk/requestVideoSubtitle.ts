@@ -1,5 +1,5 @@
 import { toast } from 'react-hot-toast'
-import loginBaidudisk from '@/components/fileImporter/baidudisk/loginBaidudisk'
+import loginBaidudisk from '@/api/components/fileImporter/baidudisk/loginBaidudisk'
 
 const requestBaiduVideoSubtitle = async (path: string) => {
   const bda = localStorage.getItem('bda')

@@ -1,15 +1,21 @@
 import { InnerNodeProps } from '../WrapperNode'
 import { IEditorInstance, IWhiteboardNode } from '~/typings'
 import SimpleEditor from '@/core/components/editor/SimpleEditor'
-import { useRef, memo, useMemo } from 'react'
+import { useRef, memo, useMemo, useLayoutEffect } from 'react'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
-import { Node } from 'slate'
+import { Descendant, Node } from 'slate'
+import { ReactEditor } from '@/core'
 const TextNode = ({ node, onClick }: InnerNodeProps & { onClick: VoidFunction }) => {
   const textNode = node as IWhiteboardNode & { type: 'text' }
   const instance = useWhiteboardInstance()
   const i = useRef<IEditorInstance>()
-
-  const handleChangeValue = (newValue: string) => {
+  useLayoutEffect(() => {
+    const currC = i.current?.getSlateEditor?.().children
+    if (currC && currC !== textNode.content) {
+      i.current?.replaceChildren?.(textNode.content)
+    }
+  }, [textNode.content])
+  const handleChangeValue = (newValue: Descendant[]) => {
     instance.updateNode?.(textNode.id, n => ({ ...n, content: newValue }), false)
   }
   const initialOkay = useMemo(() => Node.isNodeList(textNode.content), [])
@@ -23,7 +29,18 @@ const TextNode = ({ node, onClick }: InnerNodeProps & { onClick: VoidFunction })
       textareaMode={true}
       placeholder={node.type === 'mindmap' || node.rootId ? '' : undefined}
       virtualizer={node.resized}
-      onInstanceInitialized={ins => (i.current = ins)}
+      onInstanceInitialized={ins => {
+        i.current = ins
+        const funcs = instance.nodeOps?.getNodeFuncs?.(node.id!)
+        console.log(funcs)
+        if (funcs) {
+          funcs.focusText = () => {
+            const e = ins.getSlateEditor?.()
+            console.log('focusing')
+            e && ReactEditor.focus(e)
+          }
+        }
+      }}
       value={textNode.content}
       onClick={onClick}
       containerStyle={{

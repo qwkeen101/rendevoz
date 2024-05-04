@@ -9,7 +9,7 @@ export default () => {
   const groupMetas = new Set(unhiddenMetasz.filter(i => i.type === 'group').map(i => i.objectId))
   const unhiddenMetas = unhiddenMetasz.map(i => i.id)
   ObjectStore('group')
-    .getAllData()
+    .fetchAll()
     .then(res => {
       const groups = res as MetaGroup[]
       groups.forEach(g => {

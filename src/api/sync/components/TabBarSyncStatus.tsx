@@ -74,7 +74,7 @@ export default memo(() => {
           <Content flex alignItems={'center'} justifyContent={'space-between'} style={{ margin: '6px 0px 4px' }}>
             <div className={'transparent-font font-size-12 normal-font'}>
               {uploading.length ? `Uploading ${uploading.length} files...` : 'All files uploaded'}
-              {skiped.length ? ` (${skiped.length} ignored)` : ''}
+              {skiped.length ? ` (${skiped.length} skipped)` : ''}
             </div>
             <div
               className={'normal-font select-color-font font-size-12 pointer'}
@@ -130,6 +130,7 @@ export default memo(() => {
     }
   }
   const bg = SyncAPI.connectionToColors[connection]
+  if (syncSetting.enableSync !== true) return null
   return (
     <AnimatePopover
       positions={['bottom']}
@@ -208,7 +209,7 @@ export default memo(() => {
         style={{
           width: 26,
           height: '26px',
-          'app-region': 'no-drag'
+          appRegion: 'no-drag'
         }}
         className={ClassName.flatButton(4, '4px')}
       >

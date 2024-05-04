@@ -2,15 +2,12 @@ import { MetaStore, ObjectStore } from '@/api/stores'
 import Media, { MediaProps } from '@/core/components/media'
 import { saveImageLocally } from '@/utils'
 import useMediaEventHandlerWrapper from '@/core/components/media/wrappers/eventHandler'
-import useRealId from '@/core/components/media/wrappers/useRealId'
+import { useURLToId } from '@/api/indexData'
 
 export default ({ videoId, ...rest }: { videoId: number } & MediaProps) => {
-  const realId = useRealId('video', rest.mediaState?.url, videoId)
+  const realId = useURLToId(rest.mediaState?.url, videoId)
   const video = ObjectStore('video').useValue(realId)
   const videoMeta = MetaStore.useValue(MetaStore.useObjectToMetaValue(realId)?.id)
-  if (!video?.url && video?.videoUrl) {
-    ObjectStore('video').updateOne({ id: realId, url: video.videoUrl })
-  }
   const externalMediaState = rest.mediaState
   const mediaState = {
     ...video,

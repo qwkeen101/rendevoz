@@ -1,10 +1,9 @@
-import { initializePdfDocument } from '@/api/stores/document.store'
-import { ObjectStore } from '@/api/stores'
-import { IPdfDocument, MetaObject } from '~/typings'
+import { IPdfDocument } from '~/typings'
 import { IImportResult } from '@/core/rendevoz/utils/types'
+import DataUtils from '@/api/stores/utils'
 
 const importPDF = async (file: File): Promise<IImportResult<IPdfDocument>> => {
-  const doc = await initializePdfDocument(file)
+  const doc = await DataUtils.document.initializePdfDocument(file)
   if (doc) {
     return {
       object: {

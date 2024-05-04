@@ -6,14 +6,14 @@ import { css } from '@emotion/css'
 import { atom, useAtom } from 'jotai'
 import { memo, useEffect } from 'react'
 import { usePdfViewer } from '@/core'
-import usePdfInstance from '@/core/components/pdf/hooks/usePdfInstance'
+import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 import { waitFor } from '@/utils'
 
 type Outline = Awaited<ReturnType<LayoutFunctions['getOutline']>>
 const outlineAtom = atom<Outline | null>(null)
 const PdfOutline = () => {
   const [outline, setOutline] = useAtom(outlineAtom)
-  const viewer = usePdfInstance()
+  const viewer = usePDFInstance()
   console.log('out line rendererd')
   useEffect(() => {
     console.log('getting ooo')
@@ -36,15 +36,14 @@ const PdfOutline = () => {
         width: '100%',
         height: '100%',
         overflowX: 'hidden',
-        overflowY: 'auto'
+        overflowY: 'auto',
+        padding: '0px 10px'
       }}
     >
-      {outline?.map((i, idx) => (
-        <OutlineItem item={i} key={idx} />
-      ))}
+      {outline?.map((i, idx) => <OutlineItem item={i} key={idx} />)}
       {(!outline || outline.length === 0) && (
-        <div style={{ margin: 'auto' }} className={ClassName.title()}>
-          This document has no outline.
+        <div style={{ margin: 'auto' }} className={'transparent-font bold-font'}>
+          No contents
         </div>
       )}
     </Content>
@@ -54,14 +53,13 @@ const PdfOutline = () => {
 const OutlineItem = ({ item }: { item: Outline[number] }) => {
   const [hide, toggleHide] = useToggle(true)
   const hasChildren = item.items.length > 0
-  const viewer = usePdfInstance()
+  const viewer = usePDFInstance()
   return (
     <div>
       <div
         onClick={() => {
           item.dest && viewer.navigateOps?.jumpToDest(item.dest)
         }}
-        style={{ marginRight: 6 }}
         className={css([ClassName.flatButton(), ClassName.flexLayout('center', 'flex-start')])}
       >
         {hasChildren && (
@@ -78,7 +76,7 @@ const OutlineItem = ({ item }: { item: Outline[number] }) => {
             }}
           />
         )}
-        <div style={{ paddingLeft: hasChildren ? 0 : 20, textTransform: 'none' }} className={ClassName.ellipsisFont(1)}>
+        <div style={{ paddingLeft: hasChildren ? 0 : 20 }} className={ClassName.ellipsisFont(1)}>
           {item.title}
         </div>
       </div>

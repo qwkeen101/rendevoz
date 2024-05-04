@@ -1,4 +1,4 @@
-import useDb from '@/hooks/stores/useDb'
+import getLocalTable from '@/api/stores/getLocalTable'
 import { atom } from 'jotai/vanilla'
 import { toast } from 'react-hot-toast'
 import { IMetaProp, IStore, MetaLink, MetaObject, ReviewStateType } from '~/typings'
@@ -107,8 +107,8 @@ export const MAX_META_NUMBER = 100
 
 const createMetaStore = () => {
   const { get, initBaseObject, dispatch } = BaseStore
-  const metaObjectDb = useDb('metaObjects')
-  const metaLinkDb = useDb('metaLinks')
+  const metaObjectDb = getLocalTable('metaObjects')
+  const metaLinkDb = getLocalTable('metaLinks')
 
   const initializeObjectStore = initializeLocalStore(metaObjectsAtom, metaObjectDb)
 
@@ -255,7 +255,7 @@ const createMetaStore = () => {
 
   const initializedLinkStore = initializeLocalStore(metaLinksAtom, metaLinkDb)
 
-  const localLinkStore: Pick<IStoreDeprecated<MetaLink>, 'addOne' | 'updateOne' | 'deleteOneById' | 'getAll'> = {
+  const localLinkStore: Pick<IStore<MetaLink>, 'addOne' | 'updateOne' | 'deleteOneById' | 'getAll'> = {
     addOne: (one, silent) => {
       if (one.sourceId === one.targetId) return Promise.reject()
       const allMetaLinks = Array.from(globalStore.get(metaLinksAtom).values())

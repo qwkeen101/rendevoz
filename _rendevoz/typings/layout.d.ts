@@ -1,5 +1,5 @@
 import { ReactElement } from 'react'
-import { CustomTypes, IEditorInstance, IPdfInstance, IMediaInstance, IWebpageInstance, IWhiteboardInstance } from '.'
+import { CustomTypes, IEditorInstance, IPDFInstance, IMediaInstance, IWebpageInstance, IWhiteboardInstance } from '.'
 import { MetaObject } from '.'
 
 export type IVideoTab = {
@@ -28,7 +28,7 @@ export type IImageTab = {
 
 export type IPDFTab = {
   type: 'pdf'
-  instance: IPdfInstance
+  instance: IPDFInstance
   objectId: number
 }
 

@@ -80,9 +80,11 @@ export default function getCloudClient() {
               onProgress: (t, p, size) => {
                 if (t === 'start') {
                   SyncAPI.file.changeState('uploading', p, 0, size)
-                } else {
+                } else if (t === 'finish') {
                   SyncAPI.file.changeState('uploading', p, 1)
                   SyncAPI.file.writeFileSyncState(p, 'upload')
+                } else if (t === 'skipped') {
+                  SyncAPI.file.changeState('uploading', p, 0, size, true)
                 }
               }
             })

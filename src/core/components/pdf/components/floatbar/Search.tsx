@@ -55,7 +55,7 @@ const PdfSearch = () => {
     >
       <div style={{ padding: '12px 12px 0px', width: '100%' }}>
         <input
-          className={'focus-input border-box-shadow'}
+          className={'focus-input border-box-shadow font-size-14'}
           onChange={e => {
             const value = e.target.value
             if (typeof value !== 'string') return
@@ -82,10 +82,10 @@ const PdfSearch = () => {
           }}
           value={searchStr}
           placeholder={t('general.search')}
-          style={{ padding: '3px 8px', borderRadius: 4, width: '100%' }}
+          style={{ padding: '4px 8px', borderRadius: 4, width: '100%' }}
         ></input>
         {searchStr && (
-          <div className={ClassName.description()} style={{ userSelect: 'none', marginTop: 6 }}>
+          <div className={'transparent-font font-size-12'} style={{ userSelect: 'none', marginTop: 6 }}>
             {t('general.find results', { num: result.total })}
           </div>
         )}

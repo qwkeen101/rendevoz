@@ -1,37 +1,29 @@
-import useFeedState, { FeedStateAtom } from '@/core/components/feed/hooks/useFeedState'
+import { FeedStateAtom } from '@/core/components/feed/hooks/useFeedState'
 import Webpage from '@/core/components/webpage/Webpage'
-import { useEffect, useMemo, useState, memo, useLayoutEffect, useRef } from 'react'
-import { Content, Icon, Tooltip } from '@/components'
+import { useMemo, useState, memo, useLayoutEffect, useRef } from 'react'
+import { Content } from '@/components'
 import { Colors } from '@/consts'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { ClassName } from 'rendevoz'
 import { useGlobalAtomValue, useMemoizedFn, useSelectAtomValue } from '@/hooks'
-import { UrlToWebpageMap } from '@/core/components/webpage/hooks/useWebpageContent'
 import { TransformGoogleNewsLinkToRealLink } from '@/core/components/feed/utils/googleNewsScraper'
-import moveToReadLater from '@/core/components/feed/utils/moveToReadLater'
-import removeReadLater from '@/core/components/feed/utils/removeReadLater'
 import FeedPodcastRenderer from '@/core/components/feed/components/FeedPodcastRenderer'
 import { ObjectStore } from '@/api/stores'
 import FeedYoutubeRenderer from '@/core/components/feed/components/FeedYoutubeRenderer'
-import addFeedAsMeta from '@/core/components/feed/utils/service/addFeedAsMeta'
 import { FEED_CONTENT_CACHE } from '@/core/components/feed/contentCache'
 import { useUpdate } from 'react-use'
-import { useSetAtom } from 'jotai'
-import { Tweet } from 'react-tweet'
 import TweetRenderer from '@/core/components/tweet/TweetRenderer'
+import { urlToIdMap } from '@/api/indexData/urlToId'
 
 const FeedContentRenderer = () => {
   const currentFocusedFeedItemId = useSelectAtomValue(FeedStateAtom, s => s.currentFocusedFeedItemId)
-  const modalOpen = useSelectAtomValue(FeedStateAtom, s => s.modalOpen)
-  const setFeedState = useSetAtom(FeedStateAtom)
   const displayMode = KeyvalueStore.useValue('feedOpenMode')
   const currentItem = ObjectStore('feed').useValue(currentFocusedFeedItemId)
-  const alreadySaved = useGlobalAtomValue(UrlToWebpageMap).get(currentItem?.link || '')
+  const alreadySaved = useGlobalAtomValue(urlToIdMap).get(currentItem?.link || '')
 
   const [isLoading, setIsLoading] = useState(false)
   const contentCache = currentItem && FEED_CONTENT_CACHE.get(currentItem.id)
   const fakeLoad = useRef(false)
-  console.log(displayMode)
   useLayoutEffect(() => {
     if (currentItem?.link.includes('news.google.com')) {
       TransformGoogleNewsLinkToRealLink(currentItem.link).then(res => {

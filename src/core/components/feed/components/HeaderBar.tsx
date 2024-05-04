@@ -179,7 +179,7 @@ const FeedHeaderBar = () => {
         <AnimatePopover
           positions={['bottom']}
           align={'end'}
-          content={
+          content={setV => (
             <WithBorder padding={4} width={150} style={{ fontSize: 14 }}>
               <div style={{ color: Colors.Font.Transparent, fontSize: 13, paddingLeft: 8, marginBottom: 2 }}>{t('general.View')}</div>
               {Object.keys(viewToTranslate).map(k => (
@@ -191,6 +191,7 @@ const FeedHeaderBar = () => {
                   }}
                   onClick={() => {
                     KeyvalueStore.updateOne('feedCardView', k)
+                    setV(false)
                   }}
                 >
                   {t(viewToTranslate[k])}
@@ -218,7 +219,10 @@ const FeedHeaderBar = () => {
                   className={ClassName.flatButton()}
                   onClick={() => {
                     KeyvalueStore.updateOne('feedOpenMode', k)
-                    setFeedState(s => ({ ...s, currentFocusedFeedItemId: undefined }))
+                    if (k === 'sidePeek') {
+                      setFeedState(s => ({ ...s, modalOpen: true }))
+                    }
+                    setV(false)
                   }}
                 >
                   {t(openToTranslate[k])}
@@ -244,6 +248,7 @@ const FeedHeaderBar = () => {
                 className={ClassName.flatButton()}
                 onClick={() => {
                   KeyvalueStore.updateOne('feedReadRule', 'unread')
+                  setV(false)
                 }}
               >
                 {t('general.Unread')}
@@ -255,12 +260,13 @@ const FeedHeaderBar = () => {
                 className={ClassName.flatButton()}
                 onClick={() => {
                   KeyvalueStore.updateOne('feedReadRule', 'all')
+                  setV(false)
                 }}
               >
                 {t('general.All articles')}
               </Content>
             </WithBorder>
-          }
+          )}
         >
           <Icon name={'park-preview-open'} size={16} className={ClassName.circleButton(6, 4)} />
         </AnimatePopover>

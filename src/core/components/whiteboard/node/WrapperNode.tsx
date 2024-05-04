@@ -86,6 +86,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
   const shouldKeepRatio = useSelectGlobalAtomValue(SettingAtom, s => s.whiteboard.imageResizeKeepRatio)
 
   instance.values.ID_TO_NODE_MAP.set(node.id, {
+    ...instance.values.ID_TO_NODE_MAP.get(node.id),
     setNodeState,
     getNodeDOM: () => {
       const d = containerRef.current

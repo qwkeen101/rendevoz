@@ -1,4 +1,4 @@
-import { useDebounceEffect, useMergedRef } from '@/hooks'
+import { GlobalInstance, useDebounceEffect, useMergedRef } from '@/hooks'
 import { memo, useEffect, useRef, useState } from 'react'
 import { IPdfLabel } from '~/typings'
 import { ObjectStore } from '@/api/stores'
@@ -7,7 +7,7 @@ import { Content, Icon, Image, Modal, VirtualList } from '@/components'
 import ClassName from '@/styles/classNames'
 import { useTranslation } from 'react-i18next'
 import Colors from '@/consts/colors'
-import usePdfInstance from '../../hooks/usePdfInstance'
+import usePDFInstance from '../../hooks/usePDFInstance'
 import { atom, useAtom } from 'jotai'
 import fuzzysort from 'fuzzysort'
 import usePdfBarState from '@/core/components/pdf/hooks/usePdfBarState'
@@ -31,7 +31,7 @@ const PdfLabelController = memo(({ labelIds }: { labelIds?: number[] }) => {
   const [mindmapTempId, setMindmapTempId] = useState<number>()
   const [currentHighlightLabel, setCurrentHighlightLabel] = useState<number>()
   const { t } = useTranslation()
-  const instance = usePdfInstance()
+  const instance = usePDFInstance()
   const virtualizerRef = useRef<Virtualizer<HTMLDivElement, Element>>()
   instance.jumpToLabelInSidebar = id => {
     setPdfBarState(s => ({ ...s, rightBarActive: 'label', showRightBar: true }))
@@ -194,8 +194,8 @@ const PdfLabelController = memo(({ labelIds }: { labelIds?: number[] }) => {
           }}
         >
           <input
-            className={'focus-input border-box-shadow'}
-            style={{ padding: '3px 8px', borderRadius: 4, flex: 1 }}
+            className={'focus-input border-box-shadow font-size-14'}
+            style={{ padding: '4px 8px', borderRadius: 4, flex: 1 }}
             value={labelSearch.searchInput}
             onChange={e => setLabelSearch(s => ({ ...s, searchInput: e.target.value }))}
             placeholder={t('general.search')}
@@ -237,7 +237,7 @@ const Label = ({ id, highlight }: { id: number; highlight: boolean }) => {
       }
     })
   const pdfLabel = label as IPdfLabel
-  const instance = usePdfInstance()
+  const instance = usePDFInstance()
 
   const containerRef = useRef<HTMLDivElement>(null)
   const mergedContainerRef = useMergedRef(ref, containerRef)
@@ -267,11 +267,16 @@ const Label = ({ id, highlight }: { id: number; highlight: boolean }) => {
     >
       {pdfLabel.imageUrl && (
         <Image
+          onContextMenu={() => {
+            GlobalInstance.commonOps?.previewImage?.(pdfLabel.imageUrl!)
+          }}
           src={pdfLabel.imageUrl}
           width={'90%'}
           withoutContainer
-          containerStyle={{ borderRadius: 8, overflow: 'hidden', marginBottom: 6 }}
-          preview
+          onClick={() => {
+            instance.navigateOps?.jumpToLabel(id)
+          }}
+          containerStyle={{ borderRadius: 8, overflow: 'hidden', marginBottom: 6, cursor: 'pointer' }}
         />
       )}
       {pdfLabel.selectedText &&

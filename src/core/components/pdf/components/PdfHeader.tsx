@@ -2,7 +2,7 @@ import { MetaStore, ObjectStore } from '@/api/stores'
 import { Content, Icon, Tooltip } from '@/components'
 import { ClassName } from 'rendevoz'
 import usePdfBarState from '@/core/components/pdf/hooks/usePdfBarState'
-import usePdfInstance from '@/core/components/pdf/hooks/usePdfInstance'
+import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 import { Colors, KEY } from '@/consts'
 import { useIsIn } from '@/hooks'
 import { useEffect, useState } from 'react'
@@ -17,7 +17,7 @@ const PdfHeader = ({ documentId }: { documentId: number }) => {
   const [barState, setBarState] = usePdfBarState()
   const [pdfState, setPdfState] = usePdfState()
   const totalPages = pdfState.numPages
-  const instance = usePdfInstance()
+  const instance = usePDFInstance()
   const [focused, setFocused] = useState(false)
   const [pageValue, setPageValue] = useState((pdf?.lastReadPage || 0) + 1)
   const { ref: pagesRef, isIn: isInPages } = useIsIn()

@@ -2,7 +2,7 @@ import Zindexes from '@/consts/zindex'
 import { useToaster } from 'react-hot-toast'
 import { AnimatePresence, motion } from 'framer-motion'
 import { css } from '@emotion/css'
-import { Icon } from '.'
+import { Icon } from '../../components'
 import Colors from '@/consts/colors'
 
 const Notification = () => {

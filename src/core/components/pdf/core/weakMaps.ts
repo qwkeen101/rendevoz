@@ -1,7 +1,7 @@
 import { PDFDocumentProxy } from 'pdfjs-dist'
 import { TextContent } from 'pdfjs-dist/types/src/display/api'
 import { MutableRefObject } from 'react'
-import { ICanvasLayerInstance, IPdfInstance, IPdfViewer, ITextLayerInstance, PageFunctionRef } from '~/typings'
+import { ICanvasLayerInstance, IPDFInstance, IPdfViewer, ITextLayerInstance, PageFunctionRef } from '~/typings'
 import { TextItemChar } from './types/text'
 import { normalizeChars } from './utils/search'
 import { renderPageInNormalMode } from './utils/renderer'
@@ -43,6 +43,7 @@ export const getTextContent = async (viewer: IPdfViewer, pageIndex: number) => {
   if (doc) {
     const page = await doc.getPage(pageIndex + 1)
     const textContent = await page.getTextContent()
+    page.cleanup()
     const chars = textContent.items
       .map(i => ('chars' in i ? i.chars : undefined))
       .filter(i => i)
@@ -62,7 +63,7 @@ export const deleteTextContent = async (viewer: IPdfViewer, pageIndex: number) =
 }
 export const PDF_TO_RENDER_QUEUE = new WeakMap<IPdfViewer, Set<number>>()
 
-export const PDF_IS_SELECTING = new WeakMap<IPdfInstance, boolean>()
+export const PDF_IS_SELECTING = new WeakMap<IPDFInstance, boolean>()
 
 export const removeFromRenderQueue = (viewer: IPdfViewer, pageIndex: number) => {
   const queue = PDF_TO_RENDER_QUEUE.get(viewer)

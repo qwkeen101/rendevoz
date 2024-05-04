@@ -1,7 +1,7 @@
 import { FC, memo } from 'react'
 import { Container } from '@/components'
 import TabTitle from '@/components/layout/TabTitle'
-import { IPdfInstance } from '~/typings'
+import { IPDFInstance } from '~/typings'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import Pdf from '@/core/components/pdf'
 import { Rendevoz } from '@/core/rendevoz'
@@ -9,7 +9,7 @@ import UncontrolledPDF from '@/core/components/pdf/UncontrolledPDF'
 
 const PdfPage: FC<{
   pdfId: number
-  onInstanceInitialized?: (i: IPdfInstance) => void
+  onInstanceInitialized?: (i: IPDFInstance) => void
   disableTitle?: boolean
 }> = memo(({ pdfId, onInstanceInitialized, disableTitle }) => {
   const document = ObjectStore('pdf').useValue(pdfId)

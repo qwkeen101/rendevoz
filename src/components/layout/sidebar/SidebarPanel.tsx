@@ -63,13 +63,13 @@ const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
           fontSize: 18,
           color: Colors.Font.Transparent,
           borderBottom: `1px solid ${Colors.Background.BoxShadowBorder}`,
-          '-webkit-app-region': 'drag'
+          appRegion: 'drag'
         }}
         alignItems={'center'}
       >
         <Icon
           style={{
-            '-webkit-app-region': 'no-drag'
+            appRegion: 'no-drag'
           }}
           name={'custom-card-library'}
           onClick={() =>
@@ -81,7 +81,7 @@ const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
         />
         <Icon
           style={{
-            '-webkit-app-region': 'no-drag'
+            appRegion: 'no-drag'
           }}
           name={'park-folder-close'}
           onClick={() =>
@@ -93,7 +93,7 @@ const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
         />
         <Icon
           style={{
-            '-webkit-app-region': 'no-drag'
+            appRegion: 'no-drag'
           }}
           name={'park-category-management'}
           onClick={() =>
@@ -105,7 +105,7 @@ const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
         />
         <Icon
           style={{
-            '-webkit-app-region': 'no-drag'
+            appRegion: 'no-drag'
           }}
           name={'park-google'}
           onClick={() =>
@@ -125,7 +125,7 @@ const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
           className={ClassName.flatButton(4, '4px 6px')}
           style={{
             marginLeft: 'auto',
-            '-webkit-app-region': 'no-drag'
+            appRegion: 'no-drag'
           }}
         />
       </Content>

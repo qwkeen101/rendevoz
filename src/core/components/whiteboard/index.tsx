@@ -35,8 +35,6 @@ import SnapDragLayer from '@/core/components/whiteboard/snap/SnapDragLayer'
 import FakeMindmapDragLayer from '@/core/components/whiteboard/node/mindmap/FakeMindmapDragLayer'
 import WhiteboardSearch from '@/core/components/whiteboard/WhiteboardSearch'
 import WhiteboardPasteSelector from '@/core/components/whiteboard/WhiteboardPasteSelector'
-import WhiteboardRename from '@/core/components/whiteboard/WhiteboardRename'
-
 const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly, name, onRename }: IWhiteboardProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const flow = useFlow()
@@ -263,6 +261,7 @@ export const Whiteboard = memo(
     const previousWhiteboard = useRef<IWhiteboard>()
     const whiteboardAtom = ObjectStore('whiteboard').createAtom(whiteboardId)
     const whiteboard = useGlobalAtomValue(whiteboardAtom)
+    console.log(whiteboard)
     const store = useMemo(() => {
       const store = createStore()
       const whiteboard = globalStore.get(whiteboardAtom)

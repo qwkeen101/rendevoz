@@ -1,10 +1,10 @@
-import useDb from '@/hooks/stores/useDb'
+import getLocalTable from '@/api/stores/getLocalTable'
 import { atom } from 'jotai'
 import { debounce, orderBy } from 'lodash'
 import { ICollection, ICollectionItem } from '~/typings/data'
 import BaseStore, { initializeLocalStore } from './base.store'
 import produce from 'immer'
-import { IStoreDeprecated } from './types'
+import { IStore, IStoreDeprecated } from './types'
 import { toast } from 'react-hot-toast'
 import { CollectionStore, globalStore, MetaStore, ObjectStore } from './index'
 import getSetting from '@/core/setting/getSetting'
@@ -13,11 +13,9 @@ import { useSelectGlobalAtomValue } from '@/hooks'
 import { metaObjectsAtom } from '@/api/stores/meta/meta.store'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 
-const { orderedData } = BaseStore
-
 export const collectionsAtom = atom<Map<number, ICollection>>(new Map())
 
-const undeletedCollectionsAtom = atom(get => orderedData(get(collectionsAtom)).filter(i => !i.deleted))
+const undeletedCollectionsAtom = atom(get => BaseStore.orderedData(get(collectionsAtom)).filter(i => !i.deleted))
 
 export const pinnedCollectionsAtom = atom(get => get(undeletedCollectionsAtom).filter(i => i.pinned))
 
@@ -62,48 +60,17 @@ function list_to_tree(list: ICollection[]): {
     list
   }
 }
-export const MetaIdToCollectionIdsAtom = atom<Map<number, Set<number>>>(new Map())
-
-window.addEventListener('DOMContentLoaded', () => {
-  const debounceIndexCollection = debounce(() => {
-    const allCollections = globalStore.get(collectionsAtom)
-    const map = new Map()
-    const metaMap = MetaStore.getMetaObjectsMap()
-    allCollections.forEach(collection => {
-      collection.items?.forEach(i => {
-        if (i.type === 'meta' && i.id && metaMap.has(i.id)) {
-          const set = map.get(i.id) || new Set()
-          set.add(collection.id)
-          map.set(i.id, set)
-        }
-      })
-    })
-    globalStore.set(MetaIdToCollectionIdsAtom, map)
-  }, 1000)
-  globalStore.sub(collectionsAtom, () => debounceIndexCollection())
-})
-
 const useCollectionStore = () => {
-  const database = useDb('collections')
-  const shouldToast = (silent?: boolean) => {
-    const setting = getSetting()
-    if (setting.notification.enabled && setting.notification.collection && !silent) {
-      return true
-    } else {
-      return false
-    }
-  }
+  const database = getLocalTable('collections')
   const store = initializeLocalStore<ICollection>(collectionsAtom, database)
-  const localStore: Pick<IStoreDeprecated<ICollection>, 'addOne' | 'deleteOneById' | 'getAll' | 'getOneById' | 'updateOne'> = {
-    addOne: store.addOne((obj, silent) => {
+  const localStore: Pick<IStore<ICollection>, 'addOne' | 'deleteOneById' | 'getAll' | 'getOneById' | 'updateOne'> = {
+    addOne: store.addOne(obj => {
       if (!obj.workspace) {
         CollectionStore.updateCollection({ id: obj.id, workspace: KeyvalueStore.getOne('currentWorkspace')?.id })
       }
     }),
-    updateOne: store.updateOne((obj, silent) => {
-      // !silent && shouldToast(silent) && toast.success('Collection successfully updated!')
-    }),
-    deleteOneById: store.deleteOneById(silent => {}),
+    updateOne: store.updateOne(),
+    deleteOneById: store.deleteOneById(),
     getAll: store.getAll(i => i.workspace === KeyvalueStore.getOne('currentWorkspace')?.id),
     getOneById: store.getOneById()
   }
@@ -319,27 +286,6 @@ const useCollectionStore = () => {
     }
     return parentCollectionsList
   }
-  const buildMetaCollections = (metaId: number): ICollection[][] => {
-    const hasMetaCollecions = Array.from(globalStore.get(MetaIdToCollectionIdsAtom).get(metaId)?.values() || [])
-    const res = hasMetaCollecions
-      .map(collection => {
-        return findParentCollections(collection)
-      })
-      .filter(i => i) as ICollection[][]
-    return res
-  }
-  const useMetaCollections = (metaId: number) => {
-    const map = useSelectGlobalAtomValue(MetaIdToCollectionIdsAtom, s => s.get(metaId))
-    const collections = useMemo(() => {
-      const res = Array.from(map?.values() || [])
-        .map(collection => {
-          return findParentCollections(collection)
-        })
-        .filter(i => i) as ICollection[][]
-      return res
-    }, [map])
-    return collections
-  }
   const switchWorkspace = () => {
     globalStore.set(collectionsAtom, new Map())
     realStore.getAllCollections()
@@ -364,8 +310,6 @@ const useCollectionStore = () => {
     addItemToCollection,
     moveItemBetweenCollections,
     moveItems,
-    buildMetaCollections,
-    useMetaCollections,
     switchWorkspace,
     ...realStore
   }

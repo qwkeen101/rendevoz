@@ -1,19 +1,40 @@
 import { ObjectStore } from '@/api/stores'
-import { assignProperties, calculateImageAspectRatio } from '@/utils'
+import { assignProperties, calculateImageAspectRatio, waitFor } from '@/utils'
 import { atom, useAtomValue } from 'jotai'
-import { IPdfInstance } from '~/typings'
+import { IPDFInstance } from '~/typings'
 import { renderPageInDarkMode } from '@/core/components/pdf/core/utils/renderer'
+import search from './ops/search'
+import captureImage from './ops/captureImage'
 
-export const PdfInstanceAtom = atom<IPdfInstance>({})
+export const PdfInstanceAtom = atom<IPDFInstance>({})
 
-const usePdfInstance = () => useAtomValue(PdfInstanceAtom)
+const usePDFInstance = () => useAtomValue(PdfInstanceAtom)
 
 export const useAssignPdfInstance = (pdfId: number) => {
   const pdf = ObjectStore('pdf').useValue(pdfId)
-  const instance = usePdfInstance()
+  const instance = usePDFInstance()
 
   assignProperties(instance, {
     getPdfId: () => pdfId,
+    getDocument: async () => {
+      return await new Promise((res, rej) => {
+        if (instance.values.document) {
+          res(instance.values.document)
+        } else {
+          waitFor(
+            () => !!instance.values.document,
+            () => {
+              res(instance.values.document!)
+            },
+            {
+              onTimeout: () => {
+                rej()
+              }
+            }
+          )
+        }
+      })
+    },
     getThumbnail: async pageIdx => {
       const doc = await instance.getDocument?.()
       if (doc) {
@@ -30,10 +51,14 @@ export const useAssignPdfInstance = (pdfId: number) => {
         renderPageInDarkMode()
         await firstPage.render({ canvasContext: ctx, transform, viewport }).promise
         const blob = (await new Promise(res => canvas.toBlob(o => res(o)))) as Blob
+        canvas.remove()
         const url = URL.createObjectURL(blob)
+        firstPage.cleanup()
         return url
       }
     },
+    search: query => search(query, instance),
+    capturePageImage: async (p, box) => await captureImage(p, instance, box),
     insertLabel: async label => {
       await ObjectStore('pdfLabel')
         .addOne({
@@ -56,8 +81,14 @@ export const useAssignPdfInstance = (pdfId: number) => {
             labels: pdf?.labels?.filter(i => i !== label)
           })
         )
+    },
+    getOutline: async () => {
+      const doc = await instance.getDocument?.()
+      if (doc) {
+        return await doc.getOutline()
+      }
     }
   })
 }
 
-export default usePdfInstance
+export default usePDFInstance

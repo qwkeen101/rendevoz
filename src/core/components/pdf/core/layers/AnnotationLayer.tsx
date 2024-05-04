@@ -3,8 +3,7 @@ import { FC, memo, ReactElement, useMemo, useState } from 'react'
 import { useIsomorphicLayoutEffect } from 'react-use'
 import Annotation from '../annotation/Annotation'
 import { IAnnotation } from '../types/annotation'
-import {AnnotationEditorType} from 'pdfjs-dist'
-import usePdfInstance from '@/core/components/pdf/hooks/usePdfInstance'
+import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 interface AnnotationLayerProps {
   page: PDFPageProxy
   width: number
@@ -16,7 +15,7 @@ interface AnnotationLayerProps {
 
 const AnnotationLayer: FC<AnnotationLayerProps> = ({ page, width, height, scale, viewport, renderAnnotation }) => {
   const [annotations, setAnnotations] = useState<IAnnotation[]>()
-  const instance = usePdfInstance()
+  const instance = usePDFInstance()
   useIsomorphicLayoutEffect(() => {
     page.getAnnotations({ intent: 'display' }).then(data => {
       console.log(data)

@@ -96,12 +96,16 @@ const useArrowNavigation = (containerRef: RefObject<HTMLDivElement>) => {
   useEffect(() => {
     const keyboardHandler = (e: KeyboardEvent) => {
       if (containerRef.current?.contains(e.target)) {
-        if (isHotkey(KEY.ArrowRight, e)) {
-          instance.navigateOps?.forward()
-        }
-        if (isHotkey(KEY.ArrowLeft, e)) {
-          instance.navigateOps?.back()
-        }
+        setTimeout(() => {
+          if (!e.defaultPrevented) {
+            if (isHotkey(KEY.ArrowRight, e)) {
+              instance.navigateOps?.forward()
+            }
+            if (isHotkey(KEY.ArrowLeft, e)) {
+              instance.navigateOps?.back()
+            }
+          }
+        }, 10)
       }
     }
     document.addEventListener('keydown', keyboardHandler)

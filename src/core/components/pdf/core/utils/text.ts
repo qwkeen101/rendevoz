@@ -2,6 +2,7 @@ import usePdfjs from '@/hooks/utils/usePdfjs'
 import { PageViewport } from 'pdfjs-dist'
 import { Point } from '../types'
 import { TextContentBound, TextContentOffset, TextContentTrans } from '../types/text'
+import { result } from 'lodash'
 
 export const getCoordAfterTrans = (point: Point, trans: TextContentTrans) => {
   if (!trans) return point
@@ -116,57 +117,60 @@ export const getTargetTextBound = (
           x: bound.offset.left,
           y: bound.offset.top
         },
-    relX = pointCoord.x - boundCoord.x
+    pointRelativeX = pointCoord.x - boundCoord.x
   const chars = bound.textItem.chars || []
+  ctx.font = `${bound.style.fontSize} ${bound.style.fontFamily}`
   // not in bound
-  if (relX <= 0)
+  if (pointRelativeX <= 0)
     return {
       text: '',
       width: 0
     }
   const resultChars = []
-  let rx = 0
-
+  let relativeRight = 0
   for (let i = 0; i < chars.length; i += 1) {
-    if (!chars[i].transform) {
-      resultChars.push(chars[i])
+    const char = chars[i]
+    if (!char.transform) {
+      resultChars.push(char)
       continue
     }
-    const transformedCharPoint = getCharPoint(viewport, chars[i].transform),
-      charRelX = getCoordAfterTrans(transformedCharPoint, bound.offset.trans).x - boundCoord.x
-
+    const charRelativeRight = getCoordAfterTrans(getCharPoint(viewport, char.transform), bound.offset.trans).x - boundCoord.x
     if (include) {
-      if (charRelX >= relX) break
-      resultChars.push(chars[i]), (rx = charRelX)
-    } else if ((resultChars.push(chars[i]), (rx = charRelX), charRelX >= relX)) break
+      if (charRelativeRight >= pointRelativeX) break
+      resultChars.push(char), (relativeRight = charRelativeRight)
+    } else {
+      resultChars.push(char)
+      relativeRight = charRelativeRight
+      if (charRelativeRight >= pointRelativeX) break
+    }
   }
 
   const lastChar = resultChars[resultChars.length - 1]
   if (lastChar)
     return {
       text: lastChar.str,
-      width: rx,
+      width: relativeRight,
       chars: resultChars
     }
-  ctx.font = `${bound.style.fontSize} ${bound.style.fontFamily}`
   const fontWidth = bound.offset.size[0] / ctx.measureText(bound.str).width
   let resultStr = ''
   const str = bound.str
-  const resultStrWidth = 0
+  let resultStrWidth = 0
   for (let i = 0; i < str.length; i += 1) {
     resultStr += str[i]
-    const resultStrWidth = ctx.measureText(resultStr).width * fontWidth
-    if (resultStrWidth >= relX) {
+    resultStrWidth = ctx.measureText(resultStr).width * fontWidth
+    if (resultStrWidth >= pointRelativeX) {
       break
     }
   }
-  return (
-    include && resultStrWidth > relX && (resultStr = resultStr.substring(0, resultStr.length - 1)),
-    {
-      text: resultStr,
-      width: ctx.measureText(resultStr).width * fontWidth
-    }
-  )
+  if (include && resultStrWidth > pointRelativeX) {
+    resultStr = resultStr.substring(0, resultStr.length - 1)
+  }
+
+  return {
+    text: resultStr,
+    width: ctx.measureText(resultStr).width * fontWidth
+  }
 }
 export const getStartTextRect = (bound: TextContentBound, ctx: CanvasRenderingContext2D, point: Point, viewport: PageViewport) => {
   const offset = bound.offset,
@@ -246,18 +250,23 @@ export const getTextRect = (bound: TextContentBound, ctx: CanvasRenderingContext
       [realStart, realEnd] = startPointCoord.x >= endPointCoord.x ? [endPoint, startPoint] : [startPoint, endPoint],
       startTextBound = getTargetTextBound(bound, realStart, true, viewport, ctx),
       endTextBound = getTargetTextBound(bound, realEnd, false, viewport, ctx)
-    let targetText = str.substring(startTextBound.text.length, endTextBound.text.length)
-    // process select extra whitespace here
     let width = endTextBound.width - startTextBound.width
+    let targetText = str.substring(startTextBound.text.length, endTextBound.text.length)
     let x = offset.left + startTextBound.width
-    if (targetText.startsWith(' ') && startTextBound.chars && endTextBound.chars) {
-      ctx.font = `${bound.style.fontSize} ${bound.style.fontFamily}`
-      const fontWidth = bound.offset.size[0] / ctx.measureText(bound.str).width
-      const whitespaceWidth = ctx.measureText(' ').width * fontWidth
-      x += whitespaceWidth
-      width -= whitespaceWidth
-      targetText = targetText.trimStart()
-    }
+    // if (startTextBound.text === endTextBound.text && !targetText) {
+    //   targetText = startTextBound.text
+    //   width = startTextBound.width
+    //   x = offset.left
+    // }
+    //
+    // if (targetText.startsWith(' ') && startTextBound.chars && endTextBound.chars) {
+    //   ctx.font = `${bound.style.fontSize} ${bound.style.fontFamily}`
+    //   const fontWidth = bound.offset.size[0] / ctx.measureText(bound.str).width
+    //   const whitespaceWidth = ctx.measureText(' ').width * fontWidth
+    //   x += whitespaceWidth
+    //   width -= whitespaceWidth
+    //   targetText = targetText.trimStart()
+    // }
     return trans
       ? {
           x: trans[4],

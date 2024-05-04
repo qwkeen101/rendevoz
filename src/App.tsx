@@ -1,10 +1,10 @@
 import '@icon-park/react/styles/index.less'
 import './styles/common.less'
-import Initializer from './Initializer'
+import Initializer from './api/components/Initializer'
 import './styles/global.less'
 import './styles/font.less'
 import { GlobalDragOverlay, GlobalScreenShot, SettingAtom } from '@/core'
-import Notification from './components/Notification'
+import Notification from './api/components/Notification'
 import '@/styles/dock.less'
 import SvgMarker from './components/svg/Marker'
 import { Fragment, useEffect, useRef } from 'react'
@@ -14,7 +14,7 @@ import ErrorFallback from './components/base/ErrorFallBack'
 import AuthenticatedLayout from './components/base/authenticatedLayout'
 import '@/assets/pdf.js'
 import PdfJsUrl from '@/assets/pdf.worker.js?url'
-import ThemeSwitcher from './ThemeSwitcher'
+import ThemeSwitcher from './api/components/ThemeSwitcher'
 import ImagePreviewer from './core/global/components/ImagePreviewer'
 import classNames from 'classnames'
 import { css } from '@emotion/css'
@@ -29,7 +29,7 @@ import BuiltinEditorPlugin from './core/plugin/builtin/EditorPlugin'
 import { KeyToRegisteredGlobalElements } from './core/plugin/RegisterMap'
 import GlobalUtils from '@/core/global/GlobalUtils'
 import { BuiltInDraggableElement, BuiltInDropOn, BuiltInMetaObjectTypes, BuiltInObjectTypes, BuiltInTabTypes } from '~/typings'
-import { GlobalBaidudisk } from '@/components/fileImporter/baidudisk/BaidudiskDisplayer'
+import { GlobalBaidudisk } from '@/api/components/fileImporter/baidudisk/BaidudiskDisplayer'
 import { useSelectGlobalAtomValue } from '@/hooks'
 import GlobalCollection from '@/core/global/components/CollectionSelector'
 import { GlobalObjectDetails } from '@/core/object/details'
@@ -45,7 +45,8 @@ import { ChineseFormats, DateFormat, EnglishFormats } from '@/utils'
 import useGlobalShortcutHandler from '@/core/global/ShortcutHandler'
 import ObjectEditForm from '@/core/global/components/ObjectEditForm'
 import GlobalStates from '@/api/global/states'
-import LoadingPage from '@/components/loadingPage'
+import LoadingPage from '@/api/components/LoadingPage'
+import APIComponents from '@/api/components/APIComponents'
 
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
@@ -96,7 +97,6 @@ const App = () => {
     GlobalPluginManager.registerPlugin(BuiltinEditorPlugin)
     executed.current = true
   }
-  const initialized = GlobalStates.useValue('initialized')
   useEffect(() => {
     i18n.changeLanguage(lang)
     const currentLang = i18n.language
@@ -116,57 +116,50 @@ const App = () => {
   const registeredGlobalElements = Array.from(KeyToRegisteredGlobalElements.entries())
 
   return (
-    <>
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
-        {/* for unknown queryselector bug */}
-        <div
-          className={classNames(
-            'excalidraw',
-            css({
-              '--color-selection': '#6965db'
-            })
-          )}
-          style={{ display: 'none' }}
-        ></div>
-        <Initializer />
-        <ThemeSwitcher />
-        <Notification />
-        <LoadingPage />
-        <>
-          <GlobalDownloadIndicator />
-          <TextSearch />
-          <GlobalScreenShot />
-          <GlobalPreviewPanel />
-          <GlobalQuickAdd />
-          <GlobalBaidudisk />
-          <GlobalSearchPanel />
-          <GlobalDialog />
-          <ObjectEditForm />
-          <GlobalCollection />
-          <GlobalObjectCreator />
-          <GlobalObjectDetails />
-          <GlobalTranslateResult />
-          <AuthenticatedLayout />
-          <GlobalDragOverlay />
-          <ImagePreviewer />
-          <FileImporter />
-          <GlobalUtils />
-          {registeredGlobalElements.map(entry => (
-            <Fragment key={entry[0]}>{entry[1]()}</Fragment>
-          ))}
-          <svg
-            style={{
-              position: 'absolute',
-              width: 0,
-              height: 0,
-              overflow: 'hidden'
-            }}
-          >
-            <SvgMarker />
-          </svg>
-        </>
-      </ErrorBoundary>
-    </>
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      {/* for unknown queryselector bug */}
+      <div
+        className={classNames(
+          'excalidraw',
+          css({
+            '--color-selection': '#6965db'
+          })
+        )}
+        style={{ display: 'none' }}
+      ></div>
+      <APIComponents />
+      <GlobalDownloadIndicator />
+      <TextSearch />
+      <GlobalScreenShot />
+      <GlobalPreviewPanel />
+      <GlobalQuickAdd />
+      <GlobalBaidudisk />
+      <GlobalSearchPanel />
+      <GlobalDialog />
+      <ObjectEditForm />
+      <GlobalCollection />
+      <GlobalObjectCreator />
+      <GlobalObjectDetails />
+      <GlobalTranslateResult />
+      <AuthenticatedLayout />
+      <GlobalDragOverlay />
+      <ImagePreviewer />
+      <FileImporter />
+      <GlobalUtils />
+      {registeredGlobalElements.map(entry => (
+        <Fragment key={entry[0]}>{entry[1]()}</Fragment>
+      ))}
+      <svg
+        style={{
+          position: 'absolute',
+          width: 0,
+          height: 0,
+          overflow: 'hidden'
+        }}
+      >
+        <SvgMarker />
+      </svg>
+    </ErrorBoundary>
   )
 }
 

@@ -154,7 +154,7 @@ db.use({
   })
 })
 Dexie.on('storagemutated', () => {
-  if (localStorage) {
+  if (typeof localStorage !== 'undefined') {
     localStorage.setItem('DB_LAST_UPDATE', `${Date.now()}`)
   }
 })

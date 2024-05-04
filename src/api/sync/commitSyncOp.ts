@@ -67,7 +67,7 @@ export const commitManually = async () => {
     }
   }
 }
-const debounceUpload = debounce(commitManually, 2000)
+const debounceUpload = debounce(commitManually, 2000, { maxWait: 4000 })
 const removeRepeatNoteIds = () => {
   cache.noteUpdateIds = Array.from(new Set(cache.noteUpdateIds).values())
 }

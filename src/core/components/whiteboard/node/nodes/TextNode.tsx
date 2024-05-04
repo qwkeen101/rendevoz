@@ -16,7 +16,9 @@ const TextNode = ({ node, onClick }: InnerNodeProps & { onClick: VoidFunction })
     }
   }, [textNode.content])
   const handleChangeValue = (newValue: Descendant[]) => {
-    instance.updateNode?.(textNode.id, n => ({ ...n, content: newValue }), false)
+    if (newValue !== textNode.content) {
+      instance.updateNode?.(textNode.id, n => ({ ...n, content: newValue }), false)
+    }
   }
   const initialOkay = useMemo(() => Node.isNodeList(textNode.content), [])
   if (!initialOkay) {

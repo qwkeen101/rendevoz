@@ -51,7 +51,10 @@ export const PdfViewer: FC<PdfViewerProps> = memo(
     const documentMeta = MetaStore.useObjectToMetaValue(documentId)
     const viewer = usePDFInstance()
     viewer.on = on
-    const [downloadState, setDownloadState] = useState<DownloadProgress>()
+    const [downloadState, setDownloadState] = useState<{
+      isDownloading?: boolean
+      percent?: number
+    }>()
     const setPDFState = useSetAtom(PdfStateAtom)
     useEffect(() => setPDFState(s => ({ ...s, styles: outerStyles, layout, autoWidth, state })), [outerStyles, layout, autoWidth, state])
     // ref to store pdf viewer instance
@@ -71,12 +74,22 @@ export const PdfViewer: FC<PdfViewerProps> = memo(
     usePdfDrag(viewboxRef.current, documentId)
     useEffect(() => {
       if (document?.webFileUrl && !document.url) {
-        DownloadRemotePdf(document.webFileUrl, p => {
-          setDownloadState(p)
-        }).then(data => {
-          ObjectStore('pdf').updateOne({ id: documentId, url: data })
-          setDownloadState(undefined)
+        setDownloadState({
+          isDownloading: true,
+          percent: 0
         })
+        DownloadRemotePdf(document.webFileUrl, p => {
+          setDownloadState({
+            isDownloading: true,
+            percent: p
+          })
+        })
+          .then(data => {
+            ObjectStore('pdf').updateOne({ id: documentId, url: data })
+          })
+          .finally(() => {
+            setDownloadState(undefined)
+          })
       }
       waitFor(
         () => !!viewer.getPageSize,
@@ -139,7 +152,7 @@ export const PdfViewer: FC<PdfViewerProps> = memo(
       <div ref={viewboxRef} className={'viewerBox'}>
         {layout?.showHeader !== false && <PdfHeader documentId={documentId} />}
         <LabelToolbarRenderer />
-        {downloadState && (
+        {downloadState?.isDownloading && (
           <Content flex column alignItems={'center'} fullWidth justifyContent={'center'} gap={10}>
             <div
               style={{
@@ -153,12 +166,11 @@ export const PdfViewer: FC<PdfViewerProps> = memo(
               <div
                 style={{
                   height: '100%',
-                  width: `${downloadState.percentage}%`,
+                  width: `${(downloadState.percent ?? 0) * 100}%`,
                   background: Colors.Common.SelectColor
                 }}
               ></div>
             </div>
-            <div>Remaining: {formatBytes(downloadState.remaining, 0)}</div>
           </Content>
         )}
         {fileUrl && (

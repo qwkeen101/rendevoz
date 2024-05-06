@@ -4,6 +4,7 @@ import { ISystemFile } from '~/typings/fs'
 
 const LocalFileSizeMap = new Map<string, number>()
 export default async (dirName: string, lastUploaded?: number) => {
+  console.log(LocalFileSizeMap)
   const client = SyncAPI.cloudClient()
   if (!client) return []
   const allFiles = await FileSystem.fs.readdir(dirName)

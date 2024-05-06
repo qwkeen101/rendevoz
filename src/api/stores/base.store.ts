@@ -283,7 +283,6 @@ export function initializeLocalStore<T>(
                 res(undefined)
                 return
               }
-              console.log(one)
               globalStore.set(atom, BaseStore.add(one, globalStore.get(atom)))
               res(one)
             } else {

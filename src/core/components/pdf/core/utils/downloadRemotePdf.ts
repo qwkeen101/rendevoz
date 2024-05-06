@@ -1,9 +1,9 @@
 import { ErrorMaker } from '@/consts'
 import { request } from '@/utils/request'
-import fetchProcess, { DownloadProgress } from '@/utils/fetchProcess'
 import FileSystem from '@/api/fileSystem'
+import fetchProcess from '@/utils/fetchProcess'
 
-const downloadRemotePdf = async (remotePdfUrl: string, onProgress?: (progress: DownloadProgress) => void) => {
+const downloadRemotePdf = async (remotePdfUrl: string, onProgress?: (p: number) => void) => {
   if (remotePdfUrl.startsWith('baidudisk')) {
     const fsid = Number(remotePdfUrl.replace('baidudisk/', ''))
     const access = localStorage.getItem('bda')
@@ -24,17 +24,13 @@ const downloadRemotePdf = async (remotePdfUrl: string, onProgress?: (progress: D
       if (fileMetas.dlink) {
         const downloadResult = await fetch(`${fileMetas.dlink}&access_token=${access}`, {
           method: 'get'
-        }).then(
-          fetchProcess({
-            onProgress: p => onProgress?.(p)
-          })
-        )
+        })
         if (downloadResult.status > 400) {
           throw new Error(ErrorMaker.createError('WEB_REQUEST_ERROR'))
         }
-        const buf = await downloadResult.blob()
+        const buf = await fetchProcess(downloadResult, onProgress)
         if (buf) {
-          const filepath = await FileSystem.fs.writeFile(buf, `/files/${fileMetas.filename}`, 'binary')
+          const filepath = await FileSystem.fs.writeFile(buf, `/files/${fileMetas.filename}`)
           if (filepath) {
             return filepath
           }

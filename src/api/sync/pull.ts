@@ -56,6 +56,7 @@ export default async () => {
       const dbTransactions = data
         .map(i => i.databaseTranscations?.map(t => ({ ...t, timestamp: i.timestamp })))
         .flat()
+        .filter(i => i)
         .reverse()
       const fileTransactions = data
         .map(i => i.fileTransactions)

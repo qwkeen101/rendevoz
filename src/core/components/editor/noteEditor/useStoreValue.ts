@@ -54,6 +54,7 @@ const useStoreValue = (options: {
 
   const handleOperationApplied = (e: OperationAppliedEvent) => {
     if (e.noteId === noteId) {
+      console.log(e)
       shouldSaveRef.current = true
       debounceSaveValue.run()
     }

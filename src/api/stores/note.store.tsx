@@ -11,6 +11,7 @@ import normalizeChildrenToText from '@/core/components/editor/utils/normalize/no
 const createNoteStore = () => {
   const blobDb = getLocalTable('blobs')
   const saveNoteAsBuffer = async (value: Descendant[], id?: number) => {
+    console.log('saved')
     const realId = id || Id.getId()
 
     await FileSystem.fs.writeFile(new Blob([JSON.stringify(value)]), `/files/note_${realId}.json`).then(res =>

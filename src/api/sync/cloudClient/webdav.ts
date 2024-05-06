@@ -27,19 +27,18 @@ const transformToDirPath = (str: string) => {
   if (!str.startsWith(`/${folder}`)) {
     str = `/${folder}` + (folder.length ? '/' : '') + str
   }
-  const splitted = str.split('/')
+  const splitted = str.split('/').filter(i => i)
   splitted.pop()
   const final = splitted.join('/')
   return '/' + final
 }
 const checkDirCreated = async (filePath: string, isDir = false) => {
   const client = WebdavSync.client!
-  const dirs = filePath.split('/')
+  const dirs = filePath.split('/').filter(i => i)
   if (!isDir) {
     dirs.pop()
   }
   const dirPath = dirs.join('/')
-  console.log(dirPath)
   try {
     if (!(await client.exists(dirPath))) {
       await client.createDirectory(dirPath, { recursive: true })
@@ -176,24 +175,27 @@ const WebdavSync: ICloudSyncClient & {
     }
   },
   listFolder: async (dirName, startAfter) => {
-    const client = getClient()
-    dirName = addLeading(dirName)
-    await checkDirCreated(dirName, true)
-    let res = (await client.getDirectoryContents(dirName, { includeSelf: false })) as FileStat[]
-    if (startAfter) {
-      res.sort((a, b) => (a.filename > b.filename ? 1 : -1))
-      const idx = res.findIndex(i => removeLeading(i.filename) > startAfter)
-      if (idx >= 0) {
-        res = res.slice(idx)
-      } else {
-        res = []
+    try {
+      const client = getClient()
+      dirName = addLeading(dirName)
+      let res = (await client.getDirectoryContents(dirName, { includeSelf: false })) as FileStat[]
+      if (startAfter) {
+        res.sort((a, b) => (a.filename > b.filename ? 1 : -1))
+        const idx = res.findIndex(i => removeLeading(i.filename) > startAfter)
+        if (idx >= 0) {
+          res = res.slice(idx)
+        } else {
+          res = []
+        }
       }
+      return res.map(i => ({
+        key: removeLeading(i.filename),
+        lastModified: new Date(i.lastmod).getTime(),
+        size: i.size
+      }))
+    } catch (e) {
+      return []
     }
-    return res.map(i => ({
-      key: removeLeading(i.filename),
-      lastModified: new Date(i.lastmod).getTime(),
-      size: i.size
-    }))
   }
 }
 

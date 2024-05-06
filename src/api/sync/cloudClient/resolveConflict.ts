@@ -13,7 +13,7 @@ import KeyvalueStore from '@/api/stores/keyvalue.store'
 export default async (method: 'pull' | 'push') => {
   const client = SyncAPI.cloudClient()
   if (client) {
-    await SyncAPI.file.syncLocalFiles()
+    SyncAPI.file.syncLocalFiles()
     if (method === 'pull') {
       GlobalStates.setState('initialized', false)
       try {

@@ -34,9 +34,10 @@ const FeedSidebar = () => {
     return {}
   }, [allCollections, allFolders])
   const handleSetReadLater = async () => {
-    const r = await KeyvalueStore.getOne('feedReadLaterIds')
+    const r = KeyvalueStore.getOne('feedReadLaterIds')
     setFeedState(s => ({
       ...s,
+      filteredFeedItems: undefined,
       allFeedItems: r || [],
       currentVisiblePage: 'feeds',
       currentFocusedFeedItemId: undefined,
@@ -59,10 +60,11 @@ const FeedSidebar = () => {
     ObjectStore('feedFolder').getAll()
   }, [workspace?.id])
   const handleSetHistory = async () => {
-    const history = await KeyvalueStore.getOne('feedRecentlyReadIds')
+    const history = KeyvalueStore.getOne('feedRecentlyReadIds')
     setFeedState(s => ({
       ...s,
       allFeedItems: history || [],
+      filteredFeedItems: undefined,
       currentVisiblePage: 'feeds',
       currentFocusedFeedItem: undefined,
       currentCollectionId: undefined,

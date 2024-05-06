@@ -11,11 +11,8 @@ import { useAtomValue } from 'jotai'
 import { EditorBlockHandleAtom } from '../hooks/useBlockHandle'
 import useEventListener from '@/hooks/utils/useEventListener'
 import { Colors } from '@/consts'
-import { useSelectAtomValue } from '@/hooks'
-import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import { EditorOverlayStateAtom } from '@/core/components/editor/components/overlay/useEditorOverlay'
-import { assignProperties } from '@/utils'
 
 type IBlockHandle = FC<{
   outerVisible: boolean
@@ -94,7 +91,6 @@ const BlockHandle: IBlockHandle = ({ outerVisible, onAddClick, onDragClick, onMe
       </div>
     </div>
   )
-  const hasHeader = useSelectAtomValue(EditorStateAtom, s => s.layout?.showHeader) !== false
   const menuClickedRef = useRef(false)
 
   const renderHandle = () => {
@@ -116,7 +112,7 @@ const BlockHandle: IBlockHandle = ({ outerVisible, onAddClick, onDragClick, onMe
             }}
             style={{
               position: 'absolute',
-              top: hasHeader ? (top ?? 0) + 36 : top,
+              top,
               left: left || 0 - 5,
               width: 5,
               height: targetHeight,
@@ -196,7 +192,7 @@ const BlockHandle: IBlockHandle = ({ outerVisible, onAddClick, onDragClick, onMe
       </AnimatePresence>
     )
   }
-  const container = containerRef.current?.parentElement
+  const container = containerRef.current
   if (container) {
     return createPortal(renderHandle(), container)
   }

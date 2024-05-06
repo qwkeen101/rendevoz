@@ -1,4 +1,3 @@
-import { ICloudSyncClient } from '@/api/sync/cloudClient/types'
 import FileSystem from '@/api/fileSystem'
 import SyncAPI from '@/api/sync'
 
@@ -10,6 +9,7 @@ export default async (
   }
 ) => {
   const client = SyncAPI.cloudClient()
+  if (!client) return
   const protectLocal = opt?.protectLocal ?? true
   const direction = opt?.direction ?? 'from remote to local'
   const remoteFiles = await client.listFolder(dirName)
@@ -31,13 +31,8 @@ export default async (
           filesToDownload.push(name)
         }
       } else {
-        if (file.lastModified) {
-          const mtime = file.lastModified
-          if (mtime > local.mtime) {
-            const uploadTime = (await SyncAPI.file.getFileSyncState(name))?.lastUpload
-            if (uploadTime && Math.abs(uploadTime - mtime) < 1000) {
-              return
-            }
+        if (file.lastModified && file.size) {
+          if (file.size !== local.size && file.lastModified > local.mtime) {
             filesToDownload.push(name)
           }
         }
@@ -55,12 +50,10 @@ export default async (
           filesToUpload.push(name)
         }
       } else {
-        if (!remote.lastModified || file.mtime > remote.lastModified) {
-          const downloadTime = (await SyncAPI.file.getFileSyncState(name))?.lastDownload
-          if (downloadTime && Math.abs(downloadTime - file.mtime) < 1000) {
-            return
+        if (remote.size && remote.lastModified) {
+          if (remote.size !== file.size && file.mtime > remote.lastModified) {
+            filesToUpload.push(name)
           }
-          filesToUpload.push(name)
         }
       }
     })

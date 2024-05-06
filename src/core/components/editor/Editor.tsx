@@ -246,7 +246,7 @@ export const EditorV1: FC<EditorProps> = memo(
             height: targetEle.offsetHeight
           }
           const targetLeft = ((targetBounding.x - scrollBounding.x) / scrollBounding.width) * scrollElementRect.width
-          const targetTop = ((targetBounding.y - scrollBounding.y) / scrollBounding.height) * scrollElementRect.height
+          const targetTop = ((targetBounding.y - scrollBounding.y) / scrollBounding.height) * scrollElementRect.height + scrollEle.scrollTop
           let left = targetLeft - 4
           let top = targetTop
           const targetLineHeight = parseInt(window.getComputedStyle(targetEle.firstElementChild).lineHeight)

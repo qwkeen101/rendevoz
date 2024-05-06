@@ -15,6 +15,9 @@ export default memo(() => {
   const [isPulling, setIsPulling] = useState(false)
   const syncSetting = useSelectGlobalAtomValue(SettingAtom, s => s.sync)
   const connection = syncState.connection
+  const clear = (type: 'downloading' | 'uploading') => {
+    setSyncState(s => ({ ...s, [type]: { ...Object.values(s[type]).filter(i => i.progress < 1) } }))
+  }
   const renderDownloading = () => {
     if (Object.keys(syncState.downloading).length > 0) {
       const items = Object.values(syncState.downloading)
@@ -28,7 +31,7 @@ export default memo(() => {
             <div
               className={'normal-font select-color-font font-size-12 pointer'}
               onClick={() => {
-                setSyncState(s => ({ ...s, downloading: {} }))
+                clear('downloading')
               }}
             >
               Clear
@@ -79,7 +82,7 @@ export default memo(() => {
             <div
               className={'normal-font select-color-font font-size-12 pointer'}
               onClick={() => {
-                setSyncState(s => ({ ...s, uploading: {} }))
+                clear('uploading')
               }}
             >
               Clear

@@ -27,24 +27,6 @@ const changeState = (type: 'downloading' | 'uploading', name: string, progress: 
     }
   })
 }
-const getFileSyncState = async (name: string): Promise<FileSyncState> => {
-  const db = syncDB.table('sync')
-  const data = await db.get(name)
-  return data
-}
-const writeFileSyncState = async (name: string, type: 'download' | 'upload') => {
-  const db = syncDB.table('sync')
-  const curr = (await db.get(name)) as FileSyncState | undefined
-  await db.put(
-    {
-      ...curr,
-      lastUpload: type === 'upload' ? Date.now() : curr?.lastUpload,
-      lastDownload: type === 'download' ? (await FileSystem.fs.stat('rendefile://' + name)).mtime : curr?.lastDownload
-    },
-    name
-  )
-}
-
 const syncLocalFiles = async () => {
   const client = SyncAPI.cloudClient()
   if (!client) return
@@ -62,9 +44,7 @@ const syncLocalFiles = async () => {
 const FileSync = {
   commit,
   pull,
-  getFileSyncState,
   changeState,
-  writeFileSyncState,
   syncLocalFiles,
   listNeedUpload,
   uploadModifiedLocalFiles

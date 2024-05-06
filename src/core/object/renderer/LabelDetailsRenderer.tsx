@@ -150,6 +150,7 @@ export default memo(
     useEffect(() => {
       renderImgOrLabel()
     }, [metaObject, label, showVideo, showAudio])
+    const audioLabelMode = metaObject?.type === 'audioLabel' && showAudio
     return (
       <Content
         contentEditable={false}
@@ -162,44 +163,46 @@ export default memo(
         onPointerMove={() => !showToolbar && setShowToolbar(true)}
       >
         {displayer}
-        <Content
-          flex
-          alignItems={'center'}
-          justifyContent={'space-between'}
-          style={{
-            padding: '8px 12px',
-            ...sourceStyle
-          }}
-          gap={6}
-        >
-          {from && (
-            <Content
-              flex
-              gap={8}
-              style={{
-                flex: 1
-              }}
-            >
-              <Icon size={16} name={from.icon} />
-              <div className={ClassName.ellipsisFont(1)}>{from.name}</div>
-              {normalizedTime && <div style={{ flexShrink: 0 }}> - {normalizedTime}</div>}
-            </Content>
-          )}
-          {showToolbar && (
-            <Content flex gap={4}>
-              <Tooltip content={'View source'}>
-                <Icon
-                  size={12}
-                  onClick={() => {
-                    Rendevoz.Actions.Open.Meta.openMetaObject(metaId)
-                  }}
-                  className={ClassName.flatButton(4, '2px')}
-                  name={'park-share'}
-                />
-              </Tooltip>
-            </Content>
-          )}
-        </Content>
+        {!audioLabelMode && (
+          <Content
+            flex
+            alignItems={'center'}
+            justifyContent={'space-between'}
+            style={{
+              padding: '8px 12px',
+              ...sourceStyle
+            }}
+            gap={6}
+          >
+            {from && (
+              <Content
+                flex
+                gap={8}
+                style={{
+                  flex: 1
+                }}
+              >
+                <Icon size={16} name={from.icon} />
+                <div className={ClassName.ellipsisFont(1)}>{from.name}</div>
+                {normalizedTime && <div style={{ flexShrink: 0 }}> - {normalizedTime}</div>}
+              </Content>
+            )}
+            {showToolbar && (
+              <Content flex gap={4}>
+                <Tooltip content={'View source'}>
+                  <Icon
+                    size={12}
+                    onClick={() => {
+                      Rendevoz.Actions.Open.Meta.openMetaObject(metaId)
+                    }}
+                    className={ClassName.flatButton(4, '2px')}
+                    name={'park-share'}
+                  />
+                </Tooltip>
+              </Content>
+            )}
+          </Content>
+        )}
         {label?.selectedText && metaObject && (
           <AutosizeTextarea
             value={label.selectedText}
@@ -239,7 +242,7 @@ export default memo(
               resize: 'none',
               display: 'block',
               width: '100%',
-              padding: '0px 12px 8px',
+              padding: audioLabelMode ? '8px 12px 8px' : '0px 12px 8px',
               lineHeight: 1.57,
               ...noteStyle
             }}

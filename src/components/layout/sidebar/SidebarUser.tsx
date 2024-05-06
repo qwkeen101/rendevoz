@@ -79,7 +79,7 @@ const SidebarUser = memo(() => {
                 </div>
                 <Tooltip content={isPremium ? 'You are premium user' : 'You are not premium user'}>
                   <Icon
-                    containerStyle={{ position: 'absolute', top: -3, right: -3 }}
+                    containerStyle={{ position: 'absolute', top: -2, right: -1 }}
                     theme="filled"
                     fill={isPremium ? 'rgb(255,215,0)' : 'rgb(218,223,225)'}
                     name="park-vip"

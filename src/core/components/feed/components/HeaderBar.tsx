@@ -55,7 +55,7 @@ const FeedHeaderBar = () => {
       fullWidth
       gap={20}
       style={{
-        padding: '8px 24px 8px 10px',
+        padding: '8px 12px 8px 10px',
         zIndex: 99,
         borderBottom: `1px solid ${Colors.Background.Border}`
       }}
@@ -228,43 +228,48 @@ const FeedHeaderBar = () => {
                   {t(openToTranslate[k])}
                 </Content>
               ))}
-              <div
-                style={{
-                  color: Colors.Font.Transparent,
-                  fontSize: 13,
-                  paddingLeft: 8,
-                  paddingTop: 3,
-                  marginTop: 3,
-                  marginBottom: 2,
-                  borderTop: `1px solid ${Colors.Background.Border}`
-                }}
-              >
-                {t('general.Articles')}
-              </div>
-              <Content
-                style={{
-                  background: readMode === 'unread' ? Colors.Background.ButtonActive : undefined
-                }}
-                className={ClassName.flatButton()}
-                onClick={() => {
-                  KeyvalueStore.updateOne('feedReadRule', 'unread')
-                  setV(false)
-                }}
-              >
-                {t('general.Unread')}
-              </Content>
-              <Content
-                style={{
-                  background: readMode === 'all' ? Colors.Background.ButtonActive : undefined
-                }}
-                className={ClassName.flatButton()}
-                onClick={() => {
-                  KeyvalueStore.updateOne('feedReadRule', 'all')
-                  setV(false)
-                }}
-              >
-                {t('general.All articles')}
-              </Content>
+
+              {feedState.currentCollectionId && (
+                <>
+                  <div
+                    style={{
+                      color: Colors.Font.Transparent,
+                      fontSize: 13,
+                      paddingLeft: 8,
+                      paddingTop: 3,
+                      marginTop: 3,
+                      marginBottom: 2,
+                      borderTop: `1px solid ${Colors.Background.Border}`
+                    }}
+                  >
+                    {t('general.Articles')}
+                  </div>
+                  <Content
+                    style={{
+                      background: readMode === 'unread' ? Colors.Background.ButtonActive : undefined
+                    }}
+                    className={ClassName.flatButton()}
+                    onClick={() => {
+                      KeyvalueStore.updateOne('feedReadRule', 'unread')
+                      setV(false)
+                    }}
+                  >
+                    {t('general.Unread')}
+                  </Content>
+                  <Content
+                    style={{
+                      background: readMode === 'all' ? Colors.Background.ButtonActive : undefined
+                    }}
+                    className={ClassName.flatButton()}
+                    onClick={() => {
+                      KeyvalueStore.updateOne('feedReadRule', 'all')
+                      setV(false)
+                    }}
+                  >
+                    {t('general.All articles')}
+                  </Content>
+                </>
+              )}
             </WithBorder>
           )}
         >

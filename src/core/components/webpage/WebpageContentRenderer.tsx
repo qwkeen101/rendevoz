@@ -53,8 +53,9 @@ const WebpageTitle = ({
           style={{
             cursor: 'pointer'
           }}
+          className={'ellipsis-font-1'}
         >
-          {domain}
+          {domain || url}
         </div>
         {author && (
           <>
@@ -284,7 +285,7 @@ const WebpageContentRenderer = ({
               />
             ),
             titleContainerStyle: {
-              padding: '20px 0px'
+              padding: '20px 0px 10px'
             }
           }}
         />

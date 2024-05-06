@@ -146,6 +146,7 @@ const EditorElementsMenu = (props: { onAddElement: (blockName: string) => void }
     >
       {menuItems.length ? (
         <Menu.NavigationMenu
+          defaultSelectFirst
           onSelect={e => {
             if (e.type === 'item') {
               const key = e.key

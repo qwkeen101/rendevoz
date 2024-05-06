@@ -28,7 +28,6 @@ export default function getCloudClient() {
                   SyncAPI.file.changeState('downloading', p, 0, size)
                 } else {
                   SyncAPI.file.changeState('downloading', p, 1)
-                  SyncAPI.file.writeFileSyncState(p, 'download')
                 }
               }
             })
@@ -41,7 +40,6 @@ export default function getCloudClient() {
                   SyncAPI.file.changeState('uploading', p, 0, size)
                 } else if (t === 'finish') {
                   SyncAPI.file.changeState('uploading', p, 1)
-                  SyncAPI.file.writeFileSyncState(p, 'upload')
                 } else if (t === 'skipped') {
                   SyncAPI.file.changeState('uploading', p, 0, size, true)
                 }
@@ -69,7 +67,6 @@ export default function getCloudClient() {
                   SyncAPI.file.changeState('downloading', p, 0, size)
                 } else {
                   SyncAPI.file.changeState('downloading', p, 1)
-                  SyncAPI.file.writeFileSyncState(p, 'download')
                 }
               }
             })
@@ -82,7 +79,6 @@ export default function getCloudClient() {
                   SyncAPI.file.changeState('uploading', p, 0, size)
                 } else if (t === 'finish') {
                   SyncAPI.file.changeState('uploading', p, 1)
-                  SyncAPI.file.writeFileSyncState(p, 'upload')
                 } else if (t === 'skipped') {
                   SyncAPI.file.changeState('uploading', p, 0, size, true)
                 }

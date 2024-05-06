@@ -97,6 +97,8 @@ export default () => {
           }))
         })
       }
+    } else {
+      setFeedState(s => ({ ...s, filteredFeedItems: undefined }))
     }
   }, [feedCollection?.id, readRule])
 }

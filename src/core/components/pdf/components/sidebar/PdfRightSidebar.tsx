@@ -89,7 +89,7 @@ const PdfRightSidebar = ({ pdfId }: { pdfId: number }) => {
       }}
     >
       <Tabs
-        defaultActiveKey="search"
+        defaultActiveKey="label"
         activeKey={pdfBarState.rightBarActive}
         tabNavContainerStyle={{
           padding: '12px 12px 0px'
@@ -104,17 +104,6 @@ const PdfRightSidebar = ({ pdfId }: { pdfId: number }) => {
         <TabPane
           tab={
             <Content alignItems="center" flex gap={6}>
-              <Icon name="park-search" />
-              {t('general.search')}
-            </Content>
-          }
-          key="search"
-        >
-          <PdfSearch />
-        </TabPane>
-        <TabPane
-          tab={
-            <Content alignItems="center" flex gap={6}>
               <Icon name="park-label" />
               {t('general.label')}
             </Content>
@@ -122,6 +111,17 @@ const PdfRightSidebar = ({ pdfId }: { pdfId: number }) => {
           key="label"
         >
           <PdfLabelController labelIds={labelIds} />
+        </TabPane>
+        <TabPane
+          tab={
+            <Content alignItems="center" flex gap={6}>
+              <Icon name="park-search" />
+              {t('general.search')}
+            </Content>
+          }
+          key="search"
+        >
+          <PdfSearch />
         </TabPane>
         <TabPane
           key="ai"

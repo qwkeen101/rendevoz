@@ -4,8 +4,9 @@ import { syncDB } from '@/utils'
 import FileSystem from '@/api/fileSystem'
 import { globalStore } from '@/api/stores'
 import { strFromU8, decompress } from 'fflate'
-import { debounce } from 'lodash'
-const debounceDeleteCommits = debounce(async () => {
+import { throttle } from 'lodash'
+// delete every 30s
+const thottleDeleteOldCommits = throttle(async () => {
   const lastSynced = await syncDB.table('state').get('lastSynced')
   if (lastSynced) {
     const commits = await SyncAPI.cloudClient()?.listFolder('commits')
@@ -17,11 +18,11 @@ const debounceDeleteCommits = debounce(async () => {
       await Promise.all(needDeleteCommits.map(async c => SyncAPI.cloudClient()?.deleteFile(c.key)))
     }
   }
-}, 60 * 1000)
+}, 30 * 1000)
 export default async () => {
   const client = SyncAPI.cloudClient()
   if (client) {
-    debounceDeleteCommits()
+    thottleDeleteOldCommits()
     const lastSynced = await syncDB.table('state').get('lastSynced')
     syncDB.table('state').put(Date.now(), 'lastSynced')
     const all = await client.listFolder('commits', lastSynced ? `commits/${lastSynced}` : undefined)

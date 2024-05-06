@@ -17,18 +17,16 @@ export default memo(() => {
   const [isPushing, setIsPushing] = useState(false)
   const [isPulling, setIsPulling] = useState(false)
   useEffect(() => {
-    if (!setting.sync.conflictResolved || !setting.sync.enableAutoSync) {
-      if (syncState.connection === 'connected') {
-        SyncAPI.cloudClient()
-          ?.statFile('all-data.zip')
-          .then(res => {
-            if (res?.lastModified) {
-              setRemoteTime(res.lastModified)
-            }
-          })
-      }
+    if (syncState.connection === 'connected') {
+      SyncAPI.cloudClient()
+        ?.statFile('all-data.zip')
+        .then(res => {
+          if (res?.lastModified) {
+            setRemoteTime(res.lastModified)
+          }
+        })
     }
-  }, [setting.sync.conflictResolved, setting.sync.enableAutoSync, syncState.connection])
+  }, [setting.sync.conflictResolved, syncState.connection])
   useUpdateEffect(() => {
     if (setting.sync.conflictResolved) {
       setSetting(s => ({ ...s, sync: { ...s.sync, conflictResolved: false, enableAutoSync: false } }))
@@ -148,7 +146,7 @@ export default memo(() => {
                           setIsPushing(true)
                           SyncAPI.resolveConflict('push')
                             .then(() => {
-                              toast.success('Data pushed!')
+                              toast.success('Successfully pushed data!')
                               setSetting(s => ({
                                 ...s,
                                 sync: {
@@ -178,7 +176,11 @@ export default memo(() => {
                             .then(() =>
                               setSetting(s => ({
                                 ...s,
-                                sync: { ...s.sync, conflictResolved: true }
+                                sync: {
+                                  ...s.sync,
+                                  conflictResolved: true,
+                                  enableAutoSync: !s.sync.conflictResolved ? true : s.sync.enableAutoSync
+                                }
                               }))
                             )
                             .finally(() => {

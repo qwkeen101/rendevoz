@@ -19,13 +19,6 @@ const CropLabel = ({ labelId, pageSize, scale }: { labelId: number; pageSize: Pa
   const dragInitPos = useRef({ x: 0, y: 0 })
   const [selectMode] = usePdfSelectMode()
   const currentHighlightLabelId = useSelectAtomValue(PdfStateAtom, s => s.currentHighlightLabelId)
-  useEffect(() => {
-    if (currentHighlightLabelId === labelId) {
-      setTimeout(() => {
-        setPdfState(s => ({ ...s, currentHighlightLabelId: undefined }))
-      }, 1500)
-    }
-  }, [currentHighlightLabelId])
   const handleResizeOrDrag = async (element: HTMLElement) => {
     if (!label || label.page === undefined) return
     const originalImage = label?.imageUrl

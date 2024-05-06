@@ -12,9 +12,9 @@ type IPdfBarState = {
 export const PdfBarStateAtom = atom<IPdfBarState>({
   showRightBar: false,
   showLeftBar: false,
-  rightBarActive: 'search',
+  rightBarActive: 'label',
   leftBarActive: 'thumbnail',
-  leftBarWidth: 300,
+  leftBarWidth: 270,
   rightBarWidth: 400
 })
 

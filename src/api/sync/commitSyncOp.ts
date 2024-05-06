@@ -1,12 +1,12 @@
 // commit
 import { IDBTransaction, ISyncOperation } from '@/api/sync/db/types'
+import { debounce } from 'lodash'
 import FileSystem from '@/api/fileSystem'
 import SyncAPI from '@/api/sync/index'
 import { syncDB } from '@/utils'
 import exportData from '@/api/common/exportData'
 import { compressSync, strToU8 } from 'fflate'
 import { getSetting } from '@/core'
-import { throttle } from 'lodash'
 let cache: Omit<ISyncOperation, 'timestamp' | 'deviceId'> = {
   databaseTranscations: [],
   fileTransactions: [],
@@ -18,63 +18,57 @@ export default async (operation: Partial<ISyncOperation>) => {
   cache.noteUpdateIds = [...(cache.noteUpdateIds || []), ...(operation.noteUpdateIds || [])]
   const setting = getSetting()
   if (setting.sync.enableSync && setting.sync.conflictResolved && setting.sync.enableAutoSync) {
-    throttleUpload()
+    debounceUpload()
   }
 }
 
 export const commitManually = async () => {
   const cloudClient = SyncAPI.cloudClient()
   if (cloudClient) {
-    const lastUpload = await syncDB.table('state').get('lastUploaded')
-    // upload files modified after last upload
-    syncDB.table('state').put(Date.now(), 'lastUploaded')
-    removeRepeatDBTransactions()
-    removeRepeatNoteIds()
-    if (!cache.noteUpdateIds?.length) {
-      delete cache.noteUpdateIds
-    }
-    if (!cache.databaseTranscations?.length) {
-      delete cache.databaseTranscations
-    }
-    if (!cache.databaseTranscations && !cache.noteUpdateIds) {
-      cache = {
-        databaseTranscations: [],
-        fileTransactions: [],
-        noteUpdateIds: []
-      }
-      return
-    }
-
-    if (!lastUpload) {
-      await SyncAPI.file.syncLocalFiles()
-    } else {
-      const changedFiles = await SyncAPI.file.uploadModifiedLocalFiles(lastUpload)
-      if (changedFiles) {
-        cache.fileTransactions = changedFiles.map(i => ({ type: 'put', name: i }))
-      }
-    }
-    console.log(cache)
-    cloudClient.uploadData(
-      `commits/${Date.now()}`,
-      new Blob([compressSync(strToU8(JSON.stringify({ ...cache, timestamp: Date.now(), deviceId: await FileSystem.fs.getMachineId() })))])
-    )
-    const data = await exportData()
-    cloudClient.uploadData('all-data.zip', data)
+    let cloned = structuredClone(cache)
     cache = {
       databaseTranscations: [],
       fileTransactions: [],
       noteUpdateIds: []
     }
+    const lastUpload = await syncDB.table('state').get('lastUploaded')
+    // upload files modified after last upload
+    syncDB.table('state').put(Date.now(), 'lastUploaded')
+    removeRepeatDBTransactions(cloned)
+    removeRepeatNoteIds(cloned)
+    if (!cloned.noteUpdateIds?.length) {
+      delete cloned.noteUpdateIds
+    }
+    if (!cloned.databaseTranscations?.length) {
+      delete cloned.databaseTranscations
+    }
+    if (!lastUpload) {
+      await SyncAPI.file.syncLocalFiles()
+    } else {
+      const changedFiles = await SyncAPI.file.uploadModifiedLocalFiles(lastUpload)
+      if (changedFiles) {
+        cloned.fileTransactions = changedFiles.map(i => ({ type: 'put', name: i }))
+      }
+    }
+    if (!cloned.noteUpdateIds?.length && !cloned.fileTransactions?.length && !cloned.databaseTranscations?.length) {
+      return
+    }
+    cloudClient.uploadData(
+      `commits/${Date.now()}`,
+      new Blob([compressSync(strToU8(JSON.stringify({ ...cloned, timestamp: Date.now(), deviceId: await FileSystem.fs.getMachineId() })))])
+    )
+    const data = await exportData()
+    cloudClient.uploadData('all-data.zip', data)
   }
 }
-const throttleUpload = throttle(commitManually, 2000)
-const removeRepeatNoteIds = () => {
-  cache.noteUpdateIds = Array.from(new Set(cache.noteUpdateIds).values())
+const debounceUpload = debounce(commitManually, 2000, { maxWait: 5000 })
+const removeRepeatNoteIds = (c: typeof cache) => {
+  c.noteUpdateIds = Array.from(new Set(c.noteUpdateIds).values())
 }
-const removeRepeatDBTransactions = () => {
+const removeRepeatDBTransactions = (c: typeof cache) => {
   const forbidId = new Set<string | number>(['sidebarState'])
   const alreadyExistId = new Set<string | number>()
-  const reversed = cache.databaseTranscations?.reverse() || []
+  const reversed = c.databaseTranscations?.reverse() || []
   const finalOps: IDBTransaction[] = []
   // remove same key data, reverse here, because latest is at last of commits
   reversed.forEach(i => {
@@ -94,5 +88,5 @@ const removeRepeatDBTransactions = () => {
       }
     }
   })
-  cache.databaseTranscations = finalOps
+  c.databaseTranscations = finalOps
 }

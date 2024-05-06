@@ -6,6 +6,6 @@ export default async function autoSync() {
   if (setting.sync.enableSync && setting.sync.conflictResolved && setting.sync.enableAutoSync) {
     await SyncAPI.pull()
   }
-  // auto sync after 5 seconds
-  setTimeout(() => autoSync(), 5 * 1000)
+  // auto sync after 3 seconds
+  setTimeout(() => autoSync(), 3 * 1000)
 }

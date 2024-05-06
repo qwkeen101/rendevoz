@@ -2,13 +2,22 @@ import SyncAPI from '@/api/sync'
 import '@/api/sync/autoSync'
 import { globalStore } from '@/api/stores'
 import { selectAtom } from 'jotai/utils'
-import { SettingAtom } from '@/core'
+import { getSetting, SettingAtom } from '@/core'
 import { debounce, isEqual } from 'lodash'
+import GlobalStates from '@/api/global/states'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
 
 export default async () => {
   try {
-    await SyncAPI.restoreFromDB()
-    await SyncAPI.file.syncLocalFiles()
+    const setting = await KeyvalueStore.fetchOne('userSetting')
+    if (setting && setting.sync.enableSync && setting.sync.enableAutoSync && setting.sync.conflictResolved) {
+      GlobalStates.setState('loading', s => ({ ...s, currentState: 'loading remote data' }))
+      await SyncAPI.restoreFromDB()
+      GlobalStates.setState('remoteDataFetched', true)
+      SyncAPI.file.syncLocalFiles()
+    }
+  } catch (e) {
+    console.error(e)
   } finally {
     const selectedAtom = selectAtom(SettingAtom, s => ({ s3: s.sync.S3Config, webdav: s.sync.webdavConfig }), isEqual)
     const runCheck = () => {

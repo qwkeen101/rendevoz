@@ -7,12 +7,15 @@ import { syncDB } from '@/utils'
 import exportData from '@/api/common/exportData'
 import { compressSync, strToU8 } from 'fflate'
 import { getSetting } from '@/core'
+import GlobalStates from '@/api/global/states'
 let cache: Omit<ISyncOperation, 'timestamp' | 'deviceId'> = {
   databaseTranscations: [],
   fileTransactions: [],
   noteUpdateIds: []
 }
 export default async (operation: Partial<ISyncOperation>) => {
+  const initialized = GlobalStates.getValue('initialized')
+  if (!initialized) return
   cache.databaseTranscations = [...(cache.databaseTranscations || []), ...(operation.databaseTranscations || [])]
   cache.fileTransactions = [...(cache.fileTransactions || []), ...(operation.fileTransactions || [])]
   cache.noteUpdateIds = [...(cache.noteUpdateIds || []), ...(operation.noteUpdateIds || [])]
@@ -53,6 +56,7 @@ export const commitManually = async () => {
     if (!cloned.noteUpdateIds?.length && !cloned.fileTransactions?.length && !cloned.databaseTranscations?.length) {
       return
     }
+    console.log(cloned)
     cloudClient.uploadData(
       `commits/${Date.now()}`,
       new Blob([compressSync(strToU8(JSON.stringify({ ...cloned, timestamp: Date.now(), deviceId: await FileSystem.fs.getMachineId() })))])

@@ -43,15 +43,6 @@ export default async () => {
           })
         )
       ).filter(i => i && i.deviceId !== deviceId) as ISyncOperation[]
-      // reverse here
-      // const now = Date.now()
-      // const needDelete = all.filter(i => !i.LastModified || now - i.LastModified.getTime() > 10 * 1000)
-      // if (needDelete.length) {
-      //   S3Sync.deleteFile(
-      //     needDelete.map(i => i.Key),
-      //     setting
-      //   )
-      // }
       console.log(data)
       const dbTransactions = data
         .map(i => i.databaseTranscations?.map(t => ({ ...t, timestamp: i.timestamp })))

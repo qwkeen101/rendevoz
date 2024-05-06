@@ -7,11 +7,13 @@ type IGlobalStates = {
     currentState?: 'initializing' | 'loading remote data' | 'recovering from backup' | 'indexing data'
   }
   initialized: boolean
+  remoteDataFetched: boolean
 }
 
 const GlobalStates = {
   loading: atom<IGlobalStates['loading']>({}),
   initialized: atom<IGlobalStates['initialized']>(false),
+  remoteDataFetched: atom<IGlobalStates['remoteDataFetched']>(false),
   useValue: <K extends keyof IGlobalStates>(a: K): IGlobalStates[K] => {
     return useGlobalAtomValue(GlobalStates[a])
   },

@@ -7,8 +7,11 @@ import postProcess from '@/api/lifycycle/postProcess'
 import startupSync from '@/api/sync/lifecycle/startup'
 import autoSync from '@/api/sync/autoSync'
 import { subDataChange } from '@/api/stores'
+import initializeSettings from '@/api/lifycycle/initializeApp/initializeSettings'
 
 export default async () => {
+  await initializeSettings()
+  await startupSync()
   await recoverFromBackup()
   GlobalStates.setState('loading', s => ({ ...s, currentState: 'initializing' }))
   await initializeApp()
@@ -16,7 +19,6 @@ export default async () => {
   await indexData(false)
   ipcInstance.send('appOk')
   postProcess()
-  startupSync()
   autoSync()
   subDataChange()
 }

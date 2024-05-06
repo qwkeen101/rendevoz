@@ -57,13 +57,14 @@ const useRenderLabel = (opts: {
           <ContentEditor
             placeholder={t('general.Add note for label')}
             value={currentLabelHasName ? label?.name : undefined}
-            onChange={v => {
-              setLabelState(s => ({ ...s, editingName: false }))
+            onChange={async v => {
               if (labelMeta) {
-                MetaStore.updateMetaObject({ id: labelMeta.id, name: v })
+                await MetaStore.updateMetaObject({ id: labelMeta.id, name: v })
+                setLabelState(s => ({ ...s, editingName: false }))
                 return
               }
-              ObjectStore(type).updateOne({ id: objectId, name: v })
+              await ObjectStore(type).updateOne({ id: objectId, name: v })
+              setLabelState(s => ({ ...s, editingName: false }))
             }}
           />
         ) : (

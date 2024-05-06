@@ -12,7 +12,7 @@ const thottleDeleteOldCommits = throttle(async () => {
     const commits = await SyncAPI.cloudClient()?.listFolder('commits')
     if (commits) {
       const date = new Date(lastSynced)
-      date.setMinutes(date.getMinutes() - 5)
+      date.setMinutes(date.getMinutes() - 1)
       const time = date.getTime()
       const needDeleteCommits = commits.filter(a => (a.lastModified ?? 0) < time)
       await Promise.all(needDeleteCommits.map(async c => SyncAPI.cloudClient()?.deleteFile(c.key)))

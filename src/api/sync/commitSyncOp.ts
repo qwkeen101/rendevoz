@@ -61,7 +61,7 @@ export const commitManually = async () => {
     cloudClient.uploadData('all-data.zip', data)
   }
 }
-const debounceUpload = debounce(commitManually, 2000, { maxWait: 5000 })
+const debounceUpload = debounce(commitManually, 1500, { maxWait: 4000 })
 const removeRepeatNoteIds = (c: typeof cache) => {
   c.noteUpdateIds = Array.from(new Set(c.noteUpdateIds).values())
 }

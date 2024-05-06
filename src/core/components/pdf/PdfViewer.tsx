@@ -153,7 +153,8 @@ export const PdfViewer: FC<PdfViewerProps> = memo(
         {layout?.showHeader !== false && <PdfHeader documentId={documentId} />}
         <LabelToolbarRenderer />
         {downloadState?.isDownloading && (
-          <Content flex column alignItems={'center'} fullWidth justifyContent={'center'} gap={10}>
+          <Content flex column alignItems={'center'} fullWidth fullHeight justifyContent={'center'} gap={10}>
+            <div className={'transparent-font'}>Downloading PDF...</div>
             <div
               style={{
                 width: 'min(800px, 60%)',

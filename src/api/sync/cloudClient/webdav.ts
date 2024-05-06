@@ -120,6 +120,8 @@ const WebdavSync: ICloudSyncClient & {
             opts?.onProgress?.('start', p, file.length)
             const newP = addLeading(p)
             await client.putFileContents(newP, await new Blob([file]).arrayBuffer(), { overwrite: true })
+          } catch (e) {
+            console.error(e)
           } finally {
             console.log(p)
             opts?.onProgress?.('finish', p)
@@ -146,6 +148,8 @@ const WebdavSync: ICloudSyncClient & {
             }
           })
           await FileSystem.fs.writeFile(file, p)
+        } catch (e) {
+          console.error(e)
         } finally {
           opts?.onProgress?.('finish', p)
         }

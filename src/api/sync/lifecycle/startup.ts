@@ -17,7 +17,6 @@ export default async () => {
         globalStore.set(SyncAPI.stateAtom, updater(curr))
       }
       const c = SyncAPI.cloudClient()
-      console.log(c)
       if (!c) {
         setSyncState(s => ({ ...s, connection: 'wrong config' }))
         return
@@ -25,7 +24,6 @@ export default async () => {
       SyncAPI.cloudClient()
         ?.isConnected()
         .then(res => {
-          console.log(res)
           setSyncState(s => ({ ...s, connection: res ? 'connected' : 'unconnected' }))
         })
     }

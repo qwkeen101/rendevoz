@@ -11,7 +11,8 @@ const parser = new Parser()
 export default () => {
   const [newFeedUrl, setNewFeedUrl] = useState('')
   const [feedDetails, setFeedDetails] = useState<{
-    isLoading: boolean
+    isLoading?: boolean
+    failed?: boolean
     details?: { title?: string; thumbnail?: string; description?: string }
   }>()
   const [isImporting, setIsImporting] = useState(false)
@@ -31,6 +32,9 @@ export default () => {
                     isLoading: false,
                     details: { title: res.title, thumbnail: res.image?.url, description: res.description }
                   })
+                })
+                .catch(e => {
+                  setFeedDetails(s => ({ ...s, failed: true, isLoading: false }))
                 })
                 .finally(() => {
                   setFeedDetails(s => ({ ...s, isLoading: false }))
@@ -82,9 +86,9 @@ export default () => {
         }}
       ></input>
       {feedDetails?.isLoading ? (
-        <Content flex gap={12} style={{ marginBottom: 12 }}>
-          <Icon name={'park-loading-four'} spin size={20} />
-          <div>Loading feed details...</div>
+        <Content flex alignItems={'center'} gap={6} style={{ fontSize: 13 }}>
+          <Icon name={'park-loading-four'} spin />
+          <div>Loading feed...</div>
         </Content>
       ) : null}
       {feedDetails?.details && !feedDetails.isLoading && (
@@ -97,7 +101,13 @@ export default () => {
           </Content>
         </Content>
       )}
-      {newFeedUrl && (
+      {feedDetails?.failed && (
+        <Content flex alignItems={'center'} gap={6} style={{ color: Colors.Common.Red, fontSize: 13 }}>
+          <Icon name={'park-caution'} />
+          <div>Invalid feed source</div>
+        </Content>
+      )}
+      {newFeedUrl && feedDetails?.details && (
         <div
           onClick={() => {
             setNewFeedUrl('')

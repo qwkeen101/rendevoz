@@ -13,7 +13,6 @@ import { useTranslation } from 'react-i18next'
 
 const WhiteboardControlBar = memo(() => {
   const [whiteboardState, setWhiteboardState] = useWhiteboardState()
-  console.log('rerender', whiteboardState)
   const flow = useFlow()
   const [historyState, setHistoryState] = useState({
     redo: false,

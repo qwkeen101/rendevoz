@@ -1,12 +1,12 @@
 // commit
 import { IDBTransaction, ISyncOperation } from '@/api/sync/db/types'
-import { debounce } from 'lodash'
 import FileSystem from '@/api/fileSystem'
 import SyncAPI from '@/api/sync/index'
 import { syncDB } from '@/utils'
 import exportData from '@/api/common/exportData'
 import { compressSync, strToU8 } from 'fflate'
 import { getSetting } from '@/core'
+import { throttle } from 'lodash'
 let cache: Omit<ISyncOperation, 'timestamp' | 'deviceId'> = {
   databaseTranscations: [],
   fileTransactions: [],
@@ -18,7 +18,7 @@ export default async (operation: Partial<ISyncOperation>) => {
   cache.noteUpdateIds = [...(cache.noteUpdateIds || []), ...(operation.noteUpdateIds || [])]
   const setting = getSetting()
   if (setting.sync.enableSync && setting.sync.conflictResolved && setting.sync.enableAutoSync) {
-    debounceUpload()
+    throttleUpload()
   }
 }
 
@@ -67,7 +67,7 @@ export const commitManually = async () => {
     }
   }
 }
-const debounceUpload = debounce(commitManually, 2000, { maxWait: 4000 })
+const throttleUpload = throttle(commitManually, 2000)
 const removeRepeatNoteIds = () => {
   cache.noteUpdateIds = Array.from(new Set(cache.noteUpdateIds).values())
 }

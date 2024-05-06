@@ -15,7 +15,6 @@ export const needSkipKeys = new Set<string | number>()
 export default (op: DBCoreMutateRequest, dbName: string) => {
   const initialized = GlobalStates.getValue('initialized')
   if (!initialized) return
-  console.log(needSkipKeys)
   if (op.type === 'delete') {
     op.keys.forEach(k => {
       if (needSkipKeys.has(k)) {

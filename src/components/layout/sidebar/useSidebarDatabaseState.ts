@@ -14,11 +14,9 @@ export default (): [SidebarDatabaseCache, (s: (s: SidebarDatabaseCache) => Sideb
       rules: []
     }
   }
-  console.log(cache, currWorkspace)
   const updateState = useMemoizedFn((s: typeof cache | ((s: typeof cache) => typeof cache)) => {
     if (!currWorkspace) return
     if (typeof s === 'function') {
-      console.log(cache, s(cache))
       KeyvalueStore.updateOne(`sidebarDatabaseCache_${currWorkspace.id}`, s(cache))
     } else {
       KeyvalueStore.updateOne(`sidebarDatabaseCache_${currWorkspace.id}`, cache)

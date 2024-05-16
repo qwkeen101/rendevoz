@@ -7,6 +7,7 @@ import { MetaStore, ObjectStore } from '@/api/stores/index'
 import FileSystem from '@/api/fileSystem'
 import { Rendevoz } from '@/core/rendevoz'
 import normalizeChildrenToText from '@/core/components/editor/utils/normalize/normalizeChildrenToText'
+import { GlobalInstance } from '@/hooks'
 
 const createNoteStore = () => {
   const blobDb = getLocalTable('blobs')
@@ -57,6 +58,7 @@ const createNoteStore = () => {
           metaId: targetMeta.id,
           metaType: targetMeta.type,
           name: targetMeta.name || targetMeta.placeholderName,
+          placeholderName: targetMeta.placeholderName,
           description: targetMeta.description,
           content: normalizeChildrenToText(value)
         })
@@ -94,16 +96,13 @@ const createNoteStore = () => {
       const currValue = (await getNoteValue(note.contentId)) || []
       const nextValue = typeof newValue === 'function' ? newValue(currValue) : newValue
       await saveNoteAsBuffer(nextValue, note.contentId)
-      const openNote = Rendevoz.Actions.Layout.getTab({
-        type: 'note',
-        objectId: noteId
-      })
-      console.log(openNote)
-      if (openNote) {
-        const instance = openNote.instance as IEditorInstance
-        instance.replaceChildren?.(nextValue)
-      }
       saveNoteAsSearch(nextValue, noteId)
+      Rendevoz.Events.Emit.emitEventGlobally('editor', {
+        type: 'refreshFromValue',
+        data: {
+          noteId: [noteId]
+        }
+      })
     }
   }
   const getNoteIdValue = async (noteId: number) => {

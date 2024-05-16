@@ -12,7 +12,6 @@ import note from '@/assets/images/note.png?url'
 import group from '@/assets/images/group.png?url'
 import tag from '@/assets/images/tag.png?url'
 import folder from '@/assets/images/folder.png?url'
-import link from '@/assets/images/link.png?url'
 import whiteboard from '@/assets/images/whiteboard.png?url'
 import { Colors, KEY } from '@/consts'
 import ChooseWhiteboardForm from '@/components/form/quickAdd/ChooseWhiteboardForm'
@@ -22,8 +21,17 @@ import quickAdd from '@/components/form/quickAdd/quickAdd'
 import { Rendevoz } from '@/core/rendevoz'
 import updateMovetoCache from '@/components/form/quickAdd/updateMovetoCache'
 
-export default ({ currentMetaId, onClose }: { currentMetaId: number[]; onClose: VoidFunction }) => {
-  const [visible, setVisible] = useState<'tags' | 'collections' | 'groups' | 'attachments' | 'main' | 'note' | 'whiteboard'>('main')
+export type AvailableQuickAdd = 'tags' | 'collections' | 'groups' | 'attachments' | 'main' | 'note' | 'whiteboard'
+export default ({
+  currentMetaId,
+  onClose,
+  defaultVisible = 'main'
+}: {
+  currentMetaId: number[]
+  onClose: VoidFunction
+  defaultVisible?: AvailableQuickAdd
+}) => {
+  const [visible, setVisible] = useState<AvailableQuickAdd>(defaultVisible)
   const { t } = useTranslation()
   const currWorkspace = KeyvalueStore.useValue('currentWorkspace')
   const recently = KeyvalueStore.useValue('moveToCache')?.[currWorkspace?.id || 0]?.recently
@@ -42,7 +50,7 @@ export default ({ currentMetaId, onClose }: { currentMetaId: number[]; onClose: 
       if (isHotkey(KEY.Escape, e)) {
         e.preventDefault()
         e.stopPropagation()
-        if (visible === 'main') {
+        if (visible === 'main' || defaultVisible !== 'main') {
           onClose()
         } else {
           setVisible('main')
@@ -80,19 +88,15 @@ export default ({ currentMetaId, onClose }: { currentMetaId: number[]; onClose: 
       name: t('general.tags'),
       image: tag
     }
-    // {
-    //   key: 'attachments',
-    //   name: t('general.attachments'),
-    //   image: link
-    // }
   ]
-  const handleBack = () => setVisible('main')
+  const handleBack = defaultVisible !== 'main' ? undefined : () => setVisible('main')
   const renderer = () => {
     switch (visible) {
       case 'main':
         return (
           <Content style={{ padding: 16, width: 'min(420px, 90vw)' }}>
             <Menu.NavigationMenu
+              defaultSelectFirst
               layout={[
                 ...(recently?.length
                   ? [

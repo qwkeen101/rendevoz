@@ -8,6 +8,7 @@ import exportData from '@/api/common/exportData'
 import { compressSync, strToU8 } from 'fflate'
 import { getSetting } from '@/core'
 import GlobalStates from '@/api/global/states'
+import useRenderLabelEditor from '@/core/object/renderer/useRenderLabelEditor'
 let cache: Omit<ISyncOperation, 'timestamp' | 'deviceId'> = {
   databaseTranscations: [],
   fileTransactions: [],
@@ -16,11 +17,11 @@ let cache: Omit<ISyncOperation, 'timestamp' | 'deviceId'> = {
 export default async (operation: Partial<ISyncOperation>) => {
   const initialized = GlobalStates.getValue('initialized')
   if (!initialized) return
-  cache.databaseTranscations = [...(cache.databaseTranscations || []), ...(operation.databaseTranscations || [])]
-  cache.fileTransactions = [...(cache.fileTransactions || []), ...(operation.fileTransactions || [])]
-  cache.noteUpdateIds = [...(cache.noteUpdateIds || []), ...(operation.noteUpdateIds || [])]
   const setting = getSetting()
   if (setting.sync.enableSync && setting.sync.conflictResolved && setting.sync.enableAutoSync) {
+    cache.databaseTranscations = [...(cache.databaseTranscations || []), ...(operation.databaseTranscations || [])]
+    cache.fileTransactions = [...(cache.fileTransactions || []), ...(operation.fileTransactions || [])]
+    cache.noteUpdateIds = [...(cache.noteUpdateIds || []), ...(operation.noteUpdateIds || [])]
     debounceUpload()
   }
 }
@@ -70,7 +71,7 @@ const removeRepeatNoteIds = (c: typeof cache) => {
   c.noteUpdateIds = Array.from(new Set(c.noteUpdateIds).values())
 }
 const removeRepeatDBTransactions = (c: typeof cache) => {
-  const forbidId = new Set<string | number>(['sidebarState'])
+  const forbidId = new Set<string | number>(['sidebarState', useRenderLabelEditor.TEMP_ID])
   const alreadyExistId = new Set<string | number>()
   const reversed = c.databaseTranscations?.reverse() || []
   const finalOps: IDBTransaction[] = []

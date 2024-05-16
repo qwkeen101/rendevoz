@@ -16,10 +16,14 @@ import useReadOnlyEditor from '@/core/components/editor/hooks/useReadOnly'
 import { EditorTypeToElementMap } from '@/core/components/editor/maps'
 import { Icon } from '@/components'
 import isHotkey from 'is-hotkey'
+import { XYPosition } from '~/typings'
+import { ObjectStore } from '@/api/stores'
+import { lab } from 'd3'
 
 type EditorToolbarEvents =
   | {
       action: 'redo' | 'undo' | 'bold' | 'italic' | 'underline' | 'code' | 'link' | 'highlight' | 'cloze'
+      currentToolbarPosition?: XYPosition
     }
   | {
       action: 'changeFontSize'
@@ -47,6 +51,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
   const editor = useSlate()
   const toolbarRef = useRef<HTMLElement>(null)
   const position = 'float'
+  const labelType = useSelectAtomValue(EditorStateAtom, s => s.labelType)
   const [floatPosition, setFloatPosition] = useState<{
     top: number
     left: number
@@ -235,40 +240,6 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
       itemClickPreventDefault
       itemSize={12}
     >
-      {/*{toolbarOptions?.extra !== false && (*/}
-      {/*  <>*/}
-      {/*    <Toolbar.Item*/}
-      {/*      style={{*/}
-      {/*        borderRight: '1px solid var(--border-background)'*/}
-      {/*      }}*/}
-      {/*      onClick={e => {*/}
-      {/*        if (editor.selection) {*/}
-      {/*          const str = Editor.string(editor, editor.selection)*/}
-      {/*          if (str) {*/}
-      {/*            const block = Editor.above(editor, {*/}
-      {/*              match: n => Element.isElement(n) && 'id' in n,*/}
-      {/*              at: editor.selection.anchor*/}
-      {/*            })?.[0]*/}
-      {/*            if (!block?.id) return*/}
-      {/*            editor.on({*/}
-      {/*              type: 'search',*/}
-      {/*              searchedText: str*/}
-      {/*            })*/}
-      {/*          }*/}
-      {/*        }*/}
-      {/*      }}*/}
-      {/*    >*/}
-      {/*      <Button.IconButton*/}
-      {/*        style={{*/}
-      {/*          background: 'unset',*/}
-      {/*          padding: '0px'*/}
-      {/*        }}*/}
-      {/*        icon={'park-search'}*/}
-      {/*        text={t('general.search')}*/}
-      {/*      />*/}
-      {/*    </Toolbar.Item>*/}
-      {/*  </>*/}
-      {/*)}*/}
       {currentElementName && !readOnly && (
         <Toolbar.Item
           style={{
@@ -306,7 +277,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
             } else {
               isOnHighlightRef.current = true
             }
-            on({ action: 'highlight' })
+            on({ action: 'highlight', currentToolbarPosition: { x: floatPosition!.left, y: floatPosition!.top } })
             setFloatPosition(s => ({ ...s, visible: false }))
             window.getSelection()?.empty()
             ReactEditor.blur(editor)
@@ -327,16 +298,53 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
           />
         </Toolbar.Item>
       )}
+      {floatPosition?.highlightId && (
+        <Toolbar.Item
+          style={{
+            borderRight: '1px solid var(--border-background)',
+            padding: '0px 12px 0px 10px'
+          }}
+          onClick={async () => {
+            setFloatPosition(s => ({ ...s, visible: false }))
+            ObjectStore(labelType)
+              .getOneById(floatPosition!.highlightId!)
+              .then(i => {
+                if (i) {
+                  instance.labelOps?.openLabelEditor?.(
+                    i,
+                    {
+                      width: 0,
+                      height: 0,
+                      top: floatPosition!.top,
+                      left: floatPosition!.left
+                    },
+                    editor.selection
+                  )
+                }
+              })
+          }}
+        >
+          <Button.IconButton
+            style={{
+              background: 'unset',
+              padding: '0px'
+            }}
+            icon={'park-edit'}
+            text={t('general.edit')}
+          />
+        </Toolbar.Item>
+      )}
       {floatPosition?.highlightId && enableShowRightBar && (
         // sometimes we hide sidebar, so don't need this
         <Toolbar.Item
-          iconName="park-arrow-right-up"
+          iconName="park-arrow-left-up"
           style={{
             borderRight: '1px solid var(--border-background)',
             padding: '0px 6px'
           }}
           tooltip={t('general.Open in sidebar')}
-          onClick={e => {
+          onClick={() => {
+            setFloatPosition(s => ({ ...s, visible: false }))
             instance.labelOps?.openLabelInSidebar(floatPosition.highlightId)
           }}
         />

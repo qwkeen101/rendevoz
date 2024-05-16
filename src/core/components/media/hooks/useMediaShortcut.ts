@@ -65,9 +65,6 @@ const useMediaShortcut = (containerRef: RefObject<HTMLElement>) => {
           })
         }
       }
-      if (isShortCut(e, openSidebarShortcut)) {
-        setSidebarState(s => ({ ...s, rightBarVisible: !s.rightBarVisible }))
-      }
       if (isHotkey(KEY.ArrowLeft, e)) {
         e.stopPropagation()
         setMediaState(s => ({

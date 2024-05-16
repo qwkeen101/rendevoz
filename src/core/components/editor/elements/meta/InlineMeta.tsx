@@ -3,10 +3,9 @@ import { css } from '@emotion/css'
 import { FC, useEffect } from 'react'
 import { ReactEditor, RenderElementProps, useSlateStatic } from '../../slate-react'
 import { MetaStore } from '@/api/stores'
-import { AnimatePopover, WithBorder } from '@/components'
+import { WithBorder } from '@/components'
 import { Rendevoz } from '@/core/rendevoz'
-import { Colors } from '@/consts'
-import { ObjectActionPopover } from '@/core'
+import { ObjectActionMenu } from '@/core'
 import classnames from 'classnames'
 import { Editor, Transforms } from 'slate'
 import { HistoryEditor } from 'slate-history'
@@ -67,7 +66,7 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
             content={setV =>
               metaObject && (
                 <WithBorder>
-                  <ObjectActionPopover onClose={() => setV(false)} metaObjectId={metaObject?.id} />
+                  <ObjectActionMenu onClose={() => setV(false)} metaObjectId={metaObject?.id} />
                 </WithBorder>
               )
             }

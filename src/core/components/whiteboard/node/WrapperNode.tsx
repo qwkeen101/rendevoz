@@ -53,7 +53,8 @@ const NodeSelectAtom = selectAtom(
     pointerMode: s.pointerMode,
     hasEraseOrDrawTool: s.currentTool,
     isDraggingNode: s.isDraggingNode,
-    currentHighlight: s.highlightedIds
+    currentHighlight: s.highlightedIds,
+    enableClickWhenPanning: s.state?.enableClickNodeWhenPanning
   }),
   (a, b) => isEqual(a, b)
 )
@@ -77,7 +78,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
     keepRatioResize: false
   })
   const containerRef = useRef<HTMLDivElement>()
-  const { pointerMode, hasEraseOrDrawTool, isDraggingNode, currentHighlight } = useAtomValue(NodeSelectAtom)
+  const { pointerMode, hasEraseOrDrawTool, isDraggingNode, currentHighlight, enableClickWhenPanning } = useAtomValue(NodeSelectAtom)
   const panPointerMode = pointerMode === 'pan'
   const setWhiteboardState = useSetAtom(WhiteboardStateAtom)
   const instance = useWhiteboardInstance()
@@ -349,6 +350,7 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
     isErased: isTouched,
     isErasing,
     panPointerMode,
+    enableClickWhenPanning,
     background: {
       opacityBackground
     }
@@ -496,6 +498,10 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
         }
       }}
       onMouseDown={e => {
+        instance.emit?.({
+          type: 'nodeClick',
+          node
+        })
         if (panPointerMode) return
         if (node.rootId && !nodeState.selected && !nodeState.focused && e.button === 0) {
           instance.mindmapOps?.startDragMindmapChild(node.id, e)
@@ -565,9 +571,11 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
       {type !== 'group' && (
         <Content
           fullHeight
-          fullWidth
           role={'scroll-container'}
           style={{
+            width: 'max-content',
+            maxWidth: '100%',
+            minWidth: '100%',
             maxHeight: node.fixedExpanded && !node.resized ? '800px' : '100%',
             '--global-background': nodeStyle.background,
             borderRadius: 'inherit',

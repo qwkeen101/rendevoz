@@ -16,6 +16,7 @@ const getNodeStyle = (
     isErased?: boolean
     isErasing?: boolean
     panPointerMode?: boolean
+    enableClickWhenPanning?: boolean
     background: {
       opacityBackground: string
     }
@@ -47,7 +48,7 @@ const getNodeStyle = (
       pointerEvents = 'none'
     }
   }
-  if (opts.panPointerMode) {
+  if (opts.panPointerMode && opts.enableClickWhenPanning !== true) {
     pointerEvents = 'none'
   }
 
@@ -75,6 +76,9 @@ const getNodeStyle = (
   }
   if (opts.isErasing) {
     cursor = 'crosshair'
+  }
+  if (opts.panPointerMode && opts.enableClickWhenPanning === true) {
+    cursor = 'pointer'
   }
   let zIndex: number | undefined = node.z
   if (nodeState.expanded) {

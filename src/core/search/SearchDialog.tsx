@@ -120,8 +120,7 @@ export const SearchDialog = memo(({ onClose, visible }: { onClose: VoidFunction;
         const n = Date.now()
         let textResults: ISearchResult | undefined = undefined
         if (input) {
-          textResults = await searchGlobalText(input)
-          console.log(textResults)
+          textResults = await searchGlobalText(input, false)
         }
         if (filteredObjects && filteredObjects.length > 0) {
           const filteredIds = new Set(filteredObjects.map(i => i.id))
@@ -162,7 +161,6 @@ export const SearchDialog = memo(({ onClose, visible }: { onClose: VoidFunction;
               children: i.children.map(c => metaIdToResultMap.get(c.id)).filter(i => i)
             }))
           }
-          console.log(related)
           const msUsed = Date.now() - n
           setTimeout(
             () => {
@@ -210,8 +208,9 @@ export const SearchDialog = memo(({ onClose, visible }: { onClose: VoidFunction;
   useEffect(() => {
     if (enableFilter) {
       if (filter) {
-        const filtered = calculateFilterObjects(filter, undefined, true)
-        setFilteredObjects(filtered || [])
+        calculateFilterObjects(filter, undefined, true).then(filtered => {
+          setFilteredObjects(filtered || [])
+        })
       } else {
         setFilteredObjects([])
       }
@@ -250,17 +249,15 @@ export const SearchDialog = memo(({ onClose, visible }: { onClose: VoidFunction;
       <Content
         flex
         column
-        className={css([
-          {
-            width: 800,
-            borderRadius: 10,
-            maxWidth: 'calc(100vw - 100px)',
-            maxHeight: '80vh',
-            height: fixedHeight ? '80vh' : 'auto',
-            boxShadow: Colors.Background.BoxShadow,
-            overflow: 'hidden'
-          }
-        ])}
+        className={css({
+          width: 800,
+          borderRadius: 10,
+          maxWidth: 'calc(100vw - 100px)',
+          maxHeight: '90vh',
+          height: fixedHeight ? '1200px' : 'auto',
+          boxShadow: Colors.Background.BoxShadow,
+          overflow: 'hidden'
+        })}
       >
         <Content flex gap={10} alignItems={'center'} style={{ padding: '8px 12px', borderBottom: `1px solid ${Colors.Background.Border}` }}>
           <input
@@ -277,12 +274,13 @@ export const SearchDialog = memo(({ onClose, visible }: { onClose: VoidFunction;
                 GlobalInstance.searchOps?.closeSearchPanel()
               }
             }}
-            style={{ width: '100%', fontWeight: 'bold', padding: 0 }}
+            className={'normal-font'}
+            style={{ width: '100%', padding: 0 }}
           />
           <Icon onClick={() => setEnableFilter(!enableFilter)} className={ClassName.flatButton(4, '4px')} name={'park-filter'} />
-          {(searchInput || enableFilter) && (
-            <Icon className={ClassName.flatButton(4, '4px')} name={'park-save'} onClick={() => openSave()} />
-          )}
+          {/*{(searchInput || enableFilter) && (*/}
+          {/*  <Icon className={ClassName.flatButton(4, '4px')} name={'park-save'} onClick={() => openSave()} />*/}
+          {/*)}*/}
           {(searchInput || enableFilter) && (
             <Icon
               name={'park-close'}
@@ -297,7 +295,7 @@ export const SearchDialog = memo(({ onClose, visible }: { onClose: VoidFunction;
           )}
         </Content>
         {enableFilter && (
-          <div style={{ width: '100%', padding: 8, flexShrink: 0 }} className={'border-bottom'}>
+          <div style={{ width: '100%', flexShrink: 0 }} className={'border-bottom'}>
             <BetterFilter
               extraFields={allProps.map(i => ({
                 icon: i.icon,
@@ -344,6 +342,7 @@ export const SearchDialog = memo(({ onClose, visible }: { onClose: VoidFunction;
         )}
         {fixedHeight && !isLoading && searchResults && (
           <Tabs
+            mountAll
             style={{
               overflow: 'hidden'
             }}

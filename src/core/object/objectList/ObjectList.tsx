@@ -20,72 +20,78 @@ import { useMeasure } from 'react-use'
 import useDisplayInside from '@/core/object/objectList/useDisplayInside'
 import useSidebarDatabaseState from '@/components/layout/sidebar/useSidebarDatabaseState'
 import { chunk } from 'lodash'
+import classnames from 'classnames'
 
 export default memo(() => {
   const undeleteObjects = useGlobalAtomValue(undeletedMetaObjectsAtom)
   const [filterSort, setSidebarDatabaseState] = useSidebarDatabaseState()
-  const defaultHideHighlights = useSelectGlobalAtomValue(SettingAtom, s => s.sidebar.hideHighlights)
   const { renderContains, contains, renderContainIndicator } = useDisplayInside({
     defaultSelected: filterSort.selectedMeta || [],
     onSelect: v => {
       setSidebarDatabaseState(s => ({ ...s, selectedMeta: v }))
     }
   })
-  const showTempAndHidden = contains?.length
+  const showTemp = contains?.length || filterSort.filter?.rules.length || filterSort.searchInput
   const setFilterSort = setSidebarDatabaseState
   const sortMode = filterSort?.sort || 'create'
   const { t } = useTranslation()
 
   const showHiddenMetasInObjectPanel = KeyvalueStore.useValue('showHiddenMetasInSidebar') ?? false
-  const showHidden = showTempAndHidden || showHiddenMetasInObjectPanel
+  const showHidden = contains?.length || showHiddenMetasInObjectPanel
   const all = contains || undeleteObjects
   const [shouldDisplayObjects, setShouldDisplayObjects] = useState<MetaObject[]>(
     all.filter(i =>
       MetaStore.isVisibleMetaObject(i, {
-        temp: !!showTempAndHidden,
-        hidden: !!(showTempAndHidden || showHidden)
+        showTemp: !!showTemp,
+        showHidden: !!showHidden
       })
     )
   )
   useEffect(() => {
     if (filterSort.filterVisible === false && (filterSort.filter?.rules.length || filterSort.searchInput)) {
-      const afterFilter =
-        (filterSort.filter?.rules.length
-          ? calculateFilterObjects(
-              filterSort.filter,
-              all.map(i => i.id),
-              true
-            )
-          : all) || all
-      const afterSearch = filterSort.searchInput
-        ? Array.from(
-            go(filterSort.searchInput, afterFilter, {
-              keys: ['name', 'description', 'placeholderName']
-            }).values()
-          ).map(i => i.obj)
-        : afterFilter
-      const afterSort = calculateSortObjects(afterSearch, {
-        sorters: [
-          sortMode === 'create'
-            ? {
-                field: 'createdAt',
-                id: 1,
-                type: 'descending'
-              }
-            : {
-                field: 'viewAt',
-                id: 2,
-                type: 'descending'
-              }
-        ]
-      })
-      const final = afterSort.filter(i =>
-        MetaStore.isVisibleMetaObject(i, {
-          temp: !!showTempAndHidden,
-          hidden: !!(showTempAndHidden || showHidden)
+      const all = contains || Array.from(MetaStore.getMetaObjectsMap().values())
+      const action = async () => {
+        const afterFilter =
+          (filterSort.filter?.rules.length
+            ? await calculateFilterObjects(
+                filterSort.filter,
+                all.map(i => i.id),
+                true
+              )
+            : all) || all
+        const afterSearch = filterSort.searchInput
+          ? Array.from(
+              go(filterSort.searchInput, afterFilter, {
+                keys: ['name', 'description', 'placeholderName'],
+                threshold: -100000
+              }).values()
+            ).map(i => i.obj)
+          : afterFilter
+        const afterSort = calculateSortObjects(afterSearch, {
+          sorters: [
+            sortMode === 'create'
+              ? {
+                  field: 'createdAt',
+                  id: 1,
+                  type: 'descending'
+                }
+              : {
+                  field: 'viewAt',
+                  id: 2,
+                  type: 'descending'
+                }
+          ]
         })
-      )
-      setShouldDisplayObjects(final)
+        const final = afterSort.filter(i =>
+          MetaStore.isVisibleMetaObject(i, {
+            showTemp: !!showTemp,
+            showHidden: !!showHidden,
+            hideLabel: false
+          })
+        )
+        setShouldDisplayObjects(final)
+      }
+      action()
     }
     if (filterSort.filterVisible === false && !filterSort.filter?.rules.length && !filterSort.searchInput) {
       const afterSort = calculateSortObjects(all, {
@@ -105,14 +111,14 @@ export default memo(() => {
       })
       const final = afterSort.filter(i =>
         MetaStore.isVisibleMetaObject(i, {
-          temp: !!showTempAndHidden,
-          hidden: !!(showTempAndHidden || showHidden),
-          hideLabel: defaultHideHighlights && !contains
+          showTemp: !!showTemp,
+          showHidden: !!showHidden,
+          hideLabel: !contains
         })
       )
       setShouldDisplayObjects(final)
     }
-  }, [filterSort.filterVisible, defaultHideHighlights, all, filterSort.searchInput, sortMode, showHiddenMetasInObjectPanel, showHidden])
+  }, [filterSort.filterVisible, all, filterSort.searchInput, sortMode, showHiddenMetasInObjectPanel, showHidden])
 
   const debounceSet = useDebounceFn(
     v => {
@@ -264,23 +270,23 @@ export default memo(() => {
             )}
           />
           <Icon
-            className={ClassName.flatButton(4, '3px')}
-            style={{
-              color: filterSort.searchInput || filterSort.searchVisible ? Colors.Common.SelectColor : undefined
-            }}
+            className={classnames(ClassName.flatButton(4, '3px'), (filterSort.searchInput || filterSort.searchVisible) && 'active-button')}
             onClick={() => setFilterSort(s => ({ ...s, searchVisible: !s.searchVisible }))}
             name="park-search"
           />
           <AnimatePopover
             padding={6}
-            align="start"
+            align="center"
             reposition
             withClickCover={true}
             onVisiblityChange={v => setFilterSort(s => ({ ...s, filterVisible: v }))}
             positions={['bottom']}
             disableNudge
+            containerStyle={{
+              zIndex: '5000'
+            }}
             content={
-              <WithBorder padding={8}>
+              <WithBorder>
                 <BetterFilter
                   showHiddenMetas={showHiddenMetasInObjectPanel}
                   onChange={v => {
@@ -292,10 +298,9 @@ export default memo(() => {
             }
           >
             <Icon
-              className={ClassName.flatButton(4, '3px')}
+              className={classnames(ClassName.flatButton(4, '3px'), filterSort.filter?.rules.length && 'active-button')}
               style={{
-                width: 'fit-content',
-                color: filterSort.filter?.rules.length ? Colors.Common.SelectColor : undefined
+                width: 'fit-content'
               }}
               name="park-filter"
             />

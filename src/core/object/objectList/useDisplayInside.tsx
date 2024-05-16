@@ -6,7 +6,7 @@ import calculateContains, { ContainResults } from '@/core/object/objectList/calc
 import { Content, Icon, IconWithPopover, Menu, WithBorder } from '@/components'
 import { IMenuLayoutItem } from '@/components/base/menu'
 import { useTranslation } from 'react-i18next'
-import { ObjectActionPopover } from '@/core'
+import { ObjectActionMenu } from '@/core'
 import { Rendevoz } from '@/core/rendevoz'
 import { ClassName } from 'rendevoz'
 import { Colors } from '@/consts'
@@ -176,94 +176,96 @@ export default (opt: { defaultSelected?: number[]; onSelect: (selected: number[]
       }}
       className={ClassName.flatButton(4, '3px')}
       zIndex={999}
-      content={setV => {
-        const layout: IMenuLayoutItem[] = []
-        const alreadyContains = new Set(contains?.map(i => i.id))
-        Object.entries(filteredDisplay || displays).forEach(([k, v]) => {
-          if (v.length) {
-            layout.push({
-              type: 'title',
-              name: t(`general.${k}`),
-              style: {
-                margin: '0.6rem 0 0.3rem'
-              }
-            })
-            v.sort((a, b) => b.contains - a.contains)
-            v.forEach(m => {
-              if ('meta' in m) {
-                if (alreadyContains.has(m.meta.id)) return
-                layout.push({
-                  type: 'item',
-                  contextMenu: setV => (
-                    <WithBorder>
-                      <ObjectActionPopover onClose={() => setV(false)} metaObjectId={m.meta.id} />
-                    </WithBorder>
-                  ),
-                  key: String(m.meta.id),
-                  suffix: String(m.contains),
-                  onSelect: () => {
-                    if (!opt.defaultSelected?.includes(m.meta.id)) {
-                      opt.onSelect([...(opt.defaultSelected || []), m.meta.id])
-                    }
-                    setV(false)
-                  },
-                  text: m.meta.name || m.meta.placeholderName || 'Unnamed object'
-                })
-              }
-            })
-          }
-        })
-        return (
-          <WithBorder
-            padding={'0.4rem 0'}
-            style={{
-              width: layout.length || search ? 320 : 200,
-              maxHeight: 360,
-              overflowY: 'auto'
-            }}
-          >
-            {layout.length || search ? (
-              <>
-                <input
-                  ref={inputRef}
-                  autoFocus
-                  defaultValue={search}
-                  onCompositionStart={e => {
-                    e.currentTarget.setAttribute('composing', 'true')
-                  }}
-                  onCompositionEnd={e => {
-                    e.currentTarget.removeAttribute('composing')
-                    setSearch(e.currentTarget.value)
-                  }}
-                  placeholder={t('general.Type to search')}
-                  onChange={e => {
-                    !e.target.hasAttribute('composing') && setSearch(e.target.value || '')
-                  }}
-                  className={'border-box-shadow focus-input'}
-                  style={{ borderRadius: 4, width: 'calc(100% - 16px)', padding: '4px 8px', margin: '0.4rem 8px' }}
-                />
-                {layout.length ? (
-                  <Menu.NavigationMenu layout={layout} />
-                ) : (
-                  <div style={{ padding: '4px 10px' }} className={'normal-font transparent-font'}>
-                    No data
-                  </div>
-                )}
-              </>
-            ) : (
-              <div style={{ padding: '4px 16px' }} className={'normal-font transparent-font'}>
-                No data
-              </div>
-            )}
-          </WithBorder>
-        )
-      }}
+      content={setV => renderMenu(() => setV(false))}
       placement={['bottom']}
     />
   )
+  const renderMenu = (onClose?: VoidFunction) => {
+    const layout: IMenuLayoutItem[] = []
+    const alreadyContains = new Set(contains?.map(i => i.id))
+    Object.entries(filteredDisplay || displays).forEach(([k, v]) => {
+      if (v.length) {
+        layout.push({
+          type: 'title',
+          name: t(`general.${k}`),
+          style: {
+            margin: '0.6rem 0 0.3rem'
+          }
+        })
+        v.sort((a, b) => b.contains - a.contains)
+        v.forEach(m => {
+          if ('meta' in m) {
+            if (alreadyContains.has(m.meta.id)) return
+            layout.push({
+              type: 'item',
+              contextMenu: setV => (
+                <WithBorder>
+                  <ObjectActionMenu onClose={() => setV(false)} metaObjectId={m.meta.id} />
+                </WithBorder>
+              ),
+              key: String(m.meta.id),
+              suffix: String(m.contains),
+              onSelect: () => {
+                if (!opt.defaultSelected?.includes(m.meta.id)) {
+                  opt.onSelect([...(opt.defaultSelected || []), m.meta.id])
+                }
+                onClose?.()
+              },
+              text: m.meta.name || m.meta.placeholderName || 'Unnamed object'
+            })
+          }
+        })
+      }
+    })
+    return (
+      <WithBorder
+        padding={'0.4rem 0'}
+        style={{
+          width: layout.length || search ? 320 : 200,
+          maxHeight: 360,
+          overflowY: 'auto'
+        }}
+      >
+        {layout.length || search ? (
+          <>
+            <input
+              ref={inputRef}
+              autoFocus
+              defaultValue={search}
+              onCompositionStart={e => {
+                e.currentTarget.setAttribute('composing', 'true')
+              }}
+              onCompositionEnd={e => {
+                e.currentTarget.removeAttribute('composing')
+                setSearch(e.currentTarget.value)
+              }}
+              placeholder={t('general.Type to search')}
+              onChange={e => {
+                !e.target.hasAttribute('composing') && setSearch(e.target.value || '')
+              }}
+              className={'border-box-shadow focus-input'}
+              style={{ borderRadius: 4, width: 'calc(100% - 16px)', padding: '4px 8px', margin: '0.4rem 8px' }}
+            />
+            {layout.length ? (
+              <Menu.NavigationMenu layout={layout} />
+            ) : (
+              <div style={{ padding: '4px 10px' }} className={'normal-font transparent-font'}>
+                No data
+              </div>
+            )}
+          </>
+        ) : (
+          <div style={{ padding: '4px 16px' }} className={'normal-font transparent-font'}>
+            No data
+          </div>
+        )}
+      </WithBorder>
+    )
+  }
   return {
     renderContains: renderIcon,
     contains,
+    renderMenu,
     renderContainIndicator
   }
 }

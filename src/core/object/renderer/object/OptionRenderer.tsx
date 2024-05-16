@@ -1,8 +1,7 @@
 import { CSSProperties, ReactNode } from 'react'
-import { MetaObject } from '~/typings'
 import { IconWithPopover, WithBorder } from '@/components'
 import ClassName from '@/styles/classNames'
-import { ObjectActionPopover } from '@/core'
+import { ObjectActionMenu } from '@/core'
 
 export type OptionRendererProps = {
   customNode?: ReactNode
@@ -50,7 +49,7 @@ export default ({
       content={
         customNode || (
           <WithBorder>
-            <ObjectActionPopover metaObjectId={metaId} />
+            <ObjectActionMenu metaObjectId={metaId} />
           </WithBorder>
         )
       }

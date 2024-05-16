@@ -172,17 +172,6 @@ export default memo(({ metaId, onBack, onClose }: { metaId: number[]; onBack: Vo
           value={metaType}
           name={t('general.Block type')}
         />
-        {/*<ButtonSwitch*/}
-        {/*  name={t('general.Hide object')}*/}
-        {/*  value={hideObject}*/}
-        {/*  onChange={v =>*/}
-        {/*    setSetting(s =>*/}
-        {/*      produce(s, draft => {*/}
-        {/*        draft.quickAdd.addIntoNoteHideObject = v*/}
-        {/*      })*/}
-        {/*    )*/}
-        {/*  }*/}
-        {/*></ButtonSwitch>*/}
         <ButtonSwitch
           value={setting.quickAdd.addIntoNoteAutoOpen}
           name={t('general.Auto open')}
@@ -285,7 +274,7 @@ export default memo(({ metaId, onBack, onClose }: { metaId: number[]; onBack: Vo
               }}
               onClick={handleAddIntoNote}
             >
-              {t('general.OK')}
+              {t('general.Add')}
             </div>
           )}
         </Content>

@@ -12,11 +12,11 @@ export default () => {
     .fetchAll()
     .then(res => {
       const groups = res as MetaGroup[]
-      groups.forEach(g => {
+      groups.forEach(async g => {
         if (!groupMetas.has(g.id)) return
         // have automation rules
         if (g.rootFilterGroup?.rules?.length) {
-          const correctObjects = calculateFilterObjects(g.rootFilterGroup, unhiddenMetas)
+          const correctObjects = await calculateFilterObjects(g.rootFilterGroup, unhiddenMetas)
           if (correctObjects?.length) {
             const items = correctObjects.map(i => ({
               id: i.id,

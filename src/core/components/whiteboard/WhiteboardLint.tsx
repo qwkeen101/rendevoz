@@ -9,7 +9,6 @@ export default () => {
   const wrapper = (message: string) => {
     return (
       <WithBorder
-        blur
         style={{
           display: 'flex',
           gap: 8,

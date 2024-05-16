@@ -85,6 +85,7 @@ export type IGlobalInstance = Partial<{
       registeredData: TabData[BuiltInTabTypes['type']],
       options: OpenTabOptions<BuiltInTabTypes['type']>
     ) => ILayoutTab | undefined
+    getTab: (id: string) => BuiltInTabTypes | undefined
     // return tab id or undefined
     hasTargetTab: (tabData: Partial<Omit<BuiltInTabTypes, 'instance'>>) => string | undefined
     openNewTab: (tabData: OpenTabOptions<BuiltInTabTypes['type']>) => void
@@ -106,7 +107,7 @@ export type IGlobalInstance = Partial<{
       name: string
     }>
     closeDetails: VoidFunction
-    quickAdd: (metaId: number | number[]) => void
+    quickAdd: (metaId: number | number[], target?: 'tags' | 'whiteboard' | 'groups' | 'note' | 'collections') => void
     canPreview: (metaObject: MetaObject) => boolean
     openDetails: (id?: number) => void
     toggleDetails: (id?: number, visible?: boolean) => void

@@ -1,76 +1,54 @@
 import { Noop } from '@/common/types'
-import { IconPicker, IconWithPopover, Toolbar, WithBorder } from '@/components'
+import { Button, IconPicker, IconWithPopover, Toolbar, WithBorder } from '@/components'
 import BlockColorPicker from '@/core/components/editor/components/BlockColorPicker'
 import { FC, memo } from 'react'
 import { IHighlightLabel } from '~/typings'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
+import { Colors } from '@/consts'
 
-type Layout =
-  | 'colorPicker'
-  | 'iconPicker'
-  | 'contentInput'
-  | 'separator'
-  | 'addToEditorButton'
-  | 'movableToggle'
-  | 'translator'
-  | 'searcher'
-  | 'delete'
-  | 'direction'
-  | 'copy'
-  | 'rightBar'
-
+type Layout = 'move-to' | 'colorPicker' | 'separator' | 'translator' | 'searcher' | 'delete' | 'copy' | 'rightBar' | 'edit'
 type LabelToolbarProps = {
   color?: string
-  movable?: boolean
-  content?: string
   selectedText?: string
   specType?: IHighlightLabel['specHighlightType']
   onTranslate?: React.MouseEventHandler
-  onMovableChange?: Noop
-  onIconChange?: (icon: string) => void
   onColorChange?: (color: string) => void
   onCopy?: VoidFunction
   onDelete?: Noop
   onOpenInSidebar?: VoidFunction
-  onContentChange?: (value: string) => void
-  onDirectionChange?: Noop
   onSearch?: React.MouseEventHandler
   layout?: Layout[]
+  onMove?: VoidFunction
+  onEdit?: VoidFunction
+  onClose?: VoidFunction
 }
-
-const Icons = [
-  'park-info',
-  'park-bookmark',
-  'park-dislike',
-  'park-like',
-  'park-caution',
-  'park-link',
-  'park-picture',
-  'park-view-list',
-  'park-quote',
-  'park-help'
-]
 const LabelToolbar: FC<LabelToolbarProps> = ({
   onColorChange,
-  onIconChange,
-  onMovableChange,
+  onMove,
+  onEdit,
   onDelete,
   onTranslate,
   onOpenInSidebar,
   selectedText,
   onSearch,
   color,
-  movable = false,
+  onClose,
   layout = ['colorPicker', 'iconPicker', 'contentInput', 'separator', 'addToEditorButton', 'movableToggle', 'direction', 'delete']
 }) => {
   const { t } = useTranslation()
   const ColorPickerItem = (
-    <Toolbar.Item tooltip={t('general.Background color')} key="colorPicker">
+    <Toolbar.Item style={{ padding: 0 }} tooltip={t('general.Background color')} key="colorPicker">
       <IconWithPopover
-        disableNudge
         name="park-background-color"
         color={color}
+        containerStyle={{
+          height: '100%'
+        }}
+        iconContainerStyle={{
+          padding: '0px 8px',
+          height: '100%'
+        }}
         content={setV => (
           <BlockColorPicker
             bgBackDefault={false}
@@ -83,30 +61,6 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
         )}
       ></IconWithPopover>
     </Toolbar.Item>
-  )
-
-  const IconPickerItem = (
-    <Toolbar.Item key="iconPicker">
-      <IconWithPopover
-        name="park-graphic-design"
-        content={
-          <WithBorder>
-            <IconPicker onIconPick={icon => onIconChange?.(icon)} icons={Icons} />
-          </WithBorder>
-        }
-      />
-    </Toolbar.Item>
-  )
-
-  const MovableToggleItem = (
-    <Toolbar.Item
-      key="move"
-      onClick={e => {
-        onMovableChange?.()
-        e.stopPropagation()
-      }}
-      iconName={!movable ? 'park-move' : 'custom-move-block'}
-    />
   )
 
   const Separator = <Toolbar.Separator key="separator" />
@@ -128,6 +82,7 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
           toast.success(t('general.Copied'))
           navigator.clipboard.writeText(selectedText)
         }
+        onClose?.()
       }}
     ></Toolbar.Item>
   )
@@ -135,24 +90,59 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
     <Toolbar.Item
       key="rightBar"
       tooltip={t('general.Open in sidebar')}
-      iconName="park-arrow-right-up"
+      iconName="park-arrow-left-up"
       onClick={() => {
         onOpenInSidebar?.()
       }}
     ></Toolbar.Item>
   )
-  const DeleteItem = <Toolbar.Item key="delete" tooltip={t('general.delete')} iconName="park-delete" onClick={onDelete}></Toolbar.Item>
+  const DeleteItem = (
+    <Toolbar.Item
+      onClick={onDelete}
+      style={{
+        padding: '0px 12px 0 10px'
+      }}
+    >
+      <Button.IconButton
+        style={{
+          background: 'unset',
+          padding: '0px'
+        }}
+        icon={'park-delete'}
+        text={t('general.delete')}
+      />
+    </Toolbar.Item>
+  )
+  const EditItem = (
+    <Toolbar.Item
+      onClick={onEdit}
+      style={{
+        borderRight: '1px solid var(--border-background)',
+        padding: '0px 12px 0 10px'
+      }}
+    >
+      <Button.IconButton
+        style={{
+          background: 'unset',
+          padding: '0px'
+        }}
+        icon={'park-edit'}
+        text={t('general.edit')}
+      />
+    </Toolbar.Item>
+  )
+  const MovetoItem = <Toolbar.Item tooltip={t('general.Move to')} onClick={onMove} iconName={'park-corner-up-right'}></Toolbar.Item>
   const toolbarRenderer = () => {
     return layout.map(i => {
       switch (i) {
         case 'colorPicker':
           return ColorPickerItem
-        case 'iconPicker':
-          return IconPickerItem
-        case 'movableToggle':
-          return MovableToggleItem
         case 'separator':
           return Separator
+        case 'edit':
+          return EditItem
+        case 'move-to':
+          return MovetoItem
         case 'translator':
           return TranslatorItem
         case 'searcher':
@@ -180,7 +170,7 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
         height: '100%'
       }}
       itemClickPreventDefault
-      itemSize={16}
+      itemSize={18}
     >
       {toolbarRenderer()}
     </Toolbar>

@@ -71,13 +71,20 @@ const PageLayer: FC<PageLayerProps> = forwardRef(
     const mergedRef = useMergedRef(pageRef, ref)
     const pageFunctionRef = useRef<PageFunctionRef>({})
     const viewer = usePdfViewer()
-    const { isCroppingImage, renderSelectBox } = useCroppingImage(pageRef, async box => {
+    const { isCroppingImage, renderSelectBox, clearSelectBox } = useCroppingImage(pageRef, async box => {
       const path = await viewer.capturePageImage?.(pageIndex, box)
       if (path) {
         pageFunctionRef.current.onImageCropped?.(box, path)
       }
     })
-
+    useIsomorphicLayoutEffect(() => {
+      viewer.values.INDEX_TO_PAGE_LAYER[pageIndex] = {
+        clearCrop: clearSelectBox
+      }
+      return () => {
+        delete viewer.values.INDEX_TO_PAGE_LAYER[pageIndex]
+      }
+    })
     pageFunctionRef.current.highlightArea = rect => {
       setHighlightState({
         rect,

@@ -212,16 +212,16 @@ const ObjectForm: FC<
           onChange: v => setObject({ ...object, coverImgSrc: v }),
           name: object.name || ''
         },
-        {
-          type: 'colorPicker',
-          color: object.color,
-          onChange: c => setObject({ ...object, color: c })
-        },
-        {
-          type: 'iconPicker',
-          icon: object.icon,
-          onChange: i => setObject({ ...object, icon: i })
-        },
+        // {
+        //   type: 'colorPicker',
+        //   color: object.color,
+        //   onChange: c => setObject({ ...object, color: c })
+        // },
+        // {
+        //   type: 'iconPicker',
+        //   icon: object.icon,
+        //   onChange: i => setObject({ ...object, icon: i })
+        // },
         {
           type: 'tagPicker',
           tags: object.tags,

@@ -38,6 +38,7 @@ export interface AnimatePopoverProps extends Omit<PopoverProps, 'content' | 'isO
   openOnContextMenu?: boolean
   hoverOpen?: boolean
   keepAlign?: boolean
+  keyboardClose?: boolean
 }
 
 const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
@@ -47,7 +48,8 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   openOnContextMenu,
   visible,
   borderRadius = 8,
-  reposition = false,
+  keyboardClose = true,
+  reposition = true,
   keepAlign = false,
   disableNudge = false,
   position,
@@ -55,7 +57,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   openOnClickCapture = false,
   parentElement = document.body,
   boundaryElement = document.body,
-  boundaryInset = 40,
+  boundaryInset = 10,
   innerRef,
   contentDraggable,
   duration = 0.12,
@@ -134,7 +136,9 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
       }
     }
     if (isOpen) {
-      document.addEventListener('keydown', keydownHandler)
+      if (keyboardClose) {
+        document.addEventListener('keydown', keydownHandler)
+      }
       const containerDockPane = intersectionRef.current?.closest(`[role='tabpane']`)
       if (containerDockPane) {
         const visiblityWatcher = new MutationObserver(cb => {

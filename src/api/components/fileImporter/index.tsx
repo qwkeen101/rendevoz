@@ -15,7 +15,7 @@ import code from '@/assets/images/code.png?url'
 import music from '@/assets/images/music.png?url'
 import question from '@/assets/images/question.png?url'
 import localfile from '@/assets/images/localfile.png?url'
-import twitter from '@/assets/images/twitter.png?url'
+import x from '@/assets/images/x.svg?raw'
 import { BaidudiskInstance } from '@/api/components/fileImporter/baidudisk/BaidudiskDisplayer'
 import { ObjectStore } from '@/api/stores'
 import { Rendevoz } from '@/core/rendevoz'
@@ -25,11 +25,12 @@ import { toast } from 'react-hot-toast'
 import { MetaObject } from '~/typings'
 import { ObjectCreateHandler } from '@/core/global/components/ObjectCreator'
 import { Utils } from 'rendevoz'
-import { useCallback, useEffect } from 'react'
+import { ReactElement, useCallback, useEffect } from 'react'
 import handleImportNestedCollections from '@/api/components/fileImporter/handleImportNestedCollections'
 import { Colors } from '@/consts'
 import isHotkey from 'is-hotkey'
 import FileSystem from '@/api/fileSystem'
+import React from 'react'
 
 const keyToCreateType: Record<string, string> = {
   1: 'note',
@@ -187,7 +188,7 @@ const FileImporter = ({
     },
     {
       name: t('general.tweet'),
-      image: twitter,
+      image: <div style={{ fontSize: 22, width: 26, height: 26, paddingLeft: 2 }} dangerouslySetInnerHTML={{ __html: x }}></div>,
       type: 'tweet',
       onClick: () => {
         handleCreate('tweet')
@@ -258,7 +259,7 @@ const FileImporter = ({
     })
   }
   const renderer = (
-    details: { name: string; image: string; type: string },
+    details: { name: string; image: string | ReactElement; type: string },
     opts: {
       isSelected: boolean
       onPointerMove: VoidFunction
@@ -277,19 +278,22 @@ const FileImporter = ({
       >
         <div
           style={{
-            background: 'white',
             borderRadius: 4,
             padding: '4px 4px'
           }}
         >
-          <img
-            src={details.image}
-            style={{
-              width: 26,
-              height: 26,
-              objectFit: 'cover'
-            }}
-          />
+          {React.isValidElement(details.image) ? (
+            details.image
+          ) : (
+            <img
+              src={details.image}
+              style={{
+                width: 26,
+                height: 26,
+                objectFit: 'cover'
+              }}
+            />
+          )}
         </div>
         <Content flex alignItems={'center'} justifyContent={'space-between'} style={{ fontSize: 15, fontWeight: 500, flex: 1 }}>
           <div>{details.name}</div>

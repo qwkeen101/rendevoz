@@ -343,18 +343,10 @@ const assignSearchOps = (instance: IEditorInstance, editor: CustomEditor) => {
         const total = Object.values(occurrencesRecord).reduce((prev, curr) => prev + curr, 0)
         return total
       },
-      openSearch: () =>
-        setEditorBarState(s => ({
-          ...s,
-          rightBarActive: 'search',
-          showRightBar: true
-        })),
-      closeSearch: () => setEditorBarState(s => ({ ...s, showRightBar: false })),
       toggleSearch: () =>
         setEditorBarState(s => ({
           ...s,
-          showRightBar: s.rightBarActive === 'search' ? !s.showRightBar : true,
-          rightBarActive: 'search'
+          sidebarActive: 'search'
         }))
     }
   })

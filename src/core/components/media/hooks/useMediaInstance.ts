@@ -7,7 +7,7 @@ import { MediaStateAtom } from './useMediaState'
 import { MediaToolbarStateAtom } from './useMediaToolbarState'
 import Id from '@/utils/id'
 import { getSetting } from '@/core'
-import { IMediaInstance } from '~/typings'
+import { IMediaInstance, IMediaLabel } from '~/typings'
 
 export const MediaInstanceAtom = atom<IMediaInstance>({})
 
@@ -53,27 +53,11 @@ export const useAssignMediaInstance = (containerRef: RefObject<HTMLElement>) => 
           imgPath = await saveImageLocally(img)
         }
       }
-      const one = (await mediaInstance.on?.({
-        type: 'addLabel',
-        currentLabel: {
-          time,
-          selectedText: label.name,
-          imageUrl: imgPath
-        }
-      })) as IMediaLabel
-      mediaInstance.actionOps
-        ?.clip?.({
-          start: Math.max(0, time - 5),
-          end: time + 5
-        })
-        .then(p => {
-          ObjectStore(one.specType).updateOne({ id: one.id, clipUrl: p })
-        })
-      if (setting.media.openPopoverWhenHighlight) {
-        mediaInstance.openLabelPopover?.(one.id)
-      }
-
-      return one
+      mediaInstance.openLabelEditor?.({
+        time,
+        selectedText: label.name,
+        imageUrl: imgPath
+      })
     },
     getMarkerContainer: () => {
       return containerRef.current?.querySelector("[role='video-process-marker']")

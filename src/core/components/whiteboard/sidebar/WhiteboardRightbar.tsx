@@ -112,18 +112,21 @@ const WhiteboardRightbar = () => {
     >
       {visible && (
         <div
-          className={'border-box-shadow'}
           style={{
             position: 'absolute',
             top: 8,
-            left: -36,
+            left: -38,
+            boxShadow: 'var(--border-box-shadow)',
             background: Colors.Background.Popover,
             borderRadius: 4
           }}
         >
           <Icon
             size={18}
-            className={ClassName.flatButton(4, '5px')}
+            style={{
+              padding: 5,
+              cursor: 'pointer'
+            }}
             onClick={() => {
               setRightBarState(s => ({ ...s, visible: false }))
             }}

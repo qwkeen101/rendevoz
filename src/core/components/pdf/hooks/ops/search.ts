@@ -5,6 +5,7 @@ export default (query: string, instance: IPDFInstance) => {
   const results: {
     searchText: string
     pageIndex: number
+    num: number
   }[] = []
   const text = instance.values.texts
   const search = normalizeText(query).replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&')
@@ -12,32 +13,29 @@ export default (query: string, instance: IPDFInstance) => {
   const quickFilter = text.filter(i => i.str.match(reg))
   quickFilter.forEach(i => {
     const reg = new RegExp(search, 'gi')
-    const indexes = ([...i.str.matchAll(reg)].map(i => i.index).filter(i => i !== undefined) as number[]).reduce((prev, curr, idx) => {
+    const allIndice = [...i.str.matchAll(reg)].map(i => i.index)
+    const indexes = allIndice.reduce((prev, curr, idx) => {
       if (idx === 0) {
         prev.push(curr)
       } else {
         const last = prev[prev.length - 1]
-        if (curr - last > 80 + search.length) {
+        if (curr - last > 20 + search.length) {
           prev.push(curr)
         }
       }
       return prev
     }, [] as number[])
-    // five results per page
-    indexes.slice(0, 5).forEach(index => {
-      let cropStr = i.str.slice(Math.max(0, index - 80), Math.min(index + search.length + 80, i.str.length)).replace(reg, '<em>$&</em>')
-      const appendBefore = index - 80 > 0
-      const appendAfter = index + search.length + 80 < i.str.length
-      if (appendBefore) {
-        cropStr = '...' + cropStr
-      }
-      if (appendAfter) {
-        cropStr = cropStr + '...'
-      }
-      results.push({
-        searchText: cropStr,
-        pageIndex: i.page
-      })
+    const strLimit = indexes.length >= 3 ? 20 : indexes.length === 2 ? 25 : 30
+    const str = indexes
+      .slice(0, 2)
+      .map(index =>
+        i.str.slice(Math.max(0, index - strLimit), Math.min(index + search.length + strLimit, i.str.length)).replace(reg, '<em>$&</em>')
+      )
+      .join('...')
+    results.push({
+      pageIndex: i.page,
+      searchText: str,
+      num: allIndice.length
     })
   })
   return results

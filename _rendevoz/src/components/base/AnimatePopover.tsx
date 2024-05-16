@@ -4,7 +4,7 @@ import { Popover, PopoverProps } from 'react-tiny-popover'
 import useUnmount from '@/hooks/utils/useUnmount'
 import _ from 'lodash'
 import { useMergedRef } from '@/hooks'
-import { Colors, Zindexes } from '@/consts'
+import { Zindexes } from '@/consts'
 import { Position } from '~/typings'
 import { SetStateAction } from 'jotai'
 import { createPortal } from 'react-dom'
@@ -31,6 +31,47 @@ const PosHelper = forwardRef<HTMLDivElement, PosHelperProps>(({ top, left, child
     document.body
   )
 })
+const getTransformOrigin = (position: 'left' | 'top' | 'right' | 'bottom' | undefined, align?: 'start' | 'end' | 'center') => {
+  // top left
+  const origin = {
+    x: 0.5,
+    y: 0.5
+  }
+  switch (align) {
+    case 'start':
+      if (position !== 'top' && position !== 'bottom') {
+        origin.y = 0
+      } else {
+        origin.x = 0
+      }
+      break
+    case 'end':
+      if (position !== 'top' && position !== 'bottom') {
+        origin.y = 1
+      } else {
+        if (position !== 'bottom') {
+          origin.x = 1
+        }
+      }
+      break
+  }
+  switch (position) {
+    case 'left':
+      origin.x = 1
+      break
+    case 'right':
+      origin.x = 0
+      break
+    case 'top':
+      origin.y = 1
+      break
+    case 'bottom':
+      origin.y = 0
+      break
+  }
+  return origin
+}
+
 export interface AnimatePopoverProps extends Omit<PopoverProps, 'content' | 'isOpen' | 'children'> {
   animate?: boolean
   visible?: boolean
@@ -175,46 +216,6 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
     })
   }
   const realParent = parentElement === null || parentElement === undefined ? document.body : parentElement
-  const getTransformOrigin = (position: 'left' | 'top' | 'right' | 'bottom' | undefined, align?: 'start' | 'end' | 'center') => {
-    // top left
-    const origin = {
-      x: 0.5,
-      y: 0.5
-    }
-    switch (align) {
-      case 'start':
-        if (position !== 'top' && position !== 'bottom') {
-          origin.y = 0
-        } else {
-          origin.x = 0
-        }
-        break
-      case 'end':
-        if (position !== 'top' && position !== 'bottom') {
-          origin.y = 1
-        } else {
-          if (position !== 'bottom') {
-            origin.x = 1
-          }
-        }
-        break
-    }
-    switch (position) {
-      case 'left':
-        origin.x = 1
-        break
-      case 'right':
-        origin.x = 0
-        break
-      case 'top':
-        origin.y = 1
-        break
-      case 'bottom':
-        origin.y = 0
-        break
-    }
-    return origin
-  }
   const containerStyle = {
     ..._containerStyle,
     borderRadius

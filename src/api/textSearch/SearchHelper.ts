@@ -16,6 +16,7 @@ const normalizeMetaToDoc = (meta: MetaObject) => {
     metaType: meta.type,
     docType: 'metaObject',
     name: meta.name || meta.placeholderName,
+    placeholderName: meta.placeholderName,
     description: meta.description
   }
 }

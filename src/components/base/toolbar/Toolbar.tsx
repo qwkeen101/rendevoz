@@ -1,4 +1,4 @@
-import React, { Children, cloneElement, CSSProperties, FC, HTMLAttributes, ReactNode, Ref } from 'react'
+import React, { Children, cloneElement, CSSProperties, FC, HTMLAttributes, ReactElement, ReactNode, Ref } from 'react'
 import Content from '../Content'
 import ToolbarItem from './ToolbarItem'
 import ToolbarSeparator from './ToolbarSeparator'

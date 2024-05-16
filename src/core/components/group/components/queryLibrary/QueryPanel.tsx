@@ -20,26 +20,32 @@ type QueryResult = {
 const QueryPanel = ({ onClose, groupValue }: { onClose: VoidFunction; groupValue?: MetaGroup }) => {
   const [queryResult, setQueryResult] = useState<QueryResult[]>([])
   const [queryRule, setQueryRule] = useState()
-  const [showInGroup, setShowInGroup] = useState(false)
   const groupData = groupValue
   const instance = useGroupInstance()
   const { t } = useTranslation()
   useEffect(() => {
-    const existedMetas = getAllMetasInTable(groupData?.values)
-    if (queryRule?.rules?.length) {
-      const filterFunc = transformFilterGroupToFilterArray(queryRule)
-      if (filterFunc !== undefined) {
+    const action = async () => {
+      const existedMetas = getAllMetasInTable(groupData?.values)
+      if (queryRule?.rules?.length) {
+        const filterFunc = await transformFilterGroupToFilterArray(queryRule)
+        if (filterFunc !== undefined) {
+          const allObjects = MetaStore.getMetaObjects('create').filter(i =>
+            MetaStore.isVisibleMetaObject(i, {
+              showTemp: true
+            })
+          )
+          const leftObjects = allObjects.filter(filterFunc)
+          const finalObjects = leftObjects.filter(i => !existedMetas.has(i.id))
+          setQueryResult(finalObjects.map(i => ({ metaId: i.id, selected: false })))
+        }
+      } else {
         const allObjects = MetaStore.getMetaObjects('create').filter(i => MetaStore.isVisibleMetaObject(i))
-        const leftObjects = allObjects.filter(filterFunc)
-        const finalObjects = showInGroup ? leftObjects : leftObjects.filter(i => !existedMetas.has(i.id))
+        const finalObjects = allObjects.filter(i => !existedMetas.has(i.id))
         setQueryResult(finalObjects.map(i => ({ metaId: i.id, selected: false })))
       }
-    } else {
-      const allObjects = MetaStore.getMetaObjects('create').filter(i => MetaStore.isVisibleMetaObject(i))
-      const finalObjects = showInGroup ? allObjects : allObjects.filter(i => !existedMetas.has(i.id))
-      setQueryResult(finalObjects.map(i => ({ metaId: i.id, selected: false })))
     }
-  }, [queryRule, showInGroup])
+    action()
+  }, [queryRule])
   const selectRef = useRef<HTMLInputElement>(null)
   const selected = queryResult.filter(i => i.selected)
   useEffect(() => {
@@ -57,27 +63,19 @@ const QueryPanel = ({ onClose, groupValue }: { onClose: VoidFunction; groupValue
       <Content flex column style={{ padding: 24, paddingBottom: 6 }}>
         <Content flex column gap={12} style={{ lineHeight: 1, marginBottom: 16 }}>
           <div className={ClassName.title(FontSize['14px'])}>{t('general.Filter and add objects into group')}</div>
-          <Content
-            flex
-            gap={16}
-            style={{
-              color: Colors.Font.Transparent,
-              fontSize: 13
-            }}
-            alignItems={'center'}
-          >
-            <div>{t('general.Hide objects in group')}</div>
-            <Switch small value={!showInGroup} onChange={v => setShowInGroup(v)} />
-          </Content>
         </Content>
-        <BetterFilter root={queryRule} onChange={r => setQueryRule(r)} />
+        <div className={'border-box-shadow'} style={{ borderRadius: 6 }}>
+          <BetterFilter showSave={false} root={queryRule} onChange={r => setQueryRule(r)} />
+        </div>
         {queryResult.length > 0 ? (
-          <Content flex gap={12} style={{ fontWeight: 600, paddingTop: 12 }}>
+          <Content flex gap={12} style={{ fontWeight: 600, marginTop: 12, height: 26, alignItems: 'center' }}>
             <input
               ref={selectRef}
               type={'checkbox'}
               style={{
-                cursor: 'pointer'
+                cursor: 'pointer',
+                width: 16,
+                height: 16
               }}
               checked={selected.length === queryResult.length}
               onClick={() => {
@@ -99,33 +97,17 @@ const QueryPanel = ({ onClose, groupValue }: { onClose: VoidFunction; groupValue
               }}
             />
             <div style={{ color: Colors.Common.SelectColor }}>{selected.length} Selected</div>
-            {selected.length !== queryResult.length && (
-              <div
-                style={{
-                  cursor: 'pointer'
-                }}
-                onClick={() => {
-                  setQueryResult(s =>
-                    s.map(i => ({
-                      ...i,
-                      selected: true
-                    }))
-                  )
-                }}
-              >
-                Select all
-              </div>
-            )}
             {queryResult.length > 0 && selected.length > 0 && (
               <div
                 style={{
                   cursor: 'pointer',
                   marginLeft: 'auto',
-                  background: Colors.Common.SelectColor,
-                  color: 'white',
+                  height: '26px',
                   padding: '0px 8px',
-                  borderRadius: 4
+                  alignItems: 'center',
+                  display: 'flex'
                 }}
+                className={ClassName.selectButton()}
                 onClick={() => {
                   if (!groupData) return
                   const selected = queryResult.filter(i => i.selected)
@@ -156,7 +138,7 @@ const QueryPanel = ({ onClose, groupValue }: { onClose: VoidFunction; groupValue
               marginTop: 12
             }}
           >
-            No matching object found.
+            No matching object.
           </div>
         )}
       </Content>
@@ -207,21 +189,16 @@ const ResultItem = ({
     >
       <CheckBox checked={selected} onChange={v => onSelect(v)} />
       {metaObject.coverImgSrc && (
-        <img src={metaObject.coverImgSrc} width={42} style={{ borderRadius: 4, objectFit: 'cover' }} height={42} />
+        <img src={metaObject.coverImgSrc} width={32} style={{ borderRadius: 4, objectFit: 'cover' }} height={32} />
       )}
       <Content>
         {renderInline({
           ellipsisLine: 1,
-          containerStyle: { lineHeight: 1.2, fontSize: 14 },
+          containerStyle: { fontSize: 14 },
           onClick: () => {
             onSelect(!selected)
           }
         })}
-        {metaObject.description && (
-          <div style={{ fontSize: 13, color: Colors.Font.Transparent }} className={ClassName.ellipsisFont(1)}>
-            {metaObject.description}
-          </div>
-        )}
       </Content>
     </Content>
   )

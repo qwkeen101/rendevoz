@@ -102,12 +102,14 @@ const useGroupFilter = (groupData?: MetaGroup) => {
         sort: s.currentView?.sort,
         valueIndex: s.currentView?.valueIndex,
         values: s.data?.values,
-        contains: s.currentView?.selectedContainsMeta
+        contains: s.currentView?.selectedContainsMeta,
+        showTemp: s.state?.showTemp,
+        defaultShowLabels: s.state?.defaultShowLabels
       }),
       isEqual
     )
     return atom(get => {
-      const { filter, search, sort, contains, valueIndex, values } = get(trackAtom)
+      const { filter, search, sort, contains, valueIndex, values, defaultShowLabels = true, showTemp: sT = true } = get(trackAtom)
       const searchable = latestSearchable.current
       const action = async () => {
         if (values && valueIndex) {
@@ -117,7 +119,7 @@ const useGroupFilter = (groupData?: MetaGroup) => {
           index.forEach((i, idx) => {
             itemPos[i] = idx
           })
-          let showTemp = false
+          let showTemp = sT
           let currentValue = values.slice()
           if (contains?.length) {
             showTemp = true
@@ -136,16 +138,21 @@ const useGroupFilter = (groupData?: MetaGroup) => {
             const ids = new Set(rest.map(i => i.id))
             currentValue = currentValue.filter(i => ids.has(i.id))
           }
-          if (showTemp === false) {
-            currentValue = currentValue.filter(i => {
-              if (i.type === 'metaObject') {
-                const m = MetaStore.getCachedMetaObject(i.id)
-                if (m?.temp) return false
-                return true
+          currentValue = currentValue.filter(i => {
+            if (i.type === 'metaObject') {
+              const m = MetaStore.getCachedMetaObject(i.id)
+              if (m) {
+                return MetaStore.isVisibleMetaObject(m, {
+                  showDeleted: true,
+                  showHidden: true,
+                  showTemp: !!(showTemp === true || filter?.rules.length || search || contains?.length),
+                  hideLabel: defaultShowLabels === false && !filter?.rules.length && !search && !contains?.length
+                })
               }
               return true
-            })
-          }
+            }
+            return true
+          })
           currentValue.sort((a, b) => itemPos[a.rowId] - itemPos[b.rowId])
           if (!filter?.rules.length && !search?.length && !sort?.sorters.length) {
             setGroupState(s => ({ ...s, viewValues: currentValue, filterValues: undefined }))
@@ -156,7 +163,9 @@ const useGroupFilter = (groupData?: MetaGroup) => {
           const allRows = currentValue
           const firstLayerMetaIds = allRows.filter(i => i.id).map(i => i.id) as number[]
           const afterFilterExistMetaIds = new Set([
-            ...(filter?.rules.length ? calculateFilterObjects(filter, firstLayerMetaIds, true)?.map(i => i.id) || [] : firstLayerMetaIds)
+            ...(filter?.rules.length
+              ? (await calculateFilterObjects(filter, firstLayerMetaIds, true))?.map(i => i.id) || []
+              : firstLayerMetaIds)
           ])
           const afterFilterRows = allRows.filter(i => {
             if (i.type === 'metaObject') {

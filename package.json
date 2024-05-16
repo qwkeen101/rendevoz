@@ -2,7 +2,7 @@
   "name": "rendevoz-app",
   "productName": "Rendevoz",
   "private": true,
-  "version": "0.9.21",
+  "version": "1.0.0",
   "author": {
     "name": "Rendevoz Team",
     "email": "rendevoz@rendevoz.com"
@@ -81,7 +81,7 @@
     "optics-ts": "^2.3.0",
     "panzoom": "^9.4.3",
     "paper": "^0.12.17",
-    "pdfjs-dist": "^3.8.162",
+    "pdfjs-dist": "^4.2.67",
     "perfect-freehand": "^1.2.0",
     "pixi-viewport": "^5.0.1",
     "pixi.js": "^7.2.4",

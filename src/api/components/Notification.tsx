@@ -1,21 +1,26 @@
 import Zindexes from '@/consts/zindex'
 import { useToaster } from 'react-hot-toast'
 import { AnimatePresence, motion } from 'framer-motion'
-import { css } from '@emotion/css'
-import { Icon } from '../../components'
-import Colors from '@/consts/colors'
+import { Icon } from '@/components'
+import './notification.less'
+import { useSelectGlobalAtomValue } from '@/hooks'
+import { SettingAtom } from '@/core'
 
 const Notification = () => {
   const { toasts, handlers } = useToaster({
-    duration: 4000
+    duration: 3500
   })
+  const enableSetting = useSelectGlobalAtomValue(SettingAtom, s => s.notification.enabled)
   const { calculateOffset, updateHeight } = handlers
+  if (enableSetting === false) {
+    return null
+  }
   return (
     <motion.div
       style={{
         position: 'fixed',
-        top: 60,
-        right: 60,
+        top: 35,
+        left: '50%',
         zIndex: Zindexes.Notification,
         fontSize: 14
       }}
@@ -37,38 +42,25 @@ const Notification = () => {
             <motion.div
               key={toast.id}
               initial={{
-                opacity: 1,
-                x: '0%',
+                opacity: 0,
+                x: '-50%',
                 y: 0
               }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.13 }}
               animate={{
                 opacity: toast.visible ? 1 : 0,
-                x: toast.visible ? '-100%' : '0%',
-                y: offset
+                scale: toast.visible ? 1 : 0.8,
+                x: '-50%',
+                transformOrigin: 'center',
+                y: offset + 20
               }}
-              style={{
-                position: 'absolute',
-                willChange: 'transform',
-                fontSize: 14
-              }}
-              className={css({
-                borderRadius: 10,
-                padding: '8px 12px',
-                fontWeight: 500,
-                minWidth: 180,
-                boxShadow: Colors.Background.BoxShadow,
-                background: Colors.Background.Popover,
-                display: 'flex',
-                gap: 16,
-                alignItems: 'center'
-              })}
+              className={'notification'}
               {...toast.ariaProps}
               ref={ref}
             >
               <>
-                {toast.type === 'success' && <Icon fill={'#82CD47'} theme="filled" size={20} name="park-correct" />}
-                {toast.type === 'error' && <Icon fill={'#F55050'} theme="filled" size={20} name="park-error" />}
+                {toast.type === 'success' && <Icon fill={'#82CD47'} theme="filled" size={18} name="park-correct" />}
+                {toast.type === 'error' && <Icon fill={'#F55050'} theme="filled" size={18} name="park-error" />}
                 <div
                   style={{
                     display: 'flex',

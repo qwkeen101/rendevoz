@@ -10,6 +10,7 @@ import usePdfSelectMode from '../../hooks/useSelectMode'
 import { useSetAtom } from 'jotai'
 import { PdfStateAtom } from '@/core/components/pdf/hooks/usePdfState'
 import { Colors } from '@/consts'
+import LabelNoteRenderer from '@/core/components/pdf/components/label/LabelNoteRenderer'
 
 interface HighlightLabelProps {
   labelId: number
@@ -74,9 +75,7 @@ const Highlights = forwardRef((props, ref) => {
   const [selectMode] = usePdfSelectMode()
   const [focused, setFocused] = useState(false)
   const darkMode = useSelectGlobalAtomValue(SettingAtom, s => s.general.darkMode)
-  useClickOutside(() => setFocused(false), highlightRef, focused)
   const containerRectRef = useRef<Rect>()
-  const setPdfState = useSetAtom(PdfStateAtom)
   useEffect(() => {
     const container = innerRef.current
     if (container) {
@@ -148,7 +147,7 @@ const Highlights = forwardRef((props, ref) => {
       ? {
           backgroundImage: `linear-gradient(to left, ${highlight.color}, ${highlight.color} 100%)`,
           backgroundPosition: '0 100%',
-          backgroundSize: '100% 3px',
+          backgroundSize: '100% 2px',
           backgroundRepeat: 'repeat-x'
         }
       : {
@@ -164,6 +163,7 @@ const Highlights = forwardRef((props, ref) => {
       ref={mergedRef}
       onClick={onClick}
     >
+      <LabelNoteRenderer labelId={labelId} />
       {highlight.rects?.map((rect, idx) => (
         <div
           key={idx}

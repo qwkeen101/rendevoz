@@ -29,10 +29,17 @@ export default defineConfig(() => ({
   },
   base: './',
   optimizeDeps: {
+    esbuildOptions: {
+      target: 'es2022'
+    },
     include: ['retry', 'fix-webm-duration'],
-    exclude: ['canvas', 'whisper-turbo', '@ffmpeg', '@ffmpeg/ffmpeg']
+    exclude: ['canvas', 'whisper-turbo', '@ffmpeg', '@ffmpeg/ffmpeg', 'pdf.worker.mjs', 'pdf.mjs']
+  },
+  esbuild: {
+    target: 'es2022'
   },
   build: {
+    target: 'es2022',
     sourcemap: false,
     rollupOptions: {
       input: {

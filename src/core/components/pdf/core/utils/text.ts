@@ -189,7 +189,6 @@ export const getStartTextRect = (bound: TextContentBound, ctx: CanvasRenderingCo
     width -= whitespaceWidth
     targetStr = targetStr.trimStart()
   }
-  console.log(targetStr)
   return trans
     ? {
         x: trans[4],
@@ -253,20 +252,6 @@ export const getTextRect = (bound: TextContentBound, ctx: CanvasRenderingContext
     let width = endTextBound.width - startTextBound.width
     let targetText = str.substring(startTextBound.text.length, endTextBound.text.length)
     let x = offset.left + startTextBound.width
-    // if (startTextBound.text === endTextBound.text && !targetText) {
-    //   targetText = startTextBound.text
-    //   width = startTextBound.width
-    //   x = offset.left
-    // }
-    //
-    // if (targetText.startsWith(' ') && startTextBound.chars && endTextBound.chars) {
-    //   ctx.font = `${bound.style.fontSize} ${bound.style.fontFamily}`
-    //   const fontWidth = bound.offset.size[0] / ctx.measureText(bound.str).width
-    //   const whitespaceWidth = ctx.measureText(' ').width * fontWidth
-    //   x += whitespaceWidth
-    //   width -= whitespaceWidth
-    //   targetText = targetText.trimStart()
-    // }
     return trans
       ? {
           x: trans[4],

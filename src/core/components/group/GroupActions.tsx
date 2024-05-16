@@ -254,7 +254,7 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
               }
             }}
             content={
-              <WithBorder padding={8}>
+              <WithBorder>
                 <BetterFilter
                   visibleFields={visibleProps.map(i => (i.type === 'custom' ? MetaStore.getPropDetails(i.id)?.name ?? '' : i.name))}
                   extraFields={

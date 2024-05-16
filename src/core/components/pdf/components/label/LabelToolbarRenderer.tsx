@@ -1,5 +1,5 @@
 import usePdfState from '@/core/components/pdf/hooks/usePdfState'
-import { globalStore, ObjectStore } from '@/api/stores'
+import { globalStore, MetaStore, ObjectStore } from '@/api/stores'
 import { AnimatePopover, WithBorder } from '@/components'
 import LabelToolbar from '@/core/components/pdf/components/toolbar/LabelToolbar'
 import { defaultBgColor } from '@/components/picker/colorPicker'
@@ -8,6 +8,7 @@ import { objectIdToMetaObjectIdMapAtom } from '@/api/stores/meta/meta.store'
 import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
 import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 import { useEffect, useState } from 'react'
+import { GlobalInstance } from '@/hooks'
 
 const LabelToolbarRenderer = () => {
   const [pdfState, setPdfState] = usePdfState()
@@ -25,11 +26,12 @@ const LabelToolbarRenderer = () => {
   let layout: string[] = []
 
   if (currentLabel && pdfState.currentFocusedLabel?.position) {
-    layout = layout.concat('delete', 'colorPicker', 'rightBar')
+    layout = layout.concat('edit', 'rightBar', 'separator', 'colorPicker', 'move-to')
     if (currentLabel.type === 'highlight') {
       layout.push('copy')
       layout = layout.concat('separator', 'searcher', 'translator')
     }
+    layout.push('separator', 'delete')
   }
   const close = () => {
     setV(false)
@@ -49,9 +51,29 @@ const LabelToolbarRenderer = () => {
       }}
       borderRadius={5}
       withClickCover={true}
-      content={
+      content={setV => (
         <WithBorder padding={0} borderRadius={5}>
           <LabelToolbar
+            onClose={() => close()}
+            onEdit={() => {
+              close()
+              if (currentLabel) {
+                instance.labelOps?.openEditLabelPopover(currentLabel, {
+                  width: 0,
+                  height: 0,
+                  top: pos!.y,
+                  left: pos!.x
+                })
+              }
+            }}
+            onMove={() => {
+              close()
+              if (!currentLabel) return
+              const labelMeta = MetaStore.getMetaObjectByObjectId(currentLabel.id)
+              if (labelMeta) {
+                GlobalInstance.metaOps?.quickAdd(labelMeta.id)
+              }
+            }}
             onColorChange={c => {
               if (!currentLabel) return
               close()
@@ -111,7 +133,7 @@ const LabelToolbarRenderer = () => {
             layout={layout}
           />
         </WithBorder>
-      }
+      )}
     ></AnimatePopover>
   )
 }

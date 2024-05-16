@@ -1,10 +1,9 @@
-import { defaultRangeExtractor, useVirtualizer, Virtualizer } from '@tanstack/react-virtual'
+import { defaultRangeExtractor, useVirtualizer, Virtualizer } from '@/components'
 import { CSSProperties, forwardRef, memo, ReactElement, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
 import { Reorder } from 'framer-motion'
 import { GlobalInstance, useMemoizedFn } from '@/hooks'
-import { useMeasure } from 'react-use'
 type Props<T> = {
   items: T[]
   renderItem: (item: T, idx: number, selected?: boolean) => ReactElement
@@ -25,6 +24,7 @@ type Props<T> = {
   canReorder?: boolean
   onReorder?: (items: T[]) => void
   getKey?: (item: T) => string | number
+  onOffsetChange?: (offset: number) => void
 }
 
 type VirtualListRef = Virtualizer<Element, Element> & {
@@ -34,7 +34,7 @@ function VirtualList<T>(
   {
     items = [],
     renderItem,
-    overscan,
+    overscan = 3,
     onSelect,
     itemStyle,
     itemClassname,
@@ -48,7 +48,8 @@ function VirtualList<T>(
     childrenContainerClassname,
     withKeyboardNavigation,
     paddingEnd,
-    getKey
+    getKey,
+    onOffsetChange
   }: Props<T>,
   ref: VirtualListRef
 ) {
@@ -60,6 +61,9 @@ function VirtualList<T>(
       getScrollElement: () => contentRef.current,
       overscan: reorder ? items.length : overscan,
       paddingEnd,
+      onChange: instance => {
+        onOffsetChange?.(instance.scrollOffset)
+      },
       getItemKey: getKey ? idx => getKey(items[idx]) : undefined,
       rangeExtractor: rangeExtractor || defaultRangeExtractor
     })

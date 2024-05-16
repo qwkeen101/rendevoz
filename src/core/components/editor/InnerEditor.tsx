@@ -1,11 +1,11 @@
 import { useDebounceFn, useMemoizedFn, useSelectAtomValue, useSelectGlobalAtomValue } from '@/hooks'
 import isHotkey from 'is-hotkey'
-import { CSSProperties, FC, memo, RefObject, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { CSSProperties, FC, memo, RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Descendant, Editor, Node, Path, Transforms } from 'slate'
 import { Editable, ReactEditor, RenderElementProps, RenderLeafProps, Slate, useSlateStatic } from './slate-react'
 import EditorToolbar from './components/EditorSelectionToolbar'
 import HOTKEYS from './consts/hotkeys'
-import { CustomEditor, CustomElement } from '~/typings'
+import { CustomEditor, CustomElement, INoteLabel } from '~/typings'
 import Divider from './Divider'
 import { Block } from './elements'
 import Id from '@/utils/id'
@@ -34,7 +34,12 @@ import { Colors } from '@/consts'
 import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
 import { DEFAULT_BACKGROUND_COLORS } from '@/components/picker/colorPicker'
 import useGlobalKey from '@/core/components/editor/hooks/keyboards/useGlobalKey'
-import { SettingAtom } from '@/core'
+import { SettingAtom, useRenderLabel } from '@/core'
+import { ObjectStore } from '@/api/stores'
+import { atom } from 'jotai'
+import { selectAtom } from 'jotai/utils'
+import { useAtomValue } from 'jotai/react'
+import { useLatest } from 'react-use'
 
 const ReadOnlyEditorClassName = css({
   table: {
@@ -287,15 +292,22 @@ const InnerEditor: FC<InnerEditorProps> = memo(
                     const selectedText = editor.selection ? Editor.string(editor, editor.selection, { voids: true }) : ''
                     if (!selectedText) return
                     Editor.addMark(editor, 'highlight', highlightId)
-                    const label = await instance.labelOps?.addLabel?.({
-                      id: highlightId,
-                      selectedText
-                    })
-                    // if successfully add label
-                    if (!label) {
-                      Editor.removeMark(editor, 'highlight')
+                    const position = event.currentToolbarPosition
+                    if (position) {
+                      instance.labelOps?.openLabelEditor?.(
+                        {
+                          id: highlightId,
+                          selectedText
+                        },
+                        {
+                          width: 0,
+                          height: 0,
+                          left: position.x,
+                          top: position.y
+                        },
+                        editor.selection
+                      )
                     }
-                    return highlightId
                   }
                 }
                 break
@@ -464,10 +476,10 @@ const TextHighlightClassName = css({
   WebkitBackgroundClip: 'unset !important',
   cursor: 'pointer'
 })
+const labelTypeAtom = selectAtom(EditorStateAtom, s => s.labelType)
 export const Leaf = (props: RenderLeafProps) => {
-  const editor = useSlateStatic()
   const [disableCloze, setDisableCloze] = useState(false)
-  let { leaf, attributes, children } = props
+  let { leaf, attributes, children, text } = props
   const style: CSSProperties = {
     fontWeight: leaf.bold ? 'bold' : undefined,
     fontStyle: leaf.italic ? 'italic' : undefined,
@@ -483,10 +495,6 @@ export const Leaf = (props: RenderLeafProps) => {
     boxShadow: leaf.cloze && disableCloze ? '0 0 0 1px var(--emphasis)' : undefined
   }
   const handleClick = e => {
-    if (leaf.highlight) {
-      e.preventDefault()
-      editor.onHighlightClick?.(leaf.highlight)
-    }
     if (leaf.cloze) {
       e.preventDefault()
       setDisableCloze(!disableCloze)
@@ -496,22 +504,7 @@ export const Leaf = (props: RenderLeafProps) => {
     children = <sup>{children}</sup>
   }
   if (leaf.highlight) {
-    return (
-      <DraggableElement
-        onDragStart={() => editor.on({ type: 'labelDrag', labelId: leaf.highlight! })}
-        hoverElement={<DraggingElement text={editor.type === 'note' ? 'Drop to add note label' : 'Drop to add webpage label'} />}
-      >
-        <span
-          {...attributes}
-          onClick={handleClick}
-          data-highlight={leaf.highlight}
-          className={classNames(leaf.highlight && TextHighlightClassName)}
-          style={style}
-        >
-          {children}
-        </span>
-      </DraggableElement>
-    )
+    return <HighlightLeaf text={text} leaf={leaf} attributes={attributes} style={style} children={children} />
   }
   return (
     <span {...attributes} onClick={handleClick} style={style}>
@@ -520,4 +513,69 @@ export const Leaf = (props: RenderLeafProps) => {
   )
 }
 
+const HighlightLeaf = (props: RenderLeafProps & { style?: CSSProperties }) => {
+  let { leaf, attributes, children, style } = props
+  const editor = useSlateStatic()
+  const instance = useEditorInstance()
+  const labelType = useAtomValue(labelTypeAtom, { store: instance.values.editorLevelStore })
+  const { label, renderTags, labelMeta } = useRenderLabel({
+    objectId: leaf.highlight,
+    type: labelType
+  })
+  const [renderName, setRenderName] = useState(false)
+  useEffect(() => {
+    if (label) {
+      if (!instance.values.labelNoteRendered.has(label.id)) {
+        setRenderName(true)
+        instance.values.labelNoteRendered.add(label.id)
+        return () => {
+          instance.values.labelNoteRendered.delete(label.id)
+        }
+      }
+    }
+  }, [label])
+  return (
+    <DraggableElement
+      onDragStart={() => editor.on({ type: 'labelDrag', labelId: leaf.highlight! })}
+      hoverElement={<DraggingElement text={'Drop to add highlight'} />}
+    >
+      <span
+        {...attributes}
+        onClick={e => {
+          e.preventDefault()
+          editor.onHighlightClick?.(leaf.highlight)
+        }}
+        data-highlight={leaf.highlight}
+        className={TextHighlightClassName}
+        style={style}
+      >
+        {(label?.name || labelMeta?.tags?.length) && renderName && (
+          <div
+            style={{
+              maxWidth: 220,
+              position: 'absolute',
+              top: -4,
+              left: -4,
+              boxShadow: 'var(--border-box-shadow)',
+              padding: 4,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 3,
+              color: 'var(--font-primary)',
+              lineHeight: '1.4',
+              background: Colors.Background.Popover,
+              fontSize: 13,
+              borderRadius: 4,
+              transform: 'translateY(-100%)'
+            }}
+          >
+            {label?.name}
+            {renderTags(undefined, true)}
+          </div>
+        )}
+        {children}
+      </span>
+    </DraggableElement>
+  )
+}
 export default InnerEditor

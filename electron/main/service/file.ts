@@ -198,7 +198,11 @@ const readFile = async (filePath: string) => {
   }
   return new Promise(res => {
     fs.readFile(p, (err, data) => {
-      if (err) throw err
+      if (err) {
+        console.error(err)
+        res(undefined)
+        return
+      }
       res(data)
     })
   })
@@ -221,7 +225,10 @@ const stat = async (filePath: string) => {
   }
   return new Promise(res => {
     fs.stat(p, (err, data) => {
-      if (err) throw err
+      if (err) {
+        res(undefined)
+        return
+      }
       res({
         mtime: data.mtime.getTime(),
         ctime: data.ctime.getTime(),

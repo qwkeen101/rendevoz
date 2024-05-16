@@ -2,7 +2,7 @@ import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 import { useEffect } from 'react'
 import isHotkey from 'is-hotkey'
 import { useSetAtom } from 'jotai'
-import { PdfBarStateAtom } from '@/core/components/pdf/hooks/usePdfBarState'
+import { PdfBarStateAtom } from '@/core/components/pdf/hooks/usePDFBarState'
 import { PdfStateAtom } from '@/core/components/pdf/hooks/usePdfState'
 import { KEY } from '@/consts'
 
@@ -12,6 +12,18 @@ export default () => {
   const setPdfState = useSetAtom(PdfStateAtom)
   useEffect(() => {
     const keyboardHandler = (e: KeyboardEvent) => {
+      if (isHotkey(KEY.Escape, e)) {
+        setPdfState(s => {
+          if (s.croppingImage) {
+            e.preventDefault()
+            return {
+              ...s,
+              croppingImage: false
+            }
+          }
+          return s
+        })
+      }
       if (instance.isFocused) {
         if (isHotkey('alt+arrowleft', e)) {
           instance.navigateOps?.back()
@@ -35,11 +47,7 @@ export default () => {
         }
         if (isHotkey('mod+f', e)) {
           e.preventDefault()
-          setBarState(s => ({ ...s, rightBarActive: 'search', showRightBar: s.rightBarActive === 'search' ? !s.showRightBar : true }))
-        }
-        if (isHotkey('mod+l', e)) {
-          e.preventDefault()
-          setBarState(s => ({ ...s, rightBarActive: 'label', showRightBar: s.rightBarActive === 'label' ? !s.showRightBar : true }))
+          setBarState(s => ({ ...s, sidebarActive: 'search' }))
         }
         if (isHotkey('shift+f', e)) {
           e.preventDefault()
@@ -48,18 +56,6 @@ export default () => {
         if (isHotkey('mod+d', e)) {
           e.preventDefault()
           setPdfState(s => ({ ...s, handDrag: !s.handDrag }))
-        }
-        if (isHotkey(KEY.Escape, e)) {
-          setPdfState(s => {
-            if (s.croppingImage) {
-              e.preventDefault()
-              return {
-                ...s,
-                croppingImage: false
-              }
-            }
-            return s
-          })
         }
       }
     }

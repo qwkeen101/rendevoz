@@ -23,7 +23,6 @@ const useEditorInstance = () => {
 
 export const useAssignEditorInstance = (editor: CustomEditor, scrollElementRef: RefObject<HTMLElement>) => {
   const instance = useEditorInstance()
-  const [barState, setEditorBarState] = useEditorBarState()
   const getHighlightLocation = (highlightId: number) => {
     const iter = Node.texts(editor)
     const values = []
@@ -71,14 +70,6 @@ export const useAssignEditorInstance = (editor: CustomEditor, scrollElementRef: 
     },
     getHighlightLocation,
     getScrollElement: () => scrollElementRef.current,
-    openSetting: () => setEditorBarState(s => ({ ...s, showRightBar: true, rightBarActive: 'setting' })),
-    closeSetting: () => setEditorBarState(s => ({ ...s, showRightBar: false })),
-    toggleSetting: () =>
-      setEditorBarState(s => ({
-        ...s,
-        showRightBar: s.rightBarActive === 'setting' ? !s.showRightBar : true,
-        rightBarActive: 'setting'
-      })),
     selectBlock: async opts => {
       if (opts.blockId !== undefined) {
         instance.selectOps?.selectBlock(opts.blockId)

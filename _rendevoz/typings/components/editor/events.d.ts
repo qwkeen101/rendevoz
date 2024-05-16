@@ -1,9 +1,13 @@
 import { Descendant } from 'slate'
 import React from 'react'
-import { CustomElement, EditorProps, IDraggableElement, INoteBlock, INoteLabel, IQuestion } from '~/typings'
+import { CustomElement, EditorProps, IDraggableElement, INote, INoteBlock, INoteLabel, IQuestion } from '~/typings'
 import { AISummarizeEvent } from '../../../../src/core/ai/components/AskAIPanel'
 
 export type IEditorEvent =
+  | {
+      type: 'updateNote'
+      updater: (curr: INote) => INote
+    }
   | {
       type: 'linkToMeta'
       targetMetaId: number
@@ -75,30 +79,6 @@ export type IEditorEvent =
   | {
       type: 'addNewElementFromMenu'
       newElementType: CustomElement['type']
-    }
-  | {
-      type: 'stateChange'
-      event:
-        | {
-            type: 'containerWidth'
-            widthType: 'full' | 'default'
-          }
-        | {
-            type: 'typeface'
-            typeface: Required<EditorProps>['state']['typeface']
-          }
-        | {
-            type: 'fontSize'
-            fontSize: number
-          }
-        | {
-            type: 'lineSpacing'
-            lineSpacing: number
-          }
-        | {
-            type: 'pageWidth'
-            width: Required<EditorProps>['state']['pageWidth']
-          }
     }
   | {
       type: 'addLabel'

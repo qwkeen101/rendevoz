@@ -82,7 +82,7 @@ const Consts = {
 }
 
 const DarkColorCache: Record<string, string> = {}
-const getAdaptColor = (c?: string, darken = 45) => {
+const getAdaptColor = (c?: string, darken = 35) => {
   if (!c) return undefined
   if (GlobalTheme.isDark) {
     if (DarkColorCache[`${c}_${darken}`]) return DarkColorCache[`${c}_${darken}`]

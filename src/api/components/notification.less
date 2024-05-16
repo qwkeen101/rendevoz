@@ -1,0 +1,28 @@
+.notification{
+  border-radius: 8px;
+  padding: 8px 12px;
+  min-width: 170px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  position: absolute;
+  will-change: transform;
+  font-size: 14px;
+  justify-content: center;
+}
+html {
+  &[theme='dark'] {
+    .notification{
+      box-shadow: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.2) 0px 5px 10px, rgba(15, 15, 15, 0.2) 0px 15px 40px;
+      background: rgb(47,47,47);
+      color: rgb(211,211,211);
+    }
+  }
+  &[theme='light'] {
+    .notification{
+      box-shadow: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 5px 10px, rgba(15, 15, 15, 0.2) 0px 15px 40px;
+      background: rgb(15,15,15);
+      color: rgba(255,255,255);
+    }
+  }
+}

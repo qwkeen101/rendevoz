@@ -1,8 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { CheckBox, Content } from '@/components'
-import { commonStyle, FilterSelect } from '@/core/object/filter/BetterFilter'
-import { Colors } from '@/consts'
-import { ClassName } from 'rendevoz'
+import BetterFilter from '@/core/object/filter/BetterFilter'
 import { PropertyFilterRule } from '~/typings'
 
 export default function CheckboxFilter({
@@ -24,9 +22,9 @@ export default function CheckboxFilter({
     }
   ]
   return (
-    <Content flex gap={8}>
-      <FilterSelect options={filterOptions} value={rule.type || 'is'} onSelect={v => onChange({ ...rule, type: v })} />
-      <div onClick={() => onChange?.({ ...rule, value: !rule.value })} style={{ ...commonStyle, width: 80 }}>
+    <Content flex gap={BetterFilter.horizontalGap}>
+      <BetterFilter.FilterSelect options={filterOptions} value={rule.type || 'is'} onSelect={v => onChange({ ...rule, type: v })} />
+      <div onClick={() => onChange?.({ ...rule, value: !rule.value })} style={{ ...BetterFilter.commonStyle, width: 80 }}>
         <CheckBox
           style={{
             width: 16,

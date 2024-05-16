@@ -1,10 +1,10 @@
-import { useClickOutside, useGlobalAtom, useGlobalAtomValue, useMemoizedFn, useSelectAtomValue } from '@/hooks'
+import { useClickOutside, useGlobalAtomValue, useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import Id from '@/utils/id'
 import { FC, memo, MouseEventHandler, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { createEditor, Editor as SlateEditor, Path, Transforms } from 'slate'
 import { HistoryEditor, withHistory } from 'slate-history'
 import { ReactEditor, withReact } from './slate-react'
-import { CustomElement, EditorProps } from '~/typings'
+import { EditorProps } from '~/typings'
 import InnerEditor from './InnerEditor'
 import withVoid from './plugins/withVoid'
 import BlockHandle from './components/BlockHandle'
@@ -12,7 +12,7 @@ import useIsDragging from './hooks/useIsDragging'
 import { withShortcuts, withCustomComponent, withHtml } from './plugins'
 import { ID_TO_ELEMENTS_MAP } from './weakMaps'
 import { normalizeEditorDragBlocksToGlobalDraggingDetails } from './hooks/drag/useEditorDrag'
-import { enableCustomEditorStateAtom, SettingAtom, useGlobalIsDragging } from '@/core'
+import { enableCustomEditorStateAtom, useGlobalIsDragging } from '@/core'
 import { createStore } from 'jotai/vanilla'
 import { Provider, useSetAtom } from 'jotai/react'
 import EditorTitle from './EditorTitle'
@@ -20,9 +20,7 @@ import rebuildDragSelect from './utils/rebuildDragSelect'
 import useEditorInstance, { EditorInstanceAtom, EditorStoreContext } from './hooks/useEditorInstance'
 import { Rendevoz } from '../../rendevoz'
 import { Content } from '@/components'
-import EditorRightBar from './components/EditorRightBar'
 import { EditorStateAtom } from './hooks/useEditorState'
-import SidebarToolbar from '@/scenes/editor/HoverOutline'
 import { EditorBlockHandleAtom } from './hooks/useBlockHandle'
 import useThrottleFn from '@/hooks/utils/useThrottleFn'
 import EditorHeader from '@/core/components/editor/EditorHeader'
@@ -37,9 +35,9 @@ import { useAtomValue } from 'jotai'
 import EditorPluginHooks from './hooks/EditorPluginHooks'
 import { t } from 'i18next'
 import GetEditorBlockHandle from '@/core/components/editor/hooks/getEditorBlockHandle'
-import { css } from '@emotion/css'
 import './editorStyles.less'
-import { selectAtom } from 'jotai/utils'
+import EditorSidebar from '@/core/components/editor/components/sidebar/EditorSidebar'
+import QuickLabelPopover from '@/core/components/editor/components/QuickLabelPopover'
 
 // function, get unique id everytime
 const defaultSlateValue = () => [
@@ -85,6 +83,7 @@ export const EditorV1: FC<EditorProps> = memo(
     classNames,
     defaultReadOnly = false
   }) => {
+    const barState = useAtomValue(EditorBarStateAtom)
     const [isDragging, setIsDragging] = useIsDragging()
     const [globalIsDragging] = useGlobalIsDragging()
     const scrollElementRef = useRef<HTMLDivElement>(null)
@@ -97,6 +96,7 @@ export const EditorV1: FC<EditorProps> = memo(
     const setEditorState = useSetAtom(EditorStateAtom)
     const isDraggingDivider = useSelectAtomValue(EditorStateAtom, s => s.isDraggingDivider)
     const instance = useEditorInstance()
+    const sidebarVisible = barState.sidebarActive !== 'hide'
     useEffect(() => {
       if (textboxMode !== undefined) {
         setEditorState(s => ({ ...s, textboxMode }))
@@ -320,7 +320,6 @@ export const EditorV1: FC<EditorProps> = memo(
         setBlockHandle(s => (s.visible === false ? s : { ...s, visible: false }))
       }, scrollElementRef)
 
-    const barState = useAtomValue(EditorBarStateAtom)
     if (textboxMode) {
       return (
         <>
@@ -359,27 +358,23 @@ export const EditorV1: FC<EditorProps> = memo(
     }
     return (
       <>
+        {layout?.showHeader !== false && <EditorSidebar />}
         <EditorPluginHooks editor={editor} scrollElementRef={scrollElementRef} />
+        <QuickLabelPopover />
         <Content
           flex
-          fullWidth
           auto
           onClick={onClick}
           column
           style={{
             height: styles?.containerHeight ?? '100%',
             maxHeight: styles?.containerMaxHeight,
+            width: sidebarVisible ? `calc(100% - ${barState.sidebarWidth}px` : '100%',
+            marginLeft: sidebarVisible ? barState.sidebarWidth : undefined,
             ...styles?.containerStyle
           }}
         >
-          {layout?.showHeader !== false && (
-            <EditorHeader
-              title={stringTitle}
-              editor={editor}
-              maxTitleWidth={barState.showRightBar ? `calc(100% - ${barState.rightBarWidth || 380}px` : undefined}
-            />
-          )}
-          {layout?.showHeader !== false && <SidebarToolbar editor={editor} />}
+          {layout?.showHeader !== false && <EditorHeader title={stringTitle} editor={editor} />}
           <div
             ref={scrollElementRef}
             onPointerMove={e => {
@@ -392,10 +387,9 @@ export const EditorV1: FC<EditorProps> = memo(
               '--editor-max-width': pageWidthToSize[editorState.pageWidth] || '800px',
               '--editable-line-height': editorState.lineSpacing,
               fontFamily: editorState.typeface || 'Inter',
-              '--page-padding': styles?.pageMinPadding ?? '0px 40px 0px 60px',
+              '--page-padding': styles?.pageMinPadding ?? readOnly ? '0px 40px' : '0px 40px 0px 60px',
               padding: 'var(--page-padding)',
               '--font-size': editorState.fontSize,
-              width: barState.showRightBar ? `calc(100% - ${barState.rightBarWidth || 380}px` : undefined,
               ...styles?.editorContainerStyle
             }}
           >
@@ -463,7 +457,6 @@ export const EditorV1: FC<EditorProps> = memo(
               outerVisible={!!(!isDragging && !realReadOnly)}
             />
           )}
-          {layout?.showHeader !== false && <EditorRightBar />}
         </Content>
       </>
     )
@@ -476,7 +469,8 @@ export const Editor: FC<EditorProps> = memo(props => {
     store.set(EditorInstanceAtom, {
       values: {
         selectedBlocks: new Map(),
-        editorLevelStore: store
+        editorLevelStore: store,
+        labelNoteRendered: new Set()
       }
     })
     store.set(EditorStateAtom, { ...props })

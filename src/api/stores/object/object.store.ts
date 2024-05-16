@@ -35,6 +35,7 @@ type ObjectStore<T extends keyof ObjectFamily, V extends ObjectFamily[T]> = {
   createAtom: (id?: number) => Atom<V | undefined>
   getCachedOneById: (id: number) => V | undefined
   useValue: (id?: number) => Awaited<V> | undefined
+  useMultiple: (ids?: Iterable<number>) => Awaited<V[]>
 } & IStore<V>
 const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[T], S extends IStore<V>>(
   type: T,

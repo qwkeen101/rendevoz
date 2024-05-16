@@ -17,6 +17,7 @@ interface ViewerProps {
   onDocumentLoaded?: (doc: PDFDocumentProxy) => void
   onRangeChange?: (range: Range) => void
   transformScale?: number
+  thumbnailWorker?: boolean
 }
 
 export const Viewer: FC<ViewerProps> = ({
@@ -26,13 +27,14 @@ export const Viewer: FC<ViewerProps> = ({
   renderPage,
   renderAnnotation,
   innerRef,
+  thumbnailWorker,
   layoutClassName,
   onDocumentLoaded,
   onRangeChange,
   transformScale
 }) => {
   return (
-    <Loader onDocumentLoaded={onDocumentLoaded} file={fileUrl}>
+    <Loader thumbnailWorker={thumbnailWorker} onDocumentLoaded={onDocumentLoaded} file={fileUrl}>
       {doc => (
         <LayoutWrapper doc={doc}>
           {pageSize => (

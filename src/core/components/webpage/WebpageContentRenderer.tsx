@@ -34,7 +34,7 @@ const WebpageTitle = ({
     <Content flex column>
       <div
         style={{
-          fontSize: 26,
+          fontSize: 24,
           fontWeight: 600,
           hyphens: 'auto'
         }}
@@ -256,7 +256,9 @@ const WebpageContentRenderer = ({
                 {editorOptions?.header?.rightExtra}
                 <Tooltip content={t('general.Show original webpage')}>
                   <Icon
-                    className={ClassName.flatButton(4, '4px')}
+                    size={16}
+                    strokeWidth={3}
+                    className={ClassName.flatButton(4, '5px')}
                     onClick={() => {
                       if (currentWepbage) {
                         ObjectStore('webpage').updateOne({ id: currentWepbage.id, showOriginal: !realShowOriginal })
@@ -285,7 +287,7 @@ const WebpageContentRenderer = ({
               />
             ),
             titleContainerStyle: {
-              padding: '20px 0px 10px'
+              padding: '15px 0px 10px'
             }
           }}
         />

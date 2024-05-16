@@ -18,7 +18,7 @@ export default () => {
   const { loaded, paused, currentTime = 0, totalTime = 0, jumpTime, volume = 0, speed = 1 } = mediaState
   const a = audioRef.current
   const columnLayout = useAtomValue(MediaLayoutAtom)
-  const sidebarOpen = useMediaSidebarState()[0].rightBarVisible
+  const sidebarOpen = useMediaSidebarState()[0].rightBarActive !== 'hide'
   const instance = useMediaInstance()
   const containerRef = useRef<HTMLElement>(null)
   const [ref, { width }] = useMeasure()

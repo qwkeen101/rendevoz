@@ -5,6 +5,12 @@ import { useRef, memo, useMemo, useLayoutEffect } from 'react'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
 import { Descendant, Node } from 'slate'
 import { ReactEditor } from '@/core'
+const fontSizeToNumber: Record<(IWhiteboardNode & { type: 'text' })['fontSize'], number> = {
+  small: 14,
+  middle: 16,
+  large: 20,
+  'super large': 24
+}
 const TextNode = ({ node, onClick }: InnerNodeProps & { onClick: VoidFunction }) => {
   const textNode = node as IWhiteboardNode & { type: 'text' }
   const instance = useWhiteboardInstance()
@@ -34,7 +40,6 @@ const TextNode = ({ node, onClick }: InnerNodeProps & { onClick: VoidFunction })
       onInstanceInitialized={ins => {
         i.current = ins
         const funcs = instance.nodeOps?.getNodeFuncs?.(node.id!)
-        console.log(funcs)
         if (funcs) {
           funcs.focusText = () => {
             const e = ins.getSlateEditor?.()
@@ -56,7 +61,7 @@ const TextNode = ({ node, onClick }: InnerNodeProps & { onClick: VoidFunction })
         padding: '3px 8px',
         pointerEvents: 'auto'
       }}
-      fontSize={node.type === 'mindmap' ? 30 : undefined}
+      fontSize={node.type === 'mindmap' ? 30 : textNode.fontSize ? fontSizeToNumber[textNode.fontSize] : undefined}
       onChange={v => {
         handleChangeValue(v)
       }}

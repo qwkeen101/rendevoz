@@ -57,7 +57,7 @@ export default () => {
     if (v.objectId) {
       objectIdToMetaObjectMap.set(v.objectId, v.id)
     }
-    if (v.temp || v.deleted) {
+    if (v.deleted) {
       if (v.deleted) {
         deletedMetaObjectsSet.add(v)
       }

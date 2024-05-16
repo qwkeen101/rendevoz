@@ -55,7 +55,7 @@ export default memo(({ results, onNumChange }: { results: ISearchResult; onNumCh
 })
 
 const ParentChildItem = ({ items, propId }: { items: ISearchResult; propId: number }) => {
-  const [toggled, setToggled] = useState(false)
+  const [toggled, setToggled] = useState(true)
   const prop = ObjectStore('metaProp').useValue(propId)
   if (items.length === 0 || !prop) return null
   return (

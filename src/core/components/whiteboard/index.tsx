@@ -35,7 +35,7 @@ import SnapDragLayer from '@/core/components/whiteboard/snap/SnapDragLayer'
 import FakeMindmapDragLayer from '@/core/components/whiteboard/node/mindmap/FakeMindmapDragLayer'
 import WhiteboardSearch from '@/core/components/whiteboard/WhiteboardSearch'
 import WhiteboardPasteSelector from '@/core/components/whiteboard/WhiteboardPasteSelector'
-const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly, name, onRename }: IWhiteboardProps) => {
+const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly, state }: IWhiteboardProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const flow = useFlow()
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
@@ -54,11 +54,13 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly, nam
     setWhiteboardState(s => ({
       ...s,
       readOnly,
+      layout,
+      state,
       currentTool: readOnly ? undefined : s.currentTool,
       pointerMode: readOnly ? 'pan' : s.pointerMode,
       toolbarPointerMode: readOnly ? 'pan' : s.toolbarPointerMode
     }))
-  }, [readOnly])
+  }, [readOnly, layout, state])
   assignProperties(instance, {
     getContainerNode: () => containerRef.current!,
     getOutestContainerNode: () => containerRef.current?.parentElement,
@@ -253,7 +255,8 @@ export const Whiteboard = memo(
     name,
     onRename,
     onInstanceInitialized,
-    layout
+    layout,
+    state
   }: {
     whiteboardId: number
     onInstanceInitialized?: (i: IWhiteboardInstance) => void
@@ -319,6 +322,7 @@ export const Whiteboard = memo(
             id={whiteboardId}
             layout={layout}
             readOnly={readOnly}
+            state={state}
           />
         )}
       </Provider>

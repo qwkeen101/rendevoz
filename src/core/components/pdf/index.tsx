@@ -1,17 +1,16 @@
 import { Content } from '@/components'
-import { createStore, Provider } from 'jotai'
+import { atom, createStore, Provider, useStore } from 'jotai'
 import { useEffect, useMemo } from 'react'
 import { PdfViewer, PdfViewerProps } from './PdfViewer'
-import PdfRightSidebar from './components/sidebar/PdfRightSidebar'
 import { PdfStateAtom } from './hooks/usePdfState'
 import { globalStore, ObjectStore } from '@/api/stores'
-import PdfLeftSidebar from './components/sidebar/PdfLeftSidebar'
 import usePDFInstance, { PdfInstanceAtom, useAssignPdfInstance } from './hooks/usePDFInstance'
 import usePdfSelectMode from './hooks/useSelectMode'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
 import PDFOpsAssigner from '@/core/components/pdf/hooks/ops/Assigner'
 import './index.less'
+import PDFSidebar from '@/core/components/pdf/components/sidebar/PDFSidebar'
 
 type PdfProps = {
   pdfId: number
@@ -20,12 +19,17 @@ type PdfProps = {
 } & Omit<PdfViewerProps, 'documentId'>
 const PdfInner = ({ pdfId, onInstanceInitialized, on, transformScale, styles, layout, autoWidth, state, fileUrl }: PdfProps) => {
   useAssignPdfInstance(pdfId)
-
+  const store = useStore()
   const [, setSelectMode] = usePdfSelectMode()
   useEffect(() => {
     const keydownHandler = (e: KeyboardEvent) => {
       if (isHotkey(KEY.Shift, e)) {
         setSelectMode(true)
+      }
+      if (isHotkey('mod+c', e)) {
+        if (Object.keys(instance.values.selectedText).length > 0) {
+          navigator.clipboard.writeText(Object.values(instance.values.selectedText).join(''))
+        }
       }
     }
     const keyupHandler = () => {
@@ -34,6 +38,10 @@ const PdfInner = ({ pdfId, onInstanceInitialized, on, transformScale, styles, la
     document.addEventListener('keydown', keydownHandler)
     document.addEventListener('keyup', keyupHandler)
     return () => {
+      const thumbnailURLs = Array.from(store.get(instance.values.thumbnailAtom).values())
+      thumbnailURLs.forEach(u => {
+        URL.revokeObjectURL(u)
+      })
       document.removeEventListener('keydown', keydownHandler)
       document.removeEventListener('keyup', keyupHandler)
     }
@@ -57,7 +65,7 @@ const PdfInner = ({ pdfId, onInstanceInitialized, on, transformScale, styles, la
         fullHeight
         style={{ overflow: 'hidden' }}
       >
-        {layout?.showHeader !== false && <PdfLeftSidebar />}
+        {layout?.showHeader !== false && <PDFSidebar id={pdfId} />}
         <PdfViewer
           documentId={pdfId}
           styles={styles}
@@ -69,7 +77,6 @@ const PdfInner = ({ pdfId, onInstanceInitialized, on, transformScale, styles, la
           transformScale={transformScale}
           onInstanceInitialized={onInstanceInitialized}
         />
-        {layout?.showHeader !== false && <PdfRightSidebar pdfId={pdfId} />}
       </Content>
     </>
   )
@@ -81,7 +88,11 @@ const Pdf = (props: PdfProps) => {
     const store = createStore()
     store.set(PdfInstanceAtom, {
       values: {
-        texts: []
+        texts: [],
+        INDEX_TO_TEXT_LAYER: {},
+        selectedText: {},
+        INDEX_TO_PAGE_LAYER: {},
+        thumbnailAtom: atom(new Map())
       }
     })
     const { pdfId } = props

@@ -134,11 +134,11 @@ const FeedContainer = () => {
           }}
         >
           <div
-            className={'border-box-shadow'}
             style={{
               position: 'absolute',
               background: Colors.Background.Popover,
-              left: -38,
+              left: -36,
+              boxShadow: 'var(--border-box-shadow)',
               top: '22px',
               transform: 'translateY(-50%)',
               zIndex: 15,
@@ -147,8 +147,8 @@ const FeedContainer = () => {
           >
             <Icon
               name={modalOpen ? 'park-double-right' : 'park-double-left'}
-              className={ClassName.flatButton(4, '5px')}
-              size={20}
+              size={18}
+              style={{ padding: 5, cursor: 'pointer' }}
               onClick={() => {
                 setFeedState(s => ({ ...s, modalOpen: !s.modalOpen }))
               }}

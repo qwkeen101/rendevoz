@@ -21,11 +21,11 @@ type StoreDispatchEvent<T> = {
 } & (
   | {
       type: 'add'
-      onBeforeCache?: (o: T) => T
       onSuccess?: (o: T, silent?: boolean) => void
     }
   | {
       type: 'update'
+      transformData?: (o: T) => T | undefined
       onSuccess?: (o: T, silent?: boolean) => void
     }
   | {
@@ -59,9 +59,15 @@ const handleQueue = () => {
             return
           }
           const origin = draft.get(data.id)
-          const newObj = Object.assign({}, origin, data, {
+          let newObj = Object.assign({}, origin, data, {
             updatedAt: Date.now()
           })
+          if (i.transformData) {
+            newObj = i.transformData(newObj)
+          }
+          if (!newObj) {
+            return
+          }
           draft.set(data.id, newObj)
           setTimeout(() => i.onSuccess?.(newObj))
           return
@@ -203,13 +209,16 @@ export function initializeLocalStore<T>(
   const store: ILocalStore<T> = {
     addOne: (onSuccess, onFail) => (obj, options) => {
       return new Promise(res => {
-        const initedObj = BaseStore.initBaseObject(obj)
+        let initedObj = BaseStore.initBaseObject(obj)
+        initedObj = outOptions?.transformData ? outOptions?.transformData(initedObj) : initedObj
+        if (!initedObj) {
+          return
+        }
         BaseStore.dispatch<T>({
           type: 'add',
           data: initedObj,
           database,
           atom,
-          onBeforeCache: outOptions?.transformData,
           onSuccess: o => {
             res(o)
             onSuccess?.(o, options?.silent ?? false)
@@ -283,6 +292,7 @@ export function initializeLocalStore<T>(
                 res(undefined)
                 return
               }
+              console.log(one)
               globalStore.set(atom, BaseStore.add(one, globalStore.get(atom)))
               res(one)
             } else {
@@ -297,9 +307,10 @@ export function initializeLocalStore<T>(
         if (globalStore.get(atom).has(obj.id)) {
           BaseStore.dispatch({
             type: 'update',
-            data: obj,
             atom,
             database,
+            data: obj,
+            transformData: outOptions?.transformData,
             onSuccess: obj => {
               res(obj)
               onSuccess?.(obj, options?.silent ?? false)
@@ -308,6 +319,7 @@ export function initializeLocalStore<T>(
           })
         } else {
           database.get(obj.id).then(data => {
+            data = outOptions?.transformData ? outOptions.transformData(data) : data
             globalStore.set(atom, BaseStore.add(data, globalStore.get(atom)))
             BaseStore.dispatch({
               type: 'update',

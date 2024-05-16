@@ -134,13 +134,13 @@ const S3Sync: ICloudSyncClient & {
       const maxSize = getSetting().sync.maxSyncSize
       await Promise.all(
         paths.map(async p => {
-          if (maxSize && opts?.skipSetting !== true) {
-            const stat = await FileSystem.fs.stat('rendefile://' + p)
-            if (stat.size / (1024 * 1024) > maxSize) {
-              opts?.onProgress?.('skipped', p, stat.size)
-              return
-            }
-          }
+          // if (maxSize && opts?.skipSetting !== true) {
+          //   const stat = await FileSystem.fs.stat('rendefile://' + p)
+          //   if (stat.size / (1024 * 1024) > maxSize) {
+          //     opts?.onProgress?.('skipped', p, stat.size)
+          //     return
+          //   }
+          // }
           const file = await FileSystem.fs.readFile('rendefile:///' + p)
           if (file) {
             try {
@@ -150,6 +150,8 @@ const S3Sync: ICloudSyncClient & {
                 Key: p,
                 Body: file
               })
+            } catch (e) {
+              console.error(e)
             } finally {
               opts?.onProgress?.('finish', p)
             }

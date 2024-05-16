@@ -1,10 +1,11 @@
 import { ObjectStore } from '@/api/stores'
 import { assignProperties, calculateImageAspectRatio, waitFor } from '@/utils'
-import { atom, useAtomValue } from 'jotai'
+import { atom, useAtomValue, useStore } from 'jotai'
 import { IPDFInstance } from '~/typings'
 import { renderPageInDarkMode } from '@/core/components/pdf/core/utils/renderer'
 import search from './ops/search'
 import captureImage from './ops/captureImage'
+import produce from 'immer'
 
 export const PdfInstanceAtom = atom<IPDFInstance>({})
 
@@ -13,7 +14,7 @@ const usePDFInstance = () => useAtomValue(PdfInstanceAtom)
 export const useAssignPdfInstance = (pdfId: number) => {
   const pdf = ObjectStore('pdf').useValue(pdfId)
   const instance = usePDFInstance()
-
+  const store = useStore()
   assignProperties(instance, {
     getPdfId: () => pdfId,
     getDocument: async () => {
@@ -35,25 +36,40 @@ export const useAssignPdfInstance = (pdfId: number) => {
         }
       })
     },
-    getThumbnail: async pageIdx => {
-      const doc = await instance.getDocument?.()
+    getThumbnail: async (pageIdx, size) => {
+      await new Promise(res =>
+        waitFor(
+          () => !!instance.values.thumbnailDocument,
+          () => res(null)
+        )
+      )
+      if (store.get(instance.values.thumbnailAtom).has(pageIdx)) {
+        return store.get(instance.values.thumbnailAtom).get(pageIdx)
+      }
+      const doc = instance.values.thumbnailDocument
       if (doc) {
+        renderPageInDarkMode()
+        const desiredWidth = size?.width ?? 300
         const canvas = document.createElement('canvas')
         const firstPage = await doc.getPage(pageIdx + 1)
         const viewport = firstPage.getViewport({ scale: 1 })
-        const originalWidth = viewport.width
-        const originalHeight = viewport.height
-        const { width: w, height: h } = calculateImageAspectRatio(originalWidth, originalHeight, 400, 400)
-        const transform = [w / originalWidth, 0, 0, h / originalHeight, 0, 0]
-        canvas.width = w
-        canvas.height = h
+        const scaled = desiredWidth / viewport.width
+        const scaledViewport = firstPage.getViewport({ scale: scaled })
+        canvas.width = scaledViewport.width
+        canvas.height = scaledViewport.height
         const ctx = canvas.getContext('2d')!
-        renderPageInDarkMode()
-        await firstPage.render({ canvasContext: ctx, transform, viewport }).promise
+        // renderPageInDarkMode()
+        await firstPage.render({ canvasContext: ctx, viewport: scaledViewport }).promise
         const blob = (await new Promise(res => canvas.toBlob(o => res(o)))) as Blob
         canvas.remove()
         const url = URL.createObjectURL(blob)
         firstPage.cleanup()
+        store.set(
+          instance.values.thumbnailAtom,
+          produce(store.get(instance.values.thumbnailAtom), d => {
+            d.set(pageIdx, url)
+          })
+        )
         return url
       }
     },

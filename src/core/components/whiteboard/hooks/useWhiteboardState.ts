@@ -2,6 +2,7 @@ import { atom, useAtom } from 'jotai'
 import { Colors } from '@/consts'
 import { IPenStyle } from '@/core/components/whiteboard/toolbars/WhiteboardToolsBar'
 import { Transform } from 'panzoom'
+import { IWhiteboardProps } from '~/typings'
 
 type IWhiteboardState = {
   zoom: number
@@ -30,6 +31,8 @@ type IWhiteboardState = {
     color: string
     style?: IPenStyle
   }
+  layout?: IWhiteboardProps['layout']
+  state?: IWhiteboardProps['state']
 }
 export const WhiteboardStateAtom = atom<IWhiteboardState>({
   zoom: 1,

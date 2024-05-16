@@ -6,7 +6,7 @@ import { Content } from '@/components'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import { RowWrapper } from '@/core/components/group/components/table/RowWrapper'
 import { ReactNode } from 'react'
-import useChildrenSyncAsAttachment from '@/core/components/group/hooks/useChildrenSyncAsAttachment'
+
 export const Container = ({ children, hasChildren }: { children: ReactNode; hasChildren: boolean }) =>
   hasChildren ? (
     <Content flex column>

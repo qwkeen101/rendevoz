@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Content } from '@/components'
-import { FilterSelect } from '@/core/object/filter/BetterFilter'
+import BetterFilter from '@/core/object/filter/BetterFilter'
 import { Colors } from '@/consts'
 import { ClassName } from 'rendevoz'
 import { PropertyFilterRule } from '~/typings'
@@ -48,8 +48,8 @@ export default function NumberFilter({
     }
   ]
   return (
-    <Content flex gap={8}>
-      <FilterSelect options={filterOptions} value={rule.type || 'is'} onSelect={v => onChange({ ...rule, type: v })} />
+    <Content flex gap={BetterFilter.horizontalGap}>
+      <BetterFilter.FilterSelect options={filterOptions} value={rule.type || 'is'} onSelect={v => onChange({ ...rule, type: v })} />
       <input
         value={rule.value}
         className={ClassName.noStyleInput}

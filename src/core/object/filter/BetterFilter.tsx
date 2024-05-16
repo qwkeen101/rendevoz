@@ -1,14 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
-import {
-  IMetaProp,
-  IMetaProperty,
-  MetaFilterGroup,
-  MetaFilterRule,
-  StringFieldFilterRule,
-  TagFieldFilterRule,
-  TypeFieldFilterRule
-} from '~/typings'
-import { AnimatePopover, Button, Content, Icon, TimePicker, WithBorder } from '@/components'
+import { CSSProperties, useEffect, useRef, useState } from 'react'
+import { IMetaProp, MetaFilterGroup, MetaFilterRule, StringFieldFilterRule, TagFieldFilterRule, TypeFieldFilterRule } from '~/typings'
+import { AnimatePopover, Button, Content, Icon, Menu, TimePicker, WithBorder } from '@/components'
 import Select from '@/components/base/select'
 import { ClassName } from 'rendevoz'
 import { useTranslation } from 'react-i18next'
@@ -21,7 +13,6 @@ import { SelectOptionProps } from '@/components/base/select/SelectOption'
 import { Colors } from '@/consts'
 import MetaFilterer from '@/core/object/filter/MetaFilterer'
 import { css } from '@emotion/css'
-import FontSize from '@/consts/font'
 import MetaTagPicker from '@/core/object/MetaTagPicker'
 import { Rendevoz } from '@/core/rendevoz'
 import { DateFormat } from '@/utils'
@@ -29,16 +20,28 @@ import SingleOptionFilter from '@/core/object/filter/renderer/SingleOption'
 import MultiOptionFilter from '@/core/object/filter/renderer/MultiOption'
 import NumberFilter from '@/core/object/filter/renderer/Number'
 import CheckboxFilter from '@/core/object/filter/renderer/Checkbox'
+import useDisplayInside from '@/core/object/objectList/useDisplayInside'
+import Tag from '@/core/object/ObjectTag'
+import SaveFilter from '@/core/object/filter/SaveFilter'
 
-export const commonStyle = {
+const commonStyle: CSSProperties = {
   cursor: 'pointer',
   lineHeight: '1.2',
-  height: 'auto',
   padding: '3px 8px',
-  borderRadius: 6,
+  height: 26,
+  maxWidth: 200,
+  wordBreak: 'break-all',
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  minWidth: 30,
+  userSelect: 'none',
+  display: 'flex',
+  alignItems: 'center',
+  background: 'transparent',
+  borderRadius: 5,
   border: `1px solid ${Colors.Background.Border}`
 }
-export const FilterSelect = ({
+const FilterSelect = ({
   options,
   onSelect,
   value,
@@ -55,7 +58,9 @@ export const FilterSelect = ({
       reposition={false}
       closeOnSelect={true}
       menuStyle={{
-        minWidth: 150
+        minWidth: 150,
+        maxHeight: 300,
+        overflowY: 'auto'
       }}
       style={commonStyle}
       onSelect={v => onSelect(v[0])}
@@ -82,7 +87,8 @@ const BetterFilter = ({
   visibleTypes,
   showHiddenMetas,
   extraFields,
-  visibleFields
+  visibleFields,
+  showSave = true
 }: {
   disableAddGroup?: boolean
   root?: MetaFilterGroup
@@ -92,7 +98,17 @@ const BetterFilter = ({
   onChange?: (root: MetaFilterGroup) => void
   // custom property
   extraFields?: ExtraFields[]
+  showSave?: boolean
 }) => {
+  const [showSavedFilters, setShowSavedFilters] = useState(false)
+  const { renderSavedFilters, savedFilters, renderNameEditor, save, lastUsedFilter } = SaveFilter.useRenderSavedFilters(
+    filters => {
+      setFilterRoot(filters)
+    },
+    () => {
+      setShowSavedFilters(false)
+    }
+  )
   const [filterRoot, setFilterRoot] = useState<MetaFilterGroup>(
     root || {
       filterType: 'group',
@@ -122,116 +138,152 @@ const BetterFilter = ({
   })
   const { t } = useTranslation()
   return (
-    <Content
-      flex
-      gap={6}
-      column={true}
-      className={css({
-        minWidth: 200,
-        fontSize: 13
-      })}
-    >
-      {filterRoot.rules.map((i, idx) => (
-        <FilterItem
-          visibleTypes={visibleTypes}
-          onChangeGroupType={v => {
-            setFilterRoot({ ...filterRoot, groupType: v })
-          }}
-          extraFields={extraFields}
-          index={idx}
-          visibleFields={visibleFields}
-          onDelete={handleDelete}
-          groupType={filterRoot.groupType}
-          rule={i}
-          key={idx}
-          showHiddenMetas={showHiddenMetas}
-          onChange={handleChange}
-        />
-      ))}
-      <Content flex gap={10}>
-        <Button.IconButton
-          size={11}
-          gap={6}
-          style={{
-            border: `1px solid ${Colors.Background.Border}`,
-            padding: '2px 6px 2px 4px',
-            borderRadius: 6,
-            fontSize: 13,
-            lineHeight: '18px'
-          }}
-          onClick={() => {
-            setFilterRoot(s =>
-              produce(s, draft => {
-                if (visibleFields) {
-                  if (visibleFields.includes('type')) {
-                    draft.rules.push({
-                      filterType: 'rule',
-                      field: 'type',
-                      value: '',
-                      type: 'is',
-                      id: Id.getId()
-                    })
-                  } else {
-                    draft.rules.push({
-                      filterType: 'rule',
-                      field: 'name',
-                      value: '',
-                      type: 'contains',
-                      id: Id.getId()
-                    })
-                  }
-                  return
-                }
-                draft.rules.push({
-                  filterType: 'rule',
-                  field: 'type',
-                  value: '',
-                  type: 'is',
-                  id: Id.getId()
-                })
-              })
-            )
-          }}
-          text={t('filter.Filter')}
-          icon={'park-plus'}
-        />
-        {!disableAddGroup && (
-          <Button.IconButton
-            size={11}
-            gap={6}
-            style={{
-              border: `1px solid ${Colors.Background.Border}`,
-              padding: '2px 6px 2px 4px',
-              borderRadius: 6,
+    <>
+      {renderNameEditor()}
+      {showSavedFilters ? (
+        <Content style={{ width: 300, minWidth: '100%', maxWidth: '100%' }}>{renderSavedFilters()}</Content>
+      ) : (
+        <>
+          {savedFilters?.length ? (
+            <div
+              onClick={() => setShowSavedFilters(true)}
+              style={{
+                padding: '4px',
+                width: '100%'
+              }}
+              className={'border-bottom font-size-13'}
+            >
+              <Button.IconButton icon={'park-filter'} text={t('filter.Saved filters')} suffixIcon={'park-right'}></Button.IconButton>
+            </div>
+          ) : null}
+          <Content
+            flex
+            gap={8}
+            column={true}
+            className={css({
+              minWidth: 240,
               fontSize: 13,
-              lineHeight: '18px'
-            }}
-            onClick={() => {
-              setFilterRoot(s =>
-                produce(s, draft => {
-                  draft.rules.push({
-                    filterType: 'group',
-                    id: Id.getId(),
-                    groupType: 'and',
-                    rules: [
-                      {
-                        filterType: 'rule',
-                        field: 'name',
-                        value: '',
-                        type: 'contains',
-                        id: Id.getId()
+              padding: 8
+            })}
+          >
+            {filterRoot.rules.map((i, idx) => (
+              <FilterItem
+                visibleTypes={visibleTypes}
+                onChangeGroupType={v => {
+                  setFilterRoot({ ...filterRoot, groupType: v })
+                }}
+                extraFields={extraFields}
+                index={idx}
+                visibleFields={visibleFields}
+                onDelete={handleDelete}
+                groupType={filterRoot.groupType}
+                rule={i}
+                key={idx}
+                showHiddenMetas={showHiddenMetas}
+                onChange={handleChange}
+              />
+            ))}
+            <div style={{ width: 360, maxWidth: '100%', minWidth: '100%', flexWrap: 'wrap', display: 'flex', columnGap: 10, rowGap: 8 }}>
+              <Button.IconButton
+                size={11}
+                gap={6}
+                style={commonStyle}
+                onClick={() => {
+                  setFilterRoot(s =>
+                    produce(s, draft => {
+                      if (visibleFields) {
+                        if (visibleFields.includes('type')) {
+                          draft.rules.push({
+                            filterType: 'rule',
+                            field: 'type',
+                            value: '',
+                            type: 'is',
+                            id: Id.getId()
+                          })
+                        } else {
+                          draft.rules.push({
+                            filterType: 'rule',
+                            field: 'name',
+                            value: '',
+                            type: 'contains',
+                            id: Id.getId()
+                          })
+                        }
+                        return
                       }
-                    ]
-                  })
-                })
-              )
-            }}
-            text={t('filter.Filter group')}
-            icon={'park-plus'}
-          />
-        )}
-      </Content>
-    </Content>
+                      draft.rules.push({
+                        filterType: 'rule',
+                        field: 'type',
+                        value: '',
+                        type: 'is',
+                        id: Id.getId()
+                      })
+                    })
+                  )
+                }}
+                text={t('filter.Filter')}
+                icon={'park-plus'}
+              />
+              {!disableAddGroup && (
+                <Button.IconButton
+                  size={11}
+                  gap={6}
+                  style={commonStyle}
+                  onClick={() => {
+                    setFilterRoot(s =>
+                      produce(s, draft => {
+                        draft.rules.push({
+                          filterType: 'group',
+                          id: Id.getId(),
+                          groupType: 'and',
+                          rules: [
+                            {
+                              filterType: 'rule',
+                              field: 'name',
+                              value: '',
+                              type: 'contains',
+                              id: Id.getId()
+                            }
+                          ]
+                        })
+                      })
+                    )
+                  }}
+                  text={t('filter.Filter group')}
+                  icon={'park-plus'}
+                />
+              )}
+              {filterRoot.rules.length && showSave && !savedFilters?.some(i => i.filter === filterRoot) ? (
+                <>
+                  <Button.IconButton
+                    size={11}
+                    gap={6}
+                    style={commonStyle}
+                    onClick={() => {
+                      save(filterRoot)
+                    }}
+                    text={t('filter.Save filter')}
+                    icon={'park-save'}
+                  />
+                  {lastUsedFilter && (
+                    <Button.IconButton
+                      size={11}
+                      gap={6}
+                      style={commonStyle}
+                      onClick={() => {
+                        save(filterRoot, lastUsedFilter.id)
+                      }}
+                      text={t('filter.Save as') + ' ' + (lastUsedFilter.name || 'Unnamed filter')}
+                      icon={'park-save'}
+                    />
+                  )}
+                </>
+              ) : null}
+            </div>
+          </Content>
+        </>
+      )}
+    </>
   )
 }
 
@@ -262,57 +314,57 @@ const FilterItem = ({
   const { t } = useTranslation()
   let availableFilters = [
     {
-      value: 'type',
-      children: t('filter.Type'),
+      type: 'item',
+      key: 'type',
+      text: t('filter.Type'),
       icon: 'park-all-application'
     },
     {
-      value: 'name',
-      children: t('filter.Name'),
+      type: 'item',
+      key: 'contains',
+      text: t('filter.Contained in'),
+      icon: 'park-hamburger-button'
+    },
+    {
+      type: 'item',
+      key: 'name',
+      text: t('filter.Name'),
       icon: 'park-edit'
     },
     {
-      value: 'description',
-      children: t('filter.Description'),
+      type: 'item',
+      key: 'description',
+      text: t('filter.Description'),
       icon: 'park-info'
     },
     {
-      value: 'tags',
-      children: t('filter.Tags'),
+      type: 'item',
+      key: 'tags',
+      text: t('filter.Tags'),
       icon: 'park-tag-one'
     },
     {
-      value: 'relationship',
-      children: t('filter.Relationships'),
+      type: 'item',
+      key: 'relationship',
+      text: t('filter.Relationships'),
       icon: 'park-share-one'
     },
     {
-      value: 'createdAt',
-      children: t('filter.Created at'),
+      type: 'item',
+      key: 'createdAt',
+      text: t('filter.Created at'),
       icon: 'park-time'
     },
     {
-      value: 'viewAt',
+      type: 'item',
+      key: 'viewAt',
       icon: 'park-preview-open',
-      children: t('filter.Last viewed')
-    },
-    {
-      value: 'updatedAt',
-      children: t('filter.Last updated'),
-      icon: 'park-redo'
-    },
-    ...extraFields.map(i => ({
-      value: i.name,
-      id: i.value,
-      propType: i.propType,
-      children: i.name,
-      icon: i.icon,
-      type: 'custom'
-    }))
+      text: t('filter.Last viewed')
+    }
   ]
   if (visibleFields) {
     const set = new Set(visibleFields)
-    availableFilters = availableFilters.filter(i => set.has(i.value))
+    availableFilters = availableFilters.filter(i => (i.key ? set.has(i.key) : true))
   }
   const filterableCustomProps: IMetaProp['propType'][] = [
     'string',
@@ -326,14 +378,25 @@ const FilterItem = ({
     'reviewState'
   ]
   const propSet = new Set(filterableCustomProps)
-  availableFilters = availableFilters.filter(i => (i.type === 'custom' ? propSet.has(i.propType) : true))
-  availableFilters = availableFilters.map(i =>
-    i.type === 'custom' ? { value: `props$$${i.propType}$$${i.id}`, icon: i.icon, children: i.children } : i
-  )
+  if (extraFields.length) {
+    availableFilters.push({
+      type: 'item',
+      key: 'properties',
+      text: t('general.Properties'),
+      subMenu: extraFields
+        .filter(i => propSet.has(i.propType))
+        .map(i => ({
+          key: i.value,
+          text: i.name,
+          icon: i.icon,
+          type: 'item',
+          propType: i.propType
+        }))
+    })
+  }
   const renderOptions = () => {
     if (filterType === 'rule') {
       if ('propType' in rule) {
-        console.log(rule)
         switch (rule.propType) {
           case 'number':
             return <NumberFilter rule={rule} onChange={onChange} />
@@ -354,6 +417,8 @@ const FilterItem = ({
       }
 
       switch (rule.field) {
+        case 'contains':
+          return <ContainFilter rule={rule} onChange={onChange} />
         case 'name':
         case 'description':
           return <StringFilter rule={rule} onChange={onChange} />
@@ -405,70 +470,86 @@ const FilterItem = ({
       return t(`filter.${groupType}`)
     }
   }
+  console.log(rule)
+  let icon = (availableFilters.find(i => i.key === rule.field) || extraFields.find(i => i.value === rule.field))?.icon
+  let name = availableFilters.find(i => i.key === rule.field)?.text || extraFields.find(i => i.value === rule.field)?.name
+  if (filterType === 'link') {
+    name = t('filter.Relationships')
+    icon = 'park-share-one'
+  }
   return (
-    <Content flex alignItems={'center'} gap={8}>
+    <Content flex alignItems={'center'} gap={horizontalGap}>
       <div style={{ width: '4.5rem', paddingLeft: index === 1 ? 0 : '6px' }}>{renderPrefix()}</div>
       {rule.filterType !== 'group' && (
-        <FilterSelect
-          value={
-            filterType === 'rule'
-              ? rule.propType
-                ? `props$$${rule.propType}$$${rule.field}`
-                : rule.field
-              : filterType === 'link'
-              ? 'relationship'
-              : undefined
-          }
-          onSelect={v => {
-            if (v.startsWith('props$$')) {
-              const split = v.split('$$')
-              const propType = split[1] as IMetaProperty['propType']
-              const field = split[2]
-              let type: string | undefined = undefined
-              switch (propType) {
-                case 'multiSelect':
-                  type = 'contains'
-                  break
-                case 'singleSelect':
-                case 'reviewState':
-                case 'date':
-                  type = 'is'
-                  break
-                case 'URL':
-                case 'string':
-                case 'AI summary':
-                  type = 'contains'
-                  break
-                case 'checkbox':
-                case 'number':
-                  type = 'is'
-                  break
-              }
-              onChange?.({ id: rule.id, filterType: 'rule', propType, field, type })
-              return
-            }
-            switch (v) {
-              case 'relationship':
-                onChange?.({ id: rule.id, filterType: 'link', ruleType: 'is', metaType: 'spec', field: undefined, type: 'related' })
-                break
-              case 'name':
-              case 'description':
-                onChange?.({ id: rule.id, filterType: 'rule', type: 'contains', value: '', field: v })
-                break
-              case 'viewAt':
-              case 'updatedAt':
-              case 'createdAt':
-                onChange?.({ id: rule.id, filterType: 'rule', field: v, type: 'is', value: 'today' })
-                break
-              case 'type':
-                onChange?.({ id: rule.id, filterType: 'rule', field: v, type: 'is', value: '' })
-                break
-              case 'tags':
-                onChange?.({ id: rule.id, filterType: 'rule', type: 'contains', tagIds: [], field: 'tags' })
-            }
-          }}
-          options={availableFilters}
-        />
+        <AnimatePopover
+          positions={['bottom', 'top']}
+          withClickCover
+          content={setV => (
+            <WithBorder padding={'0.4rem 0'}>
+              <Menu.NavigationMenu
+                defaultSelected={
+                  filterType === 'rule' ? (rule.field ? [rule.field] : undefined) : filterType === 'link' ? ['relationship'] : undefined
+                }
+                layout={availableFilters}
+                onSelect={v => {
+                  setV(false)
+                  if (v && 'propType' in v && v.propType) {
+                    let type: string | undefined = undefined
+                    switch (v.propType) {
+                      case 'multiSelect':
+                        type = 'contains'
+                        break
+                      case 'singleSelect':
+                      case 'reviewState':
+                      case 'date':
+                        type = 'is'
+                        break
+                      case 'URL':
+                      case 'string':
+                      case 'AI summary':
+                        type = 'contains'
+                        break
+                      case 'checkbox':
+                      case 'number':
+                        type = 'is'
+                        break
+                    }
+                    onChange?.({ id: rule.id, filterType: 'rule', propType: v.propType, field: v.key, type })
+                  }
+                  if (!v || !('key' in v) || !v.key) return
+                  switch (v.key) {
+                    case 'relationship':
+                      onChange?.({ id: rule.id, filterType: 'link', ruleType: 'is', metaType: 'spec', field: undefined, type: 'related' })
+                      break
+                    case 'name':
+                    case 'description':
+                      onChange?.({ id: rule.id, filterType: 'rule', type: 'contains', value: '', field: v.key })
+                      break
+                    case 'viewAt':
+                    case 'updatedAt':
+                    case 'createdAt':
+                      onChange?.({ id: rule.id, filterType: 'rule', field: v.key, type: 'is', value: 'today' })
+                      break
+                    case 'type':
+                      onChange?.({ id: rule.id, filterType: 'rule', field: v.key, type: 'is', value: '' })
+                      break
+                    case 'tags':
+                      onChange?.({ id: rule.id, filterType: 'rule', type: 'contains', tagIds: [], field: 'tags' })
+                      break
+                    case 'contains':
+                      onChange?.({ id: rule.id, filterType: 'rule', field: 'contains' })
+                      break
+                  }
+                }}
+              />
+            </WithBorder>
+          )}
+        >
+          <Content flex gap={8} alignItems={'center'} style={commonStyle}>
+            <Icon name={icon} />
+            <div>{name}</div>
+          </Content>
+        </AnimatePopover>
       )}
       {renderOptions()}
       <Icon
@@ -477,6 +558,26 @@ const FilterItem = ({
         containerStyle={{ height: 'fit-content' }}
         onClick={() => onDelete(rule.id)}
       />
+    </Content>
+  )
+}
+
+const ContainFilter = ({ rule, onChange }: { rule: MetaFilterRule & { field: 'contains' }; onChange: (r: MetaFilterRule) => void }) => {
+  const { renderMenu } = useDisplayInside({
+    defaultSelected: rule.value ? [rule.value] : undefined,
+    onSelect: v => {
+      onChange?.({ ...rule, value: v.filter(i => i !== rule.value)[0] })
+    }
+  })
+  const { t } = useTranslation()
+  const selectedMeta = MetaStore.useValue(rule.value)
+  return (
+    <Content flex gap={horizontalGap}>
+      <AnimatePopover positions={['bottom', 'top']} content={setV => renderMenu(() => setV(false))}>
+        <div className={'ellipsis-font-1'} style={commonStyle}>
+          {selectedMeta ? selectedMeta.name || selectedMeta.placeholderName : t('general.Select an option')}
+        </div>
+      </AnimatePopover>
     </Content>
   )
 }
@@ -546,7 +647,7 @@ const DateFilter = ({
     }
   ]
   return (
-    <Content flex gap={8}>
+    <Content flex gap={horizontalGap}>
       <FilterSelect options={typeOptions} value={rule.type} onSelect={v => onChange({ ...rule, type: v })} />
       {rule.type !== 'empty' && rule.type !== 'not empty' && (
         <FilterSelect
@@ -612,7 +713,7 @@ const StringFilter = ({ rule, onChange }: { rule: StringFieldFilterRule; onChang
     }
   ]
   return (
-    <Content flex gap={8}>
+    <Content flex gap={horizontalGap}>
       <FilterSelect
         options={stringFilterOptions}
         defaultValue="contains"
@@ -667,7 +768,7 @@ const TypeFilter = ({
     }
   ]
   return (
-    <Content flex gap={8}>
+    <Content flex gap={horizontalGap}>
       <FilterSelect
         onSelect={v => {
           onChange({ ...rule, type: v })
@@ -682,10 +783,12 @@ const TypeFilter = ({
         }}
         value={rule.value}
         placeholder={t('general.Select type')}
-        options={existedTypes.map(i => ({
-          value: i,
-          children: Rendevoz.Utils.Meta.getTypeName(i)
-        }))}
+        options={existedTypes
+          .map(i => ({
+            value: i,
+            children: Rendevoz.Utils.Meta.getTypeName(i)
+          }))
+          .sort((a, b) => a.children.localeCompare(b.children))}
       />
     </Content>
   )
@@ -713,7 +816,7 @@ const RelationshipFilter = ({ rule, onChange }: { rule: any; onChange: (newRule:
     setMetaname(meta?.name)
   }, [rule.metaId])
   return (
-    <Content flex gap={8}>
+    <Content flex gap={horizontalGap}>
       <FilterSelect
         options={[
           {
@@ -760,7 +863,7 @@ const RelationshipFilter = ({ rule, onChange }: { rule: any; onChange: (newRule:
         positions={['bottom']}
         withClickCover={true}
         content={setVisible => (
-          <WithBorder padding={8}>
+          <WithBorder>
             {rule.metaType === 'spec' ? (
               <MetaFilterer
                 onChange={v => {
@@ -811,28 +914,51 @@ const TagFilter = ({ rule, onChange }: { rule: TagFieldFilterRule; onChange: (ne
     }
   ]
   return (
-    <Content flex gap={8}>
+    <Content flex gap={horizontalGap}>
       <FilterSelect options={filterOptions} value={rule.type} onSelect={v => onChange({ ...rule, type: v })} />
       {!['empty', 'not empty'].includes(rule.type) && (
         <AnimatePopover
           positions={['bottom']}
           padding={8}
           withClickCover={true}
-          content={
+          content={setV => (
             <WithBorder>
               <MetaTagPicker
                 style={{ width: '250px' }}
                 selectMode={true}
                 alreadyTags={rule.tagIds || []}
-                onChange={v => onChange({ ...rule, tagIds: v })}
+                onChange={v => {
+                  onChange({ ...rule, tagIds: v })
+                  setV(false)
+                }}
               />
             </WithBorder>
-          }
+          )}
         >
-          <div style={commonStyle}>{rule.tagIds?.length ? `${rule.tagIds.length} ${t('general.tags')}` : t('general.Select tags')}</div>
+          <div
+            style={{
+              ...commonStyle,
+              padding: rule.tagIds?.length ? '3px 4px' : commonStyle.padding,
+              overflow: 'hidden',
+              display: 'flex',
+              gap: 4
+            }}
+          >
+            {rule.tagIds?.length
+              ? rule.tagIds.map(i => <Tag tag={i} key={i} small square style={{ fontSize: 12, lineHeight: '16px' }} />)
+              : t('general.Select tags')}
+          </div>
         </AnimatePopover>
       )}
     </Content>
   )
 }
-export default BetterFilter
+const horizontalGap = 10
+export default BetterFilter as typeof BetterFilter & {
+  commonStyle: typeof commonStyle
+  FilterSelect: typeof FilterSelect
+  horizontalGap: number
+}
+BetterFilter.horizontalGap = horizontalGap
+BetterFilter.commonStyle = commonStyle
+BetterFilter.FilterSelect = FilterSelect

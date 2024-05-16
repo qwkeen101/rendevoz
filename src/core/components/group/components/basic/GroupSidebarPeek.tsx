@@ -3,8 +3,8 @@ import { Resizable } from 're-resizable'
 import MediaLabelController from '@/core/components/media/components/sidebar/MediaLabelController'
 import { memo, useEffect, useRef, useState } from 'react'
 import { MetaStore, ObjectStore } from '@/api/stores'
-import EditorLabelController from '@/core/components/editor/components/EditorLabelController'
-import PdfLabelController from '@/core/components/pdf/components/sidebar/PdfLabelController'
+import EditorLabelController from '@/core/components/editor/components/sidebar/Label'
+import Label from '@/core/components/pdf/components/sidebar/Label'
 import { Colors, KEY } from '@/consts'
 import { Icon } from '@/components'
 import { ClassName } from 'rendevoz'
@@ -143,7 +143,7 @@ export default memo(() => {
           case 'webpage':
             return <EditorLabelController labelType={labelType} labelIds={labelIds} />
           case 'pdf':
-            return <PdfLabelController labelIds={labelIds} />
+            return <Label labelIds={labelIds} />
         }
       }
     }

@@ -6,7 +6,7 @@ import { ContentEditor } from '@/components'
 import { MetaStore } from '@/api/stores'
 import { GlobalInstance } from '@/hooks'
 import Colors from '../../../../consts/colors'
-import { DefaultObjectTitleRenderClazzName, keyboard } from '@/core/object/useRenderObject'
+import { DefaultObjectTitleRenderClazzName, keyboard } from '@/core/object/renderer/useRenderObject'
 import OriginalTextRenderer from '@/core/object/renderer/object/OriginalTextRenderer'
 
 export type TitleRendererProps = {

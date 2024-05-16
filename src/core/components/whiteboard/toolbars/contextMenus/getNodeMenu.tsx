@@ -70,24 +70,6 @@ export default (
           { type: 'separator' }
         ]
       : []),
-    hasWebpageMetas
-      ? {
-          type: 'item',
-          key: 'show-original-webpage',
-          icon: Rendevoz.Utils.Object.getMetaObjectIcon('webpage'),
-          text: t('general.Show original webpage'),
-          onSelect: async () => {
-            instance.toolbarOps?.closeToolbar()
-            instance.selectOps?.deselectAll()
-            const allWebpages = selected
-              .filter(i => i.type === 'metaObject' && metaMap.get(i.metaObjectId)?.type === 'webpage')
-              .map(i => metaMap.get(i.metaObjectId))
-              .map(i => i?.objectId)
-              .filter(i => i) as number[]
-            allWebpages.forEach(i => ObjectStore('webpage').updateOne({ id: i, showOriginal: true }))
-          }
-        }
-      : undefined,
     menuItems.isText
       ? {
           type: 'item',
@@ -125,68 +107,91 @@ export default (
           }
         }
       : undefined,
-    {
-      type: 'item',
-      key: 'fitIntoView',
-      icon: 'park-focus-one',
-      text: t('whiteboard.Fit into view'),
-      suffix: WhiteboardDefaultKeyboardShortcut.FitIntoView.text,
-      onSelect: () => {
-        instance.containerOps?.fitToSelected()
-        instance.toolbarOps?.closeToolbar()
-      }
-    },
-    ...(canExpandOrFold
-      ? [
-          {
-            key: 'expand',
-            type: 'item',
-            text: !showExpandIcon
-              ? t('whiteboard.Fold')
-              : setting.whiteboard.expandToFixedSize
-              ? t('whiteboard.Expand to fixed height')
-              : t('whiteboard.Expand'),
-            icon: !showExpandIcon ? 'park-click-to-fold' : 'park-full-screen-one',
-            suffix: WhiteboardDefaultKeyboardShortcut.Expand.text,
-            onSelect: () => {
-              if (showExpandIcon) {
-                instance.nodeOps?.expand(selectedIds)
-              } else {
-                instance.nodeOps?.fold(selectedIds)
-              }
-              setTimeout(() => {
-                instance.selectOps?.resetSelectionBox()
-              }, 100)
-              instance.toolbarOps?.closeToolbar()
+    canExpandOrFold
+      ? {
+          key: 'expand',
+          type: 'item',
+          text: !showExpandIcon ? t('whiteboard.Fold') : t('whiteboard.Expand'),
+          icon: !showExpandIcon ? 'park-click-to-fold' : 'park-full-screen-one',
+          suffix: WhiteboardDefaultKeyboardShortcut.Expand.text,
+          onSelect: () => {
+            if (showExpandIcon) {
+              instance.nodeOps?.expand(selectedIds)
+            } else {
+              instance.nodeOps?.fold(selectedIds)
             }
+            setTimeout(() => {
+              instance.selectOps?.resetSelectionBox()
+            }, 100)
+            instance.toolbarOps?.closeToolbar()
           }
-        ].filter(i => i)
-      : []),
+        }
+      : undefined,
     {
       type: 'item',
-      key: 'fit-into-content',
-      text: t('whiteboard.Fit to content'),
-      icon: 'park-auto-height-one',
-      suffix: WhiteboardDefaultKeyboardShortcut.FitToContent.text,
-      onSelect: () => {
-        if (selected?.length) {
-          instance.nodeOps?.fitContent(selected?.map(i => i.id))
-        }
-        instance.toolbarOps?.closeToolbar()
-      }
-    },
-    {
-      type: 'item',
-      key: 'highlight-related',
-      text: t('whiteboard.Highlight related cards'),
-      suffix: WhiteboardDefaultKeyboardShortcut.HighlightRelated.text,
-      icon: 'park-circular-connection',
-      onSelect: () => {
-        if (selected?.length) {
-          instance.nodeOps?.highlightRelatedEdgesAndNodes(selected?.map(i => i.id))
-        }
-        instance.toolbarOps?.closeToolbar()
-      }
+      key: 'card-actions',
+      icon: 'park-application-two',
+      text: t('whiteboard.Card actions'),
+      subMenuStyle: {
+        width: 240
+      },
+      subMenu: [
+        {
+          type: 'item',
+          key: 'fitIntoView',
+          icon: 'park-focus-one',
+          text: t('whiteboard.Fit into view'),
+          suffix: WhiteboardDefaultKeyboardShortcut.FitIntoView.text,
+          onSelect: () => {
+            instance.containerOps?.fitToSelected()
+            instance.toolbarOps?.closeToolbar()
+          }
+        },
+        {
+          type: 'item',
+          key: 'fit-into-content',
+          text: t('whiteboard.Fit to content'),
+          icon: 'park-auto-height-one',
+          suffix: WhiteboardDefaultKeyboardShortcut.FitToContent.text,
+          onSelect: () => {
+            if (selected?.length) {
+              instance.nodeOps?.fitContent(selected?.map(i => i.id))
+            }
+            instance.toolbarOps?.closeToolbar()
+          }
+        },
+        {
+          type: 'item',
+          key: 'highlight-related',
+          text: t('whiteboard.Highlight related cards'),
+          suffix: WhiteboardDefaultKeyboardShortcut.HighlightRelated.text,
+          icon: 'park-circular-connection',
+          onSelect: () => {
+            if (selected?.length) {
+              instance.nodeOps?.highlightRelatedEdgesAndNodes(selected?.map(i => i.id))
+            }
+            instance.toolbarOps?.closeToolbar()
+          }
+        },
+        hasWebpageMetas
+          ? {
+              type: 'item',
+              key: 'show-original-webpage',
+              icon: Rendevoz.Utils.Object.getMetaObjectIcon('webpage'),
+              text: t('general.Show original webpage'),
+              onSelect: async () => {
+                instance.toolbarOps?.closeToolbar()
+                instance.selectOps?.deselectAll()
+                const allWebpages = selected
+                  .filter(i => i.type === 'metaObject' && metaMap.get(i.metaObjectId)?.type === 'webpage')
+                  .map(i => metaMap.get(i.metaObjectId))
+                  .map(i => i?.objectId)
+                  .filter(i => i) as number[]
+                allWebpages.forEach(i => ObjectStore('webpage').updateOne({ id: i, showOriginal: true }))
+              }
+            }
+          : undefined
+      ].filter(i => i)
     },
     {
       type: 'item',

@@ -259,19 +259,6 @@ const TreeEdge: FC<{
     }
     useUpdateEffect(() => {
       if (isEditingLabel) {
-        const bounding = labelRef.current?.getBoundingClientRect()
-        const transform = instance.getTransform?.()
-        if (bounding && transform && labelPosRef.current) {
-          const width = bounding.width / transform.scale
-          const height = bounding.height / transform.scale
-          const labelBox = {
-            left: labelPosRef.current.x - width * 0.5,
-            top: labelPosRef.current.y - height * 0.5,
-            width,
-            height
-          }
-          instance.containerOps?.fitTo(labelBox, { maxScale: 1 })
-        }
         const keydownHandler = (e: KeyboardEvent) => {
           e.stopPropagation()
         }

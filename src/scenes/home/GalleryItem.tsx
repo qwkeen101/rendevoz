@@ -6,7 +6,7 @@ import { DateFormat } from '@/utils'
 import { css } from '@emotion/css'
 import { memo } from 'react'
 import ContextMenu from '@/components/contextMenu'
-import { ObjectActionPopover } from '@/core'
+import { ObjectActionMenu } from '@/core'
 import InnerContentDisplayer from '@/core/components/group/components/gallery/items/InnerContentDisplayer'
 import { Colors } from '@/consts'
 
@@ -17,7 +17,7 @@ const GalleryItem = memo(({ metaId }: { metaId: number }) => {
     <ContextMenu
       content={setV => (
         <WithBorder>
-          <ObjectActionPopover onClose={() => setV(false)} metaObjectId={metaId} />
+          <ObjectActionMenu onClose={() => setV(false)} metaObjectId={metaId} />
         </WithBorder>
       )}
     >

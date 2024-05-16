@@ -3,8 +3,8 @@ import MiniSearch from 'minisearch'
 const createSearchStore = () => {
   const segmenter = new Intl.Segmenter(undefined, { granularity: 'word' })
   let metaSearch = new MiniSearch({
-    fields: ['id', 'name', 'description', 'content'],
-    storeFields: ['id', 'name', 'description', 'content', 'docType', 'metaId', 'metaType'],
+    fields: ['id', 'name', 'description', 'content', 'placeholderName'],
+    storeFields: ['id', 'name', 'description', 'content', 'placeholderName', 'docType', 'metaId', 'metaType'],
     tokenize: str =>
       Array.from(segmenter.segment(str))
         .filter(i => i.isWordLike)
@@ -25,13 +25,14 @@ const createSearchStore = () => {
   }
 
   const searchDocument = (params: ISearchQuery) => {
-    const fields = ['name', 'content', 'description']
+    const fields = ['name', 'content', 'description', 'placeholderName']
     const res = metaSearch.search(params.queryText, {
       prefix: true,
       boost: {
         name: 5,
         description: 2,
-        content: 1
+        content: 1,
+        placeholderName: 1
       },
       combineWith: 'AND'
     })
@@ -88,8 +89,8 @@ const createSearchStore = () => {
 
   const load = (json: string) => {
     metaSearch = MiniSearch.loadJSON(json, {
-      fields: ['id', 'name', 'description', 'content'],
-      storeFields: ['id', 'name', 'description', 'content', 'docType', 'metaId', 'metaType'],
+      fields: ['id', 'name', 'description', 'content', 'placeholderName'],
+      storeFields: ['id', 'name', 'description', 'content', 'placeholderName', 'docType', 'metaId', 'metaType'],
       tokenize: str =>
         Array.from(segmenter.segment(str))
           .filter(i => i.isWordLike)

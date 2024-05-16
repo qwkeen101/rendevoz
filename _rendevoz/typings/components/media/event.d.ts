@@ -14,6 +14,7 @@ export type IMediaEvent =
     }
   | {
       type: 'addScreenshot'
+      time: number
       imageDataUrl: string
     }
   | {

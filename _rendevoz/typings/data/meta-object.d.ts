@@ -237,6 +237,10 @@ export type MultiSelectFilterRule = {
   value?: number[]
 }
 
+export type ContainFilterRule = {
+  value?: number
+}
+
 export type MetaFilterGroup = {
   groupType: 'and' | 'or'
   rules: MetaFilterRule[]
@@ -282,6 +286,10 @@ export type PropertyFilterRule = {
 )
 
 export type MetaFilterRule = (
+  | ({
+      filterType: 'rule'
+      field: 'contains'
+    } & ContainFilterRule)
   | ({
       filterType: 'rule'
       field: 'name'

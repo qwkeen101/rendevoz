@@ -1,8 +1,8 @@
-import { MetaFilterRule, PropertyFilterRule } from '~/typings'
+import { PropertyFilterRule } from '~/typings'
 import { useTranslation } from 'react-i18next'
 import { AnimatePopover, Content, TimePicker, WithBorder } from '@/components'
 import { DateFormat } from '@/utils'
-import { commonStyle, FilterSelect } from '@/core/object/filter/BetterFilter'
+import BetterFilter from '@/core/object/filter/BetterFilter'
 
 export default function DateFilter({
   rule,
@@ -69,10 +69,10 @@ export default function DateFilter({
     }
   ]
   return (
-    <Content flex gap={8}>
-      <FilterSelect options={typeOptions} value={rule.type} onSelect={v => onChange({ ...rule, type: v })} />
+    <Content flex gap={BetterFilter.horizontalGap}>
+      <BetterFilter.FilterSelect options={typeOptions} value={rule.type} onSelect={v => onChange({ ...rule, type: v })} />
       {rule.type !== 'empty' && rule.type !== 'not empty' && (
-        <FilterSelect
+        <BetterFilter.FilterSelect
           options={dateOptions}
           value={rule.value}
           onSelect={v => {
@@ -95,7 +95,9 @@ export default function DateFilter({
             </WithBorder>
           )}
         >
-          <div style={commonStyle}>{rule.specDate ? DateFormat.format(rule.specDate, DateFormat.Formats.default) : 'Select date'}</div>
+          <div style={BetterFilter.commonStyle}>
+            {rule.specDate ? DateFormat.format(rule.specDate, DateFormat.Formats.default) : 'Select date'}
+          </div>
         </AnimatePopover>
       )}
     </Content>

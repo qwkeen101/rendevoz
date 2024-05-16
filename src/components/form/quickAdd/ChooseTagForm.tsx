@@ -24,12 +24,12 @@ export default ({ metaId, onBack }: { metaId: number[]; onBack: VoidFunction }) 
         padding: 8,
         minWidth: 'min(400px, 90vw)',
         maxWidth: 'min(660px, 90vw)',
-        minHeight: 'min(420px, 90vh)',
+        minHeight: 'min(360px, 90vh)',
         maxHeight: '80vh'
       }}
     >
-      <Content flex gap={12} alignItems={'center'} className={ClassName.title()}>
-        <Icon name={'park-left'} className={ClassName.circleButton()} onClick={onBack} />
+      <Content flex gap={12} alignItems={'center'} className={ClassName.title()} style={{ paddingLeft: onBack ? 0 : 6 }}>
+        {onBack && <Icon name={'park-left'} className={ClassName.circleButton()} onClick={onBack} />}
         {t('general.Select tags')}
       </Content>
       <MetaTagPicker

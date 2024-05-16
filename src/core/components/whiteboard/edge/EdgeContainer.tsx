@@ -2,7 +2,7 @@ import { css } from '@emotion/css'
 import EdgeOverlay from './EdgeOverlay'
 import TreeEdge from './Edge'
 import { useFlow, useWhiteboardEdges } from '../StateHooks'
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { memo, useEffect, useLayoutEffect, useRef } from 'react'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import { useUpdate } from 'react-use'
 
@@ -15,15 +15,13 @@ const clazz = css({
   overflow: 'visible',
   pointerEvents: 'none'
 })
-const TreeEdgeContainer = () => {
+const TreeEdgeContainer = memo(() => {
   const treeEdges = useWhiteboardEdges()
-  const flow = useFlow()
   const instance = useWhiteboardInstance()
   const edgeLayerRef = useRef<SVGGElement>(null)
   const edgeLabelLayerRef = useRef<SVGGElement>(null)
   instance.getEdgeLayer = () => edgeLayerRef.current
   instance.getEdgeLabelLayer = () => edgeLabelLayerRef.current
-  const container = flow.parentContainerEle?.getBoundingClientRect()
   useEffect(() => {
     instance.buildNodeToEdgeIndex?.()
   }, [treeEdges])
@@ -37,15 +35,13 @@ const TreeEdgeContainer = () => {
       <svg
         className={clazz}
         ref={edgeLabelLayerRef}
-        width={container?.width}
-        height={container?.height}
         role="data-container"
         style={{
           zIndex: 2
         }}
       ></svg>
 
-      <svg className={clazz} width={container?.width} height={container?.height} role="data-container">
+      <svg className={clazz} role="data-container">
         <g ref={edgeLayerRef}>
           {edgeLabelLayerRef.current &&
             Array.from(treeEdges.values()).map(edge => {
@@ -56,6 +52,6 @@ const TreeEdgeContainer = () => {
       </svg>
     </>
   )
-}
+})
 
 export default TreeEdgeContainer

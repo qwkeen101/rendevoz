@@ -2,6 +2,7 @@ import { getFilenameWithoutExtension, saveFileLocally } from '@/utils/file'
 import { saveImageLocally } from '@/utils/img'
 import { IPdfDocument } from '~/typings/data'
 import { globalStore, ObjectStore } from '@/api/stores'
+import usePdfjs from '@/hooks/utils/usePdfjs'
 
 export default {
   initializePdfDocument: async (file: File): Promise<Partial<IPdfDocument> | undefined> => {
@@ -10,7 +11,7 @@ export default {
         name: getFilenameWithoutExtension(file.name) || 'Unnamed PDF'
       }
       const buffer = await file.arrayBuffer()
-      const loadingTask = window['pdfjs-dist/build/pdf']?.getDocument(new Uint8Array(buffer))
+      const loadingTask = usePdfjs().getDocument(new Uint8Array(buffer))
       const pdf = await loadingTask.promise
 
       const metadata = await pdf.getMetadata()

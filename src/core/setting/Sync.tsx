@@ -1,14 +1,13 @@
 import { Button, Content } from '@/components'
-import SettingItem, { ISettingItem } from '@/core/setting/SettingItem'
+import { ISettingItem } from '@/core/setting/SettingItem'
 import SettingGroup from '@/core/setting/SettingGroup'
 import { useSetting } from '@/core'
-import { useDebounceEffect, useGlobalAtom, useUpdateEffect } from '@/hooks'
+import { useGlobalAtom, useUpdateEffect } from '@/hooks'
 import SyncAPI from '@/api/sync'
 import { memo, useEffect, useState } from 'react'
-import { ClassName } from 'rendevoz'
-import classnames from 'classnames'
 import { DateFormat } from '@/utils'
 import toast from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
 
 export default memo(() => {
   const [setting, setSetting] = useSetting()
@@ -16,6 +15,7 @@ export default memo(() => {
   const [remoteTime, setRemoteTime] = useState<number>()
   const [isPushing, setIsPushing] = useState(false)
   const [isPulling, setIsPulling] = useState(false)
+  const { t } = useTranslation()
   useEffect(() => {
     if (syncState.connection === 'connected') {
       SyncAPI.cloudClient()
@@ -26,12 +26,12 @@ export default memo(() => {
           }
         })
     }
-  }, [setting.sync.conflictResolved, syncState.connection])
+  }, [setting.sync.conflictResolved, syncState.connection, setting.sync.syncMode])
   useUpdateEffect(() => {
     if (setting.sync.conflictResolved) {
       setSetting(s => ({ ...s, sync: { ...s.sync, conflictResolved: false, enableAutoSync: false } }))
     }
-  }, [setting.sync.S3Config, setting.sync.webdavConfig, setting.sync.syncMode])
+  }, [setting.sync.S3Config, setting.sync.webdavConfig, setting.sync.syncMode, setting.sync.enableSync])
   const s3Items: ISettingItem[] = [
     {
       title: 'Access key',
@@ -78,14 +78,14 @@ export default memo(() => {
       onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, webdavConfig: { ...s.sync.webdavConfig, url: v } } }))
     },
     {
-      title: 'Username',
+      title: t('settings.Username'),
       type: 'input',
       width: 300,
       value: setting.sync.webdavConfig?.username,
       onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, webdavConfig: { ...s.sync.webdavConfig, username: v } } }))
     },
     {
-      title: 'Password',
+      title: t('settings.Password'),
       type: 'input',
       width: 300,
       value: setting.sync.webdavConfig?.password,
@@ -95,7 +95,7 @@ export default memo(() => {
   const syncItems: (ISettingItem | undefined)[] = [
     {
       type: 'switch',
-      title: 'Enable cloud sync',
+      title: t('settings.Enable cloud sync'),
       value: !!setting.sync.enableSync,
       onChange: v => {
         setSetting(s => ({ ...s, sync: { ...s.sync, enableSync: v } }))
@@ -110,15 +110,14 @@ export default memo(() => {
               { value: 'webdav', children: 'Webdav' }
             ],
             value: setting.sync.syncMode ?? 's3',
-            title: 'Sync mode',
+            title: t('settings.Sync mode'),
             onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, syncMode: v } }))
           },
           setting.sync.conflictResolved
             ? {
                 type: 'switch',
-                title: 'Auto sync',
+                title: t('settings.Auto sync'),
                 value: setting.sync.enableAutoSync ?? false,
-                description: 'If enabled, all changes you make will cover remote data',
                 onChange: v => {
                   setSetting(s => ({
                     ...s,
@@ -129,11 +128,9 @@ export default memo(() => {
             : undefined,
           syncState.connection === 'connected'
             ? {
-                title: setting.sync.conflictResolved ? 'Sync manually' : 'Resolve sync conflict',
+                title: setting.sync.conflictResolved ? t('settings.Sync manually') : t('settings.Resolve sync conflict'),
                 column: true,
-                description: setting.sync.conflictResolved
-                  ? undefined
-                  : 'After changing settings, you need to resolve sync conflicts again before enabling auto sync.',
+                description: setting.sync.conflictResolved ? undefined : t('settings.Resolve conflict desc'),
                 children: (
                   <Content flex justifyContent={'space-between'} alignItems={'flex-end'} gap={'10%'} style={{ marginTop: 4 }}>
                     <Content flex gap={8}>
@@ -141,12 +138,12 @@ export default memo(() => {
                         gap={2}
                         icon={'park-arrow-circle-up'}
                         className={'border'}
-                        text={isPushing ? 'Pushing...' : 'Push local'}
+                        text={isPushing ? `${t('settings.Pushing')}...` : t('settings.Push local')}
                         onClick={() => {
                           setIsPushing(true)
                           SyncAPI.resolveConflict('push')
                             .then(() => {
-                              toast.success('Successfully pushed data!')
+                              toast.success(t('settings.Data pushed successfully'))
                               setSetting(s => ({
                                 ...s,
                                 sync: {
@@ -165,33 +162,35 @@ export default memo(() => {
                             })
                         }}
                       ></Button.IconButton>
-                      <Button.IconButton
-                        gap={2}
-                        icon={'park-arrow-circle-down'}
-                        text={isPulling ? 'Pulling...' : 'Pull remote'}
-                        className={'border'}
-                        onClick={() => {
-                          setIsPulling(true)
-                          SyncAPI.resolveConflict('pull')
-                            .then(() =>
-                              setSetting(s => ({
-                                ...s,
-                                sync: {
-                                  ...s.sync,
-                                  conflictResolved: true,
-                                  enableAutoSync: !s.sync.conflictResolved ? true : s.sync.enableAutoSync
-                                }
-                              }))
-                            )
-                            .finally(() => {
-                              setIsPulling(false)
-                            })
-                        }}
-                      ></Button.IconButton>
+                      {remoteTime && (
+                        <Button.IconButton
+                          gap={2}
+                          icon={'park-arrow-circle-down'}
+                          text={isPulling ? `${t('settings.Pulling')}` : t('settings.Pull remote')}
+                          className={'border'}
+                          onClick={() => {
+                            setIsPulling(true)
+                            SyncAPI.resolveConflict('pull')
+                              .then(() =>
+                                setSetting(s => ({
+                                  ...s,
+                                  sync: {
+                                    ...s.sync,
+                                    conflictResolved: true,
+                                    enableAutoSync: !s.sync.conflictResolved ? true : s.sync.enableAutoSync
+                                  }
+                                }))
+                              )
+                              .finally(() => {
+                                setIsPulling(false)
+                              })
+                          }}
+                        ></Button.IconButton>
+                      )}
                     </Content>
                     {remoteTime && (
                       <div className={'transparent-font font-size-13'}>
-                        Remote data updated at: {DateFormat.format(remoteTime, DateFormat.Formats.withMinute)}
+                        {t('settings.Remote data updated at')}: {DateFormat.format(remoteTime, DateFormat.Formats.withMinute)}
                       </div>
                     )}
                   </Content>
@@ -212,18 +211,18 @@ export default memo(() => {
             borderRadius: 999
           }}
         ></div>
-        {SyncAPI.connectionToText[syncState.connection]}
+        {t(`sync.${SyncAPI.connectionToText[syncState.connection]}`)}
       </Content>
     )
   }
   return (
     <>
-      <SettingGroup title={'Cloud sync'} layout={syncItems} />
+      <SettingGroup title={t('settings.Cloud sync')} layout={syncItems} />
       {setting.sync.enableSync && (setting.sync.syncMode ?? 's3') === 's3' && (
-        <SettingGroup gap={10} title={'S3 Config'} layout={s3Items} extra={renderConnectionState()} />
+        <SettingGroup gap={10} title={t('settings.S3 config')} layout={s3Items} extra={renderConnectionState()} />
       )}
       {setting.sync.enableSync && setting.sync.syncMode === 'webdav' && (
-        <SettingGroup gap={10} title={'Webdav Config'} layout={webdavItems} extra={renderConnectionState()} />
+        <SettingGroup gap={10} title={t('settings.Webdav config')} layout={webdavItems} extra={renderConnectionState()} />
       )}
     </>
   )

@@ -24,6 +24,7 @@ export default (dbTransactions: IDBTransaction[]) => {
       }
     }
   })
+  console.log(finalDbTransactions)
   const modifyTable = syncDB.table('modify')
   finalDbTransactions.forEach(async t => {
     const key = (t.key || t.value?.id) as string | number | undefined

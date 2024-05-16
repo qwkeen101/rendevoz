@@ -26,7 +26,6 @@ import { TabTitle } from '@/core/rendevoz/components'
 import MediaToolbar from '@/core/components/media/components/MediaToolbar'
 import _ from 'lodash'
 import QuickLabelPopover from '@/core/components/media/components/QuickLabelPopover'
-import MediaClipper from '@/core/components/media/components/MediaClipper'
 import useMediaSidebarState from '@/core/components/media/hooks/useMediaSidebarState'
 export interface MediaProps {
   onInstanceInitialized?: (instance: Partial<IMediaInstance>) => void
@@ -270,7 +269,6 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
   return (
     <Content fullWidth fullHeight ref={outerContainerRef}>
       <MediaTranscriber />
-      <MediaClipper />
       {!disableTabTitle && <TabTitle title={mediaState.name} icon={<Icon name={'park-video'} />} />}
       <Content
         style={{
@@ -309,7 +307,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
             }}
           >
             {mediaState.floated ? renderFloated() : renderCore()}
-            {!audioMode && (!columnLayout || !sidebarState.rightBarVisible) && (
+            {!audioMode && (!columnLayout || sidebarState.rightBarActive === 'hide') && (
               <div style={{ fontWeight: 500, fontSize: 18, width: '100%', lineHeight: 1.4 }}>{mediaState.name}</div>
             )}
             {!audioMode && <MediaToolbar width={containerWidth} />}
@@ -393,6 +391,9 @@ const Media = (props: MediaProps) => {
       collectionName,
       metaId,
       layout,
+      labelSortMode,
+      labelPriority,
+      labelScrollOffset,
       styles,
       autoPlay,
       currentTime
@@ -421,7 +422,10 @@ const Media = (props: MediaProps) => {
         subtitleLang,
         subtitleList,
         subtitleFollow,
-        layout
+        layout,
+        labelSortMode,
+        labelPriority,
+        labelScrollOffset
       }),
       url: transformUrl(url, {
         autoPlay,
@@ -456,7 +460,10 @@ const Media = (props: MediaProps) => {
       collectionName,
       autoPlay,
       toolbar,
-      styles
+      styles,
+      labelSortMode,
+      labelPriority,
+      labelScrollOffset,
     } = props.mediaState
     console.log(props.mediaState, currentState)
     store.set(MediaStateAtom, {
@@ -481,7 +488,10 @@ const Media = (props: MediaProps) => {
       labels,
       thumbnail,
       name,
-      description
+      description,
+      labelSortMode,
+      labelPriority,
+      labelScrollOffset
     })
   }, [props.mediaState])
   useEffect(() => {

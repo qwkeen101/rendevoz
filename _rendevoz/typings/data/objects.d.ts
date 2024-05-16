@@ -103,7 +103,6 @@ export interface IAudio extends IMedia {
 
 export interface INoteLabel extends ILabel {
   specType: 'noteLabel'
-  targetBlockId: number
   name?: string
   description?: string
   selectedText?: string

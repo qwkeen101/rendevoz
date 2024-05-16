@@ -1,23 +1,18 @@
-import { FC, memo, RefObject, useEffect, useRef } from 'react'
+import { FC, memo, RefObject, useEffect, useLayoutEffect, useRef } from 'react'
 import { useIsomorphicLayoutEffect } from 'react-use'
 import { TextContent, TextStyle } from 'pdfjs-dist/types/src/display/api'
 import { PageViewport, PDFPageProxy } from 'pdfjs-dist'
-import { getCharPoint, getNearestDistanceBetweenPointAndRect, getTextRect, getWordRect, isInBounds, isInRect } from '../utils/text'
+import { getNearestDistanceBetweenPointAndRect, getTextRect, getWordRect, isInBounds, isInRect } from '../utils/text'
 import { useMousePositionWithRef } from '@/hooks/utils/useMousePositionRef'
-import { Point } from '../types/point'
-import { TextContentBound, TextItem, TextRect } from '../types/text'
-import isHotkey from 'is-hotkey'
 import { useMemoizedFn, useUnMount, useUpdateEffect } from '@/hooks'
-import { ITextLayerInstance, PageFunctionRef } from '~/typings'
+import { ITextLayerInstance, PageFunctionRef, TextContentBound, TextItem, TextRect, Point } from '~/typings'
 import useSelectingText from '../hooks/useIsSelectingText'
-import useScopedEventEmitter from '@/events/useEventEmitter'
 import { Rect } from '@/types'
-import { useEventHandler } from '@/events'
 import usePdfjs from '@/hooks/utils/usePdfjs'
-import { usePdfViewer } from '@/core'
 import { deleteTextContent, getTextContent, PAGE_INDEX_TO_PAGE_FUNCTION, PAGE_INDEX_TO_TEXT_LAYER, PDF_IS_SELECTING } from '../weakMaps'
 import { CanvasOriginFillRect } from './CanvasLayer'
-import { NormalizedMapObject, normalizeText } from '../utils/search'
+import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
+import highlightTextBoundText from '@/core/components/pdf/core/utils/highlightTextBoundText'
 
 interface TextLayerProps {
   page: PDFPageProxy
@@ -34,7 +29,7 @@ interface TextLayerProps {
 const DEFAULT_DISTANCE_TOLERANCE = 6
 const DEFAULT_HIGHLIGHT_COLOR = 'rgba(39, 158, 255)'
 const DEFAULT_SELECT_COLOR = 'rgba(39, 158, 255)'
-
+const DEFAULT_EMPHASIS_COLOR = '#D20062'
 const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageIndex, viewport, pageFunctionRef, transformScale = 1 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const renderTaskRef = useRef<TextLayerRenderTask>()
@@ -46,36 +41,51 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
   const selectedTextRef = useRef('')
   const [globalSelectingText, setGlobalSelectingText] = useSelectingText()
   const distanceToleranceAfterScale = Math.min(16, DEFAULT_DISTANCE_TOLERANCE * scale)
-  const innerEmitter = useScopedEventEmitter()
-  const handler = useEventHandler('pdf')
-  const viewer = usePdfViewer()
-
-  handler.on('highlightText', data => {
-    if (data.page === pageIndex) {
-      const item = textContentBounds.current.find(i => i.str === data.str)
-      emptyTextLayer()
-      if (item) {
-        innerEmitter.removeInterval()
-
+  const instance = usePDFInstance()
+  const highlightText = useMemoizedFn(async (text, index) => {
+    const ctx = canvasRef.current?.getContext('2d')
+    if (!ctx) return
+    await buildText()
+    emptyTextLayer()
+    const allItems = textContentBounds.current.filter(i => i.str.includes(text))
+    const all = allItems
+      .map(i => {
+        const rect = highlightTextBoundText(text, i, viewport, ctx)
+        if (rect) {
+          return rect
+        }
+      })
+      .flat()
+      .filter(Boolean)
+    all.forEach((i, idx) => {
+      if (i) {
+        if (index === idx) {
+          instance.navigateOps?.jumpToPage(pageIndex, 'center', i.top)
+        }
         paint(
           {
-            x: item.offset.left,
-            y: item.offset.top,
-            width: item.offset.size[0],
-            height: item.offset.size[1],
-            offset: item.offset.trans
+            x: i.left,
+            y: i.top,
+            width: i.width,
+            height: i.height
           },
-          DEFAULT_HIGHLIGHT_COLOR
+          idx === index ? DEFAULT_EMPHASIS_COLOR : DEFAULT_HIGHLIGHT_COLOR
         )
       }
+    })
+  })
+  useLayoutEffect(() => {
+    instance.values.INDEX_TO_TEXT_LAYER[pageIndex] = {
+      highlightText,
+      clear: () => {
+        emptyTextLayer()
+      }
+    }
+    return () => {
+      delete instance.values.INDEX_TO_TEXT_LAYER[pageIndex]
     }
   })
-  const keyboardHandler = useMemoizedFn((e: KeyboardEvent) => {
-    const selectedText = Object.values(globalSelectingText.selectedTexts).join('')
-    if (isHotkey('mod+c', e) && selectedText !== '' && window.getSelection()?.toString() === '') {
-      navigator.clipboard.writeText(selectedText)
-    }
-  })
+
   const mouseEventHandler = useMemoizedFn(async (e: MouseEvent) => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -94,10 +104,10 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
           x: elX,
           y: elY
         }
-        PDF_IS_SELECTING.set(viewer, true)
+        PDF_IS_SELECTING.set(instance, true)
       }
       if (rectsRef.current.length != 0) {
-        PDF_IS_SELECTING.set(viewer, false)
+        PDF_IS_SELECTING.set(instance, false)
         pageFunctionRef.current?.onTextSelectEnd?.()
       }
       setGlobalSelectingText({
@@ -140,7 +150,7 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
         }
       }
       if (type === 'mousemove' && mousePos.current) {
-        const isSelecting = PDF_IS_SELECTING.get(viewer)
+        const isSelecting = PDF_IS_SELECTING.get(instance)
         if (isSelecting) {
           selectText(
             mousePos.current,
@@ -151,19 +161,19 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
             distanceToleranceAfterScale
           )
           if (!globalSelectingText.isSelecting) {
+            instance.values.selectedText = {}
             setGlobalSelectingText({
               ...globalSelectingText,
               startPage: pageIndex,
               endPage: pageIndex,
               isSelecting: true,
-              startPagePoint: mousePos.current,
-              selectedTexts: {}
+              startPagePoint: mousePos.current
             })
           }
         }
       }
       if (type === 'mouseup' && mousePos.current && rectsRef.current.length !== 0) {
-        const selectedText = Object.values(globalSelectingText.selectedTexts).join(' ')
+        const selectedText = Object.values(instance.values.selectedText).join(' ')
         pageFunctionRef.current?.onTextSelected?.({
           selectedText,
           rects: rectsRef.current.map(rect => {
@@ -187,8 +197,8 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
       }
       if (type === 'mouseup') {
         mousePos.current = null
-        PDF_IS_SELECTING.set(viewer, false)
-        PAGE_INDEX_TO_PAGE_FUNCTION.get(viewer)?.forEach(v => {
+        PDF_IS_SELECTING.set(instance, false)
+        PAGE_INDEX_TO_PAGE_FUNCTION.get(instance)?.forEach(v => {
           v.current.clearAllSelect?.()
         })
       }
@@ -257,75 +267,15 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
     pageFunctionRef.current.getTextLayerCanvas = () => canvasRef.current
   }
   useUnMount(() => {
-    if (viewer) {
-      deleteTextContent(viewer, pageIndex)
+    if (instance) {
+      deleteTextContent(instance, pageIndex)
       pageFunctionRef.current = undefined
       renderTaskRef.current = undefined
     }
   })
-  const memoizedHighlightText = useMemoizedFn(async text => {
-    if (!viewer) return
-    const result = await getTextContent(viewer, pageIndex)
-    if (!result) return
-    await buildText()
-    const { hasUnicodeChars, normalizedIndexes, normalizedText } = result
-    emptyTextLayer()
-    // normalize ligatures to strings
-    // weird text transform. Honestly idk wtf is this!
-    // copied from https://tex.stackexchange.com/questions/33476/why-cant-fi-be-separated-when-being-copied-from-a-compiled-pdf
-    const removeLigRegex = new RegExp(Object.keys(NormalizedMapObject).join('|'), 'g')
-    // remove all spaces and normalize search
-    const unescaped = text
-      .replace(/\s\s+/g, '')
-      .replaceAll(' ', '')
-      .replace(removeLigRegex, matched => NormalizedMapObject[matched])
 
-    // remove unterminated class to make a regex search
-    const searchText = normalizeText(unescaped).replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&')
-
-    const indexes = [...normalizedText.matchAll(new RegExp(searchText, 'gi'))].map(i => i.index)
-
-    let first: Point | undefined = undefined
-    indexes.forEach((i, idx) => {
-      let beforeCharLongerLength = 0
-      let contain = 0
-      normalizedIndexes.forEach(ni => {
-        if (ni.index <= i) {
-          const matchedStr = ni[0]
-          const longerLength = NormalizedMapObject[matchedStr].length
-          beforeCharLongerLength += longerLength - matchedStr.length
-        }
-        if (ni.index > i && ni.index <= i + searchText.length) {
-          const matchedStr = ni[0]
-          const longerLength = NormalizedMapObject[matchedStr].length
-          contain = longerLength - matchedStr.length
-        }
-      })
-
-      const chars = hasUnicodeChars.slice(i - beforeCharLongerLength, i - beforeCharLongerLength + unescaped.length - contain)
-
-      const firstChar = chars[0]
-
-      const lastChar = chars[chars.length - 1]
-      const boundCharIdx = textContentBounds.current.findIndex(i => i.textItem.chars?.[0] === firstChar)
-      const firstCharPoint =
-        boundCharIdx >= 0
-          ? {
-              x: textContentBounds.current[boundCharIdx].offset.left,
-              y: textContentBounds.current[boundCharIdx].offset.top
-            }
-          : getCharPoint(viewport, firstChar.transform)
-
-      if (idx === 0) {
-        first = firstCharPoint
-      }
-      const lastCharPoint = getCharPoint(viewport, lastChar.transform)
-      selectText(firstCharPoint, lastCharPoint, DEFAULT_DISTANCE_TOLERANCE, false, '#FBF719')
-    })
-  })
   useIsomorphicLayoutEffect(() => {
     renderTaskRef.current = new TextLayerRenderTask(viewport)
-    innerEmitter.addListener('pdf', handler)
     textContentBounds.current = []
     console.log('rerender text layer' + pageIndex)
     const globalMouseUpHandler = () => {
@@ -333,7 +283,7 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
         mousePos.current = null
       })
     }
-    if (viewer) {
+    if (instance) {
       emptyTextLayer()
       const canvas = canvasRef.current
       if (canvas) {
@@ -372,18 +322,11 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
             instance.paintBounds(bounds, color)
           }
         } as ITextLayerInstance
-
-        viewer?.onTextLayerRendered?.(pageIndex, instance)
       }
-      if (pageFunctionRef.current) {
-        pageFunctionRef.current.highlightText = memoizedHighlightText
-      }
-      document.addEventListener('keydown', keyboardHandler)
     }
     return () => {
       document.removeEventListener('pointerup', globalMouseUpHandler)
       emptyTextLayer()
-      innerEmitter.removeListener('pdf', handler)
       const canvas = canvasRef.current
       if (canvas) {
         canvas.removeEventListener('mousedown', mouseEventHandler)
@@ -395,18 +338,17 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
         canvas.width = 0
         canvas.height = 0
       }
-      document.removeEventListener('keydown', keyboardHandler)
-      if (viewer) {
-        PAGE_INDEX_TO_TEXT_LAYER.get(viewer)?.delete(pageIndex)
+      if (instance) {
+        PAGE_INDEX_TO_TEXT_LAYER.get(instance)?.delete(pageIndex)
       }
     }
   }, [viewport.height, viewport.width, viewport.scale])
   const buildText = async () => {
-    if (viewer && !textContentBounds.current.length) {
+    if (instance && !textContentBounds.current.length) {
       await new Promise(res => {
         const task = renderTaskRef.current
         if (!task) return
-        getTextContent(viewer, pageIndex).then(item => {
+        getTextContent(instance, pageIndex).then(item => {
           if (item) {
             const { textContentBounds: bounds } = task.render(item?.textContent)
             textContentBounds.current = bounds
@@ -470,7 +412,7 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
         ? paintRects(textContentBounds.current.slice(startIndex, endIndex + 1), startPoint, endPoint, shouldEmpty, color)
         : paintRects(textContentBounds.current.slice(endIndex, startIndex + 1), endPoint, startPoint, shouldEmpty, color))
   }
-  const paint = (coordinate: { x: any; y: any; width: any; height: any; offset: any }, color: string) => {
+  const paint = (coordinate: { x: any; y: any; width: any; height: any; offset?: any }, color: string, opacity = 0.4) => {
     CanvasRenderingContext2D.prototype.fillRect = CanvasOriginFillRect
 
     const { x, y, width, height, offset } = coordinate
@@ -479,7 +421,7 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
     const ctx = canvas?.getContext('2d')
     if (!canvas || !ctx) return
     ctx.fillStyle = color
-    ctx.globalAlpha = 0.4
+    ctx.globalAlpha = opacity
     if (offset && offset.angle) {
       ctx.fillRect(x + offset.dx, y + offset.dy, width, height)
       rect = {
@@ -528,7 +470,10 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
     const targetBound = textContentBounds.current[targetIndex]
     if (!targetBound) return
     const wordRect = getWordRect(targetBound, point, viewport)
+    if (!wordRect) return
     selectedTextRef.current = wordRect?.text
+    instance.values.selectedText = {}
+    instance.values.selectedText[pageIndex] = wordRect?.text
     paint(
       {
         x: wordRect?.x,
@@ -566,7 +511,7 @@ const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageInd
       const text = rect.text as string
       selectedTextRef.current += text + ''
     })
-    globalSelectingText.selectedTexts[pageIndex] = selectedTextRef.current
+    instance.values.selectedText[pageIndex] = selectedTextRef.current
     optimizedRects.forEach(rect => {
       paint(rect, color)
     })

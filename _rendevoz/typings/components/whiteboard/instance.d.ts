@@ -140,6 +140,10 @@ export type IWhiteboardEvents =
       updated: IWhiteboardNode[]
       withUndo: boolean
     }
+  | {
+      type: 'nodeClick'
+      node: IWhiteboardNode
+    }
 export type IWhiteboardInstance = Partial<{
   openTabInSidebar?: (type: string, objectId?: number) => void
   getNode: (nodeId: number) => IWhiteboardNode | undefined

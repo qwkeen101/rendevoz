@@ -4,8 +4,7 @@ import MediaLabelController from './MediaLabelController'
 import { memo } from 'react'
 import useMediaSidebarState from '../../hooks/useMediaSidebarState'
 import { Resizable } from 're-resizable'
-import MediaSubtitleSidebar from '@/core/components/media/components/sidebar/MediaSubtitleSidebar'
-import { Colors } from '@/consts'
+import Subtitle from '@/core/components/media/components/sidebar/Subtitle'
 import { useAtomValue } from 'jotai'
 import { MediaLayoutAtom } from '@/core/components/media/hooks/useVideoLayout'
 import { useSelectAtomValue } from '@/hooks'
@@ -17,7 +16,7 @@ const MediaSidebar = memo(() => {
   const column = useAtomValue(MediaLayoutAtom)
   const labelType = useSelectAtomValue(MediaStateAtom, s => s.labelType)
   const labelIds = useSelectAtomValue(MediaStateAtom, s => s.labels)
-  const { t } = useTranslation()
+  const visible = sidebarState.rightBarActive !== 'hide'
   return (
     <Resizable
       size={{
@@ -48,7 +47,7 @@ const MediaSidebar = memo(() => {
               left: true
             }
       }
-      minHeight={column ? 360 : undefined}
+      minHeight={column ? 240 : undefined}
       style={{
         display: 'flex',
         borderRadius: column ? 12 : 0,
@@ -57,27 +56,22 @@ const MediaSidebar = memo(() => {
         borderColor: 'var(--border-background)',
         borderStyle: 'solid',
         flexGrow: 1,
-        opacity: sidebarState.rightBarVisible ? 1 : 0,
-        visibility: sidebarState.rightBarVisible ? 'visible' : 'hidden',
-        position: sidebarState.rightBarVisible ? 'relative' : 'absolute',
+        opacity: visible ? 1 : 0,
+        visibility: visible ? 'visible' : 'hidden',
+        position: visible ? 'relative' : 'absolute',
         marginBottom: column ? 16 : 0,
         overflow: 'hidden'
       }}
     >
-      <Tabs
-        activeKey={sidebarState.rightBarActive}
-        tabNavContainerStyle={{
-          padding: '12px 12px 0px'
-        }}
-      >
-        <TabPane tab={t('general.labels')} key="label">
+      <Tabs activeKey={sidebarState.rightBarActive} disableTabNav={true}>
+        <TabPane key="label">
           <MediaLabelController labelType={labelType} labelIds={labelIds} />
         </TabPane>
-        <TabPane tab={t('general.chapters')} key="chapter">
+        <TabPane key="chapter">
           <MediaChapterController />
         </TabPane>
-        <TabPane tab={t('general.subtitles')} key="subtitle">
-          <MediaSubtitleSidebar />
+        <TabPane key="subtitle">
+          <Subtitle />
         </TabPane>
       </Tabs>
     </Resizable>

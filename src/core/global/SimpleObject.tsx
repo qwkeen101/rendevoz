@@ -1,13 +1,10 @@
-import { useMergedRef } from '@/hooks'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
-import React, { forwardRef, memo, useRef, useState } from 'react'
-import { AnimatePopover, Button, Content, Icon, Tooltip, WithBorder, VirtualList, Image } from '@/components'
-import { DraggableElement, ObjectActionPopover, useRenderObject } from '@/core'
-import FontSize from '@/consts/font'
+import React, { forwardRef, memo } from 'react'
+import { Content, Icon, WithBorder, Image } from '@/components'
+import { DraggableElement, ObjectActionMenu, useRenderObject } from '@/core'
 import { Rendevoz } from '../rendevoz'
 import ContextMenu from '@/components/contextMenu'
-import ContentDisplayer from '@/core/components/group/components/gallery/items/FixedHeightContentDisplayer'
 import InnerContentDisplayer from '@/core/components/group/components/gallery/items/InnerContentDisplayer'
 import { Colors } from '@/consts'
 import usePreviewItem from '@/components/layout/sidebar/usePreviewItem'
@@ -133,7 +130,7 @@ export const SimpleObject = memo(
         <ContextMenu
           content={setV => (
             <WithBorder onClick={e => e.stopPropagation()}>
-              <ObjectActionPopover
+              <ObjectActionMenu
                 visibility={{
                   showContainsInSidebar: true
                 }}

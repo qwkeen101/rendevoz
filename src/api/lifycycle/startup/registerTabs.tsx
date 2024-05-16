@@ -1,7 +1,6 @@
 import { ILayoutTab, TabData } from '~/typings'
 import Id from '@/utils/id'
 import Webpage from '@/core/components/webpage/Webpage'
-import { ObjectTimeline } from '@/core'
 import SyncedBlockPage from '@/scenes/SyncedBlockPage'
 import { EditorPage, HomePage, PdfPage, WhiteboardPage, ImagePage, VideoPage, GraphPage, MetaGroupPage } from '@/scenes'
 import FeedViewer from '@/core/components/feed'
@@ -101,10 +100,6 @@ export const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   {
     type: 'review',
     content: () => <ReviewManager />
-  },
-  {
-    type: 'timeline',
-    content: () => <ObjectTimeline />
   },
   {
     type: 'group',

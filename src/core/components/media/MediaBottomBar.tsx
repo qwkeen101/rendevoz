@@ -11,10 +11,8 @@ import useMediaToolbarState from './hooks/useMediaToolbarState'
 import Colors from '@/consts/colors'
 import FontSize from '@/consts/font'
 import MediaProgressLabelPin from './MediaProgressLabelPin'
-import MediaScrubber from './components/MediaScrubber'
 import { useSetAtom } from 'jotai'
 import { VideoSidebarStateAtom } from './hooks/useMediaSidebarState'
-import MediaActionsMenu from '@/core/components/media/components/MediaActionsMenu'
 import { useTranslation } from 'react-i18next'
 
 const playerControlMask = css({
@@ -105,7 +103,7 @@ const MediaBottomBar = () => {
               column
               alignItems="center"
               style={{
-                fontSize: FontSize['12px'],
+                fontSize: '12px',
                 textShadow: mediaState.mode !== 'audio' ? '0 0 4px rgba(0,0,0,0.45)' : undefined,
                 padding: '5px 9px',
                 color: mediaState.mode === 'audio' ? Colors.Font.Transparent : Colors.Font.White,
@@ -116,8 +114,7 @@ const MediaBottomBar = () => {
                 <Content flex alignItems="center" gap={6}>
                   <div
                     style={{
-                      maxWidth: 160,
-                      color: Colors.Common.SelectColor
+                      maxWidth: 160
                     }}
                     className={ClassName.ellipsisFont(1)}
                   >
@@ -358,19 +355,8 @@ const MediaBottomBar = () => {
                 })
               }}
               style={{ height: 30, fontWeight: 500 }}
-              text={t('general.add label')}
+              text={t('general.Highlight')}
             ></Button.IconButton>
-          )}
-          {mediaState.toolbar?.extra !== false && (
-            <IconWithPopover
-              padding={10}
-              renderOnParent={mediaState.fullScreen}
-              content={setState => <MediaActionsMenu onClose={() => setState(false)} />}
-              name="park-more-four"
-              size={20}
-              placement={['right', 'left']}
-              className={ClassName.flatButton(4, '5px')}
-            ></IconWithPopover>
           )}
           {!audioMode && !mediaState.floated && (
             <Icon

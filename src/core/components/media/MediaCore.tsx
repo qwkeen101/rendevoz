@@ -10,9 +10,9 @@ import LocalVideoPlayer from '@/core/components/media/players/LocalVideoPlayer'
 import './loading.css'
 import { Colors } from '@/consts'
 import ContextMenu from '@/components/contextMenu'
-import MediaActionsMenu from '@/core/components/media/components/MediaActionsMenu'
 import AudioPlayer from '@/core/components/media/players/AudioPlayer'
 import { useTranslation } from 'react-i18next'
+import MediaMoreMenu from '@/core/components/media/components/MediaMoreMenu'
 
 export const MEDIA_PLAYER_DEFAULT_BORDER_RADIUS = 12
 
@@ -87,7 +87,7 @@ const MediaCore = memo(() => {
     <ContextMenu
       enableContextMenu={mediaState.loaded}
       content={setV => (
-        <MediaActionsMenu
+        <MediaMoreMenu
           onClose={() => {
             setV(false)
           }}

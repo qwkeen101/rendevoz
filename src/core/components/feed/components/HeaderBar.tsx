@@ -85,8 +85,8 @@ const FeedHeaderBar = () => {
       <Content flex gap={12} alignItems={'center'}>
         <Icon
           name={'custom-left-bar'}
-          size={16}
-          className={ClassName.circleButton(6, 4)}
+          size={18}
+          className={ClassName.flatButton(4, '4px 6px')}
           onClick={() => {
             setFeedState(s => ({ ...s, sidebarCollapsed: !s.sidebarCollapsed }))
           }}

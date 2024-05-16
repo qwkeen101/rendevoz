@@ -34,18 +34,20 @@ const EditorPluginHooks = ({ editor, scrollElementRef }: { editor: CustomEditor;
             i[0],
             {
               element: i[1],
+              pageTop: i[1].getBoundingClientRect().top,
               offsetTop: i[1].parentElement!.offsetTop
             }
-          ]) as [number, { element: HTMLElement; offsetTop: number }][]
+          ]) as [number, { element: HTMLElement; offsetTop: number; pageTop: number }][]
           withBoundingHeadings.sort((b, a) => b[1].offsetTop - a[1].offsetTop)
           const realScrollTop = Math.max(0, scrollElement.scrollTop - (editor.titleEle?.getBoundingClientRect().height || 0))
+          console.log(realScrollTop, withBoundingHeadings)
           if (realScrollTop < withBoundingHeadings[0][1].offsetTop) {
             setEditorState(s => ({
               ...s,
               currentActiveHeadingId: withBoundingHeadings[0][0]
             }))
           } else {
-            const currIdx = withBoundingHeadings.findLastIndex(i => i[1].offsetTop < realScrollTop)
+            const currIdx = withBoundingHeadings.findLastIndex(i => i[1].offsetTop - 50 < realScrollTop)
             setEditorState(s => ({
               ...s,
               currentActiveHeadingId: withBoundingHeadings[currIdx][0]

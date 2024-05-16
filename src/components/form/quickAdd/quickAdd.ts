@@ -40,13 +40,10 @@ export default async (metaId: number | number[], type: 'note' | 'group' | 'colle
           }
         })
         metaId.forEach(id => {
-          MetaStore.addMetaLink(
-            {
-              sourceId: id,
-              targetId: noteMeta.id
-            },
-            true
-          )
+          MetaStore.addMetaLink({
+            sourceId: id,
+            targetId: noteMeta.id
+          })
         })
       }
     }
@@ -67,13 +64,10 @@ export default async (metaId: number | number[], type: 'note' | 'group' | 'colle
         }, 100)
       }
       metaId.forEach(id => {
-        MetaStore.addMetaLink(
-          {
-            sourceId: id,
-            targetId: groupMeta.id
-          },
-          true
-        )
+        MetaStore.addMetaLink({
+          sourceId: id,
+          targetId: groupMeta.id
+        })
       })
     }
   }

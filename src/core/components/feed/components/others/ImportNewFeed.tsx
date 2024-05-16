@@ -69,7 +69,7 @@ export default () => {
           <ul>
             <li>Any valid RSS source.</li>
             <li>Youtube channels and playlists. (e.g. https://www.youtube.com/@BBCNews)</li>
-            <li>Tweets from users and search results. (e.g. https://twitter.com/elonmusk)</li>
+            {/*<li>Tweets from users and search results. (e.g. https://twitter.com/elonmusk)</li>*/}
           </ul>
         </Content>
       </Content>

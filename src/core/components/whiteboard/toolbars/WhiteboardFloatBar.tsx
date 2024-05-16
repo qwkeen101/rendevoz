@@ -1,11 +1,9 @@
 import { atom, useAtom } from 'jotai'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import { assignProperties } from '@/utils'
-import { AnimatePopover, Content, Icon, Menu, WithBorder } from '@/components'
-import { ClassName } from 'rendevoz'
-import classnames from 'classnames'
-import { memo, useEffect, useRef } from 'react'
-import { IWhiteboardNode, IWhiteboardToolbarState } from '~/typings'
+import { AnimatePopover, Menu, WithBorder } from '@/components'
+import { memo, useEffect } from 'react'
+import { IWhiteboardToolbarState } from '~/typings'
 import getContextMenu from '@/core/components/whiteboard/toolbars/contextMenus/getContextMenu'
 import { useTranslation } from 'react-i18next'
 import getNodeMenu from '@/core/components/whiteboard/toolbars/contextMenus/getNodeMenu'
@@ -104,7 +102,7 @@ export default memo(() => {
     }
     return 'start'
   }
-  console.log(toolbarState)
+
   return (
     <AnimatePopover
       visible={toolbarState.visible}
@@ -125,7 +123,6 @@ export default memo(() => {
       positions={toolbarState.type === 'edge' ? ['top', 'bottom'] : ['right', 'left']}
       content={
         <WithBorder
-          blur={true}
           padding={toolbarState.type === 'edge' ? 0 : '0.4rem 0'}
           width={toolbarState.type === 'edge' ? undefined : 220}
           borderRadius={4}

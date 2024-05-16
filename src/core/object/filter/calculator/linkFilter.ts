@@ -2,7 +2,7 @@ import { LinkFilterRule, MetaObject } from '~/typings'
 import { transformFilterGroupToFilterArray } from '@/core/object/filter/useBetterFilter'
 import { MetaStore } from '@/api/stores'
 
-const linkFilter = (rule: LinkFilterRule): ((o: MetaObject) => boolean) => {
+const linkFilter = async (rule: LinkFilterRule): Promise<(o: MetaObject) => boolean> => {
   const { type, metaType, ruleType } = rule
   const linkIndex = MetaStore.getIndexedMetaLinks()
   if (!linkIndex) return () => false
@@ -55,7 +55,7 @@ const linkFilter = (rule: LinkFilterRule): ((o: MetaObject) => boolean) => {
     }
   } else {
     const group = rule.group
-    const transformedFunc = transformFilterGroupToFilterArray(group)
+    const transformedFunc = await transformFilterGroupToFilterArray(group)
 
     if (transformedFunc) {
       // find relationships of these objects

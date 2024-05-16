@@ -29,7 +29,7 @@ const HomeGallery = () => {
   }
   useEffect(() => {
     if (objectIndex) {
-      const visibleTypes = new Set(MetaStore.getVisibleMetaTypes())
+      const visibleTypes = new Set(MetaStore.getVisibleMetaTypes(false))
       if (visibleTypes) {
         const allTypes = visibleTypes
         let newVisibleList = gallerySettings.visibleLists.filter(i => {

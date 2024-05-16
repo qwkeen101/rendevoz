@@ -27,7 +27,7 @@ function TypeGroup({ type }: { type: MetaObject['type'] }) {
       const map = MetaStore.getMetaObjectsMap()
       const allTypeMetas = Array.from(allMetas?.values() || [])
         .map(o => map.get(o))
-        .filter(i => i && !i.deleted && !i.temp) as MetaObject[]
+        .filter(i => i && !i.deleted) as MetaObject[]
       const sorted = calculateSortObjects(allTypeMetas, {
         sorters: [
           {

@@ -57,6 +57,12 @@ export type CurrentKeyValues = {
     search?: string
     name?: string
   }[]
+  savedFilters?: {
+    id: number
+    workspace: number
+    filter?: MetaFilterGroup
+    name?: string
+  }[]
   showHiddenMetasInSidebar?: boolean
   searchHistory: string[]
   // [width,height,x,y]

@@ -29,7 +29,7 @@ const SyncAPI = {
     connected: 'Connected',
     syncing: 'Syncing',
     unconnected: 'Unconnected',
-    'wrong config': 'Wrong config'
+    'wrong config': 'Invalid config'
   } as Record<Connection, string>,
   connectionToColors: {
     connected: Colors['green'],

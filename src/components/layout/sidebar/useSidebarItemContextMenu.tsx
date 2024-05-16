@@ -9,7 +9,7 @@ import { RefObject, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { GlobalInstance } from '@/hooks'
-import { ObjectActionPopover } from '@/core'
+import { ObjectActionMenu } from '@/core'
 
 const useSidebarItemContextMenu = (
   contextMenuElementRef: RefObject<HTMLElement>,
@@ -182,7 +182,7 @@ const useSidebarItemContextMenu = (
           </WithBorder>
         ) : (
           <WithBorder onClick={e => e.stopPropagation()}>
-            <ObjectActionPopover
+            <ObjectActionMenu
               onRemoveFromCollection={onRemoveFromCollection}
               visibility={{ deleteFromCollection: true }}
               onClose={() => setV(false)}

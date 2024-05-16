@@ -132,6 +132,7 @@ const createMetaStore = () => {
           name: obj.name || obj.placeholderName,
           description: obj.description,
           metaType: obj.type,
+          placeholderName: obj.placeholderName,
           metaId: obj.id,
           id: obj.id
         })
@@ -193,6 +194,7 @@ const createMetaStore = () => {
           docType: 'metaObject',
           name: obj.name || obj.placeholderName,
           description: obj.description,
+          placeholderName: obj.placeholderName,
           metaType: obj.type,
           metaId: obj.id,
           id: obj.id
@@ -357,23 +359,23 @@ const createMetaStore = () => {
   function isVisibleMetaObject(
     o?: Partial<MetaObject>,
     opts?: {
-      temp?: boolean
-      deleted?: boolean
-      hidden?: boolean
+      showTemp?: boolean
+      showDeleted?: boolean
+      showHidden?: boolean
       hideLabel?: boolean
     }
   ): o is MetaObject {
     if (!o) return false
-    if (o.temp && opts?.temp !== true) {
+    if (o.temp && opts?.showTemp !== true) {
       return false
     }
-    if (o.deleted && opts?.deleted !== true) {
+    if (o.deleted && opts?.showDeleted !== true) {
       return false
     }
     if (opts?.hideLabel && o.type?.includes('Label')) {
       return false
     }
-    if (o.hidden && opts?.hidden !== true) {
+    if (o.hidden && opts?.showHidden !== true) {
       return false
     }
     return true
@@ -596,11 +598,17 @@ const createMetaStore = () => {
     return useGlobalAtomValue(deletedMetaObjectsAtom)
   }
 
-  const getVisibleMetaTypes = (): MetaObject['type'][] => {
+  const getVisibleMetaTypes = (showTemp = true): MetaObject['type'][] => {
     const allMetas = Array.from(MetaStore.getMetaObjectsMap().values())
     const typeSet = new Set<MetaObject['type']>()
     allMetas.forEach(i => {
-      if (MetaStore.isVisibleMetaObject(i)) {
+      if (
+        MetaStore.isVisibleMetaObject(i, {
+          showTemp,
+          showHidden: false,
+          showDeleted: false
+        })
+      ) {
         typeSet.add(i.type)
       }
     })

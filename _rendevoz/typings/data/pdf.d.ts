@@ -1,8 +1,8 @@
 import { IBase } from './base'
-import { IHighlightLabel, IThoughtLabel } from './label'
+import { IHighlightLabel, ILabelContainerProps, IThoughtLabel } from './label'
 import { IFile } from '~/typings'
 
-export interface IPdfDocument extends IFile {
+export interface IPdfDocument extends IFile, ILabelContainerProps {
   name?: string
   description?: string
   metadata?: IPdfMetadata

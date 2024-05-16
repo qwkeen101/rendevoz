@@ -1,5 +1,5 @@
 import { CheckBox, Content } from '@/components'
-import useRenderObject from './useRenderObject'
+import useRenderObject from './renderer/useRenderObject'
 import FontSize from '@/consts/font'
 import { IMetaAttachment } from '~/typings'
 import NameEditor from '../../components/base/ContentEditor'

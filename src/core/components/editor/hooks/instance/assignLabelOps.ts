@@ -8,11 +8,12 @@ const assignLabelOps = (instance: IEditorInstance, editor: CustomEditor) => {
   const setEditorBarState = useSetAtom(EditorBarStateAtom)
   assignProperties(instance, {
     labelOps: {
+      ...instance.labelOps,
       openLabelInSidebar: labelId => {
-        setEditorBarState(s => ({ ...s, rightBarActive: 'label', showRightBar: true, currentActiveLabelId: labelId }))
+        setEditorBarState(s => ({ ...s, sidebarActive: 'label', currentActiveLabelId: labelId }))
         setTimeout(() => {
           setEditorBarState(s => ({ ...s, currentActiveLabelId: undefined }))
-        }, 2000)
+        }, 1500)
       },
       addLabel: async label => {
         return await editor.on({
@@ -26,13 +27,6 @@ const assignLabelOps = (instance: IEditorInstance, editor: CustomEditor) => {
       },
       scrollToLabel: labelId => {
         goToTextHighlight(labelId, editor)
-      },
-      toggleLabel: () => {
-        setEditorBarState(s => ({
-          ...s,
-          showRightBar: s.rightBarActive === 'label' ? !s.showRightBar : true,
-          rightBarActive: 'label'
-        }))
       }
     }
   })

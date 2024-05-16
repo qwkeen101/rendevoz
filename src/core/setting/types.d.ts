@@ -156,12 +156,10 @@ export type IComponentSetting = {
   sidebar: {
     previewTitleMode?: boolean
     previewCollectionContent?: boolean
-    hideHighlights?: boolean
   }
   label: {
     showOriginalText: boolean
     customTextBackground: boolean
-    autoAddAsObject: boolean
   }
   whiteboard: {
     enableMinimap: boolean
@@ -179,6 +177,7 @@ export type IComponentSetting = {
     objectAutoBecomeInline: boolean
     addSpacingInReaderMode?: boolean
     enableFormat?: boolean
+    autoOpenHighlightEditor?: boolean
   }
   translate: {
     autoGotoHoverText: boolean
@@ -195,6 +194,7 @@ export type IComponentSetting = {
     customRenderFont?: string
     defaultLabelColor: string
     autoWidth?: boolean
+    autoOpenHighlightEditor?: boolean
   }
   code: {
     defaultLanguage?: string

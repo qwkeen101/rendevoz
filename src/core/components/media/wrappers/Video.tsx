@@ -3,6 +3,8 @@ import Media, { MediaProps } from '@/core/components/media'
 import { saveImageLocally } from '@/utils'
 import useMediaEventHandlerWrapper from '@/core/components/media/wrappers/eventHandler'
 import { useURLToId } from '@/api/indexData'
+import FileSystem from '@/api/fileSystem'
+import { normalizeSecondsToTime } from '@/core/components/media/utils'
 
 export default ({ videoId, ...rest }: { videoId: number } & MediaProps) => {
   const realId = useURLToId(rest.mediaState?.url, videoId)
@@ -33,15 +35,15 @@ export default ({ videoId, ...rest }: { videoId: number } & MediaProps) => {
         console.log(e)
         switch (e.type) {
           case 'addScreenshot': {
-            const path = await saveImageLocally(e.imageDataUrl)
+            const path = await FileSystem.saveImage(e.imageDataUrl, { compress: false })
             ObjectStore('image').addOneWithMeta(
               {
-                imageUrl: path
+                url: path
               },
               {
                 showMetaModal: false,
                 currentMeta: {
-                  name: 'Video screenshot',
+                  name: videoMeta ? `${videoMeta.name} — ${normalizeSecondsToTime(e.time)}` : 'Unnamed screenshot',
                   coverImgSrc: path,
                   fromObject: videoMeta
                     ? {

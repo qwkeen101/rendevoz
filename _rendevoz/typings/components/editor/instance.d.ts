@@ -1,8 +1,8 @@
-import { Descendant, NodeEntry, Operation, Path, PathRef } from 'slate'
+import { Descendant, NodeEntry, Operation, Path, PathRef, Selection } from 'slate'
 import { CustomEditor, CustomElement, ElementFunctions, INoteLabel } from '.'
 import { CustomText, EmptyText } from '.'
 import { EditorOverlayManager } from '../../../../src/core/components/editor/components/overlay/useEditorOverlay'
-import { XYPosition } from '~/typings'
+import { Box, XYPosition } from '~/typings'
 import { createStore } from 'jotai'
 
 export type IEditorOverlayContent =
@@ -80,15 +80,13 @@ export type IEditorInstance = Partial<{
     getBeforeText: (distance: number, unit?: 'character' | 'word') => string | undefined
   }
   labelOps: {
+    openLabelEditor: (label: Partial<INoteLabel>, boundingBox: Box, selection: Selection) => void
     openLabelInSidebar: (labelId: number) => void
     addLabel: (label: Partial<INoteLabel>) => Promise<INoteLabel | void>
     deleteLabel: (id: number) => Promise<void>
-    toggleLabel: VoidFunction
     scrollToLabel: (labelId: number) => void
   }
   searchOps: {
-    openSearch: VoidFunction
-    closeSearch: VoidFunction
     toggleSearch: VoidFunction
     search: (query: string, reset?: boolean) => [number, string][]
     pureSearch: (query: string, reset?: boolean) => [number, string][]
@@ -98,10 +96,6 @@ export type IEditorInstance = Partial<{
   }
   replaceChildren: (newValue: Descendant[], restoreScrollPosition?: boolean) => void
   save: VoidFunction
-  toggleLeftBar: VoidFunction
-  openSetting: VoidFunction
-  closeSetting: VoidFunction
-  toggleSetting: VoidFunction
   printToPDF: VoidFunction
   applyOperation: (operation: Operation, debounce?: boolean) => void
   getScrollElement: () => HTMLElement | undefined | null
@@ -124,6 +118,7 @@ export type IEditorInstance = Partial<{
       element: CustomElement
       path: Path
     }
+    labelNoteRendered: Set<number>
     // selected id to element and pathRef map
     selectedBlocks: Map<
       number,

@@ -50,6 +50,9 @@ const initializeOneTab = (registeredData: TabData[BuiltInTabTypes['type']], opti
 export default function assignGlobalLayoutOps(layoutRef: RefObject<DockLayout>) {
   assignProperties(GlobalInstance, {
     layoutOps: {
+      getTab: id => {
+        return LayoutIdToTabMap.get(id)
+      },
       closeObjectTab: metaId => {
         const m = MetaStore.getCachedMetaObject(metaId)
         if (m) {

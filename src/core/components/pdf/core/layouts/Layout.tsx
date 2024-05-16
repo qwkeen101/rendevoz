@@ -128,7 +128,7 @@ const Layout: FC<LayoutProps> = ({
     getScrollElement: () => pagesRef.current,
     estimateSize,
     rangeExtractor,
-    overscan: 2,
+    overscan: 3,
     lanes: doublePage ? 2 : 1,
     paddingEnd: paddingEnd,
     paddingStart: paddingTop
@@ -179,19 +179,17 @@ const Layout: FC<LayoutProps> = ({
 
   if (instance) {
     Object.assign(instance, {
-      highlightText: (str, pageIndex) => {
+      highlightText: (str, pageIndex, numIndex) => {
+        instance.navigateOps?.jumpToPage(pageIndex)
         return new Promise(res => {
           waitFor(
+            () => !!instance.values.INDEX_TO_TEXT_LAYER[pageIndex]?.highlightText,
             () => {
-              const pageFunctionRef = PAGE_INDEX_TO_PAGE_FUNCTION.get(instance)?.get(pageIndex)
-              if (pageFunctionRef?.current.highlightText) {
-                return true
-              }
-              return false
-            },
-            () => {
-              PAGE_INDEX_TO_PAGE_FUNCTION.get(instance)?.get(pageIndex)?.current.highlightText?.(str)
+              instance.values.INDEX_TO_TEXT_LAYER[pageIndex]?.highlightText(str, numIndex)
               res()
+            },
+            {
+              requestAnimationFrame: true
             }
           )
         })

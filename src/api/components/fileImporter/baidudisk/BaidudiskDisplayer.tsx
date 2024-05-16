@@ -291,6 +291,7 @@ export const GlobalBaidudisk = memo(() => {
         width: 'min(60vw, 800px)',
         height: `min(80vh, 800px)`
       }}
+      enableClickEvent
       onClose={() => {
         setVisible(false)
         resrejRef.current?.[1]()

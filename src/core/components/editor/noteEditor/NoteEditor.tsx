@@ -46,7 +46,6 @@ const NoteEditor = ({
   })
   const { handleDeleteLable, handleAddLabel } = useLabel(note)
   const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
-  const updater = ObjectStore('note').updateOne
   useCheckInsideMeta(instanceRef, metaId, noteId)
 
   return (
@@ -56,6 +55,14 @@ const NoteEditor = ({
         ...rest.styles,
         containerHeight:
           initialHeight !== undefined ? (!fetchedValue ? initialHeight : rest.styles?.containerHeight) : rest.styles?.containerHeight
+      }}
+      state={{
+        lastSavedAt: note?.lastSavedAt,
+        saveImgLocally: true,
+        labelSortMode: note?.labelSortMode,
+        labelPriority: note?.labelPriority,
+        labelScrollOffset: note?.labelScrollOffset,
+        ...rest.state
       }}
       defaultValue={fetchedValue || rest.defaultValue}
       labelIds={labelIds || note?.labels}
@@ -76,19 +83,6 @@ const NoteEditor = ({
           summary: noteMeta?.properties?.[AI_SUMMARY_PROP_ID]?.value,
           questions: noteMeta?.properties?.[AI_QUESTION_PROP_ID]?.value
         }
-      }
-      state={
-        note
-          ? {
-              pageWidth: note?.pageWidth,
-              fontSize: note?.fontSize,
-              lastSavedAt: note?.lastSavedAt,
-              typeface: note?.typeface,
-              saveImgLocally: true,
-              lineSpacing: note?.lineSpacing,
-              ...rest.state
-            }
-          : rest.state
       }
       on={async e => {
         if (on) {
@@ -185,37 +179,24 @@ const NoteEditor = ({
             })
             return
           }
+          case 'updateNote': {
+            if (noteId) {
+              ObjectStore('note')
+                .getOneById(noteId)
+                .then(n => {
+                  if (n) {
+                    ObjectStore('note').updateOne(e.updater(n))
+                  }
+                })
+            }
+            break
+          }
           case 'labelDrag': {
             Rendevoz.Actions.State.Drag.setDraggingDetails({
               type: 'noteLabel',
               labelId: e.labelId
             })
             return
-          }
-          case 'stateChange': {
-            switch (e.event.type) {
-              case 'fontSize': {
-                updater({ id: noteId, fontSize: e.event.fontSize })
-                break
-              }
-              case 'containerWidth': {
-                updater({ id: noteId, width: e.event.widthType })
-                break
-              }
-              case 'typeface': {
-                updater({ id: noteId, typeface: e.event.typeface })
-                break
-              }
-              case 'lineSpacing': {
-                updater({ id: noteId, lineSpacing: e.event.lineSpacing })
-                break
-              }
-              case 'pageWidth': {
-                updater({ id: noteId, pageWidth: e.event.width })
-                break
-              }
-            }
-            break
           }
           case 'titleChange': {
             if (noteMeta) {

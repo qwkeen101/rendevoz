@@ -1,6 +1,15 @@
 import Icon from '@/components/base/Icon'
 import classNames from 'classnames'
-import { cloneElement, createElement, CSSProperties, FC, forwardRef, MouseEventHandler, ReactNode } from 'react'
+import {
+  cloneElement,
+  createElement,
+  CSSProperties,
+  FC,
+  forwardRef,
+  MouseEventHandler,
+  ReactElement,
+  ReactNode
+} from 'react'
 import Tooltip from '../Tooltip'
 import styles from './index.module.less'
 import ClassName from '@/styles/classNames'
@@ -21,6 +30,7 @@ interface ToolbarItemProps {
   clickPreventDefault?: boolean
   tooltip?: string
   radius?: number
+  popover?: ReactElement
 }
 
 const ToolbarItem: FC<ToolbarItemProps> = forwardRef(

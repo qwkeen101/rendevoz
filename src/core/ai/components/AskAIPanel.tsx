@@ -2,7 +2,7 @@ import { IAI, IQuestion } from '~/typings'
 import { Button, Content, Icon } from '@/components'
 import QuestionPanel from './question/QuestionPanel'
 import { ClassName } from 'rendevoz'
-import { memo, ReactNode, useEffect, useState } from 'react'
+import { memo, ReactNode, useEffect, useLayoutEffect, useState } from 'react'
 import { Colors } from '@/consts'
 import caculateToken from '@/core/ai/utils/caculateToken'
 import { AIService } from '@/api/services'
@@ -61,7 +61,7 @@ export default memo(
     const [isSummarizing, setIsSummarizing] = useState(false)
     const [canSummarize, setCanSummarize] = useState(true)
     const [needResummarize, setNeedResummarize] = useState(false)
-    useEffect(() => {
+    useLayoutEffect(() => {
       if (content) {
         // eagerly return here
         if (content.length > 20000) {

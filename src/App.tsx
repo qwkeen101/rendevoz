@@ -1,10 +1,7 @@
 import '@icon-park/react/styles/index.less'
-import './styles/common.less'
-import Initializer from './api/components/Initializer'
 import './styles/global.less'
 import './styles/font.less'
 import { GlobalDragOverlay, GlobalScreenShot, SettingAtom } from '@/core'
-import Notification from './api/components/Notification'
 import '@/styles/dock.less'
 import SvgMarker from './components/svg/Marker'
 import { Fragment, useEffect, useRef } from 'react'
@@ -12,9 +9,8 @@ import { useTranslation } from 'react-i18next'
 import { ErrorBoundary } from 'react-error-boundary'
 import ErrorFallback from './components/base/ErrorFallBack'
 import AuthenticatedLayout from './components/base/authenticatedLayout'
-import '@/assets/pdf.js'
-import PdfJsUrl from '@/assets/pdf.worker.js?url'
-import ThemeSwitcher from './api/components/ThemeSwitcher'
+import * as pdfjsLib from 'pdfjs-dist'
+import PdfJsUrl from '@/assets/pdf.worker.mjs?url'
 import ImagePreviewer from './core/global/components/ImagePreviewer'
 import classNames from 'classnames'
 import { css } from '@emotion/css'
@@ -37,15 +33,11 @@ import GlobalPreviewPanel from '@/core/global/components/ObjectPreviewer'
 import GlobalObjectCreator from '@/core/global/components/ObjectCreator'
 import GlobalQuickAdd from '@/components/form/quickAdd/GlobalQuickAdd'
 import GlobalDownloadIndicator from '@/core/global/DownloadIndicator'
-import { useAtomValue } from 'jotai'
 import './styles/util.less'
-import './styles/loading.less'
 import GlobalDialog from '@/core/global/GlobalDialog'
 import { ChineseFormats, DateFormat, EnglishFormats } from '@/utils'
 import useGlobalShortcutHandler from '@/core/global/ShortcutHandler'
 import ObjectEditForm from '@/core/global/components/ObjectEditForm'
-import GlobalStates from '@/api/global/states'
-import LoadingPage from '@/api/components/LoadingPage'
 import APIComponents from '@/api/components/APIComponents'
 
 export function getOS() {
@@ -87,8 +79,7 @@ declare module 'rendevoz' {
   }
 }
 const App = () => {
-  const PdfJs = window['pdfjs-dist/build/pdf']
-  PdfJs.GlobalWorkerOptions.workerSrc = PdfJsUrl
+  pdfjsLib.GlobalWorkerOptions.workerSrc = PdfJsUrl
   useGlobalShortcutHandler()
   const lang = useSelectGlobalAtomValue(SettingAtom, s => s.general.language)
   const { i18n } = useTranslation()

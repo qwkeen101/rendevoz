@@ -1,11 +1,11 @@
-export { default as useRenderObject } from './useRenderObject'
+export { default as useRenderObject } from './renderer/useRenderObject'
 export * from './menus/ObjectActionMenu'
+export * from './menus'
 export { default as useDropObjectArea } from './useDropObjectArea'
 export { default as AttachmentObject } from './AttachmentObject'
 export { default as AttachmentList } from './AttachmentList'
 export { default as AttachmentWrapper } from './AttachmentWrapper'
-export { default as useRenderLabel } from './useRenderLabel'
-export * from './ObjectTimeline'
+export { default as useRenderLabel } from './renderer/useRenderLabel'
 export { default as IconNameRenderer } from './IconNameRenderer'
 export const intersectionOfMultipleSets = (set1: Set<number>, set2: Set<number>) => {
   const ans = new Set()

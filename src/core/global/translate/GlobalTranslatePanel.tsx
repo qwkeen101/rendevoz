@@ -3,7 +3,7 @@ import { IconNameItem } from '@/components/layout/sidebar/SidebarCollection'
 import { Zindexes } from '@/consts'
 import Colors from '@/consts/colors'
 import FontSize from '@/consts/font'
-import { useGlobalAtom, useShortcut } from '@/hooks'
+import { GlobalInstance, useGlobalAtom, useShortcut } from '@/hooks'
 import TranslateService from '@/api/services/translate.service'
 import { globalStore, MetaStore } from '@/api/stores'
 import { objectIdToMetaObjectIdMapAtom } from '@/api/stores/meta/meta.store'
@@ -82,9 +82,9 @@ type TranslateSource =
 export const GlobalTranslateInstance: Partial<GlobalInstances.TranslateInstance> = {}
 const PanelDefaultSize = {
   x: window.innerWidth / 2 - 200,
-  y: window.innerHeight / 2 - 150,
+  y: window.innerHeight / 2 - 200,
   width: 400,
-  height: 600
+  height: 400
 }
 const GlobalTranslateResult = () => {
   const [translateState, setTranslateState] = useGlobalAtom(TranslateStateAtom)
@@ -151,7 +151,6 @@ const TranslatePanel = () => {
   const [translateState, setTranslateState] = useGlobalAtom(TranslateStateAtom)
   const [panelState, setPanelState] = useGlobalAtom(TranslatePanelStateAtom)
   const { t } = useTranslation()
-  const [setting] = useSetting()
   const panelRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const panel = panelRef.current
@@ -161,60 +160,40 @@ const TranslatePanel = () => {
   }, [translateState.currentResult?.translatedText])
   const renderHistory = () => {
     return (
-      <Content
-        flex
-        auto
-        column
-        gap={6}
-        style={{ overflowY: 'auto', textTransform: 'none', padding: '0px 12px 12px' }}
-        className={css({
-          '> div': {
-            ':not(:first-child)': {
-              padding: '6px 0px',
-              ':not(:last-child)': {
-                borderBottom: `1px solid ${Colors.Background.Border}`
-              }
-            }
-          }
-        })}
-      >
-        <div className={ClassName.description(FontSize['14px'])}>{translateState.allResults.length} Results</div>
+      <Content flex auto column gap={8} style={{ overflowY: 'auto', padding: '0px 12px 12px' }}>
         {translateState.allResults.map(i => (
           <Content column flex key={i.time}>
-            {i.source && <SourceRenderer small source={i.source} />}
-            <div className={ClassName.ellipsisFont(3)}>{i.translatedText.map(i => i.trans).join(' ')}</div>
-            <Content alignItems="center" flex gap={10} className={ClassName.description(FontSize['12px'])}>
-              <div>{DateFormat.formatDistanceToNowStrict(i.time)}</div>
-              <div
-                style={{ cursor: 'pointer' }}
-                onClick={() => {
-                  setPanelState(s => ({
-                    ...s,
-                    showHistory: false
-                  }))
-                  setTranslateState(s => ({ ...s, currentResult: i }))
-                }}
-              >
-                {t('translate.show this translate result')}
-              </div>
+            <Content
+              style={{ marginBottom: 2 }}
+              gap={10}
+              flex
+              alignItems={'center'}
+              justifyContent={'space-between'}
+              className={'transparent-font font-size-12'}
+            >
+              {i.source && <SourceRenderer small source={i.source} />}
+              <Content alignItems="center" flex gap={8} style={{ flexShrink: 0 }}>
+                <div>{DateFormat.formatDistanceToNowStrict(i.time, true)}</div>
+                <div
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    setPanelState(s => ({
+                      ...s,
+                      showHistory: false
+                    }))
+                    setTranslateState(s => ({ ...s, currentResult: i }))
+                  }}
+                >
+                  {t('translate.show this translate result')}
+                </div>
+              </Content>
             </Content>
+
+            <div className={ClassName.ellipsisFont(3)}>{i.translatedText.map(i => i.trans).join(' ')}</div>
           </Content>
         ))}
       </Content>
     )
-  }
-  const handleGotoOriginalPlace = (translateResult: TranslateResult, origText: string) => {
-    const setting = getSetting()
-    if (!setting.translate.autoGotoHoverText) return
-    if (translateResult.source?.type === 'pdf') {
-      const { objectId, page } = translateResult.source
-      if (page !== undefined) {
-        Rendevoz.Actions.Open.Pdf.openPdfSearchedText(origText, page, objectId)
-      }
-    }
-    if (translateResult.source?.type === 'webpage') {
-      Rendevoz.Actions.Open.Webpage.openWebpageSelectedText(translateResult.source.objectId, origText)
-    }
   }
   const renderPanel = () => {
     if (translateState.loading) {
@@ -228,39 +207,16 @@ const TranslatePanel = () => {
       )
     }
     return (
-      <Content ref={panelRef} flex auto column gap={8} style={{ overflowY: 'auto', padding: '0px 12px 12px' }}>
+      <Content ref={panelRef} flex auto column gap={6} style={{ overflowY: 'auto', padding: '0px 12px 12px' }}>
         {translateState.currentResult?.source && <SourceRenderer source={translateState.currentResult.source} />}
         {panelState.doubleRowLayout ? (
           <>
-            <div>{t('translate.original text')}</div>
+            <div className={'transparent-font font-size-12 normal-font'}>{t('translate.original text')}</div>
             {translateState.currentResult?.originalText}
-            <div>{t('translate.translated text')}</div>
-            <div style={{ textIndent: '2em' }}>
+            <div className={'transparent-font font-size-12 normal-font'}>{t('translate.translated text')}</div>
+            <div>
               {translateState.currentResult?.translatedText.map(i => (
-                <Tooltip
-                  disable={true}
-                  // disable={!setting.translate.showOrigWhenHoverText}
-                  onVisibleChange={v => {
-                    if (v) {
-                      // handleGotoOriginalPlace(translateState.currentResult!, i.orig)
-                    }
-                  }}
-                  delay={800}
-                  contentTouchable
-                  content={
-                    <div
-                      className={ClassName.description(FontSize['15px'])}
-                      style={{
-                        maxWidth: 400,
-                        textTransform: 'none'
-                      }}
-                    >
-                      {i.orig}
-                    </div>
-                  }
-                >
-                  <p style={{ marginBottom: '0.5em', width: 'fit-content' }}>{i.trans}</p>
-                </Tooltip>
+                <p style={{ marginBottom: '0.5em', width: 'fit-content' }}>{i.trans}</p>
               ))}
             </div>
           </>
@@ -273,32 +229,9 @@ const TranslatePanel = () => {
             {translateState.currentResult?.originalText}
           </div>
         ) : (
-          <div style={{ textIndent: '2em' }}>
+          <div>
             {translateState.currentResult?.translatedText.map(i => (
-              <Tooltip
-                disable={true}
-                // disable={!setting.translate.showOrigWhenHoverText}
-                onVisibleChange={v => {
-                  if (v) {
-                    // handleGotoOriginalPlace(translateState.currentResult!, i.orig)
-                  }
-                }}
-                delay={800}
-                contentTouchable
-                content={
-                  <div
-                    className={ClassName.description(FontSize['15px'])}
-                    style={{
-                      maxWidth: 400,
-                      textTransform: 'none'
-                    }}
-                  >
-                    {i.orig}
-                  </div>
-                }
-              >
-                <p style={{ marginBottom: '0.5em', width: 'fit-content' }}>{i.trans}</p>
-              </Tooltip>
+              <p style={{ marginBottom: '0.5em', width: 'fit-content' }}>{i.trans}</p>
             ))}
           </div>
         )}
@@ -349,35 +282,29 @@ const TranslatePanel = () => {
           gap: 6
         }}
       >
-        <Content
-          flex
-          gap={10}
-          alignItems="center"
-          justifyContent="space-between"
-          className={classnames(
-            ClassName.title(FontSize['16px']),
-            'drag-handle',
-            css({
-              flexShrink: 0
-            })
-          )}
+        <div
+          className={'drag-handle'}
           style={{
+            display: 'flex',
+            justifyContent: 'space-between',
             overflowX: 'auto',
-            whiteSpace: 'nowrap',
             cursor: 'grab',
             flexShrink: 0,
             overflowY: 'hidden',
-            padding: '12px'
+            padding: '8px 8px 0px 12px'
           }}
         >
-          <div>{t('translate.translate panel')}</div>
-          <Content flex gap={6} alignItems="center">
+          <Content flex gap={8} alignItems={'center'}>
+            <Icon size={15} name={'park-translate'} />
+            <div className={'font-size-14 normal-font'}>{t('general.Translator')}</div>
+          </Content>
+          <Content flex gap={6} alignItems="center" className={'transparent-font'}>
             {!panelState.showHistory && (
               <>
                 {!panelState.doubleRowLayout && (
                   <Icon
                     className={ClassName.flatButton(4, '4px')}
-                    size={15}
+                    size={16}
                     data-active={panelState.showOrigin || undefined}
                     onClick={() => {
                       setPanelState(s => ({
@@ -391,7 +318,7 @@ const TranslatePanel = () => {
                 )}
                 <Icon
                   className={ClassName.flatButton(4, '4px')}
-                  size={15}
+                  size={16}
                   data-active={panelState.doubleRowLayout || undefined}
                   onClick={() => {
                     setPanelState(s => ({
@@ -407,7 +334,7 @@ const TranslatePanel = () => {
 
             <Icon
               className={ClassName.flatButton(4, '4px')}
-              size={15}
+              size={16}
               data-active={panelState.showHistory || undefined}
               name="park-history"
               tooltip={t('translate.history')}
@@ -417,7 +344,7 @@ const TranslatePanel = () => {
             />
             <Icon
               className={ClassName.flatButton(4, '4px')}
-              size={15}
+              size={16}
               name="park-close"
               tooltip={t('general.close')}
               onClick={() => {
@@ -425,7 +352,7 @@ const TranslatePanel = () => {
               }}
             />
           </Content>
-        </Content>
+        </div>
         {panelState.showHistory ? renderHistory() : renderPanel()}
       </WithBorder>
     </ResizeAndDrag>
@@ -440,7 +367,16 @@ const SourceRenderer = ({ source, small }: { source: TranslateSource; small?: bo
   const handleNaivgate = async () => {
     const { type, objectId } = source
     const meta = MetaStore.getMetaObjectByObjectId(objectId)
-    meta && Rendevoz.Actions.Open.Meta.openMetaObject(meta.id)
+    if (meta) {
+      if (source.type === 'pdf') {
+        const i = await GlobalInstance.layoutOps?.openObject<'pdf'>(meta.id)
+        if (i && source.page !== undefined) {
+          i.navigateOps?.jumpToPage(source.page)
+        }
+      } else {
+        meta && Rendevoz.Actions.Open.Meta.openMetaObject(meta.id)
+      }
+    }
   }
   useEffect(() => {
     if (source === undefined) {
@@ -478,22 +414,13 @@ const SourceRenderer = ({ source, small }: { source: TranslateSource; small?: bo
   }, [source])
   if (!sourceState?.name) return null
   return (
-    <div>
-      <IconNameItem
-        onClick={handleNaivgate}
-        className={css([
-          {
-            ':hover': {
-              textDecoration: 'underline'
-            }
-          },
-          small && ClassName.description(FontSize['13px'])
-        ])}
-        style={{ cursor: 'pointer' }}
-        icon={sourceState?.icon}
-        name={sourceState?.name}
-      />
-    </div>
+    <IconNameItem
+      onClick={handleNaivgate}
+      className={classnames('transparent-font', small ? 'font-size-12' : 'font-size-13', 'pointer', 'text-hover-underline')}
+      style={{ cursor: 'pointer' }}
+      icon={sourceState?.icon}
+      name={sourceState?.name}
+    />
   )
 }
 export default GlobalTranslateResult

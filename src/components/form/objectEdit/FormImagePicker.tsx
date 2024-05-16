@@ -38,9 +38,9 @@ const FormImagePicker = ({ imageUrl, onChange, name }: { imageUrl?: string; onCh
             upload()
           }
         }}
-        className={ClassName.flatButton()}
+        className={ClassName.flatButton(4, '4px 8px')}
       >
-        <Content gap={8} flex style={{ textTransform: 'capitalize' }}>
+        <Content gap={10} flex style={{ textTransform: 'capitalize' }}>
           {imageUrl ? (
             <>
               <Icon name="park-delete" />

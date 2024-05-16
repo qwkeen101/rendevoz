@@ -1,5 +1,4 @@
 import callback from './callback'
-import fetch from 'node-fetch'
 
 callback('loginBaidudisk', async (code: string) => {
   const url = `https://openapi.baidu.com/oauth/2.0/token?

@@ -11,6 +11,7 @@ const SettingGroup = ({ title, layout, extra, gap = 16 }: { title: string; layou
         style={{
           marginBottom: 16,
           paddingBottom: 8,
+          userSelect: 'none',
           borderBottom: `1px solid ${Colors.Background.Border}`
         }}
         flex

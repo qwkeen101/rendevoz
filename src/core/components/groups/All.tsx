@@ -65,7 +65,9 @@ export default memo(() => {
           canHideGroupsInside: false,
           canDrag: true,
           canHideObjectsInside: false,
-          canDragInside: true
+          canDragInside: true,
+          defaultShowLabels: false,
+          showTemp: false
         }}
         layout={{
           showDeletedMetas: false,

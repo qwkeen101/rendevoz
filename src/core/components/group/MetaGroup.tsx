@@ -86,6 +86,8 @@ export type IMetaGroupProps = {
     onlyOpenIn?: IMetaGroup['openIn']
     mustExistProperties?: number[]
     extraProperties?: MetaGroupProperty[]
+    showTemp?: boolean
+    defaultShowLabels?: boolean
   }
 }
 const MetaGroupInner = ({ value, groupId, layout, title, on, state, styles, onInstanceInitialized }: IMetaGroupProps) => {

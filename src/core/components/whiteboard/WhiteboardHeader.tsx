@@ -17,12 +17,13 @@ const a = selectAtom(
   WhiteboardStateAtom,
   s => ({
     currentTool: s.currentTool,
-    readOnly: s.readOnly
+    readOnly: s.readOnly,
+    layout: s.layout
   }),
   isEqual
 )
 export default memo(() => {
-  const { currentTool, readOnly } = useAtomValue(a)
+  const { currentTool, readOnly, layout } = useAtomValue(a)
   const setWhiteboardState = useSetAtom(WhiteboardStateAtom)
   const [rightBarState, setRightBarState] = useAtom(WhiteboardSidebarStateAtom)
   const [exportState, setExportState] = useState({
@@ -45,8 +46,8 @@ export default memo(() => {
         boxShadow: Colors.Background.BorderBoxShadow,
         right: 24,
         width: 'fit-content',
-        padding: '6px',
-        borderRadius: 8
+        padding: 5,
+        borderRadius: 6
       }}
     >
       {!readOnly && (
@@ -192,17 +193,19 @@ export default memo(() => {
         name={'park-download-four'}
         className={ClassName.flatButton(4, '5px')}
       />
-      <Tooltip content={'Contents'}>
-        <Icon
-          name={'park-view-list'}
-          className={ClassName.flatButton(4, '5px')}
-          onClick={() => {
-            setRightBarState(s => ({ ...s, visible: s.active === 'outline' ? !s.visible : true, active: 'outline' }))
-          }}
-          size={16}
-        />
-      </Tooltip>
-      <WhiteboardSettings />
+      {layout?.showContents !== false && (
+        <Tooltip content={'Contents'}>
+          <Icon
+            name={'park-view-list'}
+            className={ClassName.flatButton(4, '5px')}
+            onClick={() => {
+              setRightBarState(s => ({ ...s, visible: s.active === 'outline' ? !s.visible : true, active: 'outline' }))
+            }}
+            size={16}
+          />
+        </Tooltip>
+      )}
+      {layout?.showSetting !== false && <WhiteboardSettings />}
     </Content>
   )
 })

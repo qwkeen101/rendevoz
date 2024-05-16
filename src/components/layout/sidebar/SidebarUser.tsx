@@ -53,11 +53,9 @@ const SidebarUser = memo(() => {
               visible={popoverVisible}
               onClickOutside={togglePopoverVisible}
               content={<UserPopover onUpdateUser={toggleUpdateUserVisible} onUpgradePlan={toggleUpgradPlanVisible} />}
-              positions={['bottom']}
-              boundaryElement={document.body}
-              boundaryInset={18}
-              align={'end'}
-              boundaryTolerance={18}
+              positions={['right']}
+              padding={10}
+              align={'start'}
             >
               <Content flex onClick={togglePopoverVisible} alignItems="center" style={{ cursor: 'pointer' }}>
                 {user?.photoURL && <Image width={25} src={user.photoURL} className={css({ borderRadius: 4 })} />}

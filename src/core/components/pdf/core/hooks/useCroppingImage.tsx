@@ -17,7 +17,6 @@ const useCroppingImage = (containerRef: RefObject<HTMLElement>, onImageCropped: 
       py: number
     }
   }>()
-  const setPdfState = useSetAtom(PdfStateAtom)
   const getRelativePoint = (e: PointerEvent, bounding: DOMRect) => {
     const { clientX, clientY } = e
     const { left, top, width, height } = bounding
@@ -62,8 +61,6 @@ const useCroppingImage = (containerRef: RefObject<HTMLElement>, onImageCropped: 
           container.removeEventListener('pointermove', pointerMoveHandler)
           document.removeEventListener('pointerup', pointerUpHandler)
           _pointerUpHandler()
-          setPdfState(s => ({ ...s, croppingImage: false }))
-          setSelectBoxState(undefined)
         }
 
         container.addEventListener('pointerdown', pointerDownHandler)
@@ -100,7 +97,8 @@ const useCroppingImage = (containerRef: RefObject<HTMLElement>, onImageCropped: 
   }
   return {
     isCroppingImage,
-    renderSelectBox
+    renderSelectBox,
+    clearSelectBox: () => setSelectBoxState(undefined)
   }
 }
 

@@ -11,7 +11,7 @@ import { ClassName, MetaObject } from 'rendevoz'
 import _ from 'lodash'
 import Select from '@/components/base/select'
 import { Rendevoz } from '@/core/rendevoz'
-import { ObjectActionPopover, useDropObjectArea, useRenderObject } from '@/core'
+import { ObjectActionMenu, useDropObjectArea, useRenderObject } from '@/core'
 import { MetaLink } from '~/typings'
 
 export const RelatedPanel = memo(({ metaId, style }: { metaId: number; style?: CSSProperties }) => {
@@ -351,7 +351,7 @@ const RelatedItem = ({ metaId, linkId }: { metaId: number; linkId: number }) => 
           renderOnParent={false}
           content={setV => (
             <WithBorder onPointerEnter={e => e.stopPropagation()} onPointerMove={e => e.stopPropagation()} width={200}>
-              <ObjectActionPopover
+              <ObjectActionMenu
                 onClose={() => setV(false)}
                 onDeleteLink={() => {
                   MetaStore.deleteMetaLink(linkId, true)

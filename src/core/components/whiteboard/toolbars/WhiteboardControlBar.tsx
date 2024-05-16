@@ -57,9 +57,10 @@ const WhiteboardControlBar = memo(() => {
         <>
           {(showUndo || transformHistory.redos.length > 0) && (
             <WithBorder
+              borderRadius={6}
               borderBoxShadow
-              padding={6}
-              style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 8 }}
+              padding={5}
+              style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 7 }}
             >
               {showUndo && (
                 <Tooltip content={<TooltipWithCmd cmd={'Shift+E'} name={t('whiteboard.Undo view change')} />}>
@@ -87,8 +88,9 @@ const WhiteboardControlBar = memo(() => {
           )}
           <WithBorder
             borderBoxShadow
-            padding={6}
-            style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 8 }}
+            borderRadius={6}
+            padding={5}
+            style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 7 }}
           >
             <Tooltip content={<TooltipWithCmd cmd={'Cmd+Z'} name={t('general.Undo')} />}>
               <Icon
@@ -117,8 +119,9 @@ const WhiteboardControlBar = memo(() => {
       )}
       <WithBorder
         borderBoxShadow
-        padding={6}
-        style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 8 }}
+        padding={5}
+        borderRadius={6}
+        style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 7 }}
       >
         <Icon
           onClick={() => {

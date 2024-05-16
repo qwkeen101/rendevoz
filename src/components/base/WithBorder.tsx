@@ -12,13 +12,12 @@ interface WithBorderProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivElemen
   onClick?: MouseEventHandler
   contentEditable?: boolean
   padding?: CSSProperties['padding']
-  blur?: boolean
   width?: number
   borderBoxShadow?: boolean
 }
 
 const WithBorder: FC<PropsWithChildren<WithBorderProps>> = (
-  { borderRadius = 8, width, borderBoxShadow, blur, children, style, onClick, className, contentEditable, padding, ...rest },
+  { borderRadius = 8, width, borderBoxShadow, children, style, onClick, className, contentEditable, padding, ...rest },
   ref
 ) => {
   const DefaultBorder: CSSProperties = {
@@ -36,14 +35,7 @@ const WithBorder: FC<PropsWithChildren<WithBorderProps>> = (
     onClick?.(e)
   }
   return (
-    <div
-      ref={ref}
-      {...rest}
-      onClick={handleClick}
-      contentEditable={contentEditable}
-      className={classNames(className, blur && ClassName.Background.pseudoBlubBackground)}
-      style={DefaultBorder}
-    >
+    <div ref={ref} {...rest} onClick={handleClick} contentEditable={contentEditable} className={className} style={DefaultBorder}>
       {children}
     </div>
   )

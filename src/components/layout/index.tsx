@@ -38,6 +38,7 @@ export const defaultLayout = {
     currentFocusedPanelId: 'panel1',
     globalPanelExtra: () => (
       <div
+        className={'transparent-font'}
         style={{
           height: '100%',
           padding: '0px 4px',

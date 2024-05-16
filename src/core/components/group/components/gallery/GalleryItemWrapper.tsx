@@ -3,8 +3,7 @@ import { MetaStore } from '@/api/stores'
 import { Content, Icon, Tooltip } from '@/components'
 import ImageItem from '@/core/components/group/components/gallery/items/ImageItem'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
-import { useIsIn, useMergedRef, useSelectAtomValue } from '@/hooks'
-import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
+import { useIsIn, useMergedRef } from '@/hooks'
 import SelectProp from '@/core/object/renderer/properties/SelectProp'
 import { ClassName } from 'rendevoz'
 import MultiSelectProp from '@/core/object/renderer/properties/MultiSelectProp'
@@ -336,6 +335,7 @@ export default memo(
           </Tooltip>
         )
       }
+      const labelDetailsMode = meta.type.includes('Label') && ['content', 'cover or content'].includes(showCover)
       return (
         <Content
           fullWidth
@@ -433,7 +433,7 @@ export default memo(
               />
             </Content>
             {renderIndicator()}
-            {(showCover === 'content' || thumbnailMode || (showCover === 'cover or content' && !meta.coverImgSrc)) && (
+            {(labelDetailsMode || showCover === 'content' || thumbnailMode || (showCover === 'cover or content' && !meta.coverImgSrc)) && (
               <ContentDisplayer
                 onClick={e => {
                   if (isEditing) return
@@ -445,6 +445,7 @@ export default memo(
               />
             )}
             {(showCover === 'cover' || (showCover === 'cover or content' && meta.coverImgSrc)) &&
+              !labelDetailsMode &&
               !thumbnailMode &&
               (isEditing || !hideCoverIfEmpty || meta.coverImgSrc) && (
                 <ImageItem
@@ -464,7 +465,7 @@ export default memo(
               )}
             {(!thumbnailMode || (thumbnailMode && isEditing)) && (
               <div
-                style={{ width: '100%', flex: 1 }}
+                style={{ width: '100%', flex: 1, paddingTop: labelDetailsMode && !isEditing ? '6px' : 0 }}
                 onClick={e => {
                   if (isEditing) return
                   if (e.target instanceof HTMLElement && e.target.closest('[role="prop"]')) return
@@ -494,7 +495,7 @@ export default memo(
                     }}
                     placeholder={t('general.Type a name')}
                   ></AutosizeTextarea>
-                ) : (
+                ) : labelDetailsMode ? null : (
                   <div
                     style={{
                       padding: '8px 10px 2px',

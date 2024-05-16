@@ -6,35 +6,44 @@ import { Colors } from '@/consts'
 const LabelNoteRenderer = ({
   labelId,
   style = {
-    top: -22,
-    right: -4,
-    position: 'absolute'
+    top: -8,
+    left: -4,
+    padding: 4,
+    boxShadow: 'var(--border-box-shadow)',
+    borderRadius: 4,
+    fontSize: 13,
+    maxWidth: 360,
+    width: 'max-content',
+    wordBreak: 'break-all',
+    whiteSpace: 'pre-wrap',
+    zIndex: 100,
+    gap: 3,
+    display: 'flex',
+    flexDirection: 'column',
+    transform: 'translateY(-100%)',
+    position: 'absolute',
+    pointerEvents: 'auto',
+    cursor: 'auto',
+    lineHeight: 1.4
   }
 }: {
   labelId: number
   style?: CSSProperties
 }) => {
-  const { label, renderName, renderDescription } = useRenderLabel({ objectId: labelId, type: 'pdfLabel' })
-  if (!label?.name) return null
+  const { label, renderTags, labelMeta } = useRenderLabel({ objectId: labelId, type: 'pdfLabel' })
+  if (!label?.name && !labelMeta?.tags?.length) return null
   return (
-    <AnimatePopover
-      positions={['top', 'right']}
-      content={
-        <WithBorder style={{ maxWidth: 240 }} onClick={e => e.stopPropagation()} padding={'8px 8px 4px 8px'}>
-          {renderName({})}
-          {renderDescription({})}
-        </WithBorder>
-      }
+    <WithBorder
+      className={'cancel'}
+      onClickCapture={e => {
+        e.stopPropagation()
+      }}
+      onPointerDownCapture={e => e.stopPropagation()}
+      style={style}
     >
-      <Icon
-        name={'park-info'}
-        style={{ ...style, cursor: 'pointer', pointerEvents: 'auto', zIndex: 10, color: Colors.Common.SelectColor }}
-        onClick={e => {
-          e.preventDefault()
-          e.stopPropagation()
-        }}
-      />
-    </AnimatePopover>
+      {label?.name}
+      {renderTags(undefined, true)}
+    </WithBorder>
   )
 }
 

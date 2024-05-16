@@ -57,7 +57,7 @@ const IconWithPopover: FC<Props> = (
     contentDraggable,
     disableNudge,
     tooltip,
-    boundaryInset = 20,
+    boundaryInset = 10,
     disableCloseOutside,
     disableIntersection,
     strokeWidth,

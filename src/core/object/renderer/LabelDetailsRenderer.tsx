@@ -1,7 +1,7 @@
 // for whiteboard
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { Content, Icon, Tooltip } from '@/components'
-import { CSSProperties, memo, ReactElement, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { CSSProperties, memo, ReactElement, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { ILabel, MetaObject } from '~/typings'
 import AutosizeTextarea from '@/components/custom/input/AutoSizeTextArea'
 import { ClassName } from 'rendevoz'
@@ -11,6 +11,8 @@ import { Colors } from '@/consts'
 import { useTranslation } from 'react-i18next'
 import Video from '@/core/components/media/wrappers/Video'
 import Audio from '@/core/components/media/wrappers/Audio'
+import classnames from 'classnames'
+import { LabelDetailsContext } from '@/core/object/renderer/LabelDetailsContext'
 
 export default memo(
   ({
@@ -36,6 +38,7 @@ export default memo(
     sourceStyle?: CSSProperties
     imageStyle?: CSSProperties | ((m?: MetaObject) => CSSProperties)
   }) => {
+    const context = useContext(LabelDetailsContext)
     const metaObject = MetaStore.useValue(metaId)
     const { t } = useTranslation()
     const label = ObjectStore(metaObject?.type).useValue(metaObject?.objectId) as ILabel | undefined
@@ -135,8 +138,8 @@ export default memo(
         setDisplayer(
           <img
             style={{
-              aspectRatio: '16 / 9',
-              objectFit: 'cover',
+              aspectRatio: metaObject?.type === 'videoLabel' ? '16 / 9' : undefined,
+              objectFit: metaObject?.type === 'videoLabel' ? 'cover' : 'contain',
               ...s
             }}
             src={metaObject.coverImgSrc}
@@ -151,6 +154,7 @@ export default memo(
       renderImgOrLabel()
     }, [metaObject, label, showVideo, showAudio])
     const audioLabelMode = metaObject?.type === 'audioLabel' && showAudio
+    const noteVisible = !((showAddNote === false || context.showAddNote === false) && !metaObject?.name)
     return (
       <Content
         contentEditable={false}
@@ -163,11 +167,12 @@ export default memo(
         onPointerMove={() => !showToolbar && setShowToolbar(true)}
       >
         {displayer}
-        {!audioLabelMode && (
+        {!audioLabelMode && context.showSource !== false && (
           <Content
             flex
             alignItems={'center'}
             justifyContent={'space-between'}
+            className={'font-size-13'}
             style={{
               padding: '8px 12px',
               ...sourceStyle
@@ -218,17 +223,17 @@ export default memo(
             }}
             style={{
               width: '100%',
-              marginBottom: 8,
+              marginBottom: noteVisible && context.showSource !== false ? 8 : 0,
               display: 'block',
               padding: '4px 10px 4px 10px',
               resize: 'none',
               lineHeight: 1.57,
-              borderLeft: `2px solid ${Colors.getAdaptColor(label.color) || 'var(--emphasis)'}`,
-              background: Colors.Background.ButtonHover
+              borderLeft: `3px solid ${Colors.getAdaptColor(label.color) || 'var(--emphasis)'}`
+              // background: Colors.Background.ButtonHover
             }}
           ></AutosizeTextarea>
         )}
-        {showAddNote === false && !metaObject?.name ? null : (
+        {noteVisible ? (
           <AutosizeTextarea
             ref={inputRef}
             onBlur={e => {
@@ -242,7 +247,7 @@ export default memo(
               resize: 'none',
               display: 'block',
               width: '100%',
-              padding: audioLabelMode ? '8px 12px 8px' : '0px 12px 8px',
+              padding: audioLabelMode || context.showSource === false ? '8px 12px 8px' : '0px 12px 8px',
               lineHeight: 1.57,
               ...noteStyle
             }}
@@ -250,7 +255,7 @@ export default memo(
             placeholder={t('general.Add note')}
             className={ClassName.noStyleInput}
           />
-        )}
+        ) : null}
       </Content>
     )
   }

@@ -6,9 +6,12 @@ import { getSetting, SettingAtom } from '@/core'
 import { debounce, isEqual } from 'lodash'
 import GlobalStates from '@/api/global/states'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
+import { initializeFileSizeMap } from '@/api/sync/file/listNeedUpload'
 
 export default async () => {
   try {
+    await initializeFileSizeMap('files')
+    await initializeFileSizeMap('imgs')
     const setting = await KeyvalueStore.fetchOne('userSetting')
     if (setting && setting.sync.enableSync && setting.sync.enableAutoSync && setting.sync.conflictResolved) {
       GlobalStates.setState('loading', s => ({ ...s, currentState: 'loading remote data' }))

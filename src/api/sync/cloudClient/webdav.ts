@@ -107,13 +107,13 @@ const WebdavSync: ICloudSyncClient & {
     await Promise.all(Array.from(needCheckDir.values()).map(async p => await checkDirCreated(p, true)))
     await Promise.all(
       arr.map(async p => {
-        if (maxSize && opts?.skipSetting !== true) {
-          const stat = await FileSystem.fs.stat('rendefile://' + p)
-          if (stat.size / (1024 * 1024) > maxSize) {
-            opts?.onProgress?.('skipped', p, stat.size)
-            return
-          }
-        }
+        // if (maxSize && opts?.skipSetting !== true) {
+        //   const stat = await FileSystem.fs.stat('rendefile://' + p)
+        //   if (stat.size / (1024 * 1024) > maxSize) {
+        //     opts?.onProgress?.('skipped', p, stat.size)
+        //     return
+        //   }
+        // }
         const file = await FileSystem.fs.readFile(`rendefile://` + p)
         if (file) {
           try {

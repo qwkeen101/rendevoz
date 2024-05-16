@@ -74,7 +74,6 @@ const ScrollWrapperClass = css({
   position: 'relative',
   display: 'flex',
   flexDirection: 'column',
-  transition: 'width 0.27s ease',
   overflowAnchor: 'none',
   alignItems: 'center',
   '::highlight(secondary-highlight)': {

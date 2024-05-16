@@ -1,7 +1,7 @@
 import { PropertyFilterRule } from '~/typings'
 import { useTranslation } from 'react-i18next'
 import { AnimatePopover, Content, Selector, WithBorder } from '@/components'
-import { commonStyle, FilterSelect } from '@/core/object/filter/BetterFilter'
+import BetterFilter from '@/core/object/filter/BetterFilter'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { Colors } from '@/consts'
 import { ClassName } from 'rendevoz'
@@ -38,8 +38,8 @@ export default function MultiOptionFilter({
     }
   ]
   return (
-    <Content flex gap={8}>
-      <FilterSelect options={filterOptions} value={rule.type} onSelect={v => onChange({ ...rule, type: v })} />
+    <Content flex gap={BetterFilter.horizontalGap}>
+      <BetterFilter.FilterSelect options={filterOptions} value={rule.type} onSelect={v => onChange({ ...rule, type: v })} />
       {!['empty', 'not empty'].includes(rule.type) && (
         <AnimatePopover
           positions={['bottom']}
@@ -59,7 +59,7 @@ export default function MultiOptionFilter({
             </WithBorder>
           }
         >
-          <Content flex gap={4} style={{ ...commonStyle, flexWrap: 'wrap' }}>
+          <Content flex gap={4} style={{ ...BetterFilter.commonStyle, flexWrap: 'wrap' }}>
             {selectedOptions.length ? (
               selectedOptions.map(i => (
                 <div

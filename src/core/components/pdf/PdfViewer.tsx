@@ -10,14 +10,14 @@ import usePdfDrag from './hooks/usePdfDrag'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { waitFor } from '@/utils/functions'
 import DownloadRemotePdf from '@/core/components/pdf/core/utils/downloadRemotePdf'
-import { DownloadProgress, formatBytes } from '@/utils/fetchProcess'
 import { Content } from '@/components'
 import { Colors } from '@/consts'
-import PdfHeader from '@/core/components/pdf/components/PdfHeader'
+import Header from '@/core/components/pdf/components/Header'
 import LabelToolbarRenderer from '@/core/components/pdf/components/label/LabelToolbarRenderer'
 import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 import { useSetAtom } from 'jotai'
 import { PdfStateAtom } from '@/core/components/pdf/hooks/usePdfState'
+import QuickLabelPopover from '@/core/components/pdf/components/label/QuickLabelPopover'
 
 export interface PdfViewerProps {
   documentId: number
@@ -124,10 +124,8 @@ export const PdfViewer: FC<PdfViewerProps> = memo(
     )
     const handleRangeChange = useMemoizedFn((range?: Range & { progress: number; currentIndex: number }) => {
       if (range) {
-        const progress = range?.progress || 0
         on?.({
           type: 'readProgressChange',
-          readProgress: progress,
           lastReadPage: range.currentIndex
         })
       }
@@ -150,8 +148,9 @@ export const PdfViewer: FC<PdfViewerProps> = memo(
     }, [])
     return (
       <div ref={viewboxRef} className={'viewerBox'}>
-        {layout?.showHeader !== false && <PdfHeader documentId={documentId} />}
+        {layout?.showHeader !== false && <Header id={documentId} />}
         <LabelToolbarRenderer />
+        <QuickLabelPopover />
         {downloadState?.isDownloading && (
           <Content flex column alignItems={'center'} fullWidth fullHeight justifyContent={'center'} gap={10}>
             <div className={'transparent-font'}>Downloading PDF...</div>
@@ -184,6 +183,7 @@ export const PdfViewer: FC<PdfViewerProps> = memo(
             renderPage={renderPage}
             renderAnnotation={renderAnnotation}
             onRangeChange={handleRangeChange}
+            thumbnailWorker={layout?.showHeader !== false}
             initialPage={state?.initialPage}
             transformScale={transformScale}
           />

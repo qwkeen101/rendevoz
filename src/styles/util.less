@@ -11,6 +11,12 @@
   color: var(--select-color);
   background-color: var(--select-color-transparent-light) !important;
 }
+.hover-active-button{
+  color: var(--font-s-transparent) !important;
+  &:hover{
+    color: var(--font-primary) !important;
+  }
+}
 .bg-secondary{
   background: var(--background-secondary);
 }
@@ -98,6 +104,14 @@
   overflow: hidden;
   word-break: break-all;
 }
+.ellipsis-font-3 {
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-all;
+}
 .normal-font {
   font-weight: 500;
 }
@@ -106,6 +120,11 @@
 }
 .pointer {
   cursor: pointer;
+}
+.text-hover-underline{
+  &:hover{
+    text-decoration: underline;
+  }
 }
 .border-bottom {
   border-bottom: 1px solid var(--border-background);

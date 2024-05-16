@@ -97,10 +97,15 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLDivElement, TextareaA
       onInput={e => {
         console.log(e)
         edited.current = true
+        let text = e.currentTarget.innerText || ''
+        if (text === '\n') {
+          e.currentTarget.innerText = ''
+          text = ''
+        }
         if (debounceChange) {
-          handleChange.run(e.currentTarget.innerText || '')
+          handleChange.run(text)
         } else {
-          onChange?.(e.currentTarget.innerText || '')
+          onChange?.(text)
         }
       }}
       onFocus={e => {

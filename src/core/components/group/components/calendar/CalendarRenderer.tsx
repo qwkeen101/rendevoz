@@ -104,6 +104,9 @@ export default memo(({ value }: { value?: MetaGroupChild[] }) => {
               borderBottom: '1px solid var(--border-background)',
               fontWeight: 400
             },
+            '.rbc-selected': {
+              backgroundColor: 'transparent !important'
+            },
             '.rbc-month-row + .rbc-month-row': {
               borderTop: '1px solid var(--border-background)'
             },

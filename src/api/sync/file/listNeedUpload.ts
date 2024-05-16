@@ -1,12 +1,14 @@
 import FileSystem from '@/api/fileSystem'
-import SyncAPI from '@/api/sync'
 import { ISystemFile } from '~/typings/fs'
 
 const LocalFileSizeMap = new Map<string, number>()
+export const initializeFileSizeMap = async (dirName: string) => {
+  const allFiles = await FileSystem.fs.readdir(dirName)
+  allFiles.files.forEach(f => {
+    LocalFileSizeMap.set(`${dirName}/${f.name}`, f.size)
+  })
+}
 export default async (dirName: string, lastUploaded?: number) => {
-  console.log(LocalFileSizeMap)
-  const client = SyncAPI.cloudClient()
-  if (!client) return []
   const allFiles = await FileSystem.fs.readdir(dirName)
   const leftFiles = lastUploaded ? allFiles.files.filter(i => i.mtime > lastUploaded) : allFiles.files
   const finalFiles = leftFiles.filter(i => {

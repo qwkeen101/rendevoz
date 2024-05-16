@@ -24,6 +24,9 @@ export type IWhiteboardProps = {
   readOnly?: boolean
   onRename?: (name: string) => void
   name?: string
+  state?: {
+    enableClickNodeWhenPanning?: boolean
+  }
   layout?: {
     showRename?: boolean
     showControlBar?: boolean
@@ -31,6 +34,7 @@ export type IWhiteboardProps = {
     showLeftToolbar?: boolean
     showObjectSidebar?: boolean
     showSetting?: boolean
+    showContents?: boolean
   }
 }
 

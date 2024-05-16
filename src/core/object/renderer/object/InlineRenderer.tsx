@@ -2,13 +2,12 @@ import { CSSProperties, useEffect, useRef } from 'react'
 import { useUpdate } from 'react-use'
 import Colors from '../../../../consts/colors'
 import { Rendevoz } from '@/core/rendevoz'
-import { css } from '@emotion/css'
 import ClassName from '@/styles/classNames'
 import { MetaObject } from '~/typings'
 import { useTranslation } from 'react-i18next'
 import classnames from 'classnames'
 import { AnimatePopover, IconWithPopover, WithBorder } from '@/components'
-import { ObjectActionPopover } from '@/core'
+import { ObjectActionMenu } from '@/core'
 import { GlobalInstance } from '@/hooks'
 
 export type InlineRendererProps = {
@@ -64,7 +63,7 @@ export default (
       style={{
         display: 'flex',
         gap: 6,
-        alignItems: 'baseline',
+        alignItems: 'center',
         flexDirection: reverse ? 'row-reverse' : 'row',
         ...containerStyle
       }}
@@ -90,7 +89,7 @@ export default (
         align={'start'}
         content={setV => (
           <WithBorder>
-            <ObjectActionPopover onClose={() => setV(false)} metaObjectId={metaObject.id} />
+            <ObjectActionMenu onClose={() => setV(false)} metaObjectId={metaObject.id} />
           </WithBorder>
         )}
       >
@@ -111,7 +110,6 @@ export default (
           className={classnames('hover-link', ClassName.ellipsisFont(ellipsisLine || 2))}
           style={{
             color: metaObject?.color,
-            textTransform: 'none',
             textDecoration: showUnderline === false ? 'none' : undefined
           }}
         >
@@ -125,8 +123,8 @@ export default (
           fontSize: 12,
           whiteSpace: 'nowrap',
           lineHeight: 1,
-          padding: '3px 8px',
-          margin: 'auto 0'
+          padding: '3px 6px',
+          margin: 'auto 0 auto 4px'
         }}
         className={ClassName.objectTag}
       >
@@ -165,7 +163,7 @@ export default (
                 e.stopPropagation()
               }}
             >
-              <ObjectActionPopover onClose={() => setV(false)} metaObjectId={metaObject.id} />
+              <ObjectActionMenu onClose={() => setV(false)} metaObjectId={metaObject.id} />
             </WithBorder>
           )}
         ></IconWithPopover>

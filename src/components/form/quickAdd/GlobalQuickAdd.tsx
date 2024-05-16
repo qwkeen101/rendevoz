@@ -2,23 +2,25 @@ import { assignProperties } from '@/utils'
 import { GlobalInstance } from '@/hooks'
 import { memo, useState } from 'react'
 import { Modal } from '@/components'
-import QuickAddForm from '@/components/form/quickAdd/QuickAddForm'
+import QuickAddForm, { AvailableQuickAdd } from '@/components/form/quickAdd/QuickAddForm'
 
 export default memo(() => {
   const [quickAddState, setQuickAddState] = useState<{
     visible: boolean
     metaId?: number[]
+    defaultVisible?: AvailableQuickAdd
   }>({
     visible: false
   })
   assignProperties(GlobalInstance, {
     metaOps: {
       ...GlobalInstance.metaOps,
-      quickAdd: metaId => {
+      quickAdd: (metaId, target) => {
         const idArr = Array.isArray(metaId) ? metaId : [metaId]
         setQuickAddState({
           visible: true,
-          metaId: idArr
+          metaId: idArr,
+          defaultVisible: target
         })
       }
     }
@@ -29,12 +31,12 @@ export default memo(() => {
       zIndex={8000}
       visible={quickAddState.visible}
       onClose={() => {
-        setQuickAddState(s => ({ ...s, visible: false }))
+        setQuickAddState(s => ({ ...s, visible: false, defaultVisible: undefined }))
       }}
       enableClickEvent={true}
     >
       {quickAddState.metaId && (
-        <QuickAddForm onClose={() => setQuickAddState(s => ({ ...s, visible: false }))} currentMetaId={quickAddState.metaId} />
+        <QuickAddForm defaultVisible={quickAddState.defaultVisible} onClose={() => setQuickAddState(s => ({ ...s, visible: false, defaultVisible: undefined }))} currentMetaId={quickAddState.metaId} />
       )}
     </Modal>
   )

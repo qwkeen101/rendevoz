@@ -3,7 +3,7 @@ import { Content, Icon, AnimatePopover, WithBorder } from '@/components'
 import { useTranslation } from 'react-i18next'
 import { Rendevoz } from '@/core/rendevoz'
 import { ClassName } from 'rendevoz'
-import { ObjectActionPopover } from '@/core'
+import { ObjectActionMenu } from '@/core'
 
 export default ({ metaId }: { metaId: number }) => {
   const parentItems = MetaStore.useIndexedMetaObjects()?.metaAttachmentIdToMetaIdsMap.get(metaId)
@@ -53,7 +53,7 @@ export default ({ metaId }: { metaId: number }) => {
                 padding={10}
                 content={setV => (
                   <WithBorder>
-                    <ObjectActionPopover onClose={() => setV(false)} metaObjectId={i.id} />
+                    <ObjectActionMenu onClose={() => setV(false)} metaObjectId={i.id} />
                   </WithBorder>
                 )}
               >

@@ -25,7 +25,7 @@ const RecentlyViewed = ({ onClose, visible }: { onClose: VoidFunction; visible: 
       {recentlyViewed.map(i => (
         <Button.IconButton
           icon={Rendevoz.Utils.Object.getMetaObjectIcon(i.type)}
-          text={i.name || i.placeholderName}
+          text={i.name || i.placeholderName || t('general.Unnamed')}
           key={i.id}
           onClick={() => {
             Rendevoz.Actions.Open.Meta.openMetaObject(i.id)

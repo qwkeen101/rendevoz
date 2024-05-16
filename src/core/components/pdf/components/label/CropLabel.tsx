@@ -88,7 +88,10 @@ const CropLabel = ({ labelId, pageSize, scale }: { labelId: number; pageSize: Pa
           boxShadow: `0 0 0 2px ${label.color === 'rgba(39, 158, 255)' ? 'rgba(39, 158, 255)' : Colors.getAdaptColor(label.color)}`,
           background: currentHighlightLabelId === labelId ? Colors.Common.SelectColorTransparent : undefined
         }}
-      ></ResizeAndDrag>
+        cancel={'.cancel'}
+      >
+        <LabelNoteRenderer labelId={labelId} />
+      </ResizeAndDrag>
     )
   }
 

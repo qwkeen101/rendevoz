@@ -5,10 +5,12 @@ import { useMediaInstance } from '@/core/components/media/hooks/useMediaInstance
 import { IMediaState } from '@/core/components/media/hooks/useMediaState'
 import { defaultRangeExtractor, Range } from '@tanstack/react-virtual'
 import { useMemoizedFn } from '@/hooks'
+import { useTranslation } from 'react-i18next'
 
 type Subtitle = Required<IMediaState>['subtitles'][0]
 const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subtitles']) => {
   const instance = useMediaInstance()
+  const { t } = useTranslation()
   const [isSelecting, setIsSelecting] = useState(false)
   const [addLabelState, setAddLabelState] = useState<
     | {
@@ -173,8 +175,8 @@ const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subt
                 setAddLabelState(undefined)
               }, 500)
             }}
-            text={'Add as label'}
-            icon={'park-label'}
+            text={t('general.Highlight')}
+            icon={'park-high-light'}
           />
         </WithBorder>
       }

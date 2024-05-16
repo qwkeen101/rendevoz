@@ -1,16 +1,14 @@
 import { FC, useEffect, useRef, useState } from 'react'
 import { GlobalInstance } from '@/hooks'
-import { Button, Content, Menu } from '@/components'
+import { Content, Menu } from '@/components'
 import { MetaStore } from '@/api/stores'
 import { useTranslation } from 'react-i18next'
 import { Rendevoz } from '@/core/rendevoz'
 import isHotkey from 'is-hotkey'
-import KeyvalueStore from '@/api/stores/keyvalue.store'
 import calculateContains from '@/core/object/objectList/calculateContains'
-import updateSidebarState from '@/components/layout/sidebar/updateSidebarState'
 import useSidebarDatabaseState from '@/components/layout/sidebar/useSidebarDatabaseState'
 
-export const ObjectActionPopover: FC<
+const ObjectActionMenu: FC<
   Partial<{
     onClose: VoidFunction
     onJump: VoidFunction
@@ -284,3 +282,5 @@ export const ObjectActionPopover: FC<
     </Content>
   )
 }
+
+export default ObjectActionMenu

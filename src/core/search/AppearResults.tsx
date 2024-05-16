@@ -14,7 +14,7 @@ import { Node } from 'slate'
 export default memo(({ related }: { related?: SearchRelated }) => {
   if (!related) return null
   const r = Object.values(related).flat(1)
-  console.log(r)
+  r.sort((a, b) => b.children.length - a.children.length)
   return (
     <VirtualList
       style={{
@@ -47,7 +47,7 @@ const Wrapper = ({ item }: { item: SearchRelatedResult }) => {
   return null
 }
 const ParentChildItem = ({ item, type }: { item: SearchRelatedResult; type: 'group' | 'whiteboard' | 'note' }) => {
-  const [toggled, setToggled] = useState(false)
+  const [toggled, setToggled] = useState(true)
   if (item.children.length === 0) return null
   return (
     <Content flex column>

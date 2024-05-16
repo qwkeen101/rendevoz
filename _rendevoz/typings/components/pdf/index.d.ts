@@ -1,21 +1,19 @@
 import 'fuzzysort'
 import { PDFDocumentProxy } from 'pdfjs-dist'
 import { ITextLayerInstance } from './core/layer'
-import { Box, IPdfLabel } from '~/typings'
+import { Box, IPdfLabel, XYPosition } from '~/typings'
 import { PageSize } from './core/page'
 import { Virtualizer } from '@tanstack/react-virtual'
+import { Atom, WritableAtom } from 'jotai/vanilla/atom'
+import { PrimitiveAtom } from 'jotai'
 
 type NavigateOps = {
   back: VoidFunction
   forward: VoidFunction
   insertHistory: (offset: number) => void
   // percent: 0 - 1
-  jumpToPage: (
-    pageIndex: number,
-    align?: 'start' | 'center',
-    offset?: number
-  ) => void
-  jumpToLabel: (labelId: number) => Promise<void>
+  jumpToPage: (pageIndex: number, align?: 'start' | 'center', offset?: number) => void
+  jumpToLabel: (labelId: number, openInSidebar?: boolean) => Promise<void>
   jumpToDest: (dest: string | any[]) => Promise<void>
   scrollBy: (y: number) => void
   // percent 0 - 1
@@ -41,6 +39,15 @@ type ActionsOps = {
   fitWidth: VoidFunction
   doublePage: VoidFunction
 }
+
+export type IPDFTextLayerOps = {
+  clear: VoidFunction
+  // index: multiple texts
+  highlightText: (text: string, index?: number) => void
+}
+export type IPDFPageLayerOps = {
+  clearCrop: VoidFunction
+}
 export type IPDFEvent =
   | {
       type: 'doublePage'
@@ -48,16 +55,20 @@ export type IPDFEvent =
     }
   | {
       type: 'readProgressChange'
-      readProgress: number
       lastReadPage: number
     }
   | {
       type: 'scaleChange'
       value: number
     }
+
+type LabelOps = {
+  openEditLabelPopover: (labelDetails: Partial<IPdfLabel>, boundingBox: Box) => void
+}
 export type IPDFInstance = Partial<{
   navigateOps: NavigateOps
   actionOps: ActionsOps
+  labelOps: LabelOps
   on: (e: IPDFEvent) => void
   currentFocusLabelId: number
   getPdfId: () => number
@@ -67,12 +78,13 @@ export type IPDFInstance = Partial<{
     | {
         searchText: string
         pageIndex: number
+        num: number
       }[]
     | undefined
   // image path, box: relative rect
   capturePageImage: (pageIndex: number, box?: Box) => Promise<string | undefined>
   jumpToLabelInSidebar: (labelId: number) => void
-  highlightText: (str: string, pageIndex: number) => Promise<void>
+  highlightText: (str: string, pageIndex: number, idx?: number) => Promise<void>
   highlightArea: (
     pageIndex: number,
     // all percentage
@@ -81,7 +93,7 @@ export type IPDFInstance = Partial<{
   getPageSize: () => PageSize & { pageSizeScale: number }
   getOutline: () => Promise<Awaited<ReturnType<PDFDocumentProxy['getOutline']>> | undefined>
   // return: thumbnail url, created by URL.createObjectURL
-  getThumbnail?: (pageIdx: number) => Promise<string | undefined>
+  getThumbnail?: (pageIdx: number, size?: { width?: number; height?: number }) => Promise<string | undefined>
   onLabelRendered?: (labelId: number) => void
   onThumbnailRendered?: VoidFunction
   getDocument?: () => Promise<PDFDocumentProxy>
@@ -92,6 +104,12 @@ export type IPDFInstance = Partial<{
   values: {
     texts: { page: number; str: string; id: number }[]
     document?: PDFDocumentProxy
+    thumbnailDocument?: PDFDocumentProxy
+    INDEX_TO_TEXT_LAYER: Record<number, IPDFTextLayerOps>
+    INDEX_TO_PAGE_LAYER: Record<number, IPDFPageLayerOps>
+    selectedText: Record<number, string>
+    // page index -> thumbnail url map
+    thumbnailAtom: PrimitiveAtom<Map<number, string>>
   }
 }
 

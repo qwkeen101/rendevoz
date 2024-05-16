@@ -10,7 +10,7 @@ import Select from '@/components/base/select'
 import DateFormat from '@/utils/dateFormat'
 import { css } from '@emotion/css'
 import { motion } from 'framer-motion'
-import { DraggableElement, ObjectActionPopover } from '@/core'
+import { ObjectActionMenu } from '@/core'
 import { atom, useAtomValue } from 'jotai'
 import fuzzysort from 'fuzzysort'
 import { Rendevoz } from '@/core/rendevoz'
@@ -387,48 +387,41 @@ const Recent = () => {
                 key={i.id}
                 content={setV => (
                   <WithBorder>
-                    <ObjectActionPopover onClose={() => setV(false)} metaObjectId={i.id} />
+                    <ObjectActionMenu onClose={() => setV(false)} metaObjectId={i.id} />
                   </WithBorder>
                 )}
               >
-                <DraggableElement
-                  draggingDetails={{
-                    type: 'metaElement',
-                    metaId: i.id
+                <tr
+                  onClick={e => {
+                    if (!e.defaultPrevented) {
+                      Rendevoz.Actions.Open.Meta.openMetaObject(i.id)
+                    }
                   }}
-                >
-                  <tr
-                    onClick={e => {
-                      if (!e.defaultPrevented) {
-                        Rendevoz.Actions.Open.Meta.openMetaObject(i.id)
+                  className={css([
+                    {
+                      userSelect: 'none',
+                      td: {
+                        padding: '6px 8px',
+                        fontWeight: 500,
+                        fontSize: 14
                       }
-                    }}
-                    className={css([
-                      {
-                        userSelect: 'none',
-                        td: {
-                          padding: '6px 8px',
-                          fontWeight: 500,
-                          fontSize: 14
-                        }
-                      },
-                      ClassName.flatButton()
-                    ])}
-                  >
-                    <td>
-                      <Content style={{ minHeight: 30 }} flex gap={12} alignItems={'center'}>
-                        {i.coverImgSrc ? (
-                          <img src={i.coverImgSrc} width={36} height={36} style={{ objectFit: 'cover', borderRadius: 4 }} />
-                        ) : (
-                          <Icon size={18} name={getIcon(i.type)} />
-                        )}
-                        <div className={ClassName.ellipsisFont(1)}>{i.name || i.placeholderName}</div>
-                      </Content>
-                    </td>
-                    <td>{i.viewAt && DateFormat.formatDistanceToNowStrict(i.viewAt)}</td>
-                    <td>{DateFormat.formatDistanceToNowStrict(i.createdAt)}</td>
-                  </tr>
-                </DraggableElement>
+                    },
+                    ClassName.flatButton()
+                  ])}
+                >
+                  <td>
+                    <Content style={{ minHeight: 30 }} flex gap={12} alignItems={'center'}>
+                      {i.coverImgSrc ? (
+                        <img src={i.coverImgSrc} width={36} height={36} style={{ objectFit: 'cover', borderRadius: 4 }} />
+                      ) : (
+                        <Icon size={18} name={getIcon(i.type)} />
+                      )}
+                      <div className={ClassName.ellipsisFont(1)}>{i.name || i.placeholderName}</div>
+                    </Content>
+                  </td>
+                  <td>{i.viewAt && DateFormat.formatDistanceToNowStrict(i.viewAt)}</td>
+                  <td>{DateFormat.formatDistanceToNowStrict(i.createdAt)}</td>
+                </tr>
               </ContextMenu>
             ))}
           </tbody>

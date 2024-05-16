@@ -166,6 +166,7 @@ const useFlipForm = (options: useFlipFormOptions) => {
         if (i.value || formInnerState.descVisible) return null
         return (
           <Button.IconButton
+            className={ClassName.flatButton(4, '4px 8px')}
             onClick={() => setFormInnerState(s => ({ ...s, descVisible: true }))}
             icon={'park-info'}
             text={t('general.add description')}
@@ -173,19 +174,13 @@ const useFlipForm = (options: useFlipFormOptions) => {
         )
       case 'tagPicker':
         return (
-          <Content
-            alignItems="center"
-            justifyContent="space-between"
-            flex
-            className={ClassName.flatButton()}
+          <Button.IconButton
+            text={t('general.Tags')}
+            className={ClassName.flatButton(4, '4px 8px')}
             onClick={() => setFormInnerState({ tagPickerVisible: true })}
-          >
-            <Content gap={8} flex style={{ textTransform: 'capitalize' }}>
-              <Icon name="park-tag-one" />
-              <span>{t('general.tags')}</span>
-            </Content>
-            <Icon name="park-right" />
-          </Content>
+            suffixIcon={'park-right'}
+            icon={'park-tag-one'}
+          ></Button.IconButton>
         )
       case 'markdownImporter':
         return <FormNoteImporter onClose={i.onClose} />

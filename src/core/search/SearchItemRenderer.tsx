@@ -6,8 +6,9 @@ import { Colors } from '@/consts'
 import { Rendevoz } from '@/core/rendevoz'
 import { css } from '@emotion/css'
 import { CSSProperties } from 'react'
-import { ObjectActionPopover } from '@/core'
+import { ObjectActionMenu } from '@/core'
 import classnames from 'classnames'
+import { useTranslation } from 'react-i18next'
 
 export default ({
   hit,
@@ -24,7 +25,9 @@ export default ({
   style?: CSSProperties
   className?: string
 }) => {
-  const name = hit.matched?.['name'] || hit.name
+  const { t } = useTranslation()
+  const name = hit.matched?.['name'] || hit.name || t('general.Unnamed')
+  const noName = !hit.matched?.['name'] && !hit.name
   const description = hit.matched?.['description'] || hit.description
   const content = hit.matched?.['content']
   const meta = MetaStore.useValue(hit.metaId)
@@ -66,7 +69,10 @@ export default ({
       <Content flex alignItems={'flex-start'} justifyContent={'space-between'} gap={8} style={{ flex: 1 }}>
         <Content>
           <Content flex gap={4} alignItems={'center'}>
-            <div className={css([ClassName.title('14px'), ClassName.ellipsisFont(1)])} dangerouslySetInnerHTML={{ __html: name }}></div>
+            <div
+              className={classnames('bold-font', 'font-size-14', 'ellipsis-font-1', noName && 'super-transparent-font')}
+              dangerouslySetInnerHTML={{ __html: name }}
+            ></div>
             {size ? <div className={'transparent-font font-size-13'}>({size})</div> : null}
           </Content>
           {(content || description) && (
@@ -86,7 +92,7 @@ export default ({
           className={classnames(ClassName.flatButton(4, '3px'), 'super-transparent-font')}
           content={setV => (
             <WithBorder onClick={e => e.stopPropagation()}>
-              <ObjectActionPopover
+              <ObjectActionMenu
                 onClose={() => {
                   setV(false)
                 }}

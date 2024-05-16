@@ -1,11 +1,10 @@
 import { useToggle } from '@/hooks'
 import useLatest from '@/hooks/utils/useLatest'
-import { CollectionStore, MetaStore } from '@/api/stores'
 import { ClassName } from 'rendevoz'
 import { exportRendevozDb, importRendevozDb } from '@/utils/db'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { Button, Content, Form, Switch, Modal, Icon, ButtonChooser } from '@/components'
+import { Button, Content, Switch, Modal, Icon, ButtonChooser } from '@/components'
 import useFileUpload from '../../components/base/useFileUpload'
 import { ISettingItem } from './SettingItem'
 import { useTranslation } from 'react-i18next'
@@ -46,7 +45,6 @@ const GeneralSetting = () => {
   const os = getOS()
   const [isExporting, toggleIsExporting] = useToggle(false)
   const [isImporting, toggleIsImporting] = useToggle(false)
-  const [alertVisible, toggleAlertVisible] = useToggle(false)
   const updateInfo = useGlobalAtomValue(updateInfoAtom)
   const latestIsExporting = useLatest(isExporting)
   const hasExporting = useRef(false)
@@ -130,11 +128,11 @@ const GeneralSetting = () => {
   const VersionItems: ISettingItem[] = [
     {
       title: t('settings.current version'),
-      description: `Beta ${APP_VERSION || 'Unknown'}`
+      description: `${APP_VERSION || 'Unknown'}`
     },
     {
       title: t('settings.latest version'),
-      description: `Beta ${updateInfo?.version || 'Unknown'} ${!checkCanUpdate() ? `(${t('settings.Latest')})` : ''}`,
+      description: `${updateInfo?.version || 'Unknown'} ${!checkCanUpdate() ? `(${t('settings.Latest')})` : ''}`,
       children: checkCanUpdate() && (
         <div
           onClick={() => {
@@ -549,22 +547,6 @@ const GeneralSetting = () => {
       children: (
         <>
           {renderUploader()}
-          <Modal showClose noStyle visible={alertVisible} onClose={toggleAlertVisible}>
-            <div style={{ padding: '16px', borderRadius: 10 }} className={ClassName.Background.pseudoBlubBackground}>
-              <Form
-                onBack={toggleAlertVisible}
-                onSubmit={() => {
-                  toggleAlertVisible(false)
-                  upload()
-                }}
-                title={t('general.warning')}
-                submitText="understand"
-                backText="cancel"
-              >
-                <div style={{ margin: '10px 0px 16px', textTransform: 'none' }}>{t('settings.import data warning')}</div>
-              </Form>
-            </div>
-          </Modal>
           <Content flex gap={8}>
             <Button.IconButton
               onClick={toggleIsExporting}
@@ -574,7 +556,7 @@ const GeneralSetting = () => {
             />
             <Button.IconButton
               onClick={() => {
-                toggleAlertVisible(true)
+                upload()
               }}
               text={t('settings.import')}
               spin={isImporting}

@@ -1,20 +1,17 @@
 import Icon from '@/components/base/Icon'
-import { AnimatePresence, LayoutGroup, motion } from 'framer-motion'
 import { CSSProperties, FC, ReactNode, useEffect, useRef, useState } from 'react'
 import AnimatePopover from '../AnimatePopover'
 import Content from '../Content'
 import SelectOption, { SelectOptionProps } from './SelectOption'
-import styles from './index.module.less'
+import './index.less'
 import WithBorder from '../WithBorder'
 import classNames from 'classnames'
 import { isArray } from 'lodash'
 import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
-import { Button } from '../button'
 import { Menu } from '@/components'
 
 export interface SelectProps {
-  multiple?: boolean
   value?: string | string[] | number | number[]
   closeOnSelect?: boolean
   disabled?: boolean
@@ -40,7 +37,6 @@ interface ISelect extends FC<SelectProps> {
 }
 const Select: ISelect = ({
   disabled,
-  multiple,
   closeOnSelect = true,
   onSelect,
   padding = 10,
@@ -60,6 +56,7 @@ const Select: ISelect = ({
   parentElement,
   displayRenderer
 }) => {
+  const multiple = false
   let d = []
   if (defaultValue) {
     d = [defaultValue]
@@ -92,40 +89,11 @@ const Select: ISelect = ({
       setSelected(v)
     }
   }, [value])
-  const renderMultiple = () => {
-    return (
-      <LayoutGroup>
-        <AnimatePresence>
-          {selected.map(i => (
-            <motion.div
-              layout
-              key={i}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, transition: { duration: 0.2 } }}
-            >
-              <Tag
-                key={i}
-                tag={i}
-                onDelete={() => {
-                  setSelected(() => {
-                    const newSelected = selected.filter(o => o !== i)
-                    onSelect(newSelected)
-                    return newSelected
-                  })
-                }}
-              />
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </LayoutGroup>
-    )
-  }
   const renderSingle = () => {
     const name = menuItems.find(i => i.value === selected[0])?.name
     return (
       <Content flex centered>
-        <span className={styles.placeholder}>{name}</span>
+        <span>{name}</span>
       </Content>
     )
   }
@@ -139,12 +107,12 @@ const Select: ISelect = ({
     }
     return disabled ? null : selected.length ? (
       <Content fullWidth flex justifyContent="space-between" gap={gap}>
-        {multiple ? renderMultiple() : renderSingle()}
+        {renderSingle()}
         <Icon name="park-down" />
       </Content>
     ) : (
       <Content fullWidth flex justifyContent="space-between" gap={gap}>
-        <span className={styles.placeholder}>{placeholder}</span>
+        <span>{placeholder}</span>
         <Icon name="park-down" />
       </Content>
     )
@@ -208,13 +176,7 @@ const Select: ISelect = ({
         <Content
           onPointerDown={e => e.preventDefault()}
           style={style}
-          className={classNames(
-            styles.selectContainer,
-            menuVisible ? styles.focused : undefined,
-            disabled ? styles.disabled : undefined,
-            className,
-            ClassName.flatButton()
-          )}
+          className={classNames('selectContainer', disabled ? 'disabled' : undefined, className, ClassName.flatButton())}
           onClick={() => !disabled && setMenuVisible(!menuVisible)}
           flex
         >
@@ -257,17 +219,6 @@ const SelectMenu: FC<{
         })) || []
       }
     />
-  )
-}
-const Tag: FC<{
-  tag: string
-  onDelete: () => void
-}> = ({ tag, onDelete }) => {
-  return (
-    <Content centered className={styles.tag} onClick={e => e.stopPropagation()} flex>
-      <span>{tag}</span>
-      <Icon size={12} onClick={onDelete} name="park-close" />
-    </Content>
   )
 }
 Select.Option = SelectOption

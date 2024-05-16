@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, Content, Icon } from '@/components'
-import { FilterSelect } from '@/core/object/filter/BetterFilter'
+import BetterFilter from '@/core/object/filter/BetterFilter'
 import produce from 'immer'
 import Id from '@/utils/id'
 import { Colors } from '@/consts'
@@ -10,7 +10,7 @@ import FontSize from '@/consts/font'
 import { MetaObject } from '~/typings'
 import _ from 'lodash'
 import { ClassName } from 'rendevoz'
-
+const FilterSelect = BetterFilter.FilterSelect
 export type SorterGroup = {
   sorters: MetaSorter[]
 }

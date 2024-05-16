@@ -3,6 +3,7 @@ import { assignProperties } from '@/utils'
 import { PdfStateAtom } from '@/core/components/pdf/hooks/usePdfState'
 import { ObjectStore } from '@/api/stores'
 import { atom, useAtom, useAtomValue } from 'jotai'
+import usePDFBarState from '@/core/components/pdf/hooks/usePDFBarState'
 
 const historyAtom = atom<{
   offsetArr: number[]
@@ -15,7 +16,7 @@ export default () => {
   const instance = usePDFInstance()
   const [pdfState, setPdfState] = useAtom(PdfStateAtom)
   const [pdfHistoryState, setPdfHistoryState] = useAtom(historyAtom)
-
+  const [barState] = usePDFBarState()
   assignProperties(instance, {
     navigateOps: {
       scrollByPercent: percent => {
@@ -56,9 +57,13 @@ export default () => {
         }
         if (pageNum !== undefined) {
           instance.navigateOps?.jumpToPage(pageNum)
+          instance.on?.({
+            type: 'readProgressChange',
+            lastReadPage: pageNum
+          })
         }
       },
-      jumpToLabel: async labelId => {
+      jumpToLabel: async (labelId, openInSidebar = true) => {
         const pageSize = instance.getPageSize?.()
         if (!pageSize) return
         const label = await ObjectStore('pdfLabel').getOneById(labelId)
@@ -102,6 +107,9 @@ export default () => {
         const scrollEleHeight = instance.virtualizer?.scrollElement?.clientHeight
         if (scrollEleHeight) {
           pageOffset -= scrollEleHeight / 2
+        }
+        if (barState.sidebarActive === 'label' && openInSidebar) {
+          instance.jumpToLabelInSidebar?.(labelId)
         }
         instance.navigateOps?.jumpToPage(pageIdx, 'start', pageOffset)
       },

@@ -1,7 +1,7 @@
 import EventEmitter from '@/events/eventEmitter'
 import { BaseEditor, Descendant, Element, Location, Operation, Path } from 'slate'
 import { HistoryEditor } from 'slate-history'
-import { INote } from '~/typings/data'
+import { ILabelContainerProps, INote } from '~/typings/data'
 import { EditableProps, RenderElementProps, ReactEditor } from 'slate-react'
 import { CustomTypes, IEditorInstance } from '.'
 import { CustomText, EmptyText } from './baseTypes'
@@ -170,19 +170,17 @@ export interface EditorProps {
       exportMD?: boolean
       exportPDF?: boolean
     }
-    // before leftbar
-    leftExtra?: ReactElement
     rightExtra?: ReactElement
   }
   state?: {
-    pageWidth?: INote['pageWidth']
+    pageWidth?: 'X-Small' | 'Small' | 'Medium' | 'Large' | 'X-Large' | 'Max'
     fontSize?: number
     lastSavedAt?: number
-    typeface?: INote['typeface']
-    lineSpacing?: INote['lineSpacing']
+    typeface?: 'Inter' | 'Roboto' | 'Source Serif' | 'Merriweather' | 'Open Sans' | 'Muli' | 'Lato'
+    lineSpacing?: number
     saveImgLocally?: boolean
     showSyncBlockShadow?: boolean
-  }
+  } & ILabelContainerProps
   labelType?: string
   labelIds?: number[]
   toolbar?: {

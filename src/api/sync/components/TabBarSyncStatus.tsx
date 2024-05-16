@@ -8,15 +8,23 @@ import { getSetting, SettingAtom } from '@/core'
 import SyncAPI from '@/api/sync'
 import { DateFormat } from '@/utils'
 import toast from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
 
 export default memo(() => {
   const [syncState, setSyncState] = useGlobalAtom(SyncAPI.stateAtom)
   const [isPushing, setIsPushing] = useState(false)
   const [isPulling, setIsPulling] = useState(false)
   const syncSetting = useSelectGlobalAtomValue(SettingAtom, s => s.sync)
-  const connection = syncState.connection
+  let connection = syncState.connection
+  if (Object.values(syncState.downloading).some(i => i.progress < 1) || Object.values(syncState.uploading).some(i => i.progress < 1)) {
+    connection = 'syncing'
+  }
+  const { t } = useTranslation()
   const clear = (type: 'downloading' | 'uploading') => {
-    setSyncState(s => ({ ...s, [type]: { ...Object.values(s[type]).filter(i => i.progress < 1) } }))
+    setSyncState(s => ({
+      ...s,
+      [type]: { ...Object.values(s[type]).filter(i => i.progress < 1) }
+    }))
   }
   const renderDownloading = () => {
     if (Object.keys(syncState.downloading).length > 0) {
@@ -26,7 +34,7 @@ export default memo(() => {
         <>
           <Content flex alignItems={'center'} justifyContent={'space-between'} style={{ margin: '6px 0px 4px' }}>
             <div className={'transparent-font font-size-12 normal-font'}>
-              {downloading.length ? `Downloading ${downloading.length} files...` : 'All files downloaded'}
+              {downloading.length ? t('sync.Downloading files', { num: downloading.length }) : t('sync.All files downloaded')}
             </div>
             <div
               className={'normal-font select-color-font font-size-12 pointer'}
@@ -34,7 +42,7 @@ export default memo(() => {
                 clear('downloading')
               }}
             >
-              Clear
+              {t('sync.Clear')}
             </div>
           </Content>
           <Content flex column gap={4}>
@@ -76,8 +84,8 @@ export default memo(() => {
         <>
           <Content flex alignItems={'center'} justifyContent={'space-between'} style={{ margin: '6px 0px 4px' }}>
             <div className={'transparent-font font-size-12 normal-font'}>
-              {uploading.length ? `Uploading ${uploading.length} files...` : 'All files uploaded'}
-              {skiped.length ? ` (${skiped.length} skipped)` : ''}
+              {uploading.length ? t('sync.Uploading files', { num: uploading.length }) : t('sync.All files uploaded')}
+              {skiped.length ? t('sync.Files skipped', { num: skiped.length }) : ''}
             </div>
             <div
               className={'normal-font select-color-font font-size-12 pointer'}
@@ -85,7 +93,7 @@ export default memo(() => {
                 clear('uploading')
               }}
             >
-              Clear
+              {t('sync.Clear')}
             </div>
           </Content>
           <Content flex column gap={4}>
@@ -109,7 +117,10 @@ export default memo(() => {
                         const setting = getSetting()
                         const s3Config = setting.sync.S3Config
                         if (s3Config && s3Config.bucket && s3Config.region && s3Config.endpoint && s3Config.sk && s3Config.ak) {
-                          SyncAPI.cloudClient()?.uploadFile(i.name, { ...s3Config, skipSetting: true })
+                          SyncAPI.cloudClient()?.uploadFile(i.name, {
+                            ...s3Config,
+                            skipSetting: true
+                          })
                         }
                       }
                     }}
@@ -159,7 +170,7 @@ export default memo(() => {
                   borderRadius: 99
                 }}
               ></div>
-              <div>{SyncAPI.connectionToText[connection]}</div>
+              <div>{t(`sync.${SyncAPI.connectionToText[connection]}`)}</div>
             </Content>
             {syncSetting.enableSync && connection === 'connected' && syncSetting.enableAutoSync !== true && (
               <Content flex gap={2} className={'transparent-font'} style={{ marginRight: -2 }}>
@@ -198,7 +209,7 @@ export default memo(() => {
           </Content>
           {syncState.lastSynced && (
             <div className={'transparent-font font-size-12'}>
-              Last synced at {DateFormat.format(syncState.lastSynced, DateFormat.Formats.withMinute)}
+              {t('sync.Last synced at')} {DateFormat.format(syncState.lastSynced, DateFormat.Formats.withMinute)}
             </div>
           )}
           {renderUploading()}

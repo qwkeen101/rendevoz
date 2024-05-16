@@ -1,7 +1,7 @@
 import { Content } from '@/components/base'
 import { useDebounceFn } from '@/hooks'
 import { useSetAtom } from 'jotai'
-import { GraphFilterNodesIdsAtom} from '../hooks/useGraphFilter'
+import { GraphFilterNodesIdsAtom } from '../hooks/useGraphFilter'
 import useGraphNodes from '../hooks/useGraphNodes'
 import BetterFilter from '@/core/object/filter/BetterFilter'
 import { MetaFilterGroup } from '~/typings'
@@ -11,9 +11,9 @@ const GraphFilter = () => {
   const setGraphFilterIds = useSetAtom(GraphFilterNodesIdsAtom)
 
   const handleDebounceFilter = useDebounceFn(
-    (filterGroup: MetaFilterGroup) => {
+    async (filterGroup: MetaFilterGroup) => {
       const currentObjects = nodes?.map(i => i.id)
-      const filtered = calculateFilterObjects(filterGroup, currentObjects)
+      const filtered = await calculateFilterObjects(filterGroup, currentObjects)
 
       setGraphFilterIds(filtered?.map(i => i.id) || [])
     },

@@ -11,6 +11,7 @@ import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
 import { css } from '@emotion/css'
 import { useTranslation } from 'react-i18next'
+import classnames from 'classnames'
 
 const MediaChapterController = () => {
   const [mediaState] = useMediaState()
@@ -25,10 +26,16 @@ const MediaChapterController = () => {
         padding: 12
       }}
     >
-      <Content flex column style={{ overflowY: 'auto', paddingRight: 8 }}>
-        {mediaState.sortedChapters?.map((i, idx, arr) => (
-          <Chapter canDelete={i.startTime === 0 ? arr.length === 1 : true} chapter={i} key={i.id} />
-        ))}
+      <Content flex column style={{ overflowY: 'auto', paddingRight: 8, height: '100%' }}>
+        {mediaState.sortedChapters?.length ? (
+          mediaState.sortedChapters?.map((i, idx, arr) => (
+            <Chapter canDelete={i.startTime === 0 ? arr.length === 1 : true} chapter={i} key={i.id} />
+          ))
+        ) : (
+          <div className={'bold-font transparent-font'} style={{ margin: 'auto' }}>
+            No chapter
+          </div>
+        )}
       </Content>
     </Content>
   )
@@ -38,12 +45,9 @@ const Chapter = ({ chapter, canDelete }: { chapter: IMediaChapter; canDelete: bo
   const instance = useMediaInstance()
   const [mediaState] = useMediaState()
   const [chapterState, setChapterState] = useState<{
-    hovered: boolean
     playing: boolean
     editingName: boolean
-    chapterRgb?: [number, number, number]
   }>({
-    hovered: false,
     playing: false,
     editingName: false
   })
@@ -51,7 +55,7 @@ const Chapter = ({ chapter, canDelete }: { chapter: IMediaChapter; canDelete: bo
     () => mediaState.sortedChapters?.find(i => i.startTime > chapter.startTime),
     [mediaState.sortedChapters?.length]
   )
-  const { hovered, playing, editingName, chapterRgb } = chapterState
+  const { editingName } = chapterState
   const inputRef = useRef<HTMLInputElement>(null)
   const { t } = useTranslation()
   const roundedCurrentTime = Math.round(mediaState.currentTime || 0)
@@ -69,27 +73,15 @@ const Chapter = ({ chapter, canDelete }: { chapter: IMediaChapter; canDelete: bo
   return (
     <Content
       flex
-      onPointerEnter={e => {
-        setChapterState(s => (s.hovered ? s : { ...s, hovered: true }))
-      }}
-      onPointerMove={e => {
-        setChapterState(s => (s.hovered ? s : { ...s, hovered: true }))
-      }}
-      onPointerLeave={e => setChapterState(s => ({ ...s, hovered: false }))}
       gap={12}
       alignItems="center"
       style={{
-        padding: 8,
-        background: isPlaying
-          ? chapterRgb
-            ? `rgba(${chapterRgb[0]},${chapterRgb[1]},${chapterRgb[2]},0.2)`
-            : Colors.Background.ButtonHover
-          : undefined
+        padding: 8
       }}
       onClick={e => {
         instance.actionOps?.jumpTo?.(chapter.startTime)
       }}
-      className={ClassName.flatButton(0)}
+      className={classnames(ClassName.flatButton(0), isPlaying && 'active-button')}
     >
       {chapter.imageUrl && (
         <div
@@ -122,16 +114,15 @@ const Chapter = ({ chapter, canDelete }: { chapter: IMediaChapter; canDelete: bo
                 width: '100%'
               }}
               autoFocus
-              className={ClassName.noStyleInput}
               ref={inputRef}
               defaultValue={chapter.name}
               onKeyDown={e => {
                 if (isHotkey(KEY.Enter, e)) {
+                  e.preventDefault()
                   handleChangeName()
                 }
               }}
             ></input>
-            <Icon containerStyle={{ flexShrink: 0 }} onClick={handleChangeName} className={ClassName.circleButton(2)} name="park-check" />
           </Content>
         ) : (
           <div className={css([ClassName.title(FontSize['14px']), ClassName.ellipsisFont(3)])} style={{ width: 'fit-content' }}>
@@ -139,14 +130,13 @@ const Chapter = ({ chapter, canDelete }: { chapter: IMediaChapter; canDelete: bo
           </div>
         )}
         <div
-          className={ClassName.description()}
+          className={'font-size-12 transparent-font'}
           style={{
             background: Colors.Background.ButtonHover,
             padding: '2px 6px',
             borderRadius: 2,
             lineHeight: 1.1,
-            width: 'fit-content',
-            fontSize: FontSize['12px']
+            width: 'fit-content'
           }}
         >
           {normalizeSecondsToTime(chapter.startTime)}
@@ -155,7 +145,7 @@ const Chapter = ({ chapter, canDelete }: { chapter: IMediaChapter; canDelete: bo
       <IconWithPopover
         name="park-more"
         disableIntersection
-        className={ClassName.circleButton()}
+        className={ClassName.flatButton(4, '4px')}
         disableNudge
         placement={['right', 'left']}
         align="center"
@@ -181,7 +171,6 @@ const Chapter = ({ chapter, canDelete }: { chapter: IMediaChapter; canDelete: bo
         }
       ></IconWithPopover>
     </Content>
-    // </DraggableElement>
   )
 }
 

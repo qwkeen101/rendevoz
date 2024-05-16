@@ -25,16 +25,6 @@ const ComponentSetting = () => {
       })
     )
   }
-  const labelSettingItems: ISettingItem[] = [
-    // {
-    //   title: t('settings.custom original text background'),
-    //   children: <Switch value={setting.label.customTextBackground} onChange={() => toggleSetting('label', 'customTextBackground')} />
-    // }
-    {
-      title: t('settings.Automatically add label as object'),
-      children: <Switch value={setting.label.autoAddAsObject} onChange={() => toggleSetting('label', 'autoAddAsObject')} />
-    }
-  ]
   const webpageSettingItems: ISettingItem[] = [
     {
       title: t('settings.Automatically add head image'),
@@ -97,6 +87,12 @@ const ComponentSetting = () => {
 
   const editorSettingItems: ISettingItem[] = [
     {
+      type: 'switch',
+      title: t('settings.Auto open highlight editor'),
+      value: !!setting.editor.autoOpenHighlightEditor,
+      onChange: v => setSetting(s => ({ ...s, editor: { ...s.editor, autoOpenHighlightEditor: v } }))
+    },
+    {
       title: t('settings.object auto become inline when dragged into editor'),
       children: <Switch value={setting.editor.objectAutoBecomeInline} onChange={() => toggleSetting('editor', 'objectAutoBecomeInline')} />
     },
@@ -119,13 +115,7 @@ const ComponentSetting = () => {
       value: !!setting.sidebar.previewCollectionContent,
       title: t('settings.Preview collection content'),
       onChange: v => setSetting(s => ({ ...s, sidebar: { ...s.sidebar, previewCollectionContent: !s.sidebar.previewCollectionContent } }))
-    },
-    {
-      type: 'switch',
-      value: !!setting.sidebar.hideHighlights,
-      title: t('settings.Hide highlights'),
-      onChange: v => setSetting(s => ({ ...s, sidebar: { ...s.sidebar, hideHighlights: !s.sidebar.hideHighlights } }))
-    },
+    }
   ]
   const codeSettingItems: ISettingItem[] = [
     {
@@ -157,18 +147,6 @@ const ComponentSetting = () => {
       )
     }
   ]
-  const translateSettingItems: ISettingItem[] = [
-    {
-      title: t('settings.auto go to translate original text'),
-      children: <Switch value={setting.translate.autoGotoHoverText} onChange={() => toggleSetting('translate', 'autoGotoHoverText')} />
-    },
-    {
-      title: t('settings.show original text when hover on text'),
-      children: (
-        <Switch value={setting.translate.showOrigWhenHoverText} onChange={() => toggleSetting('translate', 'showOrigWhenHoverText')} />
-      )
-    }
-  ]
 
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -180,6 +158,12 @@ const ComponentSetting = () => {
     }
   }, [setting.pdf.renderMode])
   const pdfSettingItems: (ISettingItem | undefined)[] = [
+    {
+      type: 'switch',
+      title: t('settings.Auto open highlight editor'),
+      value: !!setting.pdf.autoOpenHighlightEditor,
+      onChange: v => setSetting(s => ({ ...s, pdf: { ...s.pdf, autoOpenHighlightEditor: v } }))
+    },
     {
       title: t('settings.Auto width'),
       type: 'switch',
@@ -317,6 +301,21 @@ const ComponentSetting = () => {
 
   const videoSettingItems: ISettingItem[] = [
     {
+      title: t('settings.Auto open highlight editor'),
+      children: (
+        <Switch
+          value={setting.media.openPopoverWhenHighlight}
+          onChange={v => {
+            setSetting(
+              produce(setting, draft => {
+                draft.media.openPopoverWhenHighlight = v
+              })
+            )
+          }}
+        />
+      )
+    },
+    {
       title: t('settings.jump back when making label'),
       children: (
         <NumberInput
@@ -332,27 +331,11 @@ const ComponentSetting = () => {
           }}
         />
       )
-    },
-    {
-      title: t('settings.Open popover when highlight media'),
-      children: (
-        <Switch
-          value={setting.media.openPopoverWhenHighlight}
-          onChange={v => {
-            setSetting(
-              produce(setting, draft => {
-                draft.media.openPopoverWhenHighlight = v
-              })
-            )
-          }}
-        />
-      )
     }
   ]
   return (
     <>
       <SettingGroup title={t('settings.Sidebar settings')} layout={sidebarItems} />
-      <SettingGroup title={t('settings.label settings')} layout={labelSettingItems} />
       <SettingGroup title={t('settings.webpage settings')} layout={webpageSettingItems} />
       <SettingGroup title={t('settings.whiteboard settings')} layout={whiteboardSettingItems} />
       <SettingGroup title={t('settings.editor settings')} layout={editorSettingItems} />

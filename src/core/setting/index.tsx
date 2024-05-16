@@ -39,7 +39,7 @@ enum Settings {
   'components',
   'shortcuts',
   'object and link',
-  'sync',
+  // 'sync',
   'AI',
   'resource usage'
   // 'about'
@@ -142,6 +142,7 @@ export const defaultSetting: Setting = {
     previewCollectionContent: false
   },
   editor: {
+    autoOpenHighlightEditor: true,
     objectAutoBecomeInline: false,
     addSpacingInReaderMode: true
   },
@@ -159,7 +160,8 @@ export const defaultSetting: Setting = {
   pdf: {
     renderMode: 'followTheme',
     defaultLabelColor: '#ffe082',
-    autoWidth: true
+    autoWidth: true,
+    autoOpenHighlightEditor: true
   },
   label: {
     showOriginalText: true

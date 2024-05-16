@@ -6,6 +6,7 @@ import InnerContentDisplayer from '@/core/components/group/components/gallery/it
 import { Content, Icon } from '@/components'
 import { Rendevoz } from '@/core/rendevoz'
 import { MetaStore } from '@/api/stores'
+import classnames from 'classnames'
 
 // @ts-ignore
 const nonNullClass = css({
@@ -18,6 +19,11 @@ const nonNullClass = css({
   }
 })
 
+const containImgClass = css({
+  img: {
+    objectFit: 'contain !important'
+  }
+})
 export default memo(
   ({
     metaId,
@@ -43,7 +49,7 @@ export default memo(
           cursor: 'pointer'
         }}
         onClick={onClick}
-        className={nonNullClass}
+        className={classnames(nonNullClass, fitImage && containImgClass)}
       >
         <InnerContentDisplayer
           metaId={metaId}

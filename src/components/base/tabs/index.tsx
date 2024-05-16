@@ -19,6 +19,7 @@ import FontSize from '@/consts/font'
 import classnames from 'classnames'
 
 export interface TabNavListProps {
+  leftExtra?: ReactNode
   defaultActiveKey: string
   navs: {
     tab: string | ReactElement
@@ -29,7 +30,7 @@ export interface TabNavListProps {
   extra?: ReactNode
   containerStyle?: CSSProperties
 }
-const TabNavList: FC<TabNavListProps> = ({ navs, onTabClick, defaultActiveKey, extra, style, containerStyle }) => {
+const TabNavList: FC<TabNavListProps> = ({ leftExtra, navs, onTabClick, defaultActiveKey, extra, style, containerStyle }) => {
   const [selectedTabKey, setSelectedTabKey] = useState(defaultActiveKey)
   useEffect(() => {
     if (defaultActiveKey) {
@@ -40,6 +41,7 @@ const TabNavList: FC<TabNavListProps> = ({ navs, onTabClick, defaultActiveKey, e
   return (
     <Content flex alignItems="center" justifyContent="space-between" gap={16} style={containerStyle}>
       <Content flex alignItems="center" style={{ flexShrink: 1, flexWrap: 'wrap' }} gap={6}>
+        {leftExtra}
         {navs.map(nav => (
           <div
             className={classnames(ClassName.flatButton(), nav.key === selectedTabKey && 'active-button')}
@@ -67,14 +69,16 @@ interface TabPanesListProps {
   activeKey: string
   tabPanes: TabPaneProps[]
   disableAnimation?: boolean
+  mountAll?: boolean
 }
-const TabPanesList: FC<TabPanesListProps> = memo(({ activeKey, tabPanes, disableAnimation }) => {
+const TabPanesList: FC<TabPanesListProps> = memo(({ activeKey, tabPanes, disableAnimation, mountAll }) => {
   return (
     <Content fullWidth fullHeight style={{ overflow: 'hidden' }}>
       {disableAnimation ? (
         <>
           {tabPanes.map(tabPane => (
             <TabPane
+              mount={tabPane.mount ?? mountAll}
               onClick={tabPane.onClick}
               style={tabPane.style}
               key={tabPane.innerKey}
@@ -88,6 +92,7 @@ const TabPanesList: FC<TabPanesListProps> = memo(({ activeKey, tabPanes, disable
         <AnimatePresence initial={false}>
           {tabPanes.map(tabPane => (
             <TabPane
+              mount={tabPane.mount ?? mountAll}
               onClick={tabPane.onClick}
               style={tabPane.style}
               key={tabPane.innerKey}
@@ -102,6 +107,7 @@ const TabPanesList: FC<TabPanesListProps> = memo(({ activeKey, tabPanes, disable
 })
 
 type TabsProps = {
+  mountAll?: boolean
   children: ReactElement<TabPaneProps> | (ReactElement<TabPaneProps> | null)[] | null
   extra?: ReactNode
   style?: CSSProperties
@@ -112,6 +118,7 @@ type TabsProps = {
   disableAnimation?: boolean
   tabNavStyle?: CSSProperties
   tabNavContainerStyle?: CSSProperties
+  tabNavLeftExtra?: ReactNode
 } & (
   | {
       defaultActiveKey: string
@@ -131,13 +138,15 @@ export const Tabs: FC<TabsProps> = memo(
     onTabClick,
     renderTabNav,
     extra,
+    mountAll,
     disableInnerPanes = false,
     activeKey: outActiveKey,
     disableTabNav,
     disableAnimation,
     tabNavStyle,
     style,
-    tabNavContainerStyle
+    tabNavContainerStyle,
+    tabNavLeftExtra
   }) => {
     let panes: (ReactElement<TabPaneProps> | null)[]
     if (!Array.isArray(children)) {
@@ -186,6 +195,7 @@ export const Tabs: FC<TabsProps> = memo(
       ) : (
         <TabNavList
           containerStyle={tabNavContainerStyle}
+          leftExtra={tabNavLeftExtra}
           onTabClick={onInternalTabClick}
           extra={extra}
           navs={tabNavs}
@@ -196,7 +206,11 @@ export const Tabs: FC<TabsProps> = memo(
     return (
       <Content fullHeight flex column style={style}>
         {!disableTabNav && tabNavListRenderer()}
-        {disableInnerPanes ? panes : <TabPanesList disableAnimation={disableAnimation} activeKey={activeKey} tabPanes={tabPanes} />}
+        {disableInnerPanes ? (
+          panes
+        ) : (
+          <TabPanesList mountAll={mountAll} disableAnimation={disableAnimation} activeKey={activeKey} tabPanes={tabPanes} />
+        )}
       </Content>
     )
   }
@@ -209,8 +223,9 @@ interface TabPaneProps {
   style?: CSSProperties
   active?: boolean
   disableAnimation?: boolean
+  mount?: boolean
 }
-export const TabPane: FC<TabPaneProps> = memo(({ children, onClick, style, active, disableAnimation }) => {
+export const TabPane: FC<TabPaneProps> = memo(({ children, onClick, style, active, disableAnimation, mount }) => {
   const mergedStyle = { width: '100%', height: '100%', ...style, transition: disableAnimation ? 'none' : style?.transition }
   const variants = {
     hidden: {
@@ -231,7 +246,13 @@ export const TabPane: FC<TabPaneProps> = memo(({ children, onClick, style, activ
       zIndex: 0
     }
   }
-
+  const [actived, setActived] = useState(mount ?? false)
+  useLayoutEffect(() => {
+    if (active) {
+      setActived(true)
+    }
+  }, [active])
+  if (!actived) return null
   return (
     <motion.div
       initial="hidden"

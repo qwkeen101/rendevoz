@@ -12,9 +12,6 @@ export const PDF_TO_DOC = new WeakMap<IPdfViewer, PDFDocumentProxy>()
 
 export const PAGE_INDEX_TO_CANVAS_LAYER = new WeakMap<IPdfViewer, Map<number, ICanvasLayerInstance>>()
 
-// page index to blob url
-export const PDF_TO_THUMBNAIL = new WeakMap<IPdfViewer, Map<number, string>>()
-
 export const PAGE_INDEX_TO_PAGE_FUNCTION = new WeakMap<IPdfViewer, Map<number, MutableRefObject<PageFunctionRef>>>()
 
 export const PAGE_INDEX_TO_TEXT_CONTENT = new WeakMap<

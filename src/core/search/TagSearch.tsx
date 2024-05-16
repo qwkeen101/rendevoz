@@ -50,7 +50,7 @@ export default memo(({ results, onNumChange }: { results: ISearchResult; onNumCh
 })
 
 const ParentChildItem = ({ items, tagId }: { items: ISearchResult; tagId: number }) => {
-  const [toggled, setToggled] = useState(false)
+  const [toggled, setToggled] = useState(true)
   if (items.length === 0) return null
   return (
     <Content flex column>

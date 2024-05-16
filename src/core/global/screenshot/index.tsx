@@ -719,15 +719,20 @@ const GlobalScreenShot = () => {
             gap={3}
             style={{
               position: 'absolute',
-              right: 0,
               bottom: -8,
-              transform: Math.abs(window.innerHeight - (rect.top + rect.height)) < 40 ? 'translateY(-50%)' : 'translateY(100%)',
+              transform:
+                Math.abs(window.innerHeight - (rect.top + rect.height)) < 40
+                  ? 'translateY(-50%) translateX(-50%)'
+                  : 'translateY(100%) translateX(-50%)',
               userSelect: 'none',
-              background: Colors.Background.DarkLinear,
-              padding: '0px 12px',
-              borderRadius: '999px',
+              background: 'rgba(237, 238, 239, 0.85)',
+              backdropFilter: 'blur(32px)',
+              padding: '2px 6px',
+              borderRadius: '6px',
+              boxShadow: 'var(--box-shadow)',
+              left: '50%',
               zIndex: 10,
-              color: Colors.Font.White
+              color: Colors.Font.Black
             }}
           >
             <ScreenShotToolbar

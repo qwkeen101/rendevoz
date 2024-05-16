@@ -18,48 +18,53 @@ const NameEditor = ({
   placeholder = 'Edit content...',
   onCancel,
   onDelete,
-  showDelete
+  showDelete,
+  editorStyle
 }: {
   value?: string
   onChange: (v: string) => void
   style?: CSSProperties
   placeholder?: string
   onCancel?: VoidFunction
+  editorStyle?: CSSProperties
   onDelete?: VoidFunction
   showDelete?: boolean
   contentMode?: 'textarea' | 'editor'
 }) => {
   const inputRef = useRef<HTMLInputElement>(null)
   const [innerValue, setInnerValue] = useState(value)
-  const { t } = useTranslation()
   return (
     <Content
       onClick={e => e.stopPropagation()}
       className={'border-box-shadow focus-within-input'}
       style={{
-        padding: '2px 6px 5px',
+        padding: '5px 6px',
         borderRadius: 4,
         width: '100%',
-        marginBottom: 4,
+        flexWrap: 'wrap',
+        gap: 4,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        fontSize: 13,
         ...style
       }}
     >
       {contentMode === 'textarea' ? (
         <AutosizeTextarea
           autoFocus
-          className={ClassName.noStyleInput}
           ref={inputRef}
           spellCheck="false"
           style={{
             resize: 'none',
-            fontWeight: 400,
             padding: 0,
-            width: '100%',
-            minHeight: '3lh',
-            fontSize: FontSize['13px']
+            flexGrow: 1,
+            maxWidth: '100%',
+            width: innerValue?.length && innerValue.includes('\n') ? '100%' : undefined,
+            minHeight: '1lh',
+            ...editorStyle
           }}
           onKeyDown={e => {
-            console.log(e)
             if (isHotkey(KEY.Escape, e)) {
               onChange(value)
               e.preventDefault()
@@ -75,9 +80,9 @@ const NameEditor = ({
           onChange={e => setInnerValue(e)}
         ></AutosizeTextarea>
       ) : (
-        <SimpleEditor fontSize={14} textareaMode={true} placeholder={placeholder} value={value} onChange={e => setInnerValue(e)} />
+        <SimpleEditor fontSize={13} textareaMode={true} placeholder={placeholder} value={value} onChange={e => setInnerValue(e)} />
       )}
-      <Content flex gap={6} justifyContent={'flex-end'} alignItems={'center'} style={{ fontWeight: '500', fontSize: 12, lineHeight: 1 }}>
+      <Content flex gap={6} justifyContent={'flex-end'} alignItems={'center'} style={{ width: 'min-content' }}>
         {showDelete && (
           <Icon
             name={'park-delete'}
@@ -90,14 +95,15 @@ const NameEditor = ({
           />
         )}
         <Icon
-          name={'park-send-one'}
-          size={18}
-          className={ClassName.circleButton()}
+          name={'park-up-small'}
+          size={15}
+          strokeWidth={5}
+          className={ClassName.selectButton()}
           style={{
-            color: 'var(--select-color)',
-            cursor: 'pointer'
+            color: 'white',
+            padding: 2,
+            borderRadius: 999
           }}
-          tooltip={t('general.Save')}
           onClick={() => onChange?.(innerValue)}
         ></Icon>
       </Content>

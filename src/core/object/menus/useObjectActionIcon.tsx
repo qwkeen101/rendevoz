@@ -1,5 +1,5 @@
-import { AnimatePopover, Icon, IconWithPopover, WithBorder } from '@/components'
-import { ObjectActionPopover } from '@/core'
+import { AnimatePopover, Icon, WithBorder } from '@/components'
+import { ObjectActionMenu } from '@/core'
 import { useState } from 'react'
 
 export default ({ metaId }: { metaId: number }) => {
@@ -12,7 +12,7 @@ export default ({ metaId }: { metaId: number }) => {
       onClickOutside={() => setVisible(false)}
       content={
         <WithBorder>
-          <ObjectActionPopover onClose={() => setVisible(false)} metaObjectId={metaId} />
+          <ObjectActionMenu onClose={() => setVisible(false)} metaObjectId={metaId} />
         </WithBorder>
       }
     >

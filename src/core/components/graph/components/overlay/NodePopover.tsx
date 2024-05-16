@@ -1,18 +1,15 @@
-import { ObjectActionPopover, useRenderObject } from '@/core/object'
+import { ObjectActionMenu, useRenderObject } from '@/core/object'
 import { getAllEdgesOfNodes, getRelatedNodesOfNode, GlobalGraphInstance } from '../../index'
 import useGraph from '../../hooks/useGraph'
-import { Content, WithBorder } from '@/components'
 import { useAtom } from 'jotai'
 import { GraphPinNodesIdsAtom } from '../../hooks/useGraphFilter'
 import produce from 'immer'
-import FontSize from '@/consts/font'
 import { useMemo } from 'react'
 import { globalStore } from '@/api/stores'
 import { relatedMetaObjectsMapAtom } from '@/api/stores/meta/meta.store'
 import useGraphNodes from '../../hooks/useGraphNodes'
 import useEdges from '../../hooks/useEdges'
 import * as d3 from 'd3'
-import { Rendevoz } from '@/core/rendevoz'
 import { GlobalInstance } from '@/hooks'
 
 const NodePopover = ({ metaId, nodeId, onClose }: { metaId: number; nodeId: number; onClose: VoidFunction }) => {
@@ -40,7 +37,7 @@ const NodePopover = ({ metaId, nodeId, onClose }: { metaId: number; nodeId: numb
   }, [nodeId])
   return (
     <>
-      <ObjectActionPopover
+      <ObjectActionMenu
         metaObjectId={metaId}
         onClose={onClose}
         onShowGraph={() => {

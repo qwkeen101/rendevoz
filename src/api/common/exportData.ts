@@ -1,6 +1,5 @@
-import worker from './exportWorker?worker'
 export default async (): Promise<string> => {
-  const w = new worker()
+  const w = new Worker(new URL('exportWorker.ts', import.meta.url))
   w.postMessage('')
   return await new Promise(res => {
     w.onmessage = b => {

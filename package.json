@@ -18,6 +18,7 @@
     "build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build",
     "installDep": "npx -p typescript tsc ./_rendevoz/src/**/*.ts --jsx react-jsx --declaration --emitDeclarationOnly --outDir ./_rendevoz/types ; cd ./_rendevoz && npm run pub",
     "publishMac": "cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build && electron-builder --universal",
+    "publishWindows": "cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build && electron-builder --win",
     "publish": "cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build && electron-builder"
   },
   "overrides": {

@@ -58,7 +58,9 @@ export default <T extends ILabel>(
     if (labelIds?.length !== undefined) {
       const action = async () => {
         const labels = (
-          labelSearch.results?.length ? labelSearch.results : await Promise.all(labelIds?.map(i => ObjectStore(type).getOneById(i)) || [])
+          labelSearch.results?.length
+            ? labelSearch.results
+            : (await Promise.all(labelIds?.map(i => ObjectStore(type).getOneById(i)) || [])).filter(i => i)
         ) as T[]
         if (!labelSearch.results?.length) {
           if (sortMode === 'playback time in reverse') {
@@ -273,6 +275,7 @@ export default <T extends ILabel>(
     />
   )
   const renderContainer = (renderItem: (label: T, highlighted?: boolean) => ReactElement) => {
+    if (!sortedLabels?.length) return null
     return (
       <VirtualList
         paddingEnd={100}
@@ -280,11 +283,11 @@ export default <T extends ILabel>(
         onOffsetChange={offset => {
           debounceChangeOffset.run(offset)
         }}
-        getKey={i => i?.id}
+        getKey={i => i.id}
         ref={virtualizerRef}
         style={{ width: '100%', height: '100%', overflowAnchor: 'none' }}
         estimateSize={200}
-        items={sortedLabels}
+        items={sortedLabels.filter(i => i)}
         renderItem={i => renderItem(i, currentHighlight === i.id)}
       ></VirtualList>
     )

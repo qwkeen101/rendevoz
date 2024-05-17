@@ -120,7 +120,7 @@ const Label = ({ id, highlight }: { id: number; highlight: boolean }) => {
       flex
       column
       gap={5}
-      style={{ padding: 10, transition: 'background 0.25s ease' }}
+      style={{ padding: 12, transition: 'background 0.25s ease' }}
       className={'border-top'}
       ref={mergedContainerRef}
     >

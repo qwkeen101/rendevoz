@@ -132,8 +132,8 @@ const Label = memo(({ id, type }: { id: number; type: string }) => {
       column
       className={'border-top'}
       style={{
-        padding: '10px',
-        transition: 'background 0.35s ease',
+        padding: '12px',
+        transition: 'background 0.25s ease',
         background: currentActive === id ? Colors.Common.SelectColorTransparent : undefined
       }}
       gap={9}

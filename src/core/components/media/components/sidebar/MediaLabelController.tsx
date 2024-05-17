@@ -132,7 +132,7 @@ const Label = ({ id, type }: { id: number; type: string }) => {
   if (!label) return null
   const chapter = sortedChapters?.findLast(i => i.startTime < mediaLabel.time)
   return (
-    <Content className={'border-top'} ref={mergedRef} flex column gap={12} style={{ padding: '10px', transition: 'background 0.25s ease' }}>
+    <Content className={'border-top'} ref={mergedRef} flex column gap={12} style={{ padding: 12, transition: 'background 0.25s ease' }}>
       <Content flex gap={12} alignItems="flex-start">
         {mediaLabel?.imageUrl && (
           <Image

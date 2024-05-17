@@ -31,8 +31,7 @@ const shortCutNameToTitle = {
   },
   video: {
     makeVideoLabel: 'make video label',
-    copyVideoTimestamp: 'Copy video timestamp',
-    openMediaSidebar: 'Open sidebar'
+    copyVideoTimestamp: 'Copy video timestamp'
   }
 }
 const flattened = {

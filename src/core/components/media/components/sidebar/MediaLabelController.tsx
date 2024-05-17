@@ -61,7 +61,7 @@ const MediaLabelController = ({ labelType, labelIds }: { labelType: string; labe
     >
       {sortedLabels?.length ? (
         <>
-          <Content flex gap={6} alignItems={'center'} className={'font-size-14'} style={{ padding: 10 }}>
+          <Content flex gap={6} alignItems={'center'} className={'font-size-14'} style={{ padding: 12 }}>
             {renderSearch()}
             {renderSort()}
             <Tooltip positions={['left']} content={t('general.Export all labels')}>
@@ -155,8 +155,7 @@ const Label = ({ id, type }: { id: number; type: string }) => {
           {renderOriginalText({
             text: label.selectedText,
             style: {
-              marginBottom: 4,
-              fontSize: 12
+              marginBottom: 4
             }
           })}
           <Content>

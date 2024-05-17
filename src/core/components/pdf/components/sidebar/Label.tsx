@@ -145,8 +145,7 @@ const Label = ({ id, highlight }: { id: number; highlight: boolean }) => {
         renderOriginalText({
           text: pdfLabel.selectedText,
           style: {
-            marginBottom: 4,
-            fontSize: 12
+            marginBottom: 4
           }
         })}
       <Content flex>

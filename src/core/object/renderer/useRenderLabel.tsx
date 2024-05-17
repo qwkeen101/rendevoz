@@ -317,10 +317,12 @@ const useRenderLabel = (opts: {
     if (!options.text) return null
     return (
       <div
+        className={'font-size-12'}
         style={{
-          fontSize: 13,
           padding: '3px 6px 3px 8px',
           cursor: 'pointer',
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
           borderLeft: label?.color ? `3px solid ${Colors.getAdaptColor(label.color)}` : `3px solid ${Colors.Emphasis.Emphasis}`,
           ...options.style
         }}
@@ -338,14 +340,7 @@ const useRenderLabel = (opts: {
           }
         }}
       >
-        <div
-          style={{
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word'
-          }}
-        >
-          {options.text}
-        </div>
+        {options.text}
       </div>
     )
   }

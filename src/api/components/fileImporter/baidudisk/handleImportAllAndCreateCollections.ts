@@ -77,7 +77,7 @@ export const normalizeGroupToCollections = async (group: any) => {
         if (v.category === 1 || (v.category === 4 && v.server_filename.endsWith('pdf'))) {
           if (v.category === 1) {
             const meta = await ObjectStore('video').addOneWithMeta(
-              { videoUrl: `baidudisk${v.path}` },
+              { url: `baidudisk${v.path}` },
               { currentMeta: { name: v.server_filename }, silent: true }
             )
             BaidudiskInstance.onCreateMeta?.(meta.meta)

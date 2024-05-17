@@ -245,7 +245,7 @@ const FileImporter = ({
           if (file.category === 1) {
             if (file) {
               ObjectStore('video')
-                .addOneWithMeta({ videoUrl: `baidudisk${file.path}` }, { currentMeta: { name: file.filename, coverImgSrc: thumb } })
+                .addOneWithMeta({ url: `baidudisk${file.path}` }, { currentMeta: { name: file.filename, coverImgSrc: thumb } })
                 .then(o => createHandler?.(o.meta))
             }
           }

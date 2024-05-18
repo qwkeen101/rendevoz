@@ -24,6 +24,7 @@ export default async () => {
   if (client) {
     thottleDeleteOldCommits()
     const lastSynced = await syncDB.table('state').get('lastSynced')
+    await syncDB.table('state').put(Date.now(), 'lastSynced')
     const all = await client.listFolder('commits', lastSynced ? `commits/${lastSynced}` : undefined)
     globalStore.set(SyncAPI.stateAtom, { ...globalStore.get(SyncAPI.stateAtom), lastSynced: Date.now() })
     if (all) {
@@ -43,7 +44,6 @@ export default async () => {
         )
       ).filter(i => i && i.deviceId !== deviceId) as ISyncOperation[]
       console.log(data)
-      syncDB.table('state').put(Date.now(), 'lastSynced')
       const dbTransactions = data
         .map(i => i.databaseTranscations?.map(t => ({ ...t, timestamp: i.timestamp })))
         .flat()

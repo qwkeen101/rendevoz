@@ -67,12 +67,12 @@ export default ({ groupValue }: { groupValue?: MetaGroup }) => {
   })
 
   useGroupGetPropFromMeta(instance)
-  useLayoutEffect(() => {
-    // prevent use group filter infinite loop
-    setTimeout(() => {
-      compares()
-    })
-  }, [groupValue?.views])
+  // useLayoutEffect(() => {
+  //   // prevent use group filter infinite loop
+  //   setTimeout(() => {
+  //     compares()
+  //   })
+  // }, [groupValue?.views])
   useLayoutEffect(() => {
     const currentView = store.get(GroupStateAtom).currentView
     if (groupValue?.lastViewId && !currentView) {

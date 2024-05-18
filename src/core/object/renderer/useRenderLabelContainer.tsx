@@ -285,7 +285,7 @@ export default <T extends ILabel>(
         overscan={5}
         onOffsetChange={offset => {
           if (offset !== prevOffset.current) {
-            prevOffset.current === offset
+            prevOffset.current = offset
             debounceChangeOffset.run(offset)
           }
         }}

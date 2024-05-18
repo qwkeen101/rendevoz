@@ -57,7 +57,7 @@ export const commitManually = async () => {
     if (!cloned.noteUpdateIds?.length && !cloned.fileTransactions?.length && !cloned.databaseTranscations?.length) {
       return
     }
-    console.log(cloned)
+    console.log(cloned, Date.now())
     cloudClient.uploadData(
       `commits/${Date.now()}`,
       new Blob([compressSync(strToU8(JSON.stringify({ ...cloned, timestamp: Date.now(), deviceId: await FileSystem.fs.getMachineId() })))])

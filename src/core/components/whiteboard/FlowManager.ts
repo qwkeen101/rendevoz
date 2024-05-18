@@ -159,14 +159,6 @@ class FlowManager {
         type: 'nodeSizeChange',
         changed: sizeChanged
       })
-      setTimeout(() => {
-        this.instance.eventEmitter.emit('whiteboard', {
-          type: 'nodesSizeChange',
-          data: {
-            changedNodes: sizeChanged
-          }
-        })
-      })
       nodeFuncArr.forEach(i => {
         i.onSomeNodeSizeChange?.(sizeChanged)
       })

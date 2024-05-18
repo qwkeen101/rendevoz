@@ -23,6 +23,10 @@ export default (o: ObjectFamily[keyof ObjectFamily]) => {
           }
           delete useRenderLabelEditor.attachedTags[i.objectId]
         }
+        if (i.objectId && useRenderLabelEditor.labelNeedMoveTo) {
+          useRenderLabelEditor.labelNeedMoveTo = false
+          GlobalInstance.metaOps?.quickAdd(i.id)
+        }
       })
   }
 }

@@ -23,11 +23,9 @@ export default (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
         y: box.top
       }
     }
-    instance.eventEmitter.emit('whiteboard', {
+    instance.emit?.({
       type: 'nodeDragStart',
-      data: {
-        draggingNode: node
-      }
+      draggingNode: node
     })
     if (node.type === 'group') {
       handleGroupMoveStart()
@@ -41,16 +39,15 @@ export default (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
     const targetMindmapNode = getClosestLink({ ...node, x: data.x, y: data.y }, instance, e)
     if (initialPositionRef.current) {
       const initial = initialPositionRef.current!
-      Array.from(instance.values.ID_TO_NODE_MAP.values()).forEach(
-        i =>
-          i.checkMindmapDrag?.(
-            targetMindmapNode,
-            { ...node, x: data.x, y: data.y },
-            {
-              x: data.x - initial.x,
-              y: data.y - initial.y
-            }
-          )
+      Array.from(instance.values.ID_TO_NODE_MAP.values()).forEach(i =>
+        i.checkMindmapDrag?.(
+          targetMindmapNode,
+          { ...node, x: data.x, y: data.y },
+          {
+            x: data.x - initial.x,
+            y: data.y - initial.y
+          }
+        )
       )
     }
     const transformedWhiteboardPoint = instance.coordOps?.transformWindowPositionToPosition({
@@ -92,16 +89,14 @@ export default (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
     } else {
       // 如果链接到导图上，则不snap
       if (sendEvent && !targetMindmapNode) {
-        instance.eventEmitter.emit('whiteboard', {
+        instance.emit?.({
           type: 'nodeDrag',
-          data: {
-            draggingNode: {
-              ...node,
-              x: data.x,
-              y: data.y
-            },
-            nodeElement: data.node
-          }
+          draggingNode: {
+            ...node,
+            x: data.x,
+            y: data.y
+          },
+          nodeElement: data.node
         })
       }
     }
@@ -115,7 +110,7 @@ export default (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
       dragSingleNodeToEnlargeGroup(node, instance, availableGroups)
       draggedIntoGroups.current = undefined
     }
-    instance.eventEmitter.emit('whiteboard', {
+    instance.emit?.({
       type: 'nodeDragEnd'
     })
     if (node.type === 'group') {

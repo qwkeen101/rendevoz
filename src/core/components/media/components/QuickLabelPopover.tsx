@@ -29,6 +29,7 @@ export default memo(() => {
       handleInsertNote(labelDetails, name, tags)
     },
     showTags: !fullScreen,
+    showMoveTo: !fullScreen,
     onCancel: () => {
       if (labelDetails?.imageUrl) {
         FileSystem.fs.deleteFile(labelDetails.imageUrl)
@@ -36,7 +37,7 @@ export default memo(() => {
     },
     onClose: () => {
       instance.focus?.()
-      if (isPlayRef.current) {
+      if (isPlayRef.current && !useRenderLabelEditor.labelNeedMoveTo) {
         instance.actionOps?.play()
       }
       setMediaState(s => ({ ...s, labelPopoverVisible: false }))

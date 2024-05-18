@@ -1,7 +1,6 @@
 import {
   Box,
   EdgePosition,
-  IEventEmitter,
   IWhiteboard,
   IWhiteboardAlignment,
   IWhiteboardEdge,
@@ -12,7 +11,8 @@ import {
   IWhiteboardOutline
 } from '~/typings'
 import { CSSProperties, Dispatch, SetStateAction } from 'react'
-import { DraggableData } from 'react-rnd'
+import { Rnd } from 'react-rnd'
+import { ResizeDirection } from 're-resizable'
 
 export type IWhiteboardToolbarState = {
   // originX and originY is whiteboard coord, for scroll and move
@@ -132,6 +132,37 @@ export type IWhiteboardEvents =
       resized: IWhiteboardNode[]
     }
   | {
+      type: 'nodeDragStart'
+      draggingNode: IWhiteboardNode
+    }
+  | {
+      type: 'nodeDrag'
+      draggingNode: IWhiteboardNode
+      nodeElement: HTMLElement
+    }
+  | {
+      type: 'nodeResize'
+      // pointer move box
+      pointerBox: Box
+      resizingNode: IWhiteboardNode
+      nodeElement: HTMLElement
+      rnd: Rnd
+      resizeDir: ResizeDirection
+    }
+  | {
+      type: 'nodeResizeEnd'
+    }
+  | {
+      type: 'nodeDragEnd'
+    }
+  | {
+      type: 'nodeResizeEnd'
+    }
+  | {
+      type: 'nodeResizeStart'
+      resizingNode: IWhiteboardNode
+    }
+  | {
       type: 'nodeSizeChange'
       changed: IWhiteboardNode[]
     }
@@ -143,6 +174,12 @@ export type IWhiteboardEvents =
   | {
       type: 'nodeClick'
       node: IWhiteboardNode
+    }
+  | {
+      type: 'panChange'
+    }
+  | {
+      type: 'zoomChange'
     }
 export type IWhiteboardInstance = Partial<{
   openTabInSidebar?: (type: string, objectId?: number) => void
@@ -303,7 +340,6 @@ export type IWhiteboardInstance = Partial<{
     isSelecting: () => boolean
   }
 }> & {
-  eventEmitter: IEventEmitter
   values: {
     id?: number
     mindmapAttachableNodesCache?: IWhiteboardNode[]

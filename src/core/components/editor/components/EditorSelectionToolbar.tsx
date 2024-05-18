@@ -24,6 +24,7 @@ type EditorToolbarEvents =
   | {
       action: 'redo' | 'undo' | 'bold' | 'italic' | 'underline' | 'code' | 'link' | 'highlight' | 'cloze'
       currentToolbarPosition?: XYPosition
+      toolbarDirection: 'top' | 'bottom'
     }
   | {
       action: 'changeFontSize'
@@ -177,7 +178,30 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
   const handleScroll = e => {
     setFloatPosition(s => ({ ...s, visible: false }))
   }
-
+  const handleHighlight = async () => {
+    const marks = Editor.marks(editor)
+    if (marks['highlight']) {
+      isOnHighlightRef.current = false
+    } else {
+      isOnHighlightRef.current = true
+    }
+    if (floatPosition) {
+      on({
+        action: 'highlight',
+        currentToolbarPosition: {
+          x: floatPosition.left,
+          y: floatPosition.direction === 'top' ? floatPosition.top - 16 : floatPosition.top
+        },
+        toolbarDirection: floatPosition.direction || 'bottom'
+      })
+    }
+    setFloatPosition(s => ({ ...s, visible: false }))
+    window.getSelection()?.empty()
+    ReactEditor.blur(editor)
+    setTimeout(() => {
+      Transforms.deselect(editor)
+    }, 150)
+  }
   useEffect(() => {
     if (position === 'float') {
       document.addEventListener('pointerup', handleMouseUp)
@@ -192,8 +216,14 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
   })
 
   useEffect(() => {
-    const handleKeydown = (e: KeyboardEvent) => {
-      setFloatPosition(s => ({ ...s, visible: false }))
+    const handleKeydown = async (e: KeyboardEvent) => {
+      if (readOnly && isHotkey(KEY.Enter, e)) {
+        setTimeout(() => {
+          if (!e.defaultPrevented) {
+            handleHighlight()
+          }
+        })
+      }
     }
     if (floatPosition?.visible) {
       selectionRef.current = editor.selection
@@ -271,19 +301,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
             padding: '0px 12px 0 10px'
           }}
           onClick={async () => {
-            const marks = Editor.marks(editor)
-            if (marks['highlight']) {
-              isOnHighlightRef.current = false
-            } else {
-              isOnHighlightRef.current = true
-            }
-            on({ action: 'highlight', currentToolbarPosition: { x: floatPosition!.left, y: floatPosition!.top } })
-            setFloatPosition(s => ({ ...s, visible: false }))
-            window.getSelection()?.empty()
-            ReactEditor.blur(editor)
-            setTimeout(() => {
-              Transforms.deselect(editor)
-            }, 150)
+            handleHighlight()
           }}
         >
           <Button.IconButton
@@ -315,10 +333,11 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
                     {
                       width: 0,
                       height: 0,
-                      top: floatPosition!.top,
+                      top: floatPosition.top - 16,
                       left: floatPosition!.left
                     },
-                    editor.selection
+                    editor.selection,
+                    'top'
                   )
                 }
               })

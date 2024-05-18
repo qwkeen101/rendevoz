@@ -12,11 +12,9 @@ export default (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
       e.preventDefault()
       throw new Error()
     }
-    instance.eventEmitter.emit('whiteboard', {
+    instance.emit?.({
       type: 'nodeResizeStart',
-      data: {
-        resizingNode: node
-      }
+      resizingNode: node
     })
   }
 
@@ -92,41 +90,32 @@ export default (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
           ? // top left
             { x: node.x, y: node.y }
           : ['top', 'topRight'].includes(dir)
-          ? // bottom left
-            {
-              x: node.x,
-              y: node.y + node.height
-            }
-          : // top right
-          ['left', 'bottomLeft'].includes(dir)
-          ? {
-              x: node.x + node.width,
-              y: node.y
-            }
-          : // bottom right
-            {
-              x: node.x + node.width,
-              y: node.y + node.height
-            },
+            ? // bottom left
+              {
+                x: node.x,
+                y: node.y + node.height
+              }
+            : // top right
+              ['left', 'bottomLeft'].includes(dir)
+              ? {
+                  x: node.x + node.width,
+                  y: node.y
+                }
+              : // bottom right
+                {
+                  x: node.x + node.width,
+                  y: node.y + node.height
+                },
         endPoint: endPoint
       })
       selectionBox.width = Math.max(DEFAULT_NODE_WIDTH, selectionBox.width)
-      instance.eventEmitter.emit('whiteboard', {
+      instance.emit?.({
         type: 'nodeResize',
-        data: {
-          resizingNode: node,
-          originalBox: {
-            left: node.x,
-            top: node.y,
-            width: node.width,
-            height: node.height
-          },
-          resizeDir: dir,
-          pointerBox: selectionBox,
-          realtimeBox: nodeRealtimeBox,
-          nodeElement: elementRef,
-          rnd
-        }
+        resizingNode: node,
+        resizeDir: dir,
+        pointerBox: selectionBox,
+        nodeElement: elementRef,
+        rnd
       })
     }
     return {
@@ -137,7 +126,7 @@ export default (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
 
   const handleResizeEnd = () => {
     startPoint.current = undefined
-    instance.eventEmitter.emit('whiteboard', {
+    instance.emit?.({
       type: 'nodeResizeEnd'
     })
     const realtimeBox = instance.values.ID_TO_NODE_MAP.get(node.id)?.getRealtimeBox()

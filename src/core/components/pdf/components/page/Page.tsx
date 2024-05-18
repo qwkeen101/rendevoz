@@ -230,10 +230,11 @@ const PdfPage: React.FC<PdfPageProps> = ({
                   },
                   {
                     left: pageBounding.left + pageBox.left * ratio,
-                    top: pageBox.top * ratio + pageBounding.top,
+                    top: pageBox.top * ratio + pageBounding.top - 20,
                     width: pageBox.width * ratio,
-                    height: pageBox.height * ratio
-                  }
+                    height: 0
+                  },
+                  'top'
                 )
               }}
               textSelect={textSelect}

@@ -1,7 +1,7 @@
 import { useMemoizedFn, useRafFn } from '@/hooks'
 import { memo, MutableRefObject, useEffect, useRef, useState } from 'react'
 import { DraggableData, Rnd } from 'react-rnd'
-import { IWhiteboardNode, XYPosition } from '~/typings'
+import { IWhiteboardEvents, IWhiteboardNode, XYPosition } from '~/typings'
 import { Box } from '~/typings'
 import { assignProperties, calculateSelectionBox } from '@/utils'
 import { useFlow } from '../StateHooks'
@@ -32,11 +32,11 @@ const WhiteboardSelect = memo(({ containerRef }: { containerRef: MutableRefObjec
   const selectStartPointRef = useRef<XYPosition>()
   const selectEndPointRef = useRef<XYPosition>()
   const [isDraggingSelectionBox, setIsDraggingSelectionBox] = useState(false)
-  const scopedEmitter = Rendevoz.Events.Emit.useScopedEventEmitter()
-  const scopedEventHandler = Rendevoz.Events.Emit.useEventHandler('whiteboard')
-  scopedEventHandler.on('nodesSizeChange', e => {
-    if (e.changedNodes.some(i => selectedNodeIdsRef.current.has(i.id))) {
-      instance.selectOps?.resetSelectionBox()
+  const handler = useMemoizedFn((e: IWhiteboardEvents) => {
+    if (e.type === 'nodeSizeChange') {
+      if (e.changed.some(i => selectedNodeIdsRef.current.has(i.id))) {
+        instance.selectOps?.resetSelectionBox()
+      }
     }
   })
   assignProperties(instance, {
@@ -235,14 +235,14 @@ const WhiteboardSelect = memo(({ containerRef }: { containerRef: MutableRefObjec
   useEffect(() => {
     const container = containerRef.current
     const parent = container?.parentElement
-    scopedEmitter.addListener('whiteboard', scopedEventHandler)
+    instance.addEventListener?.(handler)
     if (parent) {
       parent.addEventListener('pointerdown', pointerHandler)
       document.addEventListener('pointermove', pointerHandler)
       document.addEventListener('pointerup', pointerHandler)
     }
     return () => {
-      scopedEmitter.removeListener('whiteboard', scopedEventHandler)
+      instance.removeEventListener?.(handler)
       parent?.removeEventListener('pointerdown', pointerHandler)
       document.removeEventListener('pointermove', pointerHandler)
       document.removeEventListener('pointerup', pointerHandler)

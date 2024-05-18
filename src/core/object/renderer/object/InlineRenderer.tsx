@@ -47,15 +47,7 @@ export default (
     renderObjectDetailsOnParent: true
   }
 ) => {
-  const { t } = useTranslation()
   const containerRef = useRef(null)
-  const update = useUpdate()
-  useEffect(() => {
-    if (renderAttOnParent) {
-      update()
-    }
-  }, [renderAttOnParent])
-
   if (!metaObject) return null
   return (
     <div
@@ -130,23 +122,6 @@ export default (
       >
         {Rendevoz.Utils.Meta.getTypeName(metaObject.type)}
       </div>
-      {metaObject?.attachments?.length ? (
-        <div
-          style={{
-            textTransform: 'capitalize',
-            pointerEvents: 'auto',
-            cursor: 'pointer',
-            fontSize: 12,
-            whiteSpace: 'nowrap',
-            lineHeight: 1,
-            padding: '3px 8px',
-            margin: 'auto 0'
-          }}
-          className={ClassName.objectTag}
-        >
-          {`${metaObject.attachments.length} ${t(`general.att`)}`}
-        </div>
-      ) : null}
       {showMoreOptions && (
         <IconWithPopover
           size={14}

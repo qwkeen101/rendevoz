@@ -100,6 +100,9 @@ export default memo(() => {
     if (toolbarState.type === 'select') {
       return 'start'
     }
+    if (toolbarState.type === 'edge') {
+      return 'center'
+    }
     return 'start'
   }
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Box, ILabel, XYPosition } from '~/typings'
-import { AnimatePopover, AutosizeTextarea, Icon, WithBorder } from '@/components'
+import { AnimatePopover, AutosizeTextarea, Content, Icon, WithBorder } from '@/components'
 import isHotkey from 'is-hotkey'
 import { Colors, KEY } from '@/consts'
 import { GlobalInstance } from '@/hooks'
@@ -16,16 +16,18 @@ const useRenderLabelEditor = function <T extends ILabel>(opts?: {
   onCancel?: VoidFunction
   parentElement?: HTMLElement | null
   showTags?: boolean
+  showMoveTo?: boolean
 }) {
   const inputRef = useRef<HTMLDivElement>(null)
   const [popoverState, setPopoverState] = useState<{
     visible: boolean
     position?: XYPosition
     labelDetails?: Partial<T>
+    direction?: 'top' | 'bottom'
   }>({
     visible: false
   })
-  const { visible, position, labelDetails } = popoverState
+  const { visible, position, labelDetails, direction = 'bottom' } = popoverState
   const labelMeta = MetaStore.useObjectToMetaValue(labelDetails?.id)
   const [value, setValue] = useState('')
   const { t } = useTranslation()
@@ -45,15 +47,15 @@ const useRenderLabelEditor = function <T extends ILabel>(opts?: {
       }
     }
   }, [popoverState.visible])
-  const handleInsertNote = async () => {
+  const handleInsertNote = async (shouldClose = true) => {
     const tags = MetaStore.getCachedMetaObject(TEMP_META_ID)?.tags
     opts?.onInsert?.(value, tags)
-    close()
+    shouldClose && close()
   }
   const renderPopover = () => (
     <AnimatePopover
       keyboardClose={false}
-      positions={['bottom', 'top']}
+      positions={direction === 'bottom' ? ['bottom', 'top'] : ['top', 'bottom']}
       visible={!!(visible && position)}
       position={{
         left: position?.x ?? 0,
@@ -76,7 +78,8 @@ const useRenderLabelEditor = function <T extends ILabel>(opts?: {
           style={{
             display: 'flex',
             flexWrap: 'wrap',
-            width: 460,
+            width: 470,
+            maxWidth: '90vw',
             gap: 4,
             alignItems: 'center',
             pointerEvents: popoverState.visible ? 'auto' : 'none',
@@ -108,32 +111,51 @@ const useRenderLabelEditor = function <T extends ILabel>(opts?: {
             }}
             placeholder={t('general.Add note')}
           />
-          {opts?.showTags !== false && (
+          <Content flex gap={8} alignItems={'center'}>
+            {opts?.showMoveTo !== false && (
+              <Icon
+                name={'park-corner-up-right'}
+                style={{
+                  color: Colors.Font.SuperTransparent
+                }}
+                onClick={() => {
+                  if (labelMeta?.id) {
+                    GlobalInstance.metaOps?.quickAdd(labelMeta?.id)
+                  } else {
+                    useRenderLabelEditor.labelNeedMoveTo = true
+                    handleInsertNote()
+                  }
+                }}
+                size={17}
+                className={ClassName.flatButton(4, '3px')}
+              />
+            )}
+            {opts?.showTags !== false && (
+              <Icon
+                name={'park-tag-one'}
+                style={{
+                  color: Colors.Font.SuperTransparent
+                }}
+                onClick={() => {
+                  GlobalInstance.metaOps?.quickAdd(labelMeta?.id ?? TEMP_META_ID, 'tags')
+                }}
+                size={17}
+                className={ClassName.flatButton(4, '3px')}
+              />
+            )}
             <Icon
-              name={'park-tag-one'}
+              name={'park-up-small'}
+              size={16}
+              strokeWidth={5}
+              onClick={handleInsertNote}
+              className={ClassName.selectButton()}
               style={{
-                color: Colors.Font.SuperTransparent,
-                marginRight: 6
+                color: 'white',
+                padding: 3,
+                borderRadius: 999
               }}
-              onClick={() => {
-                GlobalInstance.metaOps?.quickAdd(labelMeta?.id ?? TEMP_META_ID, 'tags')
-              }}
-              size={17}
-              className={ClassName.flatButton(4, '3px')}
             />
-          )}
-          <Icon
-            name={'park-up-small'}
-            size={16}
-            strokeWidth={5}
-            onClick={handleInsertNote}
-            className={ClassName.selectButton()}
-            style={{
-              color: 'white',
-              padding: 3,
-              borderRadius: 999
-            }}
-          />
+          </Content>
         </WithBorder>
       }
     />
@@ -145,7 +167,7 @@ const useRenderLabelEditor = function <T extends ILabel>(opts?: {
   const attachTags = (labelId: number, tags: number[]) => {
     attchedTags[labelId] = tags
   }
-  const open = (labelDetails: Partial<T>, box: Box) => {
+  const open = (labelDetails: Partial<T>, box: Box, direction?: 'top' | 'bottom') => {
     if (labelDetails.name) {
       setValue(labelDetails.name)
     } else {
@@ -157,6 +179,7 @@ const useRenderLabelEditor = function <T extends ILabel>(opts?: {
         x: box.left + box.width / 2,
         y: box.top + box.height + 10
       },
+      direction,
       labelDetails
     })
   }
@@ -168,9 +191,11 @@ const useRenderLabelEditor = function <T extends ILabel>(opts?: {
   }
 }
 useRenderLabelEditor.attachedTags = attchedTags
+useRenderLabelEditor.labelNeedMoveTo = false
 useRenderLabelEditor.TEMP_ID = TEMP_META_ID
 export default useRenderLabelEditor as typeof useRenderLabelEditor & {
   // label id => tags
   attachedTags: Record<number, number[]>
   TEMP_ID: number
+  labelNeedMoveTo?: boolean
 }

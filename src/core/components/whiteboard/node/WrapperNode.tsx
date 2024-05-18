@@ -36,6 +36,7 @@ import classnames from 'classnames'
 import { isEqual } from 'lodash'
 import { selectAtom } from 'jotai/utils'
 import useUpdateIsomorphicLayoutEffect from '@/hooks/utils/useUpdateIsomorphicLayoutEffect'
+import { WhiteboardTransformAtom } from '@/core/components/whiteboard/hooks/useWhiteboardTransform'
 
 export type NodeInnerState = INodeInnerState
 export interface InnerNodeProps {
@@ -64,7 +65,6 @@ const WrapperNode = ({ node }: { node: IWhiteboardNode }) => {
   const { x, y, type, id, background, width, height } = node
   const eventHandlerRef = useRef<NodeEventHandler>()
   const flow = useFlow()
-
   const isDraggingRef = useRef(false)
   const isResizingRef = useRef(false)
 

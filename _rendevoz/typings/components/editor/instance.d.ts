@@ -80,7 +80,7 @@ export type IEditorInstance = Partial<{
     getBeforeText: (distance: number, unit?: 'character' | 'word') => string | undefined
   }
   labelOps: {
-    openLabelEditor: (label: Partial<INoteLabel>, boundingBox: Box, selection: Selection) => void
+    openLabelEditor: (label: Partial<INoteLabel>, boundingBox: Box, selection: Selection, direction: 'top' | 'bottom') => void
     openLabelInSidebar: (labelId: number) => void
     addLabel: (label: Partial<INoteLabel>) => Promise<INoteLabel | void>
     deleteLabel: (id: number) => Promise<void>

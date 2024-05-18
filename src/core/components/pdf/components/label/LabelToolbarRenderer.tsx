@@ -26,10 +26,10 @@ const LabelToolbarRenderer = () => {
   let layout: string[] = []
 
   if (currentLabel && pdfState.currentFocusedLabel?.position) {
-    layout = layout.concat('edit', 'rightBar', 'separator', 'colorPicker', 'move-to')
+    layout = layout.concat('edit', 'rightBar', 'separator', 'colorPicker')
     if (currentLabel.type === 'highlight') {
       layout.push('copy')
-      layout = layout.concat('separator', 'searcher', 'translator')
+      layout = layout.concat('searcher', 'translator')
     }
     layout.push('separator', 'delete')
   }
@@ -58,12 +58,16 @@ const LabelToolbarRenderer = () => {
             onEdit={() => {
               close()
               if (currentLabel) {
-                instance.labelOps?.openEditLabelPopover(currentLabel, {
-                  width: 0,
-                  height: 0,
-                  top: pos!.y,
-                  left: pos!.x
-                })
+                instance.labelOps?.openEditLabelPopover(
+                  currentLabel,
+                  {
+                    width: 0,
+                    height: 0,
+                    top: pos!.y - 20,
+                    left: pos!.x
+                  },
+                  'top'
+                )
               }
             }}
             onMove={() => {

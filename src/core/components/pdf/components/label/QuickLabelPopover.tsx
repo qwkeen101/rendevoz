@@ -60,13 +60,13 @@ export default memo(() => {
   assignProperties(instance, {
     labelOps: {
       ...instance.labelOps,
-      openEditLabelPopover: async (l, pageBounding) => {
+      openEditLabelPopover: async (l, pageBounding, direction) => {
         const setting = getSetting()
         if (setting.pdf.autoOpenHighlightEditor === false && !l.id) {
           setTimeout(() => handleInsertNote(labelDetails))
           return
         }
-        open(l, pageBounding)
+        open(l, pageBounding, direction)
       }
     }
   })

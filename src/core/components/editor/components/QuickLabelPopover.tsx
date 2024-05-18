@@ -45,7 +45,7 @@ export default () => {
   assignProperties(instance, {
     labelOps: {
       ...instance.labelOps,
-      openLabelEditor: async (label, boundingBox, selection) => {
+      openLabelEditor: async (label, boundingBox, selection, direction) => {
         const setting = getSetting()
         if (setting.editor.autoOpenHighlightEditor === false) {
           const existed = await ObjectStore(labelType).getOneById(label.id)
@@ -56,7 +56,7 @@ export default () => {
         }
         console.log(selection)
         selectionRef.current = selection
-        open(label, boundingBox)
+        open(label, boundingBox, direction)
       }
     }
   })

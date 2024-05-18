@@ -3,8 +3,6 @@ import { createStore } from 'jotai/vanilla'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { FlowAtom, useFlow, useSetWhiteboardNodes, WhiteboardAtom } from './StateHooks'
 import TreeNodeContainer from './node/NodeContainer'
-import useScopedEventEmitter from '@/events/useEventEmitter'
-import { GlobalEventHandler } from '@/events/globalEvent'
 import WhiteboardSelect from './hooks/WhiteboardSelect'
 import { globalStore, ObjectStore } from '@/api/stores'
 import FlowManager from './FlowManager'
@@ -12,7 +10,6 @@ import { IWhiteboard, IWhiteboardNode, IWhiteboardProps } from '~/typings/data'
 import { Content } from '@/components'
 import { useClickOutside, useGlobalAtomValue, useSelectAtomValue } from '@/hooks'
 import WhiteboardRightbar, { WhiteboardSidebarStateAtom } from './sidebar/WhiteboardRightbar'
-import { Rendevoz } from '../../rendevoz'
 import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
 import { useWhiteboardInstance, WhiteboardInstanceAtom } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
 import { IWhiteboardInstance } from '~/typings'
@@ -38,9 +35,6 @@ import WhiteboardPasteSelector from '@/core/components/whiteboard/WhiteboardPast
 const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly, state }: IWhiteboardProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const flow = useFlow()
-  const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
-  const handler = useMemo(() => new GlobalEventHandler(), [])
-  const scopedEmitter = useScopedEventEmitter()
   const nodes = useSelectAtomValue(WhiteboardAtom, s => s?.nodes)
   const instance = useWhiteboardInstance()
   const eventListeners = useRef(new Set())
@@ -65,7 +59,6 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly, sta
     getContainerNode: () => containerRef.current!,
     getOutestContainerNode: () => containerRef.current?.parentElement,
     getAllNode: () => Array.from(getLatestWhiteboard()?.nodes?.values() || []),
-    eventEmitter: scopedEmitter,
     getEdge: edgeId => getLatestWhiteboard()?.edges?.get(edgeId),
     getAllEdge: () => Array.from(getLatestWhiteboard()?.edges?.values() || []),
     isFocused: () => flow.focused,
@@ -106,13 +99,9 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly, sta
 
   useEffect(() => {
     if (flow && containerRef.current) {
-      emitter.addListener('global', handler)
       flow.containerEle = containerRef.current
       flow.parentContainerEle = flow.containerEle.parentElement as HTMLElement
       containerRef.current?.style.setProperty('--zoom-level', '1')
-      return () => {
-        emitter.removeListener('global', handler)
-      }
     }
   }, [])
 

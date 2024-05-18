@@ -305,7 +305,8 @@ const InnerEditor: FC<InnerEditorProps> = memo(
                           left: position.x,
                           top: position.y
                         },
-                        editor.selection
+                        editor.selection,
+                        event.toolbarDirection
                       )
                     }
                   }

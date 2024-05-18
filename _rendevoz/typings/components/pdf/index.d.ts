@@ -63,7 +63,7 @@ export type IPDFEvent =
     }
 
 type LabelOps = {
-  openEditLabelPopover: (labelDetails: Partial<IPdfLabel>, boundingBox: Box) => void
+  openEditLabelPopover: (labelDetails: Partial<IPdfLabel>, boundingBox: Box, direction?: 'top' | 'bottom') => void
 }
 export type IPDFInstance = Partial<{
   navigateOps: NavigateOps

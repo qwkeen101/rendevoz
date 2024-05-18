@@ -37,8 +37,6 @@ const WhiteboardPanzoom = memo(({ onInitialized }: { onInitialized?: VoidFunctio
   useEffect(() => {
     const container = instance.getContainerNode?.()
     if (container) {
-      const scopedEmitter = instance.eventEmitter
-      if (!scopedEmitter) return
       const panzoom = createPanZoom(container, {
         smoothScroll: false,
         maxZoom: 5,
@@ -121,10 +119,23 @@ const WhiteboardPanzoom = memo(({ onInitialized }: { onInitialized?: VoidFunctio
           return t
         }
       })
+      console.log(lastViewport)
+      if (lastViewport) {
+        const container = instance.getContainerNode?.()
+        if (container) {
+          container.style.setProperty('--zoom-level', String(lastViewport.scale))
+        }
+        flow.containerTransformScale = lastViewport.scale
+        setWhiteboardTransform([lastViewport.x, lastViewport.y, lastViewport.scale])
+        setWhiteboardState(s => ({ ...s, zoom: lastViewport.scale }))
+        panzoom?.zoomTo(0, 0, lastViewport.scale)
+        panzoom?.moveTo(lastViewport.x, lastViewport.y)
+      } else {
+        setWhiteboardState(s => ({ ...s, zoom: 1 }))
+        setWhiteboardTransform([0, 0, 1])
+      }
       panzoom.on('pan', e => {
-        scopedEmitter.emit('whiteboard', {
-          type: 'panChange'
-        })
+        instance.emit?.({ type: 'panChange' })
         const t = panzoom.getTransform()
         setWhiteboardTransform([t.x, t.y, t.scale])
         debounceUpdateLastViewport.run()
@@ -134,26 +145,13 @@ const WhiteboardPanzoom = memo(({ onInitialized }: { onInitialized?: VoidFunctio
         flow.containerTransformScale = scale
         setWhiteboardTransform([x, y, scale])
         const zoomMultipler = Math.sqrt(1 / scale)
-        scopedEmitter.emit('whiteboard', {
-          type: 'zoomChange',
-          data: {
-            zoomLevel: scale,
-            zoomMultiplier: zoomMultipler
-          }
-        })
+        instance.emit?.({ type: 'zoomChange' })
         setWhiteboardState(s => (s.zoom === scale ? s : { ...s, zoom: scale }))
         debounceSetZoom.run(zoomMultipler)
         debounceUpdateLastViewport.run()
       })
       flow.panzoom = panzoom
-      if (lastViewport) {
-        setWhiteboardTransform([lastViewport.x, lastViewport.y, lastViewport.scale])
-        panzoom?.zoomTo(0, 0, lastViewport.scale)
-        panzoom?.moveTo(lastViewport.x, lastViewport.y)
-      } else {
-        setWhiteboardTransform([0, 0, 1])
-      }
-      onInitialized?.()
+      setTimeout(() => onInitialized?.(), 20)
       return () => {
         flow.dispose()
         panzoom.dispose()

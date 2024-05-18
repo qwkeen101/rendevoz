@@ -2,7 +2,7 @@
   "name": "rendevoz-app",
   "productName": "Rendevoz",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.2",
   "author": {
     "name": "Rendevoz Team",
     "email": "rendevoz@rendevoz.com"
@@ -19,7 +19,8 @@
     "installDep": "npx -p typescript tsc ./_rendevoz/src/**/*.ts --jsx react-jsx --declaration --emitDeclarationOnly --outDir ./_rendevoz/types ; cd ./_rendevoz && npm run pub",
     "publishMac": "cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build && electron-builder --universal",
     "publishWindows": "cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build && electron-builder --win",
-    "publish": "cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build && electron-builder"
+    "publish": "cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build && electron-builder",
+    "publishMulti": "npm run publishMac && npm run publishWindows"
   },
   "overrides": {
     "canvas": "../_EXCLUDED_"

@@ -81,7 +81,8 @@ const useRenderLabel = (opts: {
               containerStyle={{
                 zIndex: '500'
               }}
-              boundaryInset={10}
+              align={'center'}
+              disableNudge
               positions={['top', 'bottom']}
               content={
                 <WithBorder style={{ maxWidth: 400 }} width={180} padding={6}>

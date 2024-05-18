@@ -4,7 +4,7 @@ import { useRafFn, useSelectGlobalAtomValue } from '@/hooks'
 import { css } from '@emotion/css'
 import { FC, memo, PointerEventHandler, useEffect, useMemo, useRef } from 'react'
 import { useUpdate } from 'react-use'
-import { IWhiteboardNode, Box } from '~/typings'
+import { IWhiteboardNode, Box, IWhiteboardEvents } from '~/typings'
 import { useFlow, useWhiteboardNodes } from '../StateHooks'
 import { getBoxOfBoxes, getBoxOfNodes } from '../utils'
 import tinycolor from 'tinycolor2'
@@ -23,7 +23,6 @@ const WhiteboardMiniMap: FC<MinimapProps> = memo(({ width = DEFAULT_MINIMAP_WIDT
   const nodes = useWhiteboardNodes()
   const flow = useFlow()
   const instance = useWhiteboardInstance()
-  const scopedEmitter = useScopedEventEmitter()
   const transform = instance.getTransform?.()
   const containerBounding = flow.containerEle?.getBoundingClientRect()
   const isDarkMode = useSelectGlobalAtomValue(SettingAtom, s => s.general.darkMode)
@@ -77,16 +76,14 @@ const WhiteboardMiniMap: FC<MinimapProps> = memo(({ width = DEFAULT_MINIMAP_WIDT
   const realHeight = viewHeight + offset * 2
   const isPressedRef = useRef(false)
   useEffect(() => {
-    const handler = new WhiteboardEventHandler()
-    handler.on('panChange', () => {
-      rafUpdate()
-    })
-    handler.on('zoomChange', () => {
-      rafUpdate()
-    })
-    scopedEmitter.addListener('whiteboard', handler)
+    const handler = (e: IWhiteboardEvents) => {
+      if (e.type === 'panChange' || e.type === 'zoomChange') {
+        rafUpdate()
+      }
+    }
+    instance.addEventListener?.(handler)
     return () => {
-      scopedEmitter.removeListener('whiteboard', handler)
+      instance.removeEventListener?.(handler)
     }
   }, [])
   const svgPointerDownHandler: PointerEventHandler = e => {

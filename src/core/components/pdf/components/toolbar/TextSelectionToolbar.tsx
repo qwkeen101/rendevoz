@@ -1,11 +1,11 @@
 import { Button, Toolbar } from '@/components'
 import { TextSelectEvent } from '~/typings/event'
-import { FC } from 'react'
+import { FC, useEffect } from 'react'
 import { getSetting } from '@/core'
-import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
-import { Colors } from '@/consts'
+import { KEY } from '@/consts'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
+import isHotkey from 'is-hotkey'
 
 interface TextSelectionToolbarProps {
   textSelect?: TextSelectEvent
@@ -16,8 +16,22 @@ interface TextSelectionToolbarProps {
 }
 const TextSelectionToolbar: FC<TextSelectionToolbarProps> = ({ textSelect, onClose, onHighlight, onTranslate, onSearch }) => {
   const defaultLabelColor = getSetting().pdf.defaultLabelColor || '#ffe082'
-  const instance = usePDFInstance()
   const { t } = useTranslation()
+  useEffect(() => {
+    const keydownHandler = (e: KeyboardEvent) => {
+      setTimeout(() => {
+        if (!e.defaultPrevented) {
+          if (isHotkey(KEY.Enter, e)) {
+            onHighlight?.(defaultLabelColor)
+          }
+        }
+      })
+    }
+    document.addEventListener('keydown', keydownHandler)
+    return () => {
+      document.removeEventListener('keydown', keydownHandler)
+    }
+  }, [])
   return (
     <Toolbar
       itemRadius={0}

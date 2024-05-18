@@ -68,6 +68,7 @@ export default ({ groupValue }: { groupValue?: MetaGroup }) => {
 
   useGroupGetPropFromMeta(instance)
   useLayoutEffect(() => {
+    // prevent use group filter infinite loop
     setTimeout(() => {
       compares()
     })

@@ -13,10 +13,13 @@ export default () => {
       const values = get(valuesAtom)
       const valueIndex = get(valueIndexAtom)
       const groupState = instance.getGroupState?.()
-      if (!valueIndex || !values || !groupState) return
-      if (valueIndex.length !== values.length) {
+      const realtimeData = instance.getGroupData?.()
+      const realtimeIndex = realtimeData?.views.find(i => i.id === groupState?.currentView?.id)?.valueIndex
+      const finalIndex = realtimeIndex || valueIndex
+      if (!finalIndex || !values || !groupState) return
+      if (finalIndex.length !== values.length) {
         const valuesIdSet = new Set(values.map(i => i.rowId))
-        const afterFilterIndex = valueIndex.filter(i => valuesIdSet.has(i))
+        const afterFilterIndex = finalIndex.filter(i => valuesIdSet.has(i))
         const afterFilterIndexSet = new Set([...afterFilterIndex])
         const newValues = values.filter(i => !afterFilterIndexSet.has(i.rowId))
         const newIndex =

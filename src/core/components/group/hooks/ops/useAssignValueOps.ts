@@ -11,6 +11,7 @@ import { useSetAtom } from 'jotai/index'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import { GlobalInstance, useSelectAtomValue } from '@/hooks'
 import { InnerGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
+import { isEqual } from 'lodash'
 
 type GroupUpdateEvent =
   | {
@@ -36,14 +37,21 @@ type RootNode = {
   children: MetaGroupChild[]
 }
 const useAssignValueOps = (instance: InnerGroupInstance) => {
-  const value = useSelectAtomValue(GroupStateAtom, s => s.data?.values)
-  const groupedValue = useSelectAtomValue(GroupStateAtom, s => s.groupedValues)
-  const filterValue = useSelectAtomValue(GroupStateAtom, s => s.filterValues)
-  const displayValue = useSelectAtomValue(GroupStateAtom, s => s.viewValues)
-  const currentView = useSelectAtomValue(GroupStateAtom, s => s.currentView)
+  const { data, groupedValue, filterValue, displayValue, currentView, unToggledSet, hideObjects } = useSelectAtomValue(
+    GroupStateAtom,
+    s => ({
+      data: s.data,
+      groupedValue: s.groupedValues,
+      filterValue: s.filterValues,
+      displayValue: s.viewValues,
+      currentView: s.currentView,
+      unToggledSet: s.unToggledIdSet,
+      hideObjects: s.data?.hideObjectsInside
+    }),
+    { compare: isEqual }
+  )
+  const value = data?.values
   const flushed = useRef(false)
-  const unToggledSet = useSelectAtomValue(GroupStateAtom, s => s.unToggledIdSet)
-  const hideObjects = useSelectAtomValue(GroupStateAtom, s => s.data?.hideObjectsInside)
   const flushUnhiddenMetas = useRef<number[]>([])
   useEffect(() => {
     instance.values.currentIndex = currentView?.valueIndex?.slice()

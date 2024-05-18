@@ -68,9 +68,7 @@ export default ({ groupValue }: { groupValue?: MetaGroup }) => {
 
   useGroupGetPropFromMeta(instance)
   useLayoutEffect(() => {
-    setTimeout(() => {
-      compares()
-    })
+    compares()
   }, [groupValue?.views])
   useLayoutEffect(() => {
     const currentView = store.get(GroupStateAtom).currentView

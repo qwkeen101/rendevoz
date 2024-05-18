@@ -15,7 +15,7 @@ export default () => {
       const groupState = instance.getGroupState?.()
       const realtimeData = instance.getGroupData?.()
       const realtimeIndex = realtimeData?.views.find(i => i.id === groupState?.currentView?.id)?.valueIndex
-      const finalIndex = realtimeIndex || valueIndex
+      const finalIndex = realtimeIndex && (!valueIndex || realtimeIndex.length > valueIndex.length) ? realtimeIndex : valueIndex
       if (!finalIndex || !values || !groupState) return
       if (finalIndex.length !== values.length) {
         const valuesIdSet = new Set(values.map(i => i.rowId))

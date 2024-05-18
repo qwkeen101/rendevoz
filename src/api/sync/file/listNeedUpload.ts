@@ -1,7 +1,7 @@
 import FileSystem from '@/api/fileSystem'
 import { ISystemFile } from '~/typings/fs'
 
-const LocalFileSizeMap = new Map<string, number>()
+export const LocalFileSizeMap = new Map<string, number>()
 export const initializeFileSizeMap = async (dirName: string) => {
   const allFiles = await FileSystem.fs.readdir(dirName)
   allFiles.files.forEach(f => {

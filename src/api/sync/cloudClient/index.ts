@@ -3,6 +3,7 @@ import { ICloudSyncClient } from '@/api/sync/cloudClient/types'
 import SyncAPI from '@/api/sync'
 import { getSetting } from '@/core'
 import S3Sync from '@/api/sync/cloudClient/s3'
+import { LocalFileSizeMap } from '@/api/sync/file/listNeedUpload'
 
 export default function getCloudClient() {
   const setting = getSetting()
@@ -25,6 +26,9 @@ export default function getCloudClient() {
               ...opts,
               onProgress: (t, p, size) => {
                 if (t === 'start') {
+                  if (size !== undefined) {
+                    LocalFileSizeMap.set(p, size)
+                  }
                   SyncAPI.file.changeState('downloading', p, 0, size)
                 } else {
                   SyncAPI.file.changeState('downloading', p, 1)
@@ -64,6 +68,9 @@ export default function getCloudClient() {
               ...opts,
               onProgress: (t, p, size) => {
                 if (t === 'start') {
+                  if (size !== undefined) {
+                    LocalFileSizeMap.set(p, size)
+                  }
                   SyncAPI.file.changeState('downloading', p, 0, size)
                 } else {
                   SyncAPI.file.changeState('downloading', p, 1)

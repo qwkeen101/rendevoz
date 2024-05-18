@@ -48,9 +48,12 @@ export default <T extends ILabel>(
   const { t } = useTranslation()
   const virtualizerRef = useRef<Virtualizer<HTMLDivElement, Element>>()
   const scrolled = useRef(false)
+  const prevOffset = useRef<number>()
   const debounceChangeOffset = useDebounceFn(
     (o: number) => {
-      opts?.onOffsetChange?.(o)
+      if (o !== opts?.defaultScrollOffset) {
+        opts?.onOffsetChange?.(o)
+      }
     },
     { wait: 200 }
   )
@@ -281,7 +284,10 @@ export default <T extends ILabel>(
         paddingEnd={100}
         overscan={5}
         onOffsetChange={offset => {
-          debounceChangeOffset.run(offset)
+          if (offset !== prevOffset.current) {
+            prevOffset.current === offset
+            debounceChangeOffset.run(offset)
+          }
         }}
         getKey={i => i.id}
         ref={virtualizerRef}

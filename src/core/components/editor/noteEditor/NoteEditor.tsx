@@ -66,6 +66,7 @@ const NoteEditor = ({
       }}
       defaultValue={fetchedValue || rest.defaultValue}
       labelIds={labelIds || note?.labels}
+      labelType={rest.labelType ?? 'noteLabel'}
       id={rest.id || editorId}
       stringTitle={noteMeta?.name || rest.stringTitle || 'Untitled'}
       onInstanceInitialized={i => {

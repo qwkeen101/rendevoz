@@ -111,6 +111,7 @@ export type RegisteredEditorElement = {
 
 export interface EditorProps {
   onClick?: React.MouseEventHandler
+  metaId?: number
   on?: (
     event: IEditorEvent & {
       editor: CustomEditor

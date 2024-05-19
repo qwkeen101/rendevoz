@@ -211,6 +211,7 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
         boundaryInset={boundaryInset}
         positions={positions || ['top', 'bottom', 'left', 'right']}
         parentElement={parentElement}
+        disableNudge
         innerRef={mergedRef}
         visible={!!content && open && !disable}
         onVisiblityChange={v => v !== open && setOpen(v)}

@@ -1,6 +1,6 @@
 import { Content } from '@/components'
 import { atom, createStore, Provider, useStore } from 'jotai'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { PdfViewer, PdfViewerProps } from './PdfViewer'
 import { PdfStateAtom } from './hooks/usePdfState'
 import { globalStore, ObjectStore } from '@/api/stores'
@@ -11,6 +11,7 @@ import { KEY } from '@/consts'
 import PDFOpsAssigner from '@/core/components/pdf/hooks/ops/Assigner'
 import './index.less'
 import PDFSidebar from '@/core/components/pdf/components/sidebar/PDFSidebar'
+import { PdfBarStateAtom } from '@/core/components/pdf/hooks/usePDFBarState'
 
 type PdfProps = {
   pdfId: number
@@ -83,7 +84,8 @@ const PdfInner = ({ pdfId, onInstanceInitialized, on, transformScale, styles, la
 }
 
 const Pdf = (props: PdfProps) => {
-  const pdfAtom = ObjectStore('pdf').createAtom(props.pdfId)
+  const pdf = ObjectStore('pdf').useValue(props.pdfId)
+  const defaultSidebarChanged = useRef(false)
   const store = useMemo(() => {
     const store = createStore()
     store.set(PdfInstanceAtom, {
@@ -95,43 +97,36 @@ const Pdf = (props: PdfProps) => {
         thumbnailAtom: atom(new Map())
       }
     })
-    const { pdfId } = props
-    ObjectStore('pdf')
-      .getOneById(pdfId)
-      .then(document => {
-        if (document) {
-          if (document.labels === undefined) {
-            ObjectStore('pdf').updateOne({
-              id: pdfId,
-              labels: []
-            })
-          }
-          store.set(PdfStateAtom, {
-            pdfId: pdfId,
-            document,
-            state: props.state,
-            layout: props.layout,
-            styles: props.styles,
-            autoWidth: props.autoWidth
-          })
-        }
-      })
-
+    store.set(PdfStateAtom, {
+      pdfId: props.pdfId,
+      state: props.state,
+      layout: props.layout,
+      styles: props.styles,
+      autoWidth: props.autoWidth
+    })
+    if (pdf?.defaultActiveSidebar) {
+      defaultSidebarChanged.current = true
+      store.set(PdfBarStateAtom, { ...store.get(PdfBarStateAtom), sidebarActive: pdf.defaultActiveSidebar ?? 'hide' })
+    }
     return store
   }, [])
   useEffect(() => {
-    const unsub = globalStore.sub(pdfAtom, () => {
-      const value = globalStore.get(pdfAtom)
-      const pdfState = store.get(PdfStateAtom)
-      store.set(PdfStateAtom, {
-        ...pdfState,
-        document: value
+    const pdfState = store.get(PdfStateAtom)
+    if (pdf && !pdf.labels) {
+      ObjectStore('pdf').updateOne({
+        id: pdf.id,
+        labels: []
       })
-    })
-    return () => {
-      unsub()
     }
-  }, [])
+    store.set(PdfStateAtom, {
+      ...pdfState,
+      document: pdf
+    })
+    if (pdf?.defaultActiveSidebar && !defaultSidebarChanged.current) {
+      defaultSidebarChanged.current = true
+      store.set(PdfBarStateAtom, { ...store.get(PdfBarStateAtom), sidebarActive: pdf.defaultActiveSidebar ?? 'hide' })
+    }
+  }, [pdf])
   return (
     <Provider store={store}>
       <PdfInner {...props} />

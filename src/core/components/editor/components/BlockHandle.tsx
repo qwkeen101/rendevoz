@@ -63,8 +63,9 @@ const BlockHandle: IBlockHandle = ({ outerVisible, onAddClick, onDragClick, onMe
   const AddTooltip = (
     <div
       className={css({
-        fontSize: '0.8rem',
-        fontWeight: 600
+        fontSize: '13px',
+        fontWeight: 500,
+        pointerEvents: 'none'
       })}
     >
       <span style={{ color: 'white' }}>{t('editor.click')} </span>
@@ -74,9 +75,10 @@ const BlockHandle: IBlockHandle = ({ outerVisible, onAddClick, onDragClick, onMe
   const DragTooltip = (
     <div
       className={css({
-        fontSize: '0.8rem',
-        fontWeight: 600,
+        fontSize: '13px',
+        fontWeight: 500,
         display: 'flex',
+        pointerEvents: 'none',
         flexDirection: 'column',
         alignItems: 'center'
       })}
@@ -144,14 +146,14 @@ const BlockHandle: IBlockHandle = ({ outerVisible, onAddClick, onDragClick, onMe
             <Tooltip
               delay={300}
               style={{
-                background: 'rgba(0,0,0,0.8)',
-                transform: 'translate3d(-50%, 15px ,0)'
+                background: 'rgba(0,0,0,0.8)'
               }}
-              position="top"
+              positions={['top', 'bottom']}
               content={DragTooltip}
             >
               <div
                 onPointerDown={e => {
+                  console.log(e)
                   currentXY.current = {
                     x: e.clientX,
                     y: e.clientY
@@ -159,8 +161,10 @@ const BlockHandle: IBlockHandle = ({ outerVisible, onAddClick, onDragClick, onMe
                 }}
                 onPointerMove={e => {
                   const currentXYz = currentXY.current
+                  console.log(currentXYz, dragClickedRef.current)
                   if (dragClickedRef.current) return
                   if (currentXYz) {
+                    console.log('here')
                     // if (Math.abs(currentXYz.x - e.clientX) > 2 || Math.abs(currentXYz.y - e.clientY) > 2) {
                     onDragClick?.(e)
                     dragClickedRef.current = true
@@ -175,6 +179,7 @@ const BlockHandle: IBlockHandle = ({ outerVisible, onAddClick, onDragClick, onMe
                   }, 100)
                 }}
                 className={ClassName.flatButton(undefined, '3px')}
+                role={'editor-drag-handle'}
                 style={{
                   position: 'absolute',
                   left: -24,

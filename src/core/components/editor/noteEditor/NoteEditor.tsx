@@ -51,6 +51,7 @@ const NoteEditor = ({
   return (
     <Editor
       {...rest}
+      metaId={metaId}
       styles={{
         ...rest.styles,
         containerHeight:
@@ -62,6 +63,8 @@ const NoteEditor = ({
         labelSortMode: note?.labelSortMode,
         labelPriority: note?.labelPriority,
         labelScrollOffset: note?.labelScrollOffset,
+        defaultActiveSidebar: note?.defaultActiveSidebar,
+        defaultSidebarWidth: note?.defaultSidebarWidth,
         ...rest.state
       }}
       defaultValue={fetchedValue || rest.defaultValue}

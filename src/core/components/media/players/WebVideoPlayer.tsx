@@ -123,7 +123,12 @@ const WebVideoPlayer = () => {
             const handler = e => {
               const { channel, args } = e
               if (channel === 'event' && args[0].type === 'captureImage') {
-                res(args[0].url)
+                console.log(args[0].url)
+                if (args[0].url?.replace('data:,', '')?.length) {
+                  res(args[0].url)
+                } else {
+                  res('')
+                }
                 web.removeEventListener('ipc-message', handler)
               }
             }

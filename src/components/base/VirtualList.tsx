@@ -14,6 +14,7 @@ type Props<T> = {
   withKeyboardNavigation?: boolean
   onSelect?: (item: T, idex: number) => void
   onKeydown?: (e: KeyboardEvent) => void
+  initialOffset?: number
   paddingEnd?: number
   itemClassname?: string
   itemStyle?: CSSProperties
@@ -42,6 +43,7 @@ function VirtualList<T>(
     estimateSize,
     style,
     rangeExtractor,
+    initialOffset,
     reorder,
     canReorder = true,
     onReorder,
@@ -61,6 +63,7 @@ function VirtualList<T>(
       getScrollElement: () => contentRef.current,
       overscan: reorder ? items.length : overscan,
       paddingEnd,
+      initialOffset,
       onChange: instance => {
         onOffsetChange?.(instance.scrollOffset)
       },
@@ -72,7 +75,11 @@ function VirtualList<T>(
       ...virtualizer,
       setFocus: i => {
         setCurrentFocusIndex(i)
-        virtualizer.scrollToIndex(i)
+        try {
+          virtualizer.scrollToIndex(i)
+        } catch (e) {
+          console.error(e)
+        }
       }
     }))
     const itemzRef = useRef(items)

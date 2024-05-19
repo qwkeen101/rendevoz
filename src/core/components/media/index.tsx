@@ -26,7 +26,7 @@ import { TabTitle } from '@/core/rendevoz/components'
 import MediaToolbar from '@/core/components/media/components/MediaToolbar'
 import _ from 'lodash'
 import QuickLabelPopover from '@/core/components/media/components/QuickLabelPopover'
-import useMediaSidebarState from '@/core/components/media/hooks/useMediaSidebarState'
+import useMediaSidebarState, { VideoSidebarStateAtom } from '@/core/components/media/hooks/useMediaSidebarState'
 export interface MediaProps {
   onInstanceInitialized?: (instance: Partial<IMediaInstance>) => void
   onlyCore?: boolean
@@ -354,6 +354,7 @@ const transformUrl = (
 }
 
 const Media = (props: MediaProps) => {
+  const defaultSidebarChanged = useRef(false)
   const getMediaMode = (url?: string): IMediaState['mode'] => {
     if (!url) return 'video'
     if (url.startsWith('rendefile') || url.startsWith('file')) {
@@ -392,6 +393,7 @@ const Media = (props: MediaProps) => {
       metaId,
       layout,
       labelSortMode,
+      defaultActiveSidebar,
       labelPriority,
       labelScrollOffset,
       styles,
@@ -399,10 +401,6 @@ const Media = (props: MediaProps) => {
       currentTime
     } = props.mediaState || {}
     store.set(MediaInstanceAtom, {})
-    const u = transformUrl(url, {
-      autoPlay,
-      startTime: currentTime ?? lastPlayedTime
-    })
     store.set(MediaStateAtom, {
       ..._.merge({}, DEFAULT_MEDIA_STATE, {
         thumbnail,
@@ -433,6 +431,10 @@ const Media = (props: MediaProps) => {
       }),
       mode: mode || getMediaMode(url)
     })
+    if (defaultActiveSidebar) {
+      defaultSidebarChanged.current = true
+      store.set(VideoSidebarStateAtom, { ...store.get(VideoSidebarStateAtom), rightBarActive: defaultActiveSidebar ?? 'hide' })
+    }
     return store
   }, [])
 
@@ -464,8 +466,12 @@ const Media = (props: MediaProps) => {
       labelSortMode,
       labelPriority,
       labelScrollOffset,
+      defaultActiveSidebar
     } = props.mediaState
-    console.log(props.mediaState, currentState)
+    if (defaultActiveSidebar && !defaultSidebarChanged.current) {
+      defaultSidebarChanged.current = true
+      store.set(VideoSidebarStateAtom, { ...store.get(VideoSidebarStateAtom), rightBarActive: defaultActiveSidebar ?? 'hide' })
+    }
     store.set(MediaStateAtom, {
       ...currentState,
       url: transformUrl(url),

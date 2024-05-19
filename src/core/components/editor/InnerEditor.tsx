@@ -463,6 +463,7 @@ const isMarkActive = (editor: CustomEditor, mark: string) => {
 }
 
 const TextHighlightClassName = css({
+  position: 'relative',
   backgroundImage: `linear-gradient(
      0deg,
      ${Colors.Emphasis.Emphasis} 0%,
@@ -557,6 +558,7 @@ const HighlightLeaf = (props: RenderLeafProps & { style?: CSSProperties }) => {
               position: 'absolute',
               top: -4,
               left: -4,
+              width: 'max-content',
               boxShadow: 'var(--border-box-shadow)',
               padding: 4,
               display: 'flex',

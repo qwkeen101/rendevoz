@@ -5,7 +5,7 @@ type IMediaSidebarState = {
   subtitleDisplayMode: 'list' | 'article'
   rightBarVisible: boolean
   rightBarWidth: number
-  rightBarActive: 'label' | 'chapter' | 'subtitle' | 'hide'
+  rightBarActive: 'label' | 'chapter' | 'subtitle' | 'hide' | 'attachments'
   rightBarRealtimeWidth: number
 }
 export const VideoSidebarStateAtom = atom<IMediaSidebarState>({

@@ -2,7 +2,7 @@ import { atom, useAtom } from 'jotai'
 
 type IPdfBarState = {
   sidebarWidth: number
-  sidebarActive: 'search' | 'label' | 'mindmap' | 'ai' | 'thumbnail' | 'outline' | 'hide'
+  sidebarActive: 'search' | 'label' | 'mindmap' | 'ai' | 'thumbnail' | 'outline' | 'hide' | 'attachments'
 }
 
 export const PdfBarStateAtom = atom<IPdfBarState>({

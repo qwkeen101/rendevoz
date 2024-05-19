@@ -179,9 +179,7 @@ export default <T extends ILabel>(
   useEffect(() => {
     const offset = opts?.defaultScrollOffset
     if (sortedLabels?.length && offset !== undefined && !scrolled.current) {
-      setTimeout(() => {
-        virtualizerRef.current?.scrollToOffset(offset, { align: 'start' })
-      })
+      virtualizerRef.current?.scrollToOffset(offset, { align: 'start' })
       scrolled.current = true
     }
   }, [sortedLabels])
@@ -283,6 +281,7 @@ export default <T extends ILabel>(
       <VirtualList
         paddingEnd={100}
         overscan={5}
+        // initialOffset={opts?.defaultScrollOffset}
         onOffsetChange={offset => {
           if (offset !== prevOffset.current) {
             prevOffset.current = offset

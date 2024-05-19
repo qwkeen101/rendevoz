@@ -13,13 +13,14 @@ import Id from '@/utils/id'
 import { truncate } from 'lodash'
 import { IQuestion } from '~/typings'
 import { MetaStore, ObjectStore } from '@/api/stores'
-import { Trans, useTranslation } from 'react-i18next'
+import { Trans } from 'react-i18next'
 import { memo, useEffect, useLayoutEffect, useMemo, useState } from 'react'
-import { useSelectAtomValue } from '@/hooks'
+import { useSelectAtomValue, useUpdateEffect } from '@/hooks'
 import { PdfStateAtom } from '@/core/components/pdf/hooks/usePdfState'
 import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 import { useUpdate } from 'react-use'
 import PDFLabel from '@/core/components/pdf/components/sidebar/Label'
+import CommonAttachmentsSidebar from '@/core/components/common/CommonAttachmentsSidebar'
 
 export default memo(({ id }: { id: number }) => {
   const pdfMeta = MetaStore.useObjectToMetaValue(id)
@@ -35,6 +36,9 @@ export default memo(({ id }: { id: number }) => {
       clearInterval(inter)
     }
   }, [])
+  useUpdateEffect(() => {
+    updateDoc({ id, defaultActiveSidebar: barState.sidebarActive })
+  }, [barState.sidebarActive])
   const showSidebar = barState.sidebarActive !== 'hide'
   const doc = useSelectAtomValue(PdfStateAtom, s => s.document)
   const updateDoc = ObjectStore('pdf').updateOne
@@ -94,6 +98,7 @@ export default memo(({ id }: { id: number }) => {
         <TabPane key="outline">
           <PdfOutline />
         </TabPane>
+        <TabPane key="attachments">{pdfMeta && <CommonAttachmentsSidebar metaId={pdfMeta.id} />}</TabPane>
         <TabPane key="label" mount>
           {doc && (
             <PDFLabel

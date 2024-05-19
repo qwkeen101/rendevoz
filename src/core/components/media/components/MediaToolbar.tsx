@@ -30,6 +30,7 @@ export default () => {
   const { t } = useTranslation()
   const columnLayout = useAtomValue(MediaLayoutAtom)
   const [subtitleImporterVisible, setSubtitleImporterVisible] = useState(false)
+  const canHighlight = mediaState.currentTime !== undefined && mediaState.loaded
   return (
     <Content flex column gap={10} fullWidth>
       {mediaState.mode === 'web' && (!columnLayout || sidebarState.rightBarActive === 'hide') && (
@@ -73,20 +74,24 @@ export default () => {
             text={mediaState.isPinned ? t('general.unpin') : t('general.pin')}
             icon={'park-like'}
           />
-          {mediaState.currentTime !== undefined && (
-            <Button.IconButton
-              icon="park-high-light"
-              className={clazz}
-              size={18}
-              style={{ padding: '4px 12px' }}
-              onClick={() => {
+          <Button.IconButton
+            icon="park-high-light"
+            className={clazz}
+            size={18}
+            style={{
+              padding: '4px 12px',
+              color: !canHighlight ? Colors.Font.SuperTransparent : undefined,
+              cursor: !canHighlight ? 'not-allowed' : 'pointer'
+            }}
+            onClick={() => {
+              if (canHighlight) {
                 instance.insertLabel?.({
                   time: mediaState.currentTime
                 })
-              }}
-              text={t('general.Highlight')}
-            ></Button.IconButton>
-          )}
+              }
+            }}
+            text={t('general.Media highlight')}
+          ></Button.IconButton>
           {mediaState.isTranscribing && (
             <Tooltip content={'Click to cancel'}>
               <Button.IconButton
@@ -138,7 +143,14 @@ export default () => {
                       type: 'item',
                       key: 'subtitle',
                       text: t('general.Subtitles')
-                    }
+                    },
+                    mediaState.metaId
+                      ? {
+                          type: 'item',
+                          key: 'attachments',
+                          text: t('general.Attachments')
+                        }
+                      : undefined
                   ]}
                 />
               </WithBorder>

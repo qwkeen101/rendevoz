@@ -26,8 +26,10 @@ const useEditorSelect = (editor: CustomEditor, scrollElement?: HTMLElement | nul
   const mouseDownHandler = (e: MouseEvent) => {
     const target = e.target as HTMLElement
     // target is title or textbox
-
-    if (!target.closest('[role="editor-title"')) {
+    if (target.closest('[role="editor-drag-handle"]')) {
+      return
+    }
+    if (!target.closest('[role="editor-title"]')) {
       if (target.getAttribute('role') === 'textbox') {
         isPressed.current = true
       }

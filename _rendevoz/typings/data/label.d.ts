@@ -2,9 +2,19 @@ import { IBase } from './base'
 import { Box, XYPosition, TextSelectRect, ILabel } from '..'
 
 export type ILabelContainerProps = {
-  labelSortMode?: 'created at' | 'updated at' | 'page' | 'page reverse' | 'playback time' | 'playback time in reverse' | 'article order' | 'article order in reverse'
+  labelSortMode?:
+    | 'created at'
+    | 'updated at'
+    | 'page'
+    | 'page reverse'
+    | 'playback time'
+    | 'playback time in reverse'
+    | 'article order'
+    | 'article order in reverse'
   labelPriority?: 'note' | 'tag' | 'none'
   labelScrollOffset?: number
+  defaultActiveSidebar?: string
+  defaultSidebarWidth?: number
 }
 
 export type IPDFLabel = IBase &

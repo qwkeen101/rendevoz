@@ -9,6 +9,7 @@ import { Virtualizer } from '@tanstack/react-virtual'
 import { Colors, KEY } from '@/consts'
 import isHotkey from 'is-hotkey'
 import ContentDisplayer from '@/core/components/group/components/gallery/items/FixedHeightContentDisplayer'
+import { useTranslation } from 'react-i18next'
 
 interface MetaFiltererProps {
   withInput?: boolean
@@ -47,6 +48,7 @@ const MetaFilterer = ({
     currentVisibleItems?: any[]
     currentInput?: string
   }>({})
+  const { t } = useTranslation()
   const virtualizerRef = useRef<Virtualizer<any, any>>()
   const visibleTypes = useMemo(() => {
     const index = MetaStore.getIndexedMetaObjects()
@@ -71,22 +73,6 @@ const MetaFilterer = ({
       setFiltererState(s => ({ ...s, currentTypeItems: allObjects }))
     }
   }, [filtererState.currentSelectType])
-
-  useEffect(() => {
-    const keydownHandler = (e: KeyboardEvent) => {
-      if (!currentInput) {
-        if (isHotkey(KEY.Backspace, e)) {
-          if (mode === 'type') {
-            setFiltererState(s => ({ ...s, currentSelectType: undefined, currentVisibleItems: undefined, currentTypeItems: undefined }))
-          }
-        }
-      }
-    }
-    document.addEventListener('keydown', keydownHandler)
-    return () => {
-      document.removeEventListener('keydown', keydownHandler)
-    }
-  })
   useEffect(() => {
     if (filtererState.currentInput?.length) {
       const map = MetaStore.getMetaObjectsMap()
@@ -177,31 +163,46 @@ const MetaFilterer = ({
 
   return (
     <Content flex>
-      <Content style={{ width: 440, height: 260, display: 'flex', flexDirection: 'column', ...style }}>
+      <Content
+        style={{
+          width: 440,
+          height: 260,
+          display: 'flex',
+          flexDirection: 'column',
+          ...style
+        }}
+      >
         {withInput && mode === 'type' && filtererState.currentTypeItems && (
-          <input
-            style={{
-              width: '100%',
-              fontSize: 14,
-              padding: '2px 6px',
-              borderBottom: `1px solid ${Colors.Background.Border}`,
-              marginBottom: 3
-            }}
-            placeholder="Search one object"
-            defaultValue={filtererState.currentInput}
-            onCompositionEnd={e => {
-              iscompo.current = false
-              setFiltererState(s => ({ ...s, currentInput: e.target.value }))
-            }}
-            onCompositionStart={() => (iscompo.current = true)}
-            onChange={v => {
-              if (!iscompo.current) {
-                setFiltererState(s => ({ ...s, currentInput: v.target.value }))
-              }
-            }}
-            autoFocus={true}
-            className={ClassName.noStyleInput}
-          />
+          <div className={'border-bottom'} style={{ width: '100%', padding: 8 }}>
+            <input
+              style={{
+                width: '100%',
+                fontSize: 13,
+                borderRadius: 4,
+                padding: '3px 8px'
+              }}
+              placeholder={t('general.Type to search')}
+              defaultValue={filtererState.currentInput}
+              onCompositionEnd={e => {
+                iscompo.current = false
+                setFiltererState(s => ({
+                  ...s,
+                  currentInput: e.target.value
+                }))
+              }}
+              onCompositionStart={() => (iscompo.current = true)}
+              onChange={v => {
+                if (!iscompo.current) {
+                  setFiltererState(s => ({
+                    ...s,
+                    currentInput: v.target.value
+                  }))
+                }
+              }}
+              autoFocus={true}
+              className={'border-box-shadow focus-input'}
+            />
+          </div>
         )}
         {filtererState.currentVisibleItems || filtererState.currentTypeItems ? (
           <VirtualList

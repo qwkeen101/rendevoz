@@ -66,6 +66,11 @@ const EditorHeader = ({ title, editor }: { editor: CustomEditor; title: string }
                   },
                   {
                     type: 'item',
+                    key: 'attachments',
+                    text: t('general.Attachments')
+                  },
+                  {
+                    type: 'item',
                     key: 'ai',
                     text: t('general.AI')
                   }

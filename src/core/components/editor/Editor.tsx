@@ -1,6 +1,6 @@
 import { useClickOutside, useGlobalAtomValue, useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import Id from '@/utils/id'
-import { FC, memo, MouseEventHandler, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { FC, memo, MouseEventHandler, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { createEditor, Editor as SlateEditor, Path, Transforms } from 'slate'
 import { HistoryEditor, withHistory } from 'slate-history'
 import { ReactEditor, withReact } from './slate-react'
@@ -38,6 +38,7 @@ import GetEditorBlockHandle from '@/core/components/editor/hooks/getEditorBlockH
 import './editorStyles.less'
 import EditorSidebar from '@/core/components/editor/components/sidebar/EditorSidebar'
 import QuickLabelPopover from '@/core/components/editor/components/QuickLabelPopover'
+import PageConfigContext from '@/core/components/PageConfigContext'
 
 // function, get unique id everytime
 const defaultSlateValue = () => [
@@ -97,6 +98,7 @@ export const EditorV1: FC<EditorProps> = memo(
     const isDraggingDivider = useSelectAtomValue(EditorStateAtom, s => s.isDraggingDivider)
     const instance = useEditorInstance()
     const sidebarVisible = barState.sidebarActive !== 'hide'
+    const pageConfig = useContext(PageConfigContext)
     useEffect(() => {
       if (textboxMode !== undefined) {
         setEditorState(s => ({ ...s, textboxMode }))
@@ -358,7 +360,7 @@ export const EditorV1: FC<EditorProps> = memo(
     }
     return (
       <>
-        {layout?.showHeader !== false && <EditorSidebar />}
+        {layout?.showHeader !== false && pageConfig.editorHeader !== false && <EditorSidebar />}
         <EditorPluginHooks editor={editor} scrollElementRef={scrollElementRef} />
         <QuickLabelPopover />
         <Content
@@ -374,7 +376,7 @@ export const EditorV1: FC<EditorProps> = memo(
             ...styles?.containerStyle
           }}
         >
-          {layout?.showHeader !== false && <EditorHeader title={stringTitle} editor={editor} />}
+          {layout?.showHeader !== false && pageConfig.editorHeader !== false && <EditorHeader title={stringTitle} editor={editor} />}
           <div
             ref={scrollElementRef}
             onPointerMove={e => {
@@ -443,6 +445,7 @@ export const EditorV1: FC<EditorProps> = memo(
                       wrapper.style.width = `${rect.width}px`
                       wrapper.style.height = `${rect.height}px`
                       wrapper.appendChild(cloned)
+                      wrapper.classList.add('disable-all-pointer-events')
                       DragState.addDragElements?.(wrapper)
                     }
                   }
@@ -464,6 +467,7 @@ export const EditorV1: FC<EditorProps> = memo(
 )
 
 export const Editor: FC<EditorProps> = memo(props => {
+  const defaultSidebarChanged = useRef(false)
   const store = useMemo(() => {
     const store = createStore()
     store.set(EditorInstanceAtom, {
@@ -474,11 +478,27 @@ export const Editor: FC<EditorProps> = memo(props => {
       }
     })
     store.set(EditorStateAtom, { ...props })
+    if (props.state?.defaultActiveSidebar) {
+      defaultSidebarChanged.current = true
+      const defaultProps = store.get(EditorBarStateAtom)
+      store.set(EditorBarStateAtom, {
+        ...defaultProps,
+        sidebarActive: props.state.defaultActiveSidebar ?? defaultProps.sidebarActive
+      })
+    }
     return store
   }, [])
   useEffect(() => {
     const currentState = store.get(EditorStateAtom)
     store.set(EditorStateAtom, { ...currentState, ...props })
+    if (props.state?.defaultActiveSidebar && !defaultSidebarChanged.current) {
+      defaultSidebarChanged.current = true
+      const defaultProps = store.get(EditorBarStateAtom)
+      store.set(EditorBarStateAtom, {
+        ...defaultProps,
+        sidebarActive: props.state.defaultActiveSidebar ?? defaultProps.sidebarActive
+      })
+    }
   }, [props])
   return (
     <Provider store={store}>

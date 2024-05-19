@@ -355,7 +355,7 @@ const MediaBottomBar = () => {
                 })
               }}
               style={{ height: 30, fontWeight: 500 }}
-              text={t('general.Highlight')}
+              text={t('general.Media highlight')}
             ></Button.IconButton>
           )}
           {!audioMode && !mediaState.floated && (

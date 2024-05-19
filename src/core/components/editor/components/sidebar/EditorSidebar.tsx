@@ -9,7 +9,7 @@ import Colors from '@/consts/colors'
 import { useEffect, memo, useMemo, useRef } from 'react'
 import { useSetAtom } from 'jotai'
 import { EditorSearchAtom } from '../../hooks/useEditorSearch'
-import { useSelectAtomValue } from '@/hooks'
+import { useSelectAtomValue, useUpdateEffect } from '@/hooks'
 import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
 import AskAIPanel from '@/core/ai/components/AskAIPanel'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
@@ -18,21 +18,29 @@ import { Editor, Node } from 'slate'
 import { IQuestion } from '~/typings'
 import Id from '@/utils/id'
 import { isEqual } from 'lodash'
+import CommonAttachmentsSidebar from '@/core/components/common/CommonAttachmentsSidebar'
 
 export default memo(() => {
   const [barState, setBarState] = useEditorBarState()
   const instance = useEditorInstance()
-  const { labels, labelType, ai } = useSelectAtomValue(
+  const { labels, labelType, ai, metaId } = useSelectAtomValue(
     EditorStateAtom,
     s => ({
       labels: s.labelIds,
       labelType: s.labelType,
-      ai: s.ai
+      ai: s.ai,
+      metaId: s.metaId
     }),
     { compare: isEqual }
   )
   const setEditorSearch = useSetAtom(EditorSearchAtom)
   const visible = barState.sidebarActive !== 'hide'
+  useUpdateEffect(() => {
+    instance.getSlateEditor?.().on({
+      type: 'updateNote',
+      updater: n => ({ ...n, defaultActiveSidebar: barState.sidebarActive, defaultSidebarWidth: barState.sidebarWidth })
+    })
+  }, [barState.sidebarActive, barState.sidebarWidth])
   useEffect(() => {
     if (!visible || barState.sidebarActive !== 'search') {
       setEditorSearch(s => ({ ...s, isSearching: false }))
@@ -82,6 +90,7 @@ export default memo(() => {
         <TabPane key="search">
           <EditorSearch />
         </TabPane>
+        <TabPane key="attachments">{metaId && <CommonAttachmentsSidebar metaId={metaId} />}</TabPane>
         <TabPane key="label" mount>
           <EditorLabelController labelType={labelType} labelIds={labels} />
         </TabPane>

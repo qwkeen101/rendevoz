@@ -1,15 +1,17 @@
 import { TabPane, Tabs } from '@/components'
 import MediaChapterController from './MediaChapterController'
 import MediaLabelController from './MediaLabelController'
-import { memo } from 'react'
+import { memo, useEffect, useLayoutEffect, useRef } from 'react'
 import useMediaSidebarState from '../../hooks/useMediaSidebarState'
 import { Resizable } from 're-resizable'
 import Subtitle from '@/core/components/media/components/sidebar/Subtitle'
 import { useAtomValue } from 'jotai'
 import { MediaLayoutAtom } from '@/core/components/media/hooks/useVideoLayout'
-import { useSelectAtomValue } from '@/hooks'
+import { useSelectAtomValue, useUpdateEffect } from '@/hooks'
 import { MediaStateAtom } from '@/core/components/media/hooks/useMediaState'
 import { useTranslation } from 'react-i18next'
+import { useMediaInstance } from '@/core/components/media/hooks/useMediaInstance'
+import CommonAttachmentsSidebar from '@/core/components/common/CommonAttachmentsSidebar'
 
 const MediaSidebar = memo(() => {
   const [sidebarState, setSidebarState] = useMediaSidebarState()
@@ -17,6 +19,16 @@ const MediaSidebar = memo(() => {
   const labelType = useSelectAtomValue(MediaStateAtom, s => s.labelType)
   const labelIds = useSelectAtomValue(MediaStateAtom, s => s.labels)
   const visible = sidebarState.rightBarActive !== 'hide'
+  const metaId = useSelectAtomValue(MediaStateAtom, s => s.metaId)
+  const instance = useMediaInstance()
+  useUpdateEffect(() => {
+    instance.on?.({
+      type: 'externalStateChange',
+      state: {
+        defaultActiveSidebar: sidebarState.rightBarActive
+      }
+    })
+  }, [sidebarState.rightBarActive])
   return (
     <Resizable
       size={{
@@ -70,6 +82,7 @@ const MediaSidebar = memo(() => {
         <TabPane key="chapter">
           <MediaChapterController />
         </TabPane>
+        <TabPane key="attachments">{metaId && <CommonAttachmentsSidebar metaId={metaId} />}</TabPane>
         <TabPane key="subtitle">
           <Subtitle />
         </TabPane>

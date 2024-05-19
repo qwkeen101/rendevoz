@@ -95,11 +95,12 @@ const EditorLinkForm = ({ editor, manager }: { editor: CustomEditor; manager: Ed
     }
   }
   return (
-    <WithBorder style={{ padding: 4 }}>
-      <Content
+    <WithBorder>
+      <div
         style={{
-          margin: '4px 4px 8px'
+          padding: '8px'
         }}
+        className={'border-bottom'}
       >
         <input
           ref={inputRef}
@@ -107,21 +108,20 @@ const EditorLinkForm = ({ editor, manager }: { editor: CustomEditor; manager: Ed
           onChange={e => {
             setLink(e.target.value)
           }}
+          className={'border-box-shadow focus-input'}
           style={{
-            border: '1px solid var(--border-background)',
             borderRadius: 4,
             width: '100%',
             fontSize: 13,
-            padding: '2px 8px',
+            padding: '3px 8px',
             background: 'transparent'
           }}
           value={link}
           placeholder="Paste link or search objects"
         ></input>
-      </Content>
+      </div>
       <MetaFilterer
         withInput={false}
-        mode={'recentlyCreate'}
         onInputLink={l => {
           if (isValidUrl(l)) {
             handlerInsertLink(l.startsWith('http://') || l.startsWith('https://') ? l : 'https://' + l)

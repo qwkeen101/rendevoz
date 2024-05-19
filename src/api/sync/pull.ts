@@ -55,8 +55,10 @@ export default async () => {
         .map(i => i.noteUpdateIds)
         .flat()
         .filter(i => i) as number[]
-      const timestamp = data[data.length - 1].timestamp
-      await syncDB.table('state').put(timestamp + 1, 'lastSynced')
+      if (data.length) {
+        const timestamp = data[data.length - 1].timestamp
+        await syncDB.table('state').put(timestamp + 1, 'lastSynced')
+      }
       if (fileTransactions.length) {
         await SyncAPI.file.pull(fileTransactions)
       }

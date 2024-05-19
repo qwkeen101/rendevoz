@@ -18,7 +18,9 @@ const ObjectActionMenu: FC<
     onRemoveFromCollection: VoidFunction
     onEditLink: VoidFunction
     onDeleteLink: VoidFunction
+    onRemoveFromAttachment: VoidFunction
     visibility: {
+      removeFromAttachment?: boolean
       showContainsInSidebar?: boolean
       editLink?: boolean
       deleteFromCollection?: boolean
@@ -31,7 +33,18 @@ const ObjectActionMenu: FC<
       showGraph?: boolean
     }
   }> & { metaObjectId: number }
-> = ({ onClose, metaObjectId, visibility, onJump, onRemoveFromCollection, onEditLink, onDeleteLink, onGraphPin, onShowGraph }) => {
+> = ({
+  onClose,
+  metaObjectId,
+  onRemoveFromAttachment,
+  visibility,
+  onJump,
+  onRemoveFromCollection,
+  onEditLink,
+  onDeleteLink,
+  onGraphPin,
+  onShowGraph
+}) => {
   const { updateMetaObject, deleteMetaObject } = MetaStore
   const { t } = useTranslation()
   const metaObject = MetaStore.useValue(metaObjectId)
@@ -88,6 +101,18 @@ const ObjectActionMenu: FC<
     <Content style={{ padding: '0.4rem 0', minWidth: 200, fontSize: 14 }} ref={containerRef} role="object-popover-panel">
       <Menu.NavigationMenu
         layout={[
+          visibility?.removeFromAttachment
+            ? {
+                type: 'item',
+                key: 'remove-from-attachment',
+                onSelect: () => {
+                  onRemoveFromAttachment?.()
+                  onClose?.()
+                },
+                text: t('general.Remove from attachments'),
+                icon: 'park-delete-two'
+              }
+            : undefined,
           displayContains && contains > 0
             ? {
                 type: 'item',

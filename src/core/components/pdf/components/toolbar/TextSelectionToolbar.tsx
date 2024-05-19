@@ -62,7 +62,7 @@ const TextSelectionToolbar: FC<TextSelectionToolbarProps> = ({ textSelect, onClo
             background: 'unset',
             padding: '0px'
           }}
-          icon={'park-background-color'}
+          icon={'park-high-light'}
           text={t('general.Highlight')}
         />
       </Toolbar.Item>

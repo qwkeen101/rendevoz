@@ -15,23 +15,13 @@ export default ({ metaId }: { metaId: number }) => {
         <Content
           flex
           alignItems={'center'}
-          gap={12}
+          gap={8}
           style={{
-            fontWeight: 500,
             fontSize: 14,
-            margin: '16px 0 12px'
+            margin: '16px 0px'
           }}
         >
-          <Icon
-            name={'park-adjacent-item'}
-            size={16}
-            containerStyle={{
-              background: 'linear-gradient(rgb(243 204 74) 0%, rgb(251 93 90) 140%)',
-              color: 'white',
-              borderRadius: 6,
-              padding: 4
-            }}
-          />
+          <Icon strokeWidth={3} name={'park-adjacent-item'} size={18} />
           {t('general.Parent items')}
         </Content>
         <Content

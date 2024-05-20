@@ -1,4 +1,4 @@
-import { useDebounceFn, useMemoizedFn, useSelectAtomValue, useSelectGlobalAtomValue } from '@/hooks'
+import { useDebounceFn, useGlobalAtomValue, useMemoizedFn, useSelectAtomValue, useSelectGlobalAtomValue } from '@/hooks'
 import isHotkey from 'is-hotkey'
 import { CSSProperties, FC, memo, RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Descendant, Editor, Node, Path, Transforms } from 'slate'
@@ -34,12 +34,14 @@ import { Colors } from '@/consts'
 import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
 import { DEFAULT_BACKGROUND_COLORS } from '@/components/picker/colorPicker'
 import useGlobalKey from '@/core/components/editor/hooks/keyboards/useGlobalKey'
-import { SettingAtom, useRenderLabel } from '@/core'
+import { SettingAtom, SettingAtoms, useRenderLabel } from '@/core'
 import { ObjectStore } from '@/api/stores'
 import { atom } from 'jotai'
 import { selectAtom } from 'jotai/utils'
 import { useAtomValue } from 'jotai/react'
 import { useLatest } from 'react-use'
+import { Icon } from '@/components'
+import UseClickOutside from '@/hooks/utils/useClickOutside'
 
 export type InnerEditorProps = {
   editor: CustomEditor
@@ -483,7 +485,20 @@ const HighlightLeaf = (props: RenderLeafProps & { style?: CSSProperties }) => {
     objectId: leaf.highlight,
     type: labelType
   })
+  const defaultExpanded = useGlobalAtomValue(SettingAtoms.editorDefaultExpandHighlightDetails)
+  const [expanded, setExpanded] = useState(!!defaultExpanded)
   const [renderName, setRenderName] = useState(false)
+  const show = useGlobalAtomValue(SettingAtoms.editorShowHighlightText)
+  const r = useRef()
+  UseClickOutside(
+    () => {
+      if (expanded && defaultExpanded !== true) {
+        setExpanded(false)
+      }
+    },
+    r,
+    expanded
+  )
   useEffect(() => {
     if (label) {
       if (!instance.values.labelNoteRendered.has(label.id)) {
@@ -510,31 +525,62 @@ const HighlightLeaf = (props: RenderLeafProps & { style?: CSSProperties }) => {
         className={'textHighlight'}
         style={style}
       >
-        {(label?.name || labelMeta?.tags?.length) && renderName && (
-          <div
-            style={{
-              maxWidth: 220,
-              position: 'absolute',
-              top: -4,
-              left: -4,
-              width: 'max-content',
-              boxShadow: 'var(--border-box-shadow)',
-              padding: 4,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 3,
-              color: 'var(--font-primary)',
-              lineHeight: '1.4',
-              background: Colors.Background.Popover,
-              fontSize: 13,
-              borderRadius: 4,
-              transform: 'translateY(-100%)'
-            }}
-          >
-            {label?.name}
-            {renderTags(undefined, true)}
-          </div>
-        )}
+        {(label?.name || labelMeta?.tags?.length) &&
+          renderName &&
+          show &&
+          (expanded ? (
+            <div
+              onPointerDownCapture={e => e.nativeEvent.stopPropagation()}
+              onPointerUpCapture={e => e.stopPropagation()}
+              ref={r}
+              onClick={e => {
+                e.stopPropagation()
+              }}
+              style={{
+                maxWidth: 220,
+                position: 'absolute',
+                top: -4,
+                left: -4,
+                width: 'max-content',
+                boxShadow: 'var(--border-box-shadow)',
+                padding: 4,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 3,
+                color: 'var(--font-primary)',
+                lineHeight: '1.4',
+                cursor: 'auto',
+                background: Colors.Background.Popover,
+                fontSize: 13,
+                borderRadius: 4,
+                transform: 'translateY(-100%)',
+                fontWeight: 400
+              }}
+            >
+              {label?.name}
+              {renderTags(undefined, true)}
+            </div>
+          ) : (
+            <Icon
+              size={16}
+              onPointerDownCapture={e => e.nativeEvent.stopPropagation()}
+              onPointerUpCapture={e => e.stopPropagation()}
+              onClick={e => {
+                setExpanded(true)
+                e.stopPropagation()
+              }}
+              style={{
+                position: 'absolute',
+                top: -16,
+                left: -16,
+                cursor: 'pointer',
+                color: 'var(--emphasis)',
+                transform: 'rotateY(180deg)'
+              }}
+              theme={'filled'}
+              name={'park-message'}
+            />
+          ))}
         {children}
       </span>
     </DraggableElement>

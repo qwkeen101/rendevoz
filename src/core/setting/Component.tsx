@@ -85,13 +85,27 @@ const ComponentSetting = () => {
     }
   ]
 
-  const editorSettingItems: ISettingItem[] = [
+  const editorSettingItems: (ISettingItem | undefined)[] = [
     {
       type: 'switch',
       title: t('settings.Auto open highlight editor'),
       value: !!setting.editor.autoOpenHighlightEditor,
       onChange: v => setSetting(s => ({ ...s, editor: { ...s.editor, autoOpenHighlightEditor: v } }))
     },
+    {
+      type: 'switch',
+      title: t('settings.Show highlight details'),
+      value: !!setting.editor.showHighlightText,
+      onChange: v => setSetting(s => ({ ...s, editor: { ...s.editor, showHighlightText: v } }))
+    },
+    setting.editor.showHighlightText
+      ? {
+          type: 'switch',
+          title: t('settings.Default expand highlight details'),
+          value: !!setting.editor.defaultExpandHighlightText,
+          onChange: v => setSetting(s => ({ ...s, editor: { ...s.editor, defaultExpandHighlightText: v } }))
+        }
+      : undefined,
     {
       title: t('settings.object auto become inline when dragged into editor'),
       children: <Switch value={setting.editor.objectAutoBecomeInline} onChange={() => toggleSetting('editor', 'objectAutoBecomeInline')} />
@@ -102,7 +116,7 @@ const ComponentSetting = () => {
       value: !!setting.editor.enableFormat,
       onChange: v => setSetting(s => ({ ...s, editor: { ...s.editor, enableFormat: !s.editor.enableFormat } }))
     }
-  ]
+  ].filter(i => i)
   const sidebarItems: ISettingItem[] = [
     {
       type: 'switch',
@@ -164,6 +178,20 @@ const ComponentSetting = () => {
       value: !!setting.pdf.autoOpenHighlightEditor,
       onChange: v => setSetting(s => ({ ...s, pdf: { ...s.pdf, autoOpenHighlightEditor: v } }))
     },
+    {
+      type: 'switch',
+      title: t('settings.Show highlight details'),
+      value: !!setting.pdf.showHighlightText,
+      onChange: v => setSetting(s => ({ ...s, pdf: { ...s.pdf, showHighlightText: v } }))
+    },
+    setting.pdf.showHighlightText
+      ? {
+          type: 'switch',
+          title: t('settings.Default expand highlight details'),
+          value: !!setting.pdf.defaultExpandHighlightText,
+          onChange: v => setSetting(s => ({ ...s, pdf: { ...s.pdf, defaultExpandHighlightText: v } }))
+        }
+      : undefined,
     {
       title: t('settings.Auto width'),
       type: 'switch',

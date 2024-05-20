@@ -708,6 +708,8 @@
     "code-block": "Code block"
   },
   "settings": {
+    "Show highlight details": "Show highlight details",
+    "Default expand highlight details": "Expand highlight details by default",
     "Auto open highlight editor": "Auto open highlight editor",
     "Cloud sync": "Cloud sync",
     "Sync mode": "Sync mode",

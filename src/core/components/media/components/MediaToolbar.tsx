@@ -92,20 +92,6 @@ export default () => {
             }}
             text={t('general.Media highlight')}
           ></Button.IconButton>
-          {mediaState.isTranscribing && (
-            <Tooltip content={'Click to cancel'}>
-              <Button.IconButton
-                className={clazz}
-                text={'Transcribing'}
-                onClick={() => {
-                  instance.cancelTranscribe?.()
-                }}
-                spin={true}
-                style={{ padding: '4px 12px' }}
-                icon={'park-loading-four'}
-              />
-            </Tooltip>
-          )}
           <AnimatePopover
             padding={10}
             positions={['bottom', 'top']}
@@ -162,6 +148,20 @@ export default () => {
               <Icon size={14} name={'park-down'} />
             </Content>
           </AnimatePopover>
+          {mediaState.isTranscribing && (
+            <Tooltip content={'Click to cancel'}>
+              <Button.IconButton
+                className={clazz}
+                text={'Transcribing'}
+                onClick={() => {
+                  instance.cancelTranscribe?.()
+                }}
+                spin={true}
+                style={{ padding: '4px 12px' }}
+                icon={'park-loading-four'}
+              />
+            </Tooltip>
+          )}
           <IconWithPopover
             padding={10}
             renderOnParent={false}

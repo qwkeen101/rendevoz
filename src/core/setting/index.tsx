@@ -39,7 +39,7 @@ enum Settings {
   'components',
   'shortcuts',
   'object and link',
-  'sync',
+  // 'sync',
   'AI',
   'resource usage'
   // 'about'
@@ -144,7 +144,8 @@ export const defaultSetting: Setting = {
   editor: {
     autoOpenHighlightEditor: true,
     objectAutoBecomeInline: false,
-    addSpacingInReaderMode: true
+    addSpacingInReaderMode: true,
+    showHighlightText: true
   },
   object: {
     deleteFileWhenDeleteObject: true,
@@ -161,7 +162,8 @@ export const defaultSetting: Setting = {
     renderMode: 'followTheme',
     defaultLabelColor: '#ffe082',
     autoWidth: true,
-    autoOpenHighlightEditor: true
+    autoOpenHighlightEditor: true,
+    showHighlightText: true
   },
   label: {
     showOriginalText: true
@@ -177,6 +179,12 @@ export const defaultSetting: Setting = {
 }
 
 export const SettingAtom = atom<Setting>(defaultSetting)
+export const SettingAtoms = {
+  pdfShowHighlightText: selectAtom(SettingAtom, s => s.pdf.showHighlightText),
+  editorShowHighlightText: selectAtom(SettingAtom, s => s.editor.showHighlightText),
+  pdfDefaultExpandHighlightDetails: selectAtom(SettingAtom, s => s.pdf.defaultExpandHighlightText),
+  editorDefaultExpandHighlightDetails: selectAtom(SettingAtom, s => s.editor.defaultExpandHighlightText)
+}
 export const enableCustomEditorStateAtom = selectAtom(SettingAtom, s => s.editor.enableFormat)
 export const useSetting = () => useAtom(SettingAtom, { store: globalStore })
 export const previewSidebarTitleAtom = selectAtom(SettingAtom, s => s.sidebar.previewTitleMode)

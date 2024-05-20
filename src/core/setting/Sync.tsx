@@ -67,6 +67,14 @@ export default memo(() => {
       width: 300,
       value: setting.sync.S3Config?.bucket,
       onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, S3Config: { ...s.sync.S3Config, bucket: v } } }))
+    },
+    {
+      title: 'Folder',
+      type: 'input',
+      width: 300,
+      description: '(Optional) Example: /cloud',
+      value: setting.sync.S3Config?.defaultFolder,
+      onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, S3Config: { ...s.sync.S3Config, defaultFolder: v } } }))
     }
   ]
   const webdavItems: ISettingItem[] = [
@@ -90,6 +98,14 @@ export default memo(() => {
       width: 300,
       value: setting.sync.webdavConfig?.password,
       onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, webdavConfig: { ...s.sync.webdavConfig, password: v } } }))
+    },
+    {
+      title: 'Folder',
+      type: 'input',
+      width: 300,
+      description: '(Optional) Example: /cloud',
+      value: setting.sync.webdavConfig?.defaultFolder,
+      onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, webdavConfig: { ...s.sync.webdavConfig, defaultFolder: v } } }))
     }
   ]
   const syncItems: (ISettingItem | undefined)[] = [

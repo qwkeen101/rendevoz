@@ -4,7 +4,6 @@ import { PageSize } from '~/typings'
 import { ObjectStore } from '@/api/stores'
 import { CSSProperties, FC, forwardRef, memo, useEffect, useRef, useState } from 'react'
 import { ILabel } from '~/typings/data'
-import useClickOutside from '@/hooks/utils/useClickOutside'
 import { Rect } from '@/types'
 import usePdfSelectMode from '../../hooks/useSelectMode'
 import { useSetAtom } from 'jotai'
@@ -17,10 +16,8 @@ interface HighlightLabelProps {
   pageSize: PageSize
   documentId: number
 }
-const layout = ['copy', 'colorPicker', 'separator', 'searcher', 'translator', 'rightBar', 'separator', 'delete']
-
 const HighlightLabel: FC<HighlightLabelProps> = memo(
-  ({ labelId, pageSize, documentId }) => {
+  ({ labelId, pageSize }) => {
     const highlight = ObjectStore('pdfLabel').useValue(labelId) as (ILabel & { type: 'highlight' }) | undefined
     const highlightRef = useRef<HTMLDivElement>(null)
     const setPdfState = useSetAtom(PdfStateAtom)
@@ -28,7 +25,7 @@ const HighlightLabel: FC<HighlightLabelProps> = memo(
 
     return (
       <DraggableElement
-        hoverElement={<DraggingElement text="Drop to add pdf label." />}
+        hoverElement={<DraggingElement text="Drop to move highlight" />}
         draggingDetails={{
           type: 'pdfLabel',
           labelId: highlight.id

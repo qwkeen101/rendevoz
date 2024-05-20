@@ -1,7 +1,9 @@
-import { CSSProperties } from 'react'
-import { useRenderLabel } from '@/core'
+import { CSSProperties, useRef, useState } from 'react'
+import { SettingAtoms, useRenderLabel } from '@/core'
 import { AnimatePopover, Icon, WithBorder } from '@/components'
 import { Colors } from '@/consts'
+import { useGlobalAtomValue } from '@/hooks'
+import UseClickOutside from '@/hooks/utils/useClickOutside'
 
 const LabelNoteRenderer = ({
   labelId,
@@ -30,21 +32,61 @@ const LabelNoteRenderer = ({
   labelId: number
   style?: CSSProperties
 }) => {
-  const { label, renderTags, labelMeta } = useRenderLabel({ objectId: labelId, type: 'pdfLabel' })
-  if (!label?.name && !labelMeta?.tags?.length) return null
-  return (
-    <WithBorder
-      className={'cancel'}
-      onClickCapture={e => {
-        e.stopPropagation()
-      }}
-      onPointerDownCapture={e => e.stopPropagation()}
-      style={style}
-    >
-      {label?.name}
-      {renderTags(undefined, true)}
-    </WithBorder>
+  const show = useGlobalAtomValue(SettingAtoms.pdfShowHighlightText)
+  const defaultExpanded = useGlobalAtomValue(SettingAtoms.pdfDefaultExpandHighlightDetails)
+  const [expanded, setExpanded] = useState(!!defaultExpanded)
+  const r = useRef<HTMLDivElement>()
+  UseClickOutside(
+    () => {
+      if (expanded && defaultExpanded !== true) {
+        setExpanded(false)
+      }
+    },
+    r,
+    expanded
   )
+  const { label, renderTags, labelMeta } = useRenderLabel({ objectId: labelId, type: 'pdfLabel' })
+  if (!show) return null
+  if (!label?.name && !labelMeta?.tags?.length) return null
+  if (expanded) {
+    return (
+      <WithBorder
+        ref={r}
+        className={'cancel'}
+        onClickCapture={e => {
+          e.stopPropagation()
+        }}
+        onPointerDownCapture={e => e.stopPropagation()}
+        style={style}
+      >
+        {label?.name}
+        {renderTags(undefined, true)}
+      </WithBorder>
+    )
+  } else {
+    return (
+      <Icon
+        onClickCapture={e => {
+          setExpanded(true)
+          e.stopPropagation()
+        }}
+        onPointerDownCapture={e => e.stopPropagation()}
+        name={'park-message'}
+        style={{
+          position: 'absolute',
+          top: -16,
+          left: -16,
+          cursor: 'pointer',
+          color: 'var(--emphasis)',
+          transform: 'rotateY(180deg)',
+          pointerEvents: 'auto'
+        }}
+        size={16}
+        theme={'filled'}
+        className={'cancel'}
+      />
+    )
+  }
 }
 
 export default LabelNoteRenderer

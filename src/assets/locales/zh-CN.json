@@ -704,6 +704,8 @@
     "code-block": "代码块"
   },
   "settings": {
+    "Show highlight details": "显示高亮详情",
+    "Default expand highlight details": "默认展开高亮详情",
     "Auto open highlight editor": "自动打开高亮编辑器",
     "sync": "数据同步",
     "Cloud sync": "云端同步",

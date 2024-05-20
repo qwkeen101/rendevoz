@@ -16,5 +16,6 @@ export const useEditorContents = () => {
         setHeadingTree(headingTree)
       }
     }, 500)
+    instance.triggerContentsChange?.()
   }, [])
 }

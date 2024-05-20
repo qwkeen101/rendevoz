@@ -178,6 +178,8 @@ export type IComponentSetting = {
     addSpacingInReaderMode?: boolean
     enableFormat?: boolean
     autoOpenHighlightEditor?: boolean
+    showHighlightText?: boolean
+    defaultExpandHighlightText?: boolean
   }
   translate: {
     autoGotoHoverText: boolean
@@ -195,6 +197,8 @@ export type IComponentSetting = {
     defaultLabelColor: string
     autoWidth?: boolean
     autoOpenHighlightEditor?: boolean
+    showHighlightText?: boolean
+    defaultExpandHighlightText?: boolean
   }
   code: {
     defaultLanguage?: string

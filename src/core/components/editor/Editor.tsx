@@ -97,7 +97,7 @@ export const EditorV1: FC<EditorProps> = memo(
     const setEditorState = useSetAtom(EditorStateAtom)
     const isDraggingDivider = useSelectAtomValue(EditorStateAtom, s => s.isDraggingDivider)
     const instance = useEditorInstance()
-    const sidebarVisible = barState.sidebarActive !== 'hide'
+    const sidebarVisible = layout?.showHeader !== false && barState.sidebarActive !== 'hide'
     const pageConfig = useContext(PageConfigContext)
     useEffect(() => {
       if (textboxMode !== undefined) {

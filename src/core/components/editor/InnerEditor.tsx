@@ -41,32 +41,6 @@ import { selectAtom } from 'jotai/utils'
 import { useAtomValue } from 'jotai/react'
 import { useLatest } from 'react-use'
 
-const ReadOnlyEditorClassName = css({
-  table: {
-    width: '100%',
-    borderSpacing: 0,
-    border: 'none',
-    tr: {
-      border: 'none'
-    },
-    td: {
-      '.ParagraphBlock': {
-        marginBottom: 2
-      },
-      padding: '0.5em'
-    }
-  },
-  '.ParagraphBlock': {
-    borderRadius: 0,
-    paddingLeft: 0
-  },
-  cite: ClassName.description()
-})
-const AddSpacingClassName = css({
-  '.ParagraphBlock': {
-    marginBottom: 'calc((var(--font-size) / 16 * 1rem) - 3px)'
-  }
-})
 export type InnerEditorProps = {
   editor: CustomEditor
   defaultValue: Descendant[]
@@ -156,6 +130,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
         scopedEmitter.emit('editor', {
           type: 'valueChange'
         })
+        instance.triggerContentsChange?.()
         shouldChange = true
       }
       const prevValue = previousValue.current
@@ -400,9 +375,9 @@ const InnerEditor: FC<InnerEditorProps> = memo(
           className={classNames(
             EditorClasses.TextBoxClass,
             EditorClasses.DefaultContentClass,
-            readOnly && ReadOnlyEditorClassName,
+            readOnly && 'readOnlyEditor',
             editorClassName,
-            readOnly && addParagraphSpacing && AddSpacingClassName
+            readOnly && addParagraphSpacing && 'spacingParagraph'
           )}
           scrollElementRef={scrollElementRef}
         ></Editable>
@@ -462,22 +437,6 @@ const isMarkActive = (editor: CustomEditor, mark: string) => {
   return marks ? mark in marks : false
 }
 
-const TextHighlightClassName = css({
-  position: 'relative',
-  backgroundImage: `linear-gradient(
-     0deg,
-     ${Colors.Emphasis.Emphasis} 0%,
-     ${Colors.Emphasis.Emphasis} 1.5px,
-     rgba(247, 219, 106, 0.3) 1.5px,
-     rgba(247, 219, 106, 0.3) 100%
-   )`,
-  transition: 'background-color 0.5s ease',
-  backgroundRepeat: 'no-repeat !important',
-  backgroundSize: '100% 90% !important',
-  backgroundPosition: '0 75% !important',
-  WebkitBackgroundClip: 'unset !important',
-  cursor: 'pointer'
-})
 const labelTypeAtom = selectAtom(EditorStateAtom, s => s.labelType)
 export const Leaf = (props: RenderLeafProps) => {
   const [disableCloze, setDisableCloze] = useState(false)
@@ -548,7 +507,7 @@ const HighlightLeaf = (props: RenderLeafProps & { style?: CSSProperties }) => {
           editor.onHighlightClick?.(leaf.highlight)
         }}
         data-highlight={leaf.highlight}
-        className={TextHighlightClassName}
+        className={'textHighlight'}
         style={style}
       >
         {(label?.name || labelMeta?.tags?.length) && renderName && (

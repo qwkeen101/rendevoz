@@ -93,3 +93,43 @@
     pointer-events: none !important;
   }
 }
+.readOnlyEditor{
+  table{
+    width: 100%;
+    border-spacing: 0px;
+    border: none;
+    tr{
+      border: none;
+    }
+    td{
+      padding: 0.5em;
+      .ParagraphBlock{
+        margin-bottom: 2px;
+      }
+    }
+  }
+  .ParagraphBlock{
+    border-radius: 0px;
+    padding-left: 0px;
+  }
+  cite{
+    color: var(--font-transparent);
+  }
+}
+
+.spacingParagraph{
+  .ParagraphBlock{
+    margin-bottom: calc((var(--font-size) / 16 * 1rem) - 3px);
+  }
+}
+
+.textHighlight{
+  position: relative;
+  background-image: linear-gradient(0deg, var(--emphasis) 0%, var(--emphasis) 1.5px, rgba(247,219,106,0.3) 1.5px, rgba(247,219,106,0.3) 100%);
+  transition: background-color 0.5s ease;
+  background-repeat: no-repeat !important;
+  background-size: 100% 90% !important;
+  background-position: 0 75% !important;
+  -webkit-background-clip: unset !important;
+  cursor: pointer;
+}

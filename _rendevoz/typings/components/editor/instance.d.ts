@@ -22,6 +22,7 @@ export type IEditorInstance = Partial<{
   scrollToHighlight: (options: { highlightId: number }) => Promise<void>
   getSlateEditor: () => CustomEditor
   isSelectionCollapsed?: () => boolean
+  triggerContentsChange?: VoidFunction
   indexPath: VoidFunction
   dragManager: any
   getScrollPosition: () => number

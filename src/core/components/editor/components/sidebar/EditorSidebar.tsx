@@ -95,7 +95,7 @@ export default memo(() => {
           <EditorLabelController labelType={labelType} labelIds={labels} />
         </TabPane>
         <TabPane key="contents">
-          <EditorContents editor={editor} />
+          <EditorContents/>
         </TabPane>
         <TabPane key="ai">
           {(barState.sidebarActive === 'ai' || openAi.current) && normalized && (

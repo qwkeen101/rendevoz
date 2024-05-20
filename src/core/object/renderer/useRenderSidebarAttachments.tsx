@@ -116,10 +116,12 @@ export default (metaId: number) => {
           <AnimatePopover
             positions={['bottom', 'top']}
             padding={10}
-            content={
+            disableNudge
+            content={setV => (
               <WithBorder>
                 <MetaFilterer
                   onChange={m => {
+                    setV(false)
                     const o = MetaStore.getCachedMetaObject(m)
                     if (o) {
                       if (!meta || meta?.attachments?.some(i => i.id === o.id)) return
@@ -138,7 +140,7 @@ export default (metaId: number) => {
                   }}
                 />
               </WithBorder>
-            }
+            )}
           >
             <Icon name={'park-filter'} className={ClassName.flatButton(4, '4px')}></Icon>
           </AnimatePopover>

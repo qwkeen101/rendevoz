@@ -2,22 +2,22 @@ import { Content, Icon } from '@/components'
 import Outliner from '@/core/components/editor/utils/outline/outliner'
 import { useSelectAtomValue, useToggle } from '@/hooks'
 import ClassName from '@/styles/classNames'
-import { Descendant } from 'slate'
 import { CustomEditor } from '~/typings'
-import { EditorHeadingTreeAtom, useEditorFilter } from './useEditorFilter'
+import { EditorHeadingTreeAtom, useEditorContents } from './useEditorContents'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { goToBlock, highlightBlock } from '@/core/components/editor/utils'
-import useEditorValue from '@/core/components/editor/hooks/useEditorValue'
 import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
-import { memo, useMemo } from 'react'
+import { memo } from 'react'
 import classnames from 'classnames'
+import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 
 type IHeadingTreeNode = ReturnType<typeof Outliner.headingListToTree>
-const SidebarContents = memo(({ editor }: { editor: CustomEditor }) => {
-  const value = useEditorValue()
-  useEditorFilter(editor)
+const SidebarContents = memo(() => {
+  const instance = useEditorInstance()
+  const editor = instance.getSlateEditor?.()
+  useEditorContents()
   const headingTree = useAtomValue(EditorHeadingTreeAtom)
-  if (!headingTree?.children.length)
+  if (!headingTree?.children.length || !editor)
     return (
       <div
         className={'bold-font transparent-font'}
@@ -32,10 +32,10 @@ const SidebarContents = memo(({ editor }: { editor: CustomEditor }) => {
         No content
       </div>
     )
-  return <HeadingTree value={value} editor={editor} />
+  return <HeadingTree editor={editor} />
 })
 
-const HeadingTree = ({ editor }: { value: Descendant[]; editor: CustomEditor }) => {
+const HeadingTree = ({ editor }: { editor: CustomEditor }) => {
   const headingTree = useAtomValue(EditorHeadingTreeAtom)
   return (
     headingTree && (

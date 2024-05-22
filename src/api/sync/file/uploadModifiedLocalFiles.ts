@@ -16,9 +16,8 @@ export default async (lastUploaded?: number) => {
       }
     }
     // await upload('test')
-    await upload('files')
-    await upload('imgs')
     upload('backup')
+    await Promise.all([upload('files'), upload('imgs')])
     return changedFiles
   }
 }

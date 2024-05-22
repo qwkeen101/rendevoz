@@ -10,19 +10,37 @@ import SyncAPI from '@/api/sync'
 import { ICloudSyncClient } from '@/api/sync/cloudClient/types'
 import { throttle } from 'lodash'
 
-const changeState = (type: 'downloading' | 'uploading', name: string, progress: number, size?: number, skiped?: boolean) => {
+const changeState = (
+  type: 'downloading' | 'uploading',
+  name: string,
+  opts?: {
+    progress?: number
+    size?: number
+    skiped?: boolean
+    error?: boolean
+  }
+) => {
   const currState = globalStore.get(SyncAPI.stateAtom)
   globalStore.set(SyncAPI.stateAtom, {
     ...currState,
     [type]: {
       ...currState[type],
       [name]: {
-        progress,
-        skiped,
+        progress: opts?.progress,
+        skiped: opts?.skiped,
         name: name,
-        size: size ?? currState[type][name]?.size ?? 0
+        error: opts?.error,
+        size: opts?.size ?? currState[type][name]?.size ?? 0
       }
     }
+  })
+}
+const clearTasks = () => {
+  const currState = globalStore.get(SyncAPI.stateAtom)
+  globalStore.set(SyncAPI.stateAtom, {
+    ...currState,
+    downloading: Object.fromEntries(Object.entries(currState.downloading).filter(i => i[1].progress === 1)),
+    uploading: Object.fromEntries(Object.entries(currState.uploading).filter(i => i[1].progress === 1))
   })
 }
 const syncFolder = async (dirName: string, client: ICloudSyncClient) => {
@@ -35,10 +53,8 @@ const syncFolder = async (dirName: string, client: ICloudSyncClient) => {
 const syncLocalFiles = async () => {
   const client = SyncAPI.cloudClient()
   if (!client) return
-  // await syncFolder('test', client)
-  await syncFolder('imgs', client)
-  await syncFolder('files', client)
   syncFolder('backup', client)
+  await Promise.all([syncFolder('imgs', client), syncFolder('files', client)])
 }
 const FileSync = {
   commit,
@@ -46,7 +62,8 @@ const FileSync = {
   changeState,
   syncLocalFiles,
   listNeedUpload,
-  uploadModifiedLocalFiles
+  uploadModifiedLocalFiles,
+  clearTasks
 }
 
 export default FileSync

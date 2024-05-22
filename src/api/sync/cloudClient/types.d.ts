@@ -7,15 +7,16 @@ export type ICloudSyncClient = {
   downloadFile: (
     filePath: string | string[],
     opts?: {
-      onProgress?: (type: 'finish' | 'start', path: string, size?: number) => void
+      onProgress?: (type: 'finish' | 'start' | 'error', path: string, size?: number) => void
     }
   ) => Promise<void>
+  cancelAllTasks: VoidFunction
   statFile: (filePath: string) => Promise<{ size?: number; lastModified?: number } | undefined>
   getFileAsBuffer: (filePath: string) => Promise<ArrayBuffer | undefined>
   uploadFile: (
     filePath: string | string[],
     opts?: {
-      onProgress?: (type: 'finish' | 'start' | 'skipped', path: string, size?: number) => void
+      onProgress?: (type: 'finish' | 'start' | 'skipped' | 'error', path: string, size?: number) => void
       skipSetting?: boolean
     }
   ) => Promise<void>

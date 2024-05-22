@@ -4,6 +4,11 @@ import { getSetting } from '@/core'
 import { ICloudSyncClient } from '@/api/sync/cloudClient/types'
 import { pathJoin, pathNormalize, pathRemoveLeading, pathRemoveLeadingSlash } from '@/api/sync/utils/path'
 import { Queue } from 'async-await-queue'
+import { Simulate } from 'react-dom/test-utils'
+import cancel = Simulate.cancel
+import Id from '@/utils/id'
+import GlobalStates from '@/api/global/states'
+import SyncAPI from '@/api/sync'
 const q = new Queue(4, 0)
 const getClient = () => {
   const client = S3Sync.client
@@ -17,6 +22,8 @@ const getClient = () => {
   }
 }
 
+const CancelFuncsMap = new Map<number, VoidFunction>()
+const CancelControllersMap = new Map<number, AbortController>()
 const addLeading = (str: string) => {
   const folder = pathNormalize(S3Sync.defaultFolder ?? '', false)
   if (str.startsWith(folder)) {
@@ -40,6 +47,16 @@ const S3Sync: ICloudSyncClient & {
     S3Sync.client = client
     S3Sync.bucket = bucket
     S3Sync.defaultFolder = defaultFolder
+  },
+  cancelAllTasks: () => {
+    Array.from(CancelControllersMap.values()).forEach(f => {
+      f.abort()
+    })
+    Array.from(CancelFuncsMap.values()).forEach(f => {
+      f()
+    })
+    CancelFuncsMap.clear()
+    CancelControllersMap.clear()
   },
   deleteFile: async fileName => {
     const { client, bucket } = getClient()
@@ -117,16 +134,35 @@ const S3Sync: ICloudSyncClient & {
     const { client, bucket } = getClient()
     const paths = Array.isArray(filePath) ? filePath : [filePath]
     if (paths.length) {
+      const controller = new AbortController()
+      controller.signal.throwIfAborted()
+      const id = Id.getId()
+      const cancel = {
+        current: false
+      }
+      CancelControllersMap.set(id, controller)
+      CancelFuncsMap.set(id, () => {
+        cancel.current = true
+      })
       await Promise.all(
         paths.map(async p => {
           const me = `download_${p}`
           await q.wait(me, -1)
+          if (cancel.current) {
+            q.end(me)
+            return
+          }
           try {
-            const res = await client.getObject({
-              Bucket: bucket,
-              Key: addLeading(p),
-              ResponseCacheControl: 'no-cache'
-            })
+            const res = await client.getObject(
+              {
+                Bucket: bucket,
+                Key: addLeading(p),
+                ResponseCacheControl: 'no-cache'
+              },
+              {
+                abortSignal: controller.signal
+              }
+            )
             if (res.Body) {
               opts?.onProgress?.('start', p, res.ContentLength ?? 0)
               try {
@@ -134,8 +170,9 @@ const S3Sync: ICloudSyncClient & {
                 await FileSystem.fs.writeFile(arr, p)
                 opts?.onProgress?.('finish', p, res.ContentLength ?? 0)
               } catch (e) {
+                q.end(me)
                 console.error(e)
-                opts?.onProgress?.('finish', p)
+                opts?.onProgress?.('error', p)
               }
             }
           } catch (e) {
@@ -162,6 +199,16 @@ const S3Sync: ICloudSyncClient & {
     const paths = Array.isArray(filePath) ? filePath : [filePath]
     if (paths.length) {
       const maxSize = getSetting().sync.maxSyncSize
+      const controller = new AbortController()
+      controller.signal.throwIfAborted()
+      const cancel = {
+        current: false
+      }
+      const id = Id.getId()
+      CancelControllersMap.set(id, controller)
+      CancelFuncsMap.set(id, () => {
+        cancel.current = true
+      })
       await Promise.all(
         paths.map(async p => {
           const me = `upload_${p}`
@@ -173,20 +220,28 @@ const S3Sync: ICloudSyncClient & {
           //   }
           // }
           await q.wait(me, -1)
+          if (cancel.current) {
+            q.end(me)
+            return
+          }
           try {
             const file = await FileSystem.fs.readFile('rendefile:///' + p)
             if (file) {
               try {
                 opts?.onProgress?.('start', p, file.length)
-                await client.putObject({
-                  Bucket: bucket,
-                  Key: addLeading(p),
-                  Body: file
-                })
+                await client.putObject(
+                  {
+                    Bucket: bucket,
+                    Key: addLeading(p),
+                    Body: file
+                  },
+                  { abortSignal: controller.signal }
+                )
+                opts?.onProgress?.('finish', p, file.length)
               } catch (e) {
                 console.error(e)
-              } finally {
-                opts?.onProgress?.('finish', p, file.length)
+                opts?.onProgress?.('error', p)
+                q.end(me)
               }
             }
           } catch (e) {

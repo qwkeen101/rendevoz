@@ -26,13 +26,29 @@ export default function getCloudClient() {
             return await S3Sync.downloadFile(filePath, {
               ...opts,
               onProgress: (t, p, size) => {
+                if (t === 'error') {
+                  SyncAPI.file.changeState('downloading', p, {
+                    error: true,
+                    size
+                  })
+                  return
+                }
                 if (t === 'start') {
-                  SyncAPI.file.changeState('downloading', p, 0, size)
+                  SyncAPI.file.changeState('downloading', p, {
+                    progress: 0,
+                    size
+                  })
                 } else {
                   if (size !== undefined) {
                     LocalFileSizeMap.set(p, size)
                   }
-                  setTimeout(() => SyncAPI.file.changeState('downloading', p, 1), 200)
+                  setTimeout(
+                    () =>
+                      SyncAPI.file.changeState('downloading', p, {
+                        progress: 1
+                      }),
+                    200
+                  )
                 }
               }
             })
@@ -42,11 +58,25 @@ export default function getCloudClient() {
               ...opts,
               onProgress: (t, p, size) => {
                 if (t === 'start') {
-                  SyncAPI.file.changeState('uploading', p, 0, size)
+                  SyncAPI.file.changeState('uploading', p, {
+                    progress: 0,
+                    size
+                  })
                 } else if (t === 'finish') {
-                  SyncAPI.file.changeState('uploading', p, 1)
+                  SyncAPI.file.changeState('uploading', p, {
+                    progress: 1
+                  })
                 } else if (t === 'skipped') {
-                  SyncAPI.file.changeState('uploading', p, 0, size, true)
+                  SyncAPI.file.changeState('uploading', p, {
+                    progress: 0,
+                    size,
+                    skiped: true
+                  })
+                } else if (t === 'error') {
+                  SyncAPI.file.changeState('uploading', p, {
+                    error: true,
+                    size
+                  })
                 }
               }
             })
@@ -69,13 +99,28 @@ export default function getCloudClient() {
             return await WebdavSync.downloadFile(filePath, {
               ...opts,
               onProgress: (t, p, size) => {
+                if (t === 'error') {
+                  SyncAPI.file.changeState('downloading', p, {
+                    error: true,
+                    size
+                  })
+                }
                 if (t === 'start') {
-                  SyncAPI.file.changeState('downloading', p, 0, size)
+                  SyncAPI.file.changeState('downloading', p, {
+                    progress: 0,
+                    size
+                  })
                 } else {
                   if (size !== undefined) {
                     LocalFileSizeMap.set(p, size)
                   }
-                  setTimeout(() => SyncAPI.file.changeState('downloading', p, 1), 200)
+                  setTimeout(
+                    () =>
+                      SyncAPI.file.changeState('downloading', p, {
+                        progress: 1
+                      }),
+                    200
+                  )
                 }
               }
             })
@@ -85,11 +130,25 @@ export default function getCloudClient() {
               ...opts,
               onProgress: (t, p, size) => {
                 if (t === 'start') {
-                  SyncAPI.file.changeState('uploading', p, 0, size)
+                  SyncAPI.file.changeState('uploading', p, {
+                    progress: 0,
+                    size
+                  })
                 } else if (t === 'finish') {
-                  SyncAPI.file.changeState('uploading', p, 1)
+                  SyncAPI.file.changeState('uploading', p, {
+                    progress: 1
+                  })
                 } else if (t === 'skipped') {
-                  SyncAPI.file.changeState('uploading', p, 0, size, true)
+                  SyncAPI.file.changeState('uploading', p, {
+                    progress: 0,
+                    skiped: true,
+                    size
+                  })
+                } else if (t === 'error') {
+                  SyncAPI.file.changeState('uploading', p, {
+                    size,
+                    error: true
+                  })
                 }
               }
             })

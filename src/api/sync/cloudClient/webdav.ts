@@ -5,6 +5,7 @@ import FileSystem from '@/api/fileSystem'
 import { getSetting } from '@/core'
 import { getDirPath, pathJoin, pathNormalize, pathRemoveLeading } from '@/api/sync/utils/path'
 import { Queue } from 'async-await-queue'
+import Id from '@/utils/id'
 const q = new Queue(4, 0)
 const getClient = () => {
   if (!WebdavSync.client) throw 'Client is not registered!'
@@ -40,6 +41,8 @@ const checkDirCreated = async (filePath: string, isDir = false) => {
     await client.createDirectory(dirPath, { recursive: true })
   }
 }
+const CancelFuncsMap = new Map<number, VoidFunction>()
+const CancelControllersMap = new Map<number, AbortController>()
 const WebdavSync: ICloudSyncClient & {
   client?: WebDAVClient
   defaultFolder?: string
@@ -53,6 +56,16 @@ const WebdavSync: ICloudSyncClient & {
     })
     WebdavSync.defaultFolder = opts.defaultFolder
     WebdavSync.client = client
+  },
+  cancelAllTasks: () => {
+    Array.from(CancelControllersMap.values()).forEach(f => {
+      f.abort()
+    })
+    Array.from(CancelFuncsMap.values()).forEach(f => {
+      f()
+    })
+    CancelFuncsMap.clear()
+    CancelControllersMap.clear()
   },
   getFile: async filePath => {
     const client = getClient()
@@ -96,12 +109,26 @@ const WebdavSync: ICloudSyncClient & {
     const client = getClient()
     const arr = Array.isArray(filePath) ? filePath : [filePath]
     const needCheckDir = new Set(arr.map(p => transformToDirPath(p)))
+    const controller = new AbortController()
+    controller.signal.throwIfAborted()
+    const id = Id.getId()
+    CancelControllersMap.set(id, controller)
+    const cancel = {
+      current: false
+    }
+    CancelFuncsMap.set(id, () => {
+      cancel.current = true
+    })
     const maxSize = getSetting().sync.maxSyncSize
     await Promise.all(Array.from(needCheckDir.values()).map(async p => await checkDirCreated(p, true)))
     await Promise.all(
       arr.map(async p => {
         const me = `upload_${p}`
         await q.wait(me, -1)
+        if (cancel.current) {
+          q.end(me)
+          return
+        }
         // if (maxSize && opts?.skipSetting !== true) {
         //   const stat = await FileSystem.fs.stat('rendefile://' + p)
         //   if (stat.size / (1024 * 1024) > maxSize) {
@@ -114,11 +141,14 @@ const WebdavSync: ICloudSyncClient & {
           if (file) {
             try {
               opts?.onProgress?.('start', p, file.length)
-              await client.putFileContents(addLeading(p), await new Blob([file]).arrayBuffer(), { overwrite: true })
+              await client.putFileContents(addLeading(p), await new Blob([file]).arrayBuffer(), {
+                overwrite: true,
+                signal: controller.signal
+              })
+              opts?.onProgress?.('finish', p, file.length)
             } catch (e) {
               console.error(e)
-            } finally {
-              opts?.onProgress?.('finish', p, file.length)
+              opts?.onProgress?.('error', p, file.length)
             }
           }
         } catch (e) {
@@ -133,6 +163,16 @@ const WebdavSync: ICloudSyncClient & {
     const client = getClient()
     const arr = Array.isArray(filePath) ? filePath : [filePath]
     const needCheckDir = new Set(arr.map(p => transformToDirPath(p)))
+    const controller = new AbortController()
+    controller.signal.throwIfAborted()
+    const id = Id.getId()
+    CancelControllersMap.set(id, controller)
+    const cancel = {
+      current: false
+    }
+    CancelFuncsMap.set(id, () => {
+      cancel.current = true
+    })
     await Promise.all(Array.from(needCheckDir.values()).map(async p => await checkDirCreated(p, true)))
     await Promise.all(
       arr.map(async p => {
@@ -140,6 +180,10 @@ const WebdavSync: ICloudSyncClient & {
         const newP = addLeading(p)
         try {
           await q.wait(me, -1)
+          if (cancel.current) {
+            q.end(me)
+            return
+          }
           const state = await client.stat(newP)
           if (!state) {
             q.end(me)
@@ -150,11 +194,13 @@ const WebdavSync: ICloudSyncClient & {
             format: 'binary',
             headers: {
               'Cache-Control': 'no-cache'
-            }
+            },
+            signal: controller.signal
           })
           await FileSystem.fs.writeFile(file, p)
           opts?.onProgress?.('finish', p, state?.size ?? 0)
         } catch (e) {
+          opts?.onProgress?.('error', p)
           console.error(e)
         } finally {
           q.end(me)

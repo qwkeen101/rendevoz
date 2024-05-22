@@ -38,8 +38,8 @@ const SyncAPI = {
     'wrong config': Colors['grey']
   } as Record<Connection, string>,
   stateAtom: atom<{
-    uploading: Record<string, { name: string; size: number; progress: number; skiped?: boolean }>
-    downloading: Record<string, { name: string; size: number; progress: number }>
+    uploading: Record<string, { name: string; size: number; progress: number; skiped?: boolean; error?: boolean }>
+    downloading: Record<string, { name: string; size: number; progress: number; error?: boolean }>
     connection: Connection
     lastSynced?: number
   }>({

@@ -3,7 +3,7 @@ import { exportDB, importInto, peakImportFile } from 'dexie-export-import'
 export const db = new Dexie('rendevozDb')
 export const syncDB = new Dexie('sync')
 let SyncAPI: undefined | (typeof import('@/api/sync'))['default'] = undefined
-
+let GlobalStates: undefined | (typeof import('@/api/global/states'))['default'] = undefined
 syncDB.version(1).stores({
   sync: ''
 })
@@ -130,6 +130,7 @@ db.version(19).stores({
   keyvalues: null,
   sync: null
 })
+const stateTable = syncDB.table('state')
 db.use({
   stack: 'dbcore',
   create: down => ({
@@ -139,13 +140,27 @@ db.use({
       return {
         ...downlevelTable,
         mutate: req => {
-          if (SyncAPI) {
-            SyncAPI.database.commit(req, name)
-          } else {
-            import('@/api/sync').then(res => {
-              SyncAPI = res.default
-              res.default.database.commit(req, name)
-            })
+          if (typeof localStorage !== 'undefined') {
+            if (GlobalStates) {
+              if (GlobalStates.getValue('initialized')) {
+                stateTable.put(Date.now(), 'lastDatabaseModified')
+              }
+            } else {
+              import('@/api/global/states').then(res => {
+                GlobalStates = res.default
+                if (res.default.getValue('initialized')) {
+                  stateTable.put(Date.now(), 'lastDatabaseModified')
+                }
+              })
+            }
+            if (SyncAPI) {
+              SyncAPI.database.commit(req, name)
+            } else {
+              import('@/api/sync').then(res => {
+                SyncAPI = res.default
+                res.default.database.commit(req, name)
+              })
+            }
           }
           return downlevelTable.mutate(req)
         }

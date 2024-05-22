@@ -7,11 +7,9 @@ import FileSystem from '@/api/fileSystem'
 import { globalStore } from '@/api/stores'
 import syncBetweenLocalFolderAndCloudFolder from '@/api/sync/cloudClient/syncBetweenLocalFolderAndCloudFolder'
 import SyncAPI from '@/api/sync'
+import { ICloudSyncClient } from '@/api/sync/cloudClient/types'
+import { throttle } from 'lodash'
 
-export type FileSyncState = {
-  lastDownload: number
-  lastUpload: number
-}
 const changeState = (type: 'downloading' | 'uploading', name: string, progress: number, size?: number, skiped?: boolean) => {
   const currState = globalStore.get(SyncAPI.stateAtom)
   globalStore.set(SyncAPI.stateAtom, {
@@ -27,19 +25,20 @@ const changeState = (type: 'downloading' | 'uploading', name: string, progress: 
     }
   })
 }
+const syncFolder = async (dirName: string, client: ICloudSyncClient) => {
+  const res = await syncBetweenLocalFolderAndCloudFolder(dirName)
+  if (res) {
+    res.filesToDownload.length && (await client.downloadFile(res.filesToDownload))
+    res.filesToUpload.length && (await client.uploadFile(res.filesToUpload))
+  }
+}
 const syncLocalFiles = async () => {
   const client = SyncAPI.cloudClient()
   if (!client) return
-  const imgRes = await syncBetweenLocalFolderAndCloudFolder('imgs')
-  if (imgRes) {
-    imgRes.filesToDownload.length && (await client.downloadFile(imgRes.filesToDownload))
-    imgRes.filesToUpload.length && (await client.uploadFile(imgRes.filesToUpload))
-  }
-  const fileRes = await syncBetweenLocalFolderAndCloudFolder('files')
-  if (fileRes) {
-    fileRes.filesToDownload.length && (await client.downloadFile(fileRes.filesToDownload))
-    fileRes.filesToUpload.length && (await client.uploadFile(fileRes.filesToUpload))
-  }
+  // await syncFolder('test', client)
+  await syncFolder('imgs', client)
+  await syncFolder('files', client)
+  syncFolder('backup', client)
 }
 const FileSync = {
   commit,

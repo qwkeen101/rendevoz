@@ -10,14 +10,17 @@ import { initializeFileSizeMap } from '@/api/sync/file/listNeedUpload'
 
 export default async () => {
   try {
+    await initializeFileSizeMap('backup')
     await initializeFileSizeMap('files')
     await initializeFileSizeMap('imgs')
     const setting = await KeyvalueStore.fetchOne('userSetting')
-    if (setting && setting.sync.enableSync && setting.sync.enableAutoSync && setting.sync.conflictResolved) {
-      GlobalStates.setState('loading', s => ({ ...s, currentState: 'loading remote data' }))
-      await SyncAPI.restoreFromDB()
-      GlobalStates.setState('remoteDataFetched', true)
+    if (setting && setting.sync.enableSync) {
       SyncAPI.file.syncLocalFiles()
+      if (setting.sync.enableAutoSync && setting.sync.conflictResolved) {
+        GlobalStates.setState('loading', s => ({ ...s, currentState: 'loading remote data' }))
+        await SyncAPI.restoreFromDB()
+        GlobalStates.setState('remoteDataFetched', true)
+      }
     }
   } catch (e) {
     console.error(e)

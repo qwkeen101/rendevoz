@@ -28,20 +28,23 @@ export default async () => {
     globalStore.set(SyncAPI.stateAtom, { ...globalStore.get(SyncAPI.stateAtom), lastSynced: Date.now() })
     if (all) {
       const deviceId = await FileSystem.fs.getMachineId()
-      const data = (
-        await Promise.all(
-          all.map(async k => {
-            const buffer = await client.getFileAsBuffer(k.key)
-            if (buffer) {
-              return await new Promise<ISyncOperation>(res => {
-                decompress(new Uint8Array(buffer), (err, data) => {
-                  res(JSON.parse(strFromU8(data)))
-                })
+      let data = (await Promise.all(
+        all.map(async k => {
+          const buffer = await client.getFileAsBuffer(k.key)
+          if (buffer) {
+            return await new Promise<ISyncOperation>(res => {
+              decompress(new Uint8Array(buffer), (err, data) => {
+                res(JSON.parse(strFromU8(data)))
               })
-            }
-          })
-        )
-      ).filter(i => i && i.deviceId !== deviceId) as ISyncOperation[]
+            })
+          }
+        })
+      )) as ISyncOperation[]
+      if (data.length) {
+        const timestamp = data[data.length - 1].timestamp
+        await syncDB.table('state').put(timestamp + 1, 'lastSynced')
+      }
+      data = data.filter(i => i.deviceId !== deviceId)
       const dbTransactions = data
         .map(i => i.databaseTranscations?.map(t => ({ ...t, timestamp: i.timestamp })))
         .flat()
@@ -55,10 +58,6 @@ export default async () => {
         .map(i => i.noteUpdateIds)
         .flat()
         .filter(i => i) as number[]
-      if (data.length) {
-        const timestamp = data[data.length - 1].timestamp
-        await syncDB.table('state').put(timestamp + 1, 'lastSynced')
-      }
       if (fileTransactions.length) {
         await SyncAPI.file.pull(fileTransactions)
       }

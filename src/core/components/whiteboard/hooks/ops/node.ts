@@ -16,11 +16,13 @@ import pasteImage from '@/core/components/whiteboard/hooks/ops/paste/pasteImage'
 import pasteNodes from '@/core/components/whiteboard/hooks/ops/paste/pasteNodes'
 import pastePlainText from '@/core/components/whiteboard/hooks/ops/paste/pastePlainText'
 import { getSetting } from '@/core'
+import { useRef } from 'react'
 
 const assignNodeOps = (instance: IWhiteboardInstance) => {
   const updateWhiteboard = useUpdateWhiteboard()
   const store = useStore()
   const metaMap = MetaStore.getMetaObjectsMap()
+  const needUpdateEdges = useRef<Set<number>>(new Set())
   assignProperties(instance, {
     nodeOps: {
       getMaxZindex: () => {
@@ -49,15 +51,19 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
       },
       updateRelatedEdges: nodeId => {
         const idArr = Array.isArray(nodeId) ? nodeId : [nodeId]
-        const edgeIdSet = new Set<number>()
         idArr.forEach(id => {
           const relatedEdges = instance.values.NODE_TO_EDGE_MAP.get(id)
           relatedEdges?.forEach(edgeId => {
-            edgeIdSet.add(edgeId)
+            if (!needUpdateEdges.current.size) {
+              Promise.resolve().then(() => {
+                needUpdateEdges.current.forEach(id => {
+                  instance.values.ID_TO_EDGE_MAP.get(id)?.drawPath()
+                })
+                needUpdateEdges.current.clear()
+              })
+            }
+            needUpdateEdges.current.add(edgeId)
           })
-        })
-        edgeIdSet.forEach(id => {
-          instance.values.ID_TO_EDGE_MAP.get(id)?.drawPath()
         })
       },
       deleteNode: (nodeId, redo = true) => {

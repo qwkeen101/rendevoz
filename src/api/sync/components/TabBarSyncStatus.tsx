@@ -1,7 +1,7 @@
 import { useGlobalAtom, useSelectGlobalAtomValue } from '@/hooks'
 import { ClassName } from 'rendevoz'
 import { AnimatePopover, Content, Icon, WithBorder } from '@/components'
-import { memo, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import { formatBytes } from '@/utils/fetchProcess'
 import { Colors } from '@/consts'
 import { getSetting, SettingAtom } from '@/core'
@@ -14,6 +14,8 @@ export default memo(() => {
   const [syncState, setSyncState] = useGlobalAtom(SyncAPI.stateAtom)
   const [isPushing, setIsPushing] = useState(false)
   const [isPulling, setIsPulling] = useState(false)
+  const [showMoreDownloads, setShowMoreDownloads] = useState(false)
+  const [showMoreUploads, setShowMoreUploads] = useState(false)
   const syncSetting = useSelectGlobalAtomValue(SettingAtom, s => s.sync)
   let connection = syncState.connection
   if (Object.values(syncState.downloading).some(i => i.progress < 1) || Object.values(syncState.uploading).some(i => i.progress < 1)) {
@@ -25,11 +27,15 @@ export default memo(() => {
       ...s,
       [type]: { ...Object.values(s[type]).filter(i => i.progress < 1) }
     }))
+    setShowMoreUploads(false)
+    setShowMoreDownloads(false)
   }
   const renderDownloading = () => {
     if (Object.keys(syncState.downloading).length > 0) {
       const items = Object.values(syncState.downloading)
       const downloading = items.filter(i => i.progress < 1)
+      const leftItems = downloading.length ? 0 : Math.max(0, items.length - 50)
+      const visibleItems = downloading.length ? downloading : showMoreDownloads ? items : items.slice(0, 50)
       return (
         <>
           <Content flex alignItems={'center'} justifyContent={'space-between'} style={{ margin: '6px 0px 4px' }}>
@@ -46,7 +52,7 @@ export default memo(() => {
             </div>
           </Content>
           <Content flex column gap={4}>
-            {items.map(i => (
+            {visibleItems.map(i => (
               <Content gap={12} flex justifyContent={'space-between'} key={i.name}>
                 <Content flex gap={8} alignItems={'center'}>
                   <Icon
@@ -61,7 +67,7 @@ export default memo(() => {
                     name={i.progress === 1 ? 'park-check' : 'park-loading-four'}
                   />
                   <div title={i.name} className={'ellipsis-font-1 font-size-13'}>
-                    {i.name.split('/')[1]}
+                    {i.name.split('/').pop()}
                   </div>
                 </Content>
 
@@ -70,6 +76,11 @@ export default memo(() => {
                 </div>
               </Content>
             ))}
+            {leftItems > 0 && !showMoreDownloads ? (
+              <div onClick={() => setShowMoreDownloads(true)} className={'transparent-font font-size-12 link'}>
+                {t('general.More sync files', { num: leftItems })}
+              </div>
+            ) : null}
           </Content>
         </>
       )
@@ -80,6 +91,8 @@ export default memo(() => {
       const items = Object.values(syncState.uploading)
       const uploading = items.filter(i => i.progress < 1 && !i.skiped)
       const skiped = items.filter(i => i.skiped)
+      const leftItems = uploading.length || skiped.length ? 0 : Math.max(0, items.length - 50)
+      const visibleItems = uploading.length || skiped.length ? [...uploading, ...skiped] : showMoreUploads ? items : items.slice(0, 50)
       return (
         <>
           <Content flex alignItems={'center'} justifyContent={'space-between'} style={{ margin: '6px 0px 4px' }}>
@@ -97,7 +110,7 @@ export default memo(() => {
             </div>
           </Content>
           <Content flex column gap={4}>
-            {items.map(i => (
+            {visibleItems.map(i => (
               <Content gap={12} flex justifyContent={'space-between'} key={i.name}>
                 <Content flex gap={8} alignItems={'center'}>
                   <Icon
@@ -109,8 +122,8 @@ export default memo(() => {
                       background: i.skiped
                         ? Colors.Common.RedTransparentLight
                         : i.progress === 1
-                        ? Colors.Common.SelectColorTransparentLight
-                        : 'transparent'
+                          ? Colors.Common.SelectColorTransparentLight
+                          : 'transparent'
                     }}
                     onClick={() => {
                       if (i.skiped) {
@@ -138,6 +151,11 @@ export default memo(() => {
                 </div>
               </Content>
             ))}
+            {leftItems > 0 && !showMoreUploads ? (
+              <div onClick={() => setShowMoreUploads(true)} className={'transparent-font font-size-12 link'}>
+                {t('general.More sync files', { num: leftItems })}
+              </div>
+            ) : null}
           </Content>
         </>
       )

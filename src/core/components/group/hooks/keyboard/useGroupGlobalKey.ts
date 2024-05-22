@@ -20,11 +20,11 @@ const useGroupGlobalKey = () => {
         if (e.defaultPrevented) {
           return
         }
+        if (!instance.values.isFocused) return
         handleCommonKey(e)
         handleTableCellControlKey(e)
         handleTableRowControlKey(e)
         handleEscKey(e)
-        if (!instance.values.isFocused) return
         handleDeleteKey(e)
       })
     }

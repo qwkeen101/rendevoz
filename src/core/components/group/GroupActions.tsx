@@ -4,7 +4,7 @@ import { MetaGroup } from '~/typings'
 import BetterFilter from '@/core/object/filter/BetterFilter'
 import { memo, useLayoutEffect, useRef, useState } from 'react'
 import { ClassName } from 'rendevoz'
-import { useDebounceFn, useSelectAtomValue } from '@/hooks'
+import { GlobalInstance, useDebounceFn, useSelectAtomValue } from '@/hooks'
 import { Colors } from '@/consts'
 import GroupSettingMenu from '@/core/components/group/components/menu/setting/GroupSettingMenu'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
@@ -42,7 +42,8 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
     visibleTypes,
     visibleProps,
     showImport,
-    showViews
+    showViews,
+    showCreate
   } = useSelectAtomValue(
     GroupStateAtom,
     s => ({
@@ -50,7 +51,8 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
       visibleProps: s.visibleProperties,
       visibleTypes: s.visibleTypes,
       showViews: s.layout?.showMultipleViews,
-      showImport: s.layout?.showImport
+      showImport: s.layout?.showImport,
+      showCreate: s.layout?.showCreate
     }),
     {
       compare: (prev, curr) => isEqual(prev, curr)
@@ -374,6 +376,19 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
               text={t('general.Add')}
               onClick={() => {
                 open()
+              }}
+              className={ClassName.selectButton()}
+              style={{
+                marginLeft: 8,
+                padding: '2px 8px'
+              }}
+            ></Button.IconButton>
+          )}
+          {showCreate && (
+            <Button.IconButton
+              text={t('general.New')}
+              onClick={() => {
+                GlobalInstance.metaOps?.createObject()
               }}
               className={ClassName.selectButton()}
               style={{

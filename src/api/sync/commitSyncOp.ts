@@ -9,6 +9,7 @@ import { compressSync, strToU8 } from 'fflate'
 import { getSetting } from '@/core'
 import GlobalStates from '@/api/global/states'
 import useRenderLabelEditor from '@/core/object/renderer/useRenderLabelEditor'
+import getClientInfo from '@/api/sync/utils/getClientInfo'
 let cache: Omit<ISyncOperation, 'timestamp' | 'deviceId'> = {
   databaseTranscations: [],
   fileTransactions: [],
@@ -57,13 +58,18 @@ export const commitManually = async () => {
     if (!cloned.noteUpdateIds?.length && !cloned.fileTransactions?.length && !cloned.databaseTranscations?.length) {
       return
     }
-    console.log(cloned, Date.now())
+    const now = Date.now()
     cloudClient.uploadData(
-      `commits/${Date.now()}`,
+      `commits/${now}`,
       new Blob([compressSync(strToU8(JSON.stringify({ ...cloned, timestamp: Date.now(), deviceId: await FileSystem.fs.getMachineId() })))])
     )
     const data = await exportData()
     cloudClient.uploadData('all-data.zip', data)
+    getClientInfo().then(res => {
+      if (res) {
+        cloudClient.uploadData('client-info.json', JSON.stringify(res))
+      }
+    })
   }
 }
 const debounceUpload = debounce(commitManually, 1500, { maxWait: 4000 })

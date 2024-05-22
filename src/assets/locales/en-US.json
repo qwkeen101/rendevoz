@@ -1,5 +1,6 @@
 {
   "general": {
+    "More sync files": "And {{num}} more files",
     "Tools": "Tools",
     "More": "More",
     "Priority": "Priority",
@@ -708,6 +709,12 @@
     "code-block": "Code block"
   },
   "settings": {
+    "Auto sync desc": "If enabled, data and files will auto-sync with the cloud",
+    "Sync files": "Sync files",
+    "Folder path": "Folder path",
+    "Position": "Position",
+    "Device": "Device",
+    "Folder path desc": "(Optional) Example: /cloud",
     "Show highlight details": "Show highlight details",
     "Default expand highlight details": "Expand highlight details by default",
     "Auto open highlight editor": "Auto open highlight editor",

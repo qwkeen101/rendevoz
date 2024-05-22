@@ -162,30 +162,47 @@ const openFolder = async (folderPath: string) => {
 const readDir = async (directoryPath: string) => {
   checkFileFolderGenerated()
   const dirPath = path.join(getRendeFileFolderPath(), directoryPath)
+  if (!fs.existsSync(dirPath)) {
+    return {
+      dirState: {
+        totalSize: 0
+      },
+      files: []
+    }
+  }
   return new Promise(res => {
     fs.readdir(dirPath, (err, files) => {
-      Promise.all(
-        files.map(f => {
-          return new Promise(res => {
-            const filePath = join(dirPath, f)
-            fs.stat(filePath, (err, data) => {
-              res({
-                mtime: data.mtime.getTime(),
-                ctime: data.ctime.getTime(),
-                size: data.size,
-                name: f
+      if (files) {
+        Promise.all(
+          files.map(f => {
+            return new Promise(res => {
+              const filePath = join(dirPath, f)
+              fs.stat(filePath, (err, data) => {
+                res({
+                  mtime: data.mtime.getTime(),
+                  ctime: data.ctime.getTime(),
+                  size: data.size,
+                  name: f
+                })
               })
             })
           })
-        })
-      ).then(data =>
-        res({
+        ).then(data =>
+          res({
+            dirState: {
+              totalSize: data.reduce((prev, curr) => prev + curr.size, 0)
+            },
+            files: data
+          })
+        )
+      } else {
+        return {
           dirState: {
-            totalSize: data.reduce((prev, curr) => prev + curr.size, 0)
+            totalSize: 0
           },
-          files: data
-        })
-      )
+          files: []
+        }
+      }
     })
   })
 }

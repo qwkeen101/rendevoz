@@ -9,6 +9,7 @@ import { globalStore } from '@/api/stores'
 import { syncDB } from '@/utils'
 import { getSetting } from '@/core'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
+import getClientInfo from '@/api/sync/utils/getClientInfo'
 
 export default async (method: 'pull' | 'push') => {
   const client = SyncAPI.cloudClient()
@@ -39,6 +40,11 @@ export default async (method: 'pull' | 'push') => {
     if (method === 'push') {
       const data = await exportData()
       await client.uploadData('all-data.zip', data)
+      getClientInfo().then(res => {
+        if (res) {
+          client.uploadData('client-info.json', JSON.stringify(res))
+        }
+      })
     }
   }
 }

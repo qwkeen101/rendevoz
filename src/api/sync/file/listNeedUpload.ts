@@ -10,7 +10,9 @@ export const initializeFileSizeMap = async (dirName: string) => {
 }
 export default async (dirName: string, lastUploaded?: number) => {
   const allFiles = await FileSystem.fs.readdir(dirName)
-  const leftFiles = lastUploaded ? allFiles.files.filter(i => i.mtime > lastUploaded) : allFiles.files
+  const leftFiles = lastUploaded
+    ? allFiles.files.filter(i => i.mtime > lastUploaded || !LocalFileSizeMap.has(`${dirName}/${i.name}`))
+    : allFiles.files
   const finalFiles = leftFiles.filter(i => {
     const prev = LocalFileSizeMap.get(`${dirName}/${i.name}`)
     if (!prev || prev !== i.size) {

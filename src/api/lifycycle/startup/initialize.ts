@@ -10,10 +10,10 @@ import { subDataChange } from '@/api/stores'
 import initializeSettings from '@/api/lifycycle/initializeApp/initializeSettings'
 
 export default async () => {
+  GlobalStates.setState('loading', s => ({ ...s, currentState: 'initializing' }))
   await initializeSettings()
   await startupSync()
   await recoverFromBackup()
-  GlobalStates.setState('loading', s => ({ ...s, currentState: 'initializing' }))
   await initializeApp()
   GlobalStates.setState('loading', s => ({ ...s, currentState: 'indexing data' }))
   await indexData(false)

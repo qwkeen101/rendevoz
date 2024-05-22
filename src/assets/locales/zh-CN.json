@@ -1,5 +1,6 @@
 {
   "general": {
+    "More sync files": "与其他{{num}}个文件",
     "Tools": "工具",
     "More": "更多",
     "Priority": "优先度",
@@ -704,6 +705,12 @@
     "code-block": "代码块"
   },
   "settings": {
+    "Position": "位置",
+    "Device": "设备",
+    "Auto sync desc": "如果开启，数据与文件将自动与云端同步",
+    "Sync files": "同步文件",
+    "Folder path": "文件夹路径",
+    "Folder path desc": "(可选) 例如: /cloud",
     "Show highlight details": "显示高亮详情",
     "Default expand highlight details": "默认展开高亮详情",
     "Auto open highlight editor": "自动打开高亮编辑器",

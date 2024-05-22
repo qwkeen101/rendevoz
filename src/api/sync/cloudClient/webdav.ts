@@ -3,34 +3,27 @@ import * as webdav from 'webdav'
 import { AuthType, FileStat, WebDAVClient } from 'webdav'
 import FileSystem from '@/api/fileSystem'
 import { getSetting } from '@/core'
-
+import { getDirPath, pathJoin, pathNormalize, pathRemoveLeading } from '@/api/sync/utils/path'
+import { Queue } from 'async-await-queue'
+const q = new Queue(4, 0)
 const getClient = () => {
   if (!WebdavSync.client) throw 'Client is not registered!'
   return WebdavSync.client
 }
 const addLeading = (str: string) => {
-  const folder = WebdavSync.defaultFolder ?? ''
-  if (!str.startsWith(`/${folder}`)) {
-    return `/${folder}` + (folder.length ? '/' : '') + str
+  const folder = pathNormalize(WebdavSync.defaultFolder ?? '', true)
+  if (str.startsWith(folder)) {
+    return str
   }
-  return str
+  return pathNormalize(pathJoin([folder, str]), true)
 }
 const removeLeading = (str: string) => {
   const folder = WebdavSync.defaultFolder ?? ''
-  if (str.startsWith(`/${folder}`)) {
-    return str.slice(`/${folder}`.length + (folder.length ? 1 : 0))
-  }
-  return str
+  return pathRemoveLeading(str, folder)
 }
 const transformToDirPath = (str: string) => {
-  const folder = WebdavSync.defaultFolder ?? ''
-  if (!str.startsWith(`/${folder}`)) {
-    str = `/${folder}` + (folder.length ? '/' : '') + str
-  }
-  const splitted = str.split('/').filter(i => i)
-  splitted.pop()
-  const final = splitted.join('/')
-  return '/' + final
+  str = addLeading(str)
+  return getDirPath(str)
 }
 const checkDirCreated = async (filePath: string, isDir = false) => {
   const client = WebdavSync.client!
@@ -107,6 +100,8 @@ const WebdavSync: ICloudSyncClient & {
     await Promise.all(Array.from(needCheckDir.values()).map(async p => await checkDirCreated(p, true)))
     await Promise.all(
       arr.map(async p => {
+        const me = `upload_${p}`
+        await q.wait(me, -1)
         // if (maxSize && opts?.skipSetting !== true) {
         //   const stat = await FileSystem.fs.stat('rendefile://' + p)
         //   if (stat.size / (1024 * 1024) > maxSize) {
@@ -114,18 +109,22 @@ const WebdavSync: ICloudSyncClient & {
         //     return
         //   }
         // }
-        const file = await FileSystem.fs.readFile(`rendefile://` + p)
-        if (file) {
-          try {
-            opts?.onProgress?.('start', p, file.length)
-            const newP = addLeading(p)
-            await client.putFileContents(newP, await new Blob([file]).arrayBuffer(), { overwrite: true })
-          } catch (e) {
-            console.error(e)
-          } finally {
-            console.log(p)
-            opts?.onProgress?.('finish', p)
+        try {
+          const file = await FileSystem.fs.readFile(`rendefile://` + p)
+          if (file) {
+            try {
+              opts?.onProgress?.('start', p, file.length)
+              await client.putFileContents(addLeading(p), await new Blob([file]).arrayBuffer(), { overwrite: true })
+            } catch (e) {
+              console.error(e)
+            } finally {
+              opts?.onProgress?.('finish', p, file.length)
+            }
           }
+        } catch (e) {
+          console.error(e)
+        } finally {
+          q.end(me)
         }
       })
     )
@@ -137,9 +136,15 @@ const WebdavSync: ICloudSyncClient & {
     await Promise.all(Array.from(needCheckDir.values()).map(async p => await checkDirCreated(p, true)))
     await Promise.all(
       arr.map(async p => {
+        const me = `download_${p}`
+        const newP = addLeading(p)
         try {
-          const newP = addLeading(p)
+          await q.wait(me, -1)
           const state = await client.stat(newP)
+          if (!state) {
+            q.end(me)
+            return
+          }
           opts?.onProgress?.('start', p, state?.size)
           const file = await client.getFileContents(newP, {
             format: 'binary',
@@ -148,10 +153,11 @@ const WebdavSync: ICloudSyncClient & {
             }
           })
           await FileSystem.fs.writeFile(file, p)
+          opts?.onProgress?.('finish', p, state?.size ?? 0)
         } catch (e) {
           console.error(e)
         } finally {
-          opts?.onProgress?.('finish', p)
+          q.end(me)
         }
       })
     )
@@ -182,6 +188,7 @@ const WebdavSync: ICloudSyncClient & {
     try {
       const client = getClient()
       dirName = addLeading(dirName)
+      console.log(dirName)
       let res = (await client.getDirectoryContents(dirName, { includeSelf: false })) as FileStat[]
       if (startAfter) {
         res.sort((a, b) => (a.filename > b.filename ? 1 : -1))

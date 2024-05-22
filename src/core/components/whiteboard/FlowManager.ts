@@ -143,8 +143,8 @@ class FlowManager {
           height: trimNumber(box.height)
         }
         if (newSize.width === 0 && newSize.height === 0) return
+        this.instance.nodeOps?.updateRelatedEdges(nodeId)
         if (newSize.width !== node.width || newSize.height !== node.height) {
-          this.instance.nodeOps?.updateRelatedEdges(nodeId)
           nodeSizeChange.push({ ...newSize, id: nodeId })
           if (!this.instance.nodeOps?.getNodeFuncs(nodeId)?.sizeAlreadyDefined()) {
             batchNewSize.push({ ...newSize, id: nodeId })

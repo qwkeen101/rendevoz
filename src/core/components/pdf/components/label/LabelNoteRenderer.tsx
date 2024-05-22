@@ -76,6 +76,7 @@ const LabelNoteRenderer = ({
           position: 'absolute',
           top: -16,
           left: -16,
+          zIndex: 100,
           cursor: 'pointer',
           color: 'var(--emphasis)',
           transform: 'rotateY(180deg)',

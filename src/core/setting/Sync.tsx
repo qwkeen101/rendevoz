@@ -8,21 +8,49 @@ import { memo, useEffect, useState } from 'react'
 import { DateFormat } from '@/utils'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
+import getClientInfo from '@/api/sync/utils/getClientInfo'
 
 export default memo(() => {
   const [setting, setSetting] = useSetting()
   const [syncState, setSyncState] = useGlobalAtom(SyncAPI.stateAtom)
-  const [remoteTime, setRemoteTime] = useState<number>()
   const [isPushing, setIsPushing] = useState(false)
   const [isPulling, setIsPulling] = useState(false)
+  const [remoteData, setRemoteData] = useState<{
+    ip: string
+    city: string
+    region: string
+    country: string
+    time: number
+    os: string
+  }>()
+  const renderRemote = () => {
+    if (remoteData) {
+      const renderRegion = remoteData.region && remoteData.region !== remoteData.country
+      const renderCity = remoteData.city && remoteData.city !== remoteData.region && remoteData.city !== remoteData.country
+      return (
+        <Content flex className={'font-size-13 transparent-font'}>
+          {t('settings.Remote data updated at')}
+          {`: ${DateFormat.format(remoteData.time, DateFormat.Formats.withMinute)}`}
+          <span style={{ marginLeft: 12 }}>{t('settings.Position')}</span>
+          {': '}
+          {remoteData.country}
+          {renderRegion && ` ${remoteData.region}`}
+          {renderCity && ` ${remoteData.city}`}
+          <span style={{ marginLeft: 12 }}>{t('settings.Device')}</span>
+          {`: ${remoteData.os}`}
+        </Content>
+      )
+    }
+  }
   const { t } = useTranslation()
   useEffect(() => {
     if (syncState.connection === 'connected') {
       SyncAPI.cloudClient()
-        ?.statFile('all-data.zip')
+        ?.getFile('client-info.json')
         .then(res => {
-          if (res?.lastModified) {
-            setRemoteTime(res.lastModified)
+          if (res) {
+            const parsed = JSON.parse(res)
+            setRemoteData(parsed)
           }
         })
     }
@@ -69,10 +97,10 @@ export default memo(() => {
       onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, S3Config: { ...s.sync.S3Config, bucket: v } } }))
     },
     {
-      title: 'Folder',
+      title: t('settings.Folder path'),
       type: 'input',
       width: 300,
-      description: '(Optional) Example: /cloud',
+      description: t('settings.Folder path desc'),
       value: setting.sync.S3Config?.defaultFolder,
       onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, S3Config: { ...s.sync.S3Config, defaultFolder: v } } }))
     }
@@ -100,10 +128,10 @@ export default memo(() => {
       onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, webdavConfig: { ...s.sync.webdavConfig, password: v } } }))
     },
     {
-      title: 'Folder',
+      title: t('settings.Folder path'),
       type: 'input',
       width: 300,
-      description: '(Optional) Example: /cloud',
+      description: t('settings.Folder path desc'),
       value: setting.sync.webdavConfig?.defaultFolder,
       onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, webdavConfig: { ...s.sync.webdavConfig, defaultFolder: v } } }))
     }
@@ -133,6 +161,7 @@ export default memo(() => {
             ? {
                 type: 'switch',
                 title: t('settings.Auto sync'),
+                description: t('settings.Auto sync desc'),
                 value: setting.sync.enableAutoSync ?? false,
                 onChange: v => {
                   setSetting(s => ({
@@ -148,7 +177,8 @@ export default memo(() => {
                 column: true,
                 description: setting.sync.conflictResolved ? undefined : t('settings.Resolve conflict desc'),
                 children: (
-                  <Content flex justifyContent={'space-between'} alignItems={'flex-end'} gap={'10%'} style={{ marginTop: 4 }}>
+                  <Content flex column gap={10} style={{ marginTop: 4 }}>
+                    {renderRemote()}
                     <Content flex gap={8}>
                       <Button.IconButton
                         gap={2}
@@ -165,10 +195,12 @@ export default memo(() => {
                                 sync: {
                                   ...s.sync,
                                   conflictResolved: true,
-                                  enableAutoSync: !s.sync.conflictResolved ? true : s.sync.enableAutoSync
+                                  enableAutoSync: false
                                 }
                               }))
-                              setRemoteTime(Date.now())
+                              getClientInfo().then(res => {
+                                res && setRemoteData(res)
+                              })
                             })
                             .catch(e => {
                               toast.error('Failed to push data!')
@@ -178,7 +210,7 @@ export default memo(() => {
                             })
                         }}
                       ></Button.IconButton>
-                      {remoteTime && (
+                      {remoteData && (
                         <Button.IconButton
                           gap={2}
                           icon={'park-arrow-circle-down'}
@@ -193,22 +225,29 @@ export default memo(() => {
                                   sync: {
                                     ...s.sync,
                                     conflictResolved: true,
-                                    enableAutoSync: !s.sync.conflictResolved ? true : s.sync.enableAutoSync
+                                    enableAutoSync: false
                                   }
                                 }))
                               )
+                              .catch(e => {
+                                toast.error('Failed to pull data!')
+                              })
                               .finally(() => {
                                 setIsPulling(false)
                               })
                           }}
                         ></Button.IconButton>
                       )}
+                      <Button.IconButton
+                        gap={2}
+                        icon={'park-file-conversion-one'}
+                        text={t('settings.Sync files')}
+                        className={'border'}
+                        onClick={() => {
+                          SyncAPI.file.syncLocalFiles()
+                        }}
+                      ></Button.IconButton>
                     </Content>
-                    {remoteTime && (
-                      <div className={'transparent-font font-size-13'}>
-                        {t('settings.Remote data updated at')}: {DateFormat.format(remoteTime, DateFormat.Formats.withMinute)}
-                      </div>
-                    )}
                   </Content>
                 )
               }

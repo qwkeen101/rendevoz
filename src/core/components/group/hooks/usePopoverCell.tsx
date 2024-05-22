@@ -108,14 +108,16 @@ const usePopoverCell = (
       }, 10)
       window.addEventListener('wheel', h, { passive: false })
       document.addEventListener('keydown', k)
-      // document.addEventListener('click', c)
       return () => {
         resizeObserver.disconnect()
         setGroupState(s => ({ ...s, popoverVisible: false }))
         document.removeEventListener('keydown', k)
         window.removeEventListener('wheel', h)
-        // document.removeEventListener('click', c)
         opts?.onClose?.()
+        // timeout here to prevent some conditions group is not focused
+        setTimeout(() => {
+          instance.values.isFocused = true
+        })
       }
     }
   }, [cellState.visible])

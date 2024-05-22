@@ -67,16 +67,25 @@ export default memo(() => {
           canHideObjectsInside: false,
           canDragInside: true,
           defaultShowLabels: false,
-          showTemp: false
+          showTemp: false,
+          addAfterCreateMeta: false
         }}
         layout={{
           showDeletedMetas: false,
+          showCreate: true,
           showDescription: false,
           showContains: true,
+          showAddNew: false,
           showAddObjectIntoSetting: false,
           showTitleActions: false,
           showIcon: false,
-          showImport: false
+          showImport: false,
+          showTitle: false
+        }}
+        styles={{
+          containerStyle: {
+            paddingTop: 40
+          }
         }}
         value={data}
         on={v => {

@@ -59,6 +59,7 @@ export type IMetaGroupProps = {
     showMultipleViews?: boolean
     showImport?: boolean
     showAddNew?: boolean
+    showCreate?: boolean
     showIcon?: boolean
     showAddObjectIntoSetting?: boolean
     // meta ids
@@ -150,7 +151,7 @@ const MetaGroupInner = ({ value, groupId, layout, title, on, state, styles, onIn
       if (!instance.values.isFocused) return
       const t = e.target
       if (t instanceof Element) {
-        if (document.querySelector('[role="click-cover"]')) return
+        // if (document.querySelector('[role="click-cover"]')) return
         if (!c.contains(t)) {
           instance.values.isFocused = false
         }

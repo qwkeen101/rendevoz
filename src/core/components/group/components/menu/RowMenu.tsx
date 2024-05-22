@@ -187,11 +187,11 @@ export default memo(
               ? []
               : [
                   layoutItems['separator'],
-                  layoutItems['moveTo'],
+                  layoutItems['viewDetails'],
                   ...(onlyOpenIn
                     ? [layoutItems['open']]
                     : [layoutItems['openInNewTab'], ...(canPreview ? [layoutItems['openInSidePeek']] : [])]),
-                  layoutItems['viewDetails'],
+                  layoutItems['moveTo'],
                   layoutItems['edit'],
                   layoutItems['copyLink']
                 ])

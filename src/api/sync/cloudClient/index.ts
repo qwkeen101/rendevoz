@@ -17,7 +17,8 @@ export default function getCloudClient() {
           ak: config.ak!,
           endpoint: config.endpoint!,
           bucket: config.bucket!,
-          region: config.region!
+          region: config.region!,
+          defaultFolder: config.defaultFolder
         })
         return {
           ...S3Sync,
@@ -26,12 +27,12 @@ export default function getCloudClient() {
               ...opts,
               onProgress: (t, p, size) => {
                 if (t === 'start') {
+                  SyncAPI.file.changeState('downloading', p, 0, size)
+                } else {
                   if (size !== undefined) {
                     LocalFileSizeMap.set(p, size)
                   }
-                  SyncAPI.file.changeState('downloading', p, 0, size)
-                } else {
-                  SyncAPI.file.changeState('downloading', p, 1)
+                  setTimeout(() => SyncAPI.file.changeState('downloading', p, 1), 200)
                 }
               }
             })
@@ -59,7 +60,8 @@ export default function getCloudClient() {
         WebdavSync.registerClient({
           username: config.username!,
           password: config.password!,
-          url: config.url!
+          url: config.url!,
+          defaultFolder: config.defaultFolder
         })
         return {
           ...WebdavSync,
@@ -68,12 +70,12 @@ export default function getCloudClient() {
               ...opts,
               onProgress: (t, p, size) => {
                 if (t === 'start') {
+                  SyncAPI.file.changeState('downloading', p, 0, size)
+                } else {
                   if (size !== undefined) {
                     LocalFileSizeMap.set(p, size)
                   }
-                  SyncAPI.file.changeState('downloading', p, 0, size)
-                } else {
-                  SyncAPI.file.changeState('downloading', p, 1)
+                  setTimeout(() => SyncAPI.file.changeState('downloading', p, 1), 200)
                 }
               }
             })

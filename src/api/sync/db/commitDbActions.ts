@@ -31,13 +31,13 @@ export default (op: DBCoreMutateRequest, dbName: string) => {
   if (op.type === 'add' || op.type === 'put') {
     if (op.keys) {
       op.keys.forEach((k, idx) => {
-        updateLocalSyncTimestamp(k)
         if (needSkipKeys.has(k)) {
           needSkipKeys.delete(k)
           return
         }
         const v = op.values[idx]
         if (v) {
+          updateLocalSyncTimestamp(k)
           opsToCommit.push({
             type: 'put',
             value: v,
@@ -48,12 +48,12 @@ export default (op: DBCoreMutateRequest, dbName: string) => {
       })
     } else {
       op.values.forEach(value => {
-        if ('id' in value && value.id) {
-          updateLocalSyncTimestamp(value.id)
-        }
         if (needSkipKeys.has(value.id)) {
           needSkipKeys.delete(value.id)
           return
+        }
+        if ('id' in value && value.id) {
+          updateLocalSyncTimestamp(value.id)
         }
         opsToCommit.push({
           type: 'put',

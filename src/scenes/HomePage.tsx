@@ -28,6 +28,7 @@ export const HomePage: FC = () => {
   const currentWorkspace = KeyvalueStore.useValue('currentWorkspace')
   const homeMode = KeyvalueStore.useValue('homeDisplayMode') || 'gallery'
   const allWorkspaces = KeyvalueStore.useValue('allWorkspaces') || []
+  console.log(currentWorkspace)
   return (
     <Content fullHeight fullWidth style={{ overflowY: 'auto' }}>
       <Content

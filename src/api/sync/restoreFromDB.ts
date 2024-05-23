@@ -1,15 +1,17 @@
 import SyncAPI from '@/api/sync/index'
 import { importRendevozDb, syncDB } from '@/utils'
 import { unzip, strFromU8 } from 'fflate'
-export default async () => {
+export default async (checkModify = false) => {
   const client = SyncAPI.cloudClient()
   const error = 'Failed to load remote data!'
   if (client) {
-    const localLastModified = (await syncDB.table('state').get('lastDatabaseModified')) as number | undefined
-    if (localLastModified) {
-      const remoteState = await client.statFile('all-data.zip')
-      if (!remoteState || !remoteState.lastModified || remoteState.lastModified < localLastModified) {
-        return
+    if (checkModify) {
+      const localLastModified = (await syncDB.table('state').get('lastDatabaseModified')) as number | undefined
+      if (localLastModified) {
+        const remoteState = await client.statFile('all-data.zip')
+        if (!remoteState || !remoteState.lastModified || remoteState.lastModified < localLastModified) {
+          return
+        }
       }
     }
     const file = await client.getFileAsBuffer('all-data.zip')

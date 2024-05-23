@@ -19,7 +19,7 @@ export default async () => {
       globalStore.set(SyncAPI.stateAtom, { ...globalStore.get(SyncAPI.stateAtom), lastSynced: Date.now() })
       if (setting.sync.enableAutoSync && setting.sync.conflictResolved) {
         GlobalStates.setState('loading', s => ({ ...s, currentState: 'loading remote data' }))
-        await SyncAPI.restoreFromDB()
+        await SyncAPI.restoreFromDB(true)
         GlobalStates.setState('remoteDataFetched', true)
       }
     }

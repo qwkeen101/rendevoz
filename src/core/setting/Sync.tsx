@@ -191,7 +191,7 @@ export default memo(() => {
                 column: true,
                 description: setting.sync.conflictResolved ? undefined : t('settings.Resolve conflict desc'),
                 children: (
-                  <Content flex column gap={6} style={{ marginTop: 4 }}>
+                  <Content flex column gap={6}>
                     {renderRemote()}
                     <Content flex gap={8}>
                       <Button.IconButton

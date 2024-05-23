@@ -9,16 +9,16 @@ import KeyvalueStore from '@/api/stores/keyvalue.store'
 export default async (o: ObjectFamily[keyof ObjectFamily], force: boolean) => {
   if ('specType' in o) {
     if ('imageUrl' in o && o.imageUrl) {
-      FileSystem.deleteFile(o.imageUrl)
+      FileSystem.fs.deleteFile(o.imageUrl)
     }
     if ('fileUrl' in o && o.fileUrl) {
-      FileSystem.deleteFile(o.fileUrl)
+      FileSystem.fs.deleteFile(o.fileUrl)
     }
     if ('url' in o && o.url) {
-      FileSystem.deleteFile(o.url)
+      FileSystem.fs.deleteFile(o.url)
     }
     if ('excalidrawUrl' in o && o.excalidrawUrl) {
-      FileSystem.deleteFile(o.excalidrawUrl)
+      FileSystem.fs.deleteFile(o.excalidrawUrl)
     }
     if ('labels' in o && o.labels) {
       const labelType = `${o.specType}Label`
@@ -34,7 +34,7 @@ export default async (o: ObjectFamily[keyof ObjectFamily], force: boolean) => {
       const url = await blobDb.get(contentId)
       await blobDb.delete(contentId)
       if (typeof url?.fileUrl === 'string') {
-        FileSystem.deleteFile(url.fileUrl)
+        FileSystem.fs.deleteFile(url.fileUrl)
       }
     }
     switch (o.specType) {

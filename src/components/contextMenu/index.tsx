@@ -62,7 +62,7 @@ const ContextMenu = forwardRef<HTMLElement, ContextMenuProps>(
           boundaryInset={boundaryInset}
           reposition={true}
           visible={contextMenuOpen}
-          containerStyle={{ zIndex: '1000' }}
+          containerStyle={{ zIndex: '1500' }}
           onClickOutside={() => setContextMenuOpen(false)}
           content={setV => renderContent(setV)}
         ></AnimatePopover>

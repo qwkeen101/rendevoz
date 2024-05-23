@@ -1,7 +1,7 @@
 // pull remote transactions and replace local
 import { syncDB } from '@/utils'
 import { IDBTransaction } from '@/api/sync/db/types'
-import { useDb } from '@/hooks'
+import { GlobalInstance, useDb } from '@/hooks'
 import { needSkipKeys } from '@/api/sync/db/commitDbActions'
 import refreshLocalFromDB from '@/api/stores/refreshLocalFromDB'
 
@@ -33,6 +33,9 @@ export default (dbTransactions: IDBTransaction[]) => {
       if (t.type === 'delete') {
         needSkipKeys.add(key)
         db.delete(key)
+        if (t.database === 'metaObjects' && typeof key === 'number') {
+          processDeleteMeta(key)
+        }
       } else {
         if (shouldProcessLabels(t.value)) {
           if (await processLabelTrans(t, finalDbTransactions)) {
@@ -53,6 +56,9 @@ export default (dbTransactions: IDBTransaction[]) => {
   })
 }
 
+const processDeleteMeta = (id: number) => {
+  GlobalInstance.layoutOps?.closeObjectTab(id)
+}
 const shouldProcessLabels = (value: any) => {
   if (typeof value === 'object') {
     if ('labels' in value && value.labels && Array.isArray(value.labels)) {
@@ -81,13 +87,15 @@ const processLabelTrans = async (trans: IDBTransaction, allTrans: IDBTransaction
     if (remoteLabels.length === localLabelIdSet.size && remoteLabels.every(i => localLabelIdSet.has(i))) {
       return
     }
+    const remoteLabelIdSet = new Set(remoteLabels)
     // delete tran
     allTrans.forEach(t => {
       if (t.type === 'delete' && typeof t.key === 'number' && localLabelIdSet.has(t.key)) {
         localLabelIdSet.delete(t.key)
+        remoteLabelIdSet.delete(t.key)
       }
     })
-    const finalLabelIdSet = new Set([...remoteLabels, ...Array.from(localLabelIdSet.values())])
+    const finalLabelIdSet = new Set([...Array.from(remoteLabelIdSet.values()), ...Array.from(localLabelIdSet.values())])
     const finalLabels = Array.from(finalLabelIdSet.values())
     needSkipKeys.add(key)
     await db.put({ ...value, labels: finalLabels }, key)

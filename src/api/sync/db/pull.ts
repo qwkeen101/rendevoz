@@ -64,7 +64,7 @@ const shouldProcessLabels = (value: any) => {
 // 避免视频或者音频标注播放时bug，比如两边都在播放，并都做了标注，但是并没有同步过去的情况
 const processLabelTrans = async (trans: IDBTransaction, allTrans: IDBTransaction[]) => {
   if (trans.type === 'put') {
-    const key = trans.key
+    const key = trans.value?.id
     const value = trans.value
     if (!key || !value) {
       return
@@ -75,6 +75,7 @@ const processLabelTrans = async (trans: IDBTransaction, allTrans: IDBTransaction
       return
     }
     const remoteLabels = value.labels as number[]
+    console.log(remoteLabels, localLabels)
     const localLabelIdSet = new Set(localLabels)
     // label not changed, return here
     if (remoteLabels.length === localLabelIdSet.size && remoteLabels.every(i => localLabelIdSet.has(i))) {

@@ -299,12 +299,16 @@ const useCollectionStore = () => {
       globalStore.set(collectionsAtom, BaseStore.update(v, globalStore.get(collectionsAtom)))
     }
   }
+  const removeFromCache = (id: number) => {
+    globalStore.set(collectionsAtom, BaseStore.remove(id, globalStore.get(collectionsAtom)))
+  }
   const clearAtomData = () => {
     globalStore.set(collectionsAtom, new Map())
   }
   return {
     clearAtomData,
     refreshFromDB,
+    removeFromCache,
     getCachedCollectionById,
     findParentCollections,
     addItemToCollection,

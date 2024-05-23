@@ -656,6 +656,14 @@ const createMetaStore = () => {
       }
     }
   }
+  const removeFromCache = (type: 'object' | 'link', key: number) => {
+    if (type === 'object') {
+      globalStore.set(metaObjectsAtom, BaseStore.remove(key, globalStore.get(metaObjectsAtom)))
+    }
+    if (type === 'link') {
+      globalStore.set(metaLinksAtom, BaseStore.remove(key, globalStore.get(metaLinksAtom)))
+    }
+  }
   const clearAtomData = () => {
     globalStore.set(metaObjectsAtom, new Map())
     globalStore.set(metaLinksAtom, new Map())
@@ -683,6 +691,7 @@ const createMetaStore = () => {
     useObjectToMetaValue,
     getPropOptions,
     isVisibleMetaObject,
+    removeFromCache,
     addObjectAsMeta,
     getMetaObjectsMap,
     getMetaLinksMap,

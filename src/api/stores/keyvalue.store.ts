@@ -8,6 +8,7 @@ import { ISidebarState } from '@/components/layout/sidebar'
 import { Atom } from 'jotai/vanilla'
 import { selectAtom } from 'jotai/utils'
 import Workspace from '@/api/common/workspace'
+import BaseStore from '@/api/stores/base.store'
 
 export type SidebarDatabaseCache = {
   viewMode?: 'title' | 'thumbnail'
@@ -165,6 +166,11 @@ const createKeyvalueStore = () => {
     },
     deleteOne: <T extends keyof CurrentKeyValues>(key: T) => {
       return keyvalueDb.delete(key)
+    },
+    removeFromCache: <T extends keyof CurrentKeyValues>(key: T) => {
+      const m = new Map(globalStore.get(keyvalueAtom))
+      m.delete(key)
+      globalStore.set(keyvalueAtom, m)
     },
     freshOne: async <T extends keyof CurrentKeyValues>(key: T) => {
       const value = await keyvalueDb.get(key)

@@ -422,10 +422,6 @@ const createFeedFolderStore = () => {
   })
 }
 
-const createTagStore = () => {
-  return
-}
-
 const createGroupStore = () => {
   return createObjectStore('group', {
     beforeAddProcess: async o => {
@@ -445,6 +441,15 @@ export const refreshValueFromDB = async (key: number) => {
     const store = ObjectStore(value.specType)
     store.getOneById(key, { forceRefresh: true })
   }
+}
+export const removeFromCache = (key: number) => {
+  const keys = Array.from(ObjectStoreKeys.values())
+  keys.some(k => {
+    if (globalStore.get(ObjectStore(k).objectMapAtom).has(key)) {
+      globalStore.set(ObjectStore(k).objectMapAtom, BaseStore.remove(key, globalStore.get(ObjectStore(k).objectMapAtom)))
+      return true
+    }
+  })
 }
 export const bulkRefreshValue = () => {
   const keys = Array.from(ObjectStoreKeys.values())

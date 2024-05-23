@@ -40,6 +40,7 @@ export default (dbTransactions: IDBTransaction[]) => {
         } else {
           needSkipKeys.add(key)
           await db.put(t.value, key)
+          await modifyTable.put(t.timestamp, key)
           refreshLocalFromDB(t.database, key)
         }
       }

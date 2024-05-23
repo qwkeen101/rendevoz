@@ -4,8 +4,9 @@ export type ISearchableDocument = {
   metaType: string
   name: string
   description?: string
+  placeholderName?: string
   // note, pdf, video...
-  content: string
+  content?: string
   id: number
 }
 

@@ -637,6 +637,15 @@ const createMetaStore = () => {
     if (type === 'object') {
       const value = await metaObjectDb.get(key)
       if (value) {
+        SearchHelper.insertDocument({
+          docType: 'metaObject',
+          name: value.name || value.placeholderName,
+          description: value.description,
+          metaType: value.type,
+          placeholderName: value.placeholderName,
+          metaId: value.id,
+          id: value.id
+        })
         globalStore.set(metaObjectsAtom, BaseStore.update(value, globalStore.get(metaObjectsAtom)))
       }
     }

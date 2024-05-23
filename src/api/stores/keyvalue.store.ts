@@ -7,6 +7,7 @@ import { MetaFilterGroup, MetaGroup, MetaObject } from '~/typings'
 import { ISidebarState } from '@/components/layout/sidebar'
 import { Atom } from 'jotai/vanilla'
 import { selectAtom } from 'jotai/utils'
+import Workspace from '@/api/common/workspace'
 
 export type SidebarDatabaseCache = {
   viewMode?: 'title' | 'thumbnail'
@@ -170,6 +171,9 @@ const createKeyvalueStore = () => {
       const map = new Map(globalStore.get(keyvalueAtom))
       map.set(key, value)
       globalStore.set(keyvalueAtom, map)
+      if (key === 'currentWorkspace') {
+        Workspace.switchWorkspace(value.id)
+      }
     },
     useValue: <T extends keyof CurrentKeyValues>(key: T): CurrentKeyValues[T] | undefined => {
       if (!keyAtomCache.has(key)) {

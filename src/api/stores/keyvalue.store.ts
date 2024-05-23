@@ -167,10 +167,10 @@ const createKeyvalueStore = () => {
       return keyvalueDb.delete(key)
     },
     freshOne: async <T extends keyof CurrentKeyValues>(key: T) => {
+      const value = await keyvalueDb.get(key)
       const map = new Map(globalStore.get(keyvalueAtom))
       const prev = map.get(key)
-      const value = await keyvalueDb.get(key)
-      map.set(key, structuredClone(value))
+      map.set(key, value)
       globalStore.set(keyvalueAtom, map)
       if (key === 'currentWorkspace') {
         if (value?.id !== prev?.id) {

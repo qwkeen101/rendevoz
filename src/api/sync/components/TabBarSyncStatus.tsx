@@ -1,4 +1,4 @@
-import { useGlobalAtom, useSelectGlobalAtomValue } from '@/hooks'
+import { useGlobalAtom, useGlobalSetAtom, useSelectGlobalAtomValue } from '@/hooks'
 import { ClassName } from 'rendevoz'
 import { AnimatePopover, Content, Icon, WithBorder } from '@/components'
 import { memo, useEffect, useState } from 'react'
@@ -9,6 +9,7 @@ import SyncAPI from '@/api/sync'
 import { DateFormat } from '@/utils'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
+import ButtonSwitch from '@/components/base/ButtonSwitch'
 
 export default memo(() => {
   const [syncState, setSyncState] = useGlobalAtom(SyncAPI.stateAtom)
@@ -16,6 +17,7 @@ export default memo(() => {
   const [isPulling, setIsPulling] = useState(false)
   const [showMoreDownloads, setShowMoreDownloads] = useState(false)
   const [showMoreUploads, setShowMoreUploads] = useState(false)
+  const setSetting = useGlobalSetAtom(SettingAtom)
   const syncSetting = useSelectGlobalAtomValue(SettingAtom, s => s.sync)
   let connection = syncState.connection
   if (Object.values(syncState.downloading).some(i => i.progress < 1) || Object.values(syncState.uploading).some(i => i.progress < 1)) {
@@ -77,8 +79,8 @@ export default memo(() => {
       const visibleItems = downloading.length ? downloading : showMoreDownloads ? items : items.slice(0, 50)
       return (
         <>
-          <Content flex alignItems={'center'} justifyContent={'space-between'} style={{ margin: '6px 0px 4px' }}>
-            <div className={'transparent-font font-size-12 normal-font'}>
+          <Content flex alignItems={'center'} justifyContent={'space-between'} style={{ marginTop: 4 }}>
+            <div className={'transparent-font font-size-12'}>
               {downloading.length ? t('sync.Downloading files', { num: downloading.length }) : t('sync.All files downloaded')}
             </div>
             <div
@@ -111,8 +113,8 @@ export default memo(() => {
       const visibleItems = uploading.length || skiped.length ? [...uploading, ...skiped] : showMoreUploads ? items : items.slice(0, 50)
       return (
         <>
-          <Content flex alignItems={'center'} justifyContent={'space-between'} style={{ margin: '6px 0px 4px' }}>
-            <div className={'transparent-font font-size-12 normal-font'}>
+          <Content flex alignItems={'center'} justifyContent={'space-between'} style={{ marginTop: 4 }}>
+            <div className={'transparent-font font-size-12'}>
               {uploading.length ? t('sync.Uploading files', { num: uploading.length }) : t('sync.All files uploaded')}
               {skiped.length ? t('sync.Files skipped', { num: skiped.length }) : ''}
             </div>
@@ -151,11 +153,12 @@ export default memo(() => {
             display: 'flex',
             flexDirection: 'column',
             maxHeight: 500,
-            overflowY: 'auto'
+            overflowY: 'auto',
+            gap: 3
           }}
         >
           <Content flex alignItems={'center'} justifyContent={'space-between'}>
-            <Content alignItems={'center'} className={'font-size-14 bold-font'} flex gap={8}>
+            <Content alignItems={'center'} className={'font-size-14 normal-font'} flex gap={8}>
               <div
                 style={{
                   width: 7,
@@ -167,7 +170,7 @@ export default memo(() => {
               <div>{t(`sync.${SyncAPI.connectionToText[connection]}`)}</div>
             </Content>
             {syncSetting.enableSync && (
-              <Content flex gap={2} className={'transparent-font'} style={{ marginRight: -2 }}>
+              <Content flex gap={3} style={{ marginRight: -2 }}>
                 {connection === 'syncing' && (
                   <Icon
                     name={'park-close'}
@@ -194,12 +197,12 @@ export default memo(() => {
                           })
                       }}
                       spin={isPushing}
-                      name={isPushing ? 'park-loading-four' : 'park-arrow-circle-up'}
+                      name={isPushing ? 'park-loading-four' : 'park-arrow-up'}
                       className={ClassName.flatButton(4, '4px')}
                     />
                     <Icon
                       spin={isPulling}
-                      name={isPulling ? 'park-loading-four' : 'park-arrow-circle-down'}
+                      name={isPulling ? 'park-loading-four' : 'park-arrow-down'}
                       onClick={() => {
                         setIsPulling(true)
                         SyncAPI.resolveConflict('pull')
@@ -212,11 +215,30 @@ export default memo(() => {
                       }}
                       className={ClassName.flatButton(4, '4px')}
                     />
+                    <Icon
+                      name={'park-file-conversion-one'}
+                      className={ClassName.flatButton(4, '4px')}
+                      onClick={() => {
+                        SyncAPI.file.syncLocalFiles()
+                      }}
+                    />
                   </>
                 )}
               </Content>
             )}
           </Content>
+          {syncSetting.conflictResolved && syncSetting.enableSync && (
+            <ButtonSwitch
+              name={t('settings.Auto sync')}
+              className={'font-size-13'}
+              disableButtonStyle
+              style={{ marginTop: 2 }}
+              value={!!syncSetting.enableAutoSync}
+              onChange={v => {
+                setSetting(s => ({ ...s, sync: { ...s.sync, enableAutoSync: v } }))
+              }}
+            />
+          )}
           {syncState.lastSynced && (
             <div className={'transparent-font font-size-12'}>
               {t('sync.Last synced at')} {DateFormat.format(syncState.lastSynced, DateFormat.Formats.withMinute)}

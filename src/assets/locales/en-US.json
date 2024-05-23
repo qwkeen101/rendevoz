@@ -723,7 +723,7 @@
     "Password": "Password",
     "Username": "Username",
     "Enable cloud sync": "Enable cloud sync",
-    "Auto sync": "Auto sync",
+    "Auto sync": "Auto sync (Experimental)",
     "Sync manually": "Sync manually",
     "Resolve sync conflict": "Resolve sync conflict",
     "Resolve conflict desc": "After changing settings, you need to resolve sync conflicts again before enabling auto sync",

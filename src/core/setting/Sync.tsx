@@ -31,11 +31,22 @@ export default memo(() => {
         <Content flex className={'font-size-13 transparent-font'}>
           {t('settings.Remote data updated at')}
           {`: ${DateFormat.format(remoteData.time, DateFormat.Formats.withMinute)}`}
-          <span style={{ marginLeft: 12 }}>{t('settings.Position')}</span>
-          {': '}
-          {remoteData.country}
-          {renderRegion && ` ${remoteData.region}`}
-          {renderCity && ` ${remoteData.city}`}
+          <span style={{ marginLeft: 12, marginRight: 4 }}>{t('settings.Position')}:</span>
+          <Content flex gap={3}>
+            <span>{remoteData.country}</span>
+            {renderRegion && (
+              <>
+                <span>-</span>
+                <span>{remoteData.region}</span>
+              </>
+            )}
+            {renderCity && (
+              <>
+                <span>-</span>
+                <span>{remoteData.city}</span>
+              </>
+            )}
+          </Content>
           <span style={{ marginLeft: 12 }}>{t('settings.Device')}</span>
           {`: ${remoteData.os}`}
         </Content>
@@ -44,6 +55,7 @@ export default memo(() => {
   }
   const { t } = useTranslation()
   useEffect(() => {
+    setRemoteData(undefined)
     if (syncState.connection === 'connected') {
       SyncAPI.cloudClient()
         ?.getFile('client-info.json')
@@ -56,6 +68,8 @@ export default memo(() => {
     }
   }, [setting.sync.conflictResolved, syncState.connection, setting.sync.syncMode])
   useUpdateEffect(() => {
+    setSyncState(s => ({ ...s, connection: 'unconnected' }))
+    SyncAPI.cloudClient()?.cancelAllTasks()
     if (setting.sync.conflictResolved) {
       setSetting(s => ({ ...s, sync: { ...s.sync, conflictResolved: false, enableAutoSync: false } }))
     }
@@ -177,12 +191,12 @@ export default memo(() => {
                 column: true,
                 description: setting.sync.conflictResolved ? undefined : t('settings.Resolve conflict desc'),
                 children: (
-                  <Content flex column gap={10} style={{ marginTop: 4 }}>
+                  <Content flex column gap={6} style={{ marginTop: 4 }}>
                     {renderRemote()}
                     <Content flex gap={8}>
                       <Button.IconButton
                         gap={2}
-                        icon={'park-arrow-circle-up'}
+                        icon={'park-arrow-up'}
                         className={'border'}
                         text={isPushing ? `${t('settings.Pushing')}...` : t('settings.Push local')}
                         onClick={() => {
@@ -194,8 +208,7 @@ export default memo(() => {
                                 ...s,
                                 sync: {
                                   ...s.sync,
-                                  conflictResolved: true,
-                                  enableAutoSync: false
+                                  conflictResolved: true
                                 }
                               }))
                               getClientInfo().then(res => {
@@ -213,11 +226,12 @@ export default memo(() => {
                       {remoteData && (
                         <Button.IconButton
                           gap={2}
-                          icon={'park-arrow-circle-down'}
+                          icon={'park-arrow-down'}
                           text={isPulling ? `${t('settings.Pulling')}` : t('settings.Pull remote')}
                           className={'border'}
                           onClick={() => {
                             setIsPulling(true)
+                            let prevAuto = setting.sync.enableAutoSync
                             SyncAPI.resolveConflict('pull')
                               .then(() =>
                                 setSetting(s => ({
@@ -225,7 +239,7 @@ export default memo(() => {
                                   sync: {
                                     ...s.sync,
                                     conflictResolved: true,
-                                    enableAutoSync: false
+                                    enableAutoSync: prevAuto
                                   }
                                 }))
                               )

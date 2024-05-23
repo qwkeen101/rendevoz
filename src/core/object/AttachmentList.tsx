@@ -204,7 +204,6 @@ const AttachmentList = ({
                   }
                   setListState(s => ({ ...s }))
                 }}
-                showHoverObject={!isEditing}
                 attachment={i}
                 onChange={a => {
                   const idx = attachments.findIndex(i => i.id === a.id && i.createdAt === a.createdAt)

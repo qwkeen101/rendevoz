@@ -9,14 +9,11 @@ import classnames from 'classnames'
 import { AnimatePopover, IconWithPopover, WithBorder } from '@/components'
 import { ObjectActionMenu } from '@/core'
 import { GlobalInstance } from '@/hooks'
+import ContextMenu from '@/components/contextMenu'
 
 export type InlineRendererProps = {
   containerStyle?: CSSProperties
   ellipsisLine?: number
-  showCircle?: boolean
-  showUnderline?: boolean
-  showHoverObjectDetails?: boolean
-  showMoreOptions?: boolean
   renderAttOnParent?: boolean
   renderObjectDetailsOnParent?: boolean
   reverse?: boolean
@@ -27,12 +24,6 @@ export default (
   {
     containerStyle,
     ellipsisLine,
-    showCircle,
-    showUnderline,
-    showHoverObjectDetails,
-    showMoreOptions,
-    renderAttOnParent,
-    renderObjectDetailsOnParent,
     onClick,
     reverse,
     metaObject
@@ -40,14 +31,12 @@ export default (
     metaObject?: MetaObject
   } = {
     ellipsisLine: 2,
-    showCircle: true,
-    showUnderline: true,
-    showHoverObjectDetails: false,
     renderAttOnParent: false,
     renderObjectDetailsOnParent: true
   }
 ) => {
   const containerRef = useRef(null)
+  const { t } = useTranslation()
   if (!metaObject) return null
   return (
     <div
@@ -60,25 +49,7 @@ export default (
         ...containerStyle
       }}
     >
-      {showCircle && (
-        <div
-          style={{
-            borderRadius: '50%',
-            width: '1em',
-            height: '1em',
-            background: Colors.Background.Light,
-            border: `0.3em solid #6d6d6d`,
-            margin: 'auto 0',
-            flexShrink: 0,
-            padding: 3
-          }}
-        ></div>
-      )}
-      <AnimatePopover
-        withClickCover={true}
-        positions={['right', 'left']}
-        padding={10}
-        align={'start'}
+      <ContextMenu
         content={setV => (
           <WithBorder>
             <ObjectActionMenu onClose={() => setV(false)} metaObjectId={metaObject.id} />
@@ -86,7 +57,6 @@ export default (
         )}
       >
         <span
-          role="meta-name"
           data-meta
           onClick={e => {
             if (onClick) {
@@ -94,20 +64,17 @@ export default (
               e.preventDefault()
               return
             }
-            if (showHoverObjectDetails === false) {
-              e.preventDefault()
-              GlobalInstance.layoutOps?.openObject(metaObject.id)
-            }
+            e.preventDefault()
+            GlobalInstance.layoutOps?.openObject(metaObject.id)
           }}
           className={classnames('hover-link', ClassName.ellipsisFont(ellipsisLine || 2))}
           style={{
-            color: metaObject?.color,
-            textDecoration: showUnderline === false ? 'none' : undefined
+            color: metaObject?.color
           }}
         >
-          {metaObject?.name || metaObject?.placeholderName || 'Unnamed object'}
+          {metaObject?.name || metaObject?.placeholderName || t('general.Unnamed')}
         </span>
-      </AnimatePopover>
+      </ContextMenu>
       <div
         style={{
           textTransform: 'capitalize',
@@ -122,27 +89,6 @@ export default (
       >
         {Rendevoz.Utils.Meta.getTypeName(metaObject.type)}
       </div>
-      {showMoreOptions && (
-        <IconWithPopover
-          size={14}
-          name={'park-more'}
-          placement={['right', 'left']}
-          containerStyle={{
-            marginLeft: 'auto'
-          }}
-          onClick={e => e.stopPropagation()}
-          className={ClassName.flatButton(4, '3px')}
-          content={setV => (
-            <WithBorder
-              onClick={e => {
-                e.stopPropagation()
-              }}
-            >
-              <ObjectActionMenu onClose={() => setV(false)} metaObjectId={metaObject.id} />
-            </WithBorder>
-          )}
-        ></IconWithPopover>
-      )}
     </div>
   )
 }

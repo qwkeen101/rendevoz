@@ -9,7 +9,6 @@ import { useTranslation } from 'react-i18next'
 import AutosizeTextarea from '@/components/custom/input/AutoSizeTextArea'
 
 const AttachmentObject = ({
-  showHoverObject = true,
   showSelect,
   onSelect,
   selected,
@@ -18,7 +17,6 @@ const AttachmentObject = ({
   renderObjectDetailsOnParent = true,
   onChange
 }: {
-  showHoverObject: boolean
   showSelect?: boolean
   onSelect?: (selected: boolean) => void
   selected?: boolean
@@ -54,9 +52,6 @@ const AttachmentObject = ({
                 onSelect?.(!selected)
               }
             : undefined,
-          showCircle: false,
-          showUnderline: showHoverObject ? true : false,
-          showHoverObjectDetails: showHoverObject,
           renderObjectDetailsOnParent,
           containerStyle: { fontSize: FontSize['12px'] }
         })}

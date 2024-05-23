@@ -45,7 +45,8 @@ export default function getCloudClient() {
                   setTimeout(
                     () =>
                       SyncAPI.file.changeState('downloading', p, {
-                        progress: 1
+                        progress: 1,
+                        size
                       }),
                     200
                   )
@@ -64,7 +65,8 @@ export default function getCloudClient() {
                   })
                 } else if (t === 'finish') {
                   SyncAPI.file.changeState('uploading', p, {
-                    progress: 1
+                    progress: 1,
+                    size
                   })
                 } else if (t === 'skipped') {
                   SyncAPI.file.changeState('uploading', p, {
@@ -117,7 +119,8 @@ export default function getCloudClient() {
                   setTimeout(
                     () =>
                       SyncAPI.file.changeState('downloading', p, {
-                        progress: 1
+                        progress: 1,
+                        size
                       }),
                     200
                   )
@@ -136,7 +139,8 @@ export default function getCloudClient() {
                   })
                 } else if (t === 'finish') {
                   SyncAPI.file.changeState('uploading', p, {
-                    progress: 1
+                    progress: 1,
+                    size
                   })
                 } else if (t === 'skipped') {
                   SyncAPI.file.changeState('uploading', p, {

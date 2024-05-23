@@ -51,6 +51,9 @@ const AttCell = ({ metaId, style }: { metaId: number; style?: CSSProperties }) =
         box => (
           <PopupWrapper box={{ ...box, width: 'min(380px, 90vw)' }}>
             <div
+              onContextMenu={e => {
+                e.stopPropagation()
+              }}
               style={{
                 position: 'relative'
               }}

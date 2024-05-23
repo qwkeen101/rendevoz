@@ -718,7 +718,7 @@
     "Cloud sync": "云端同步",
     "Sync mode": "同步方式",
     "Enable cloud sync": "开启云端同步",
-    "Auto sync": "自动同步",
+    "Auto sync": "自动同步 (实验性功能)",
     "Password": "密码",
     "Username": "用户名",
     "Sync manually": "手动同步",

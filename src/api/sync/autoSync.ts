@@ -5,7 +5,9 @@ export default async function autoSync() {
   try {
     const setting = getSetting()
     if (setting.sync.enableSync && setting.sync.conflictResolved && setting.sync.enableAutoSync) {
-      await SyncAPI.pull()
+      if (document.visibilityState === 'visible') {
+        await SyncAPI.pull()
+      }
     }
   } catch (e) {
     console.error(e)

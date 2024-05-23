@@ -61,7 +61,6 @@ const Item = ({ metaId, parentMetaId }: { metaId: number; parentMetaId: number }
             width: '100%',
             alignItems: 'center'
           },
-          showMoreOptions: true,
           onClick: () => {
             GlobalInstance.metaOps?.closeDetails()
             GlobalInstance.searchOps?.closeSearchPanel()

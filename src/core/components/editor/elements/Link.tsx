@@ -197,7 +197,6 @@ const LinkObjectRenderer = ({
   return (
     <WithBorder style={{ display: 'flex', fontSize: 14, maxWidth: 500, alignItems: 'center', overflow: 'hidden' }}>
       {renderInline({
-        showCircle: false,
         ellipsisLine: 1,
         onClick: () => {
           window.open(url)

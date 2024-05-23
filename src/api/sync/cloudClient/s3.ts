@@ -9,7 +9,7 @@ import cancel = Simulate.cancel
 import Id from '@/utils/id'
 import GlobalStates from '@/api/global/states'
 import SyncAPI from '@/api/sync'
-const q = new Queue(4, 0)
+const q = new Queue(2, 0)
 const getClient = () => {
   const client = S3Sync.client
   const bucket = S3Sync.bucket

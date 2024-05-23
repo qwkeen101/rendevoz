@@ -16,6 +16,7 @@ export default async () => {
     const setting = await KeyvalueStore.fetchOne('userSetting')
     if (setting && setting.sync.enableSync) {
       SyncAPI.file.syncLocalFiles()
+      globalStore.set(SyncAPI.stateAtom, { ...globalStore.get(SyncAPI.stateAtom), lastSynced: Date.now() })
       if (setting.sync.enableAutoSync && setting.sync.conflictResolved) {
         GlobalStates.setState('loading', s => ({ ...s, currentState: 'loading remote data' }))
         await SyncAPI.restoreFromDB()
@@ -27,6 +28,7 @@ export default async () => {
   } finally {
     const selectedAtom = selectAtom(SettingAtom, s => ({ s3: s.sync.S3Config, webdav: s.sync.webdavConfig }), isEqual)
     const runCheck = () => {
+      if (document.visibilityState === 'hidden') return
       const setSyncState = (updater: any) => {
         const curr = globalStore.get(SyncAPI.stateAtom)
         globalStore.set(SyncAPI.stateAtom, updater(curr))

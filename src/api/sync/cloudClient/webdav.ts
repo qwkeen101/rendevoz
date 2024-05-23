@@ -6,7 +6,7 @@ import { getSetting } from '@/core'
 import { getDirPath, pathJoin, pathNormalize, pathRemoveLeading } from '@/api/sync/utils/path'
 import { Queue } from 'async-await-queue'
 import Id from '@/utils/id'
-const q = new Queue(4, 0)
+const q = new Queue(2, 0)
 const getClient = () => {
   if (!WebdavSync.client) throw 'Client is not registered!'
   return WebdavSync.client

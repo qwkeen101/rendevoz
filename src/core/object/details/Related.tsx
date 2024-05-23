@@ -325,10 +325,9 @@ const RelatedGroup = ({
 }
 const RelatedItem = ({ metaId, linkId }: { metaId: number; linkId: number }) => {
   const { renderInline, metaObject } = useRenderObject({ metaObjectId: metaId })
-  const { t } = useTranslation()
   const link = MetaStore.useMetaLinksMap().get(linkId)
   const [editName, setEditName] = useState(false)
-  if (metaObject?.deleted || metaObject?.temp) return null
+  if (metaObject?.deleted) return null
   return (
     <Content flex column>
       <Content flex gap={12} justifyContent={'space-between'} alignItems={'center'}>

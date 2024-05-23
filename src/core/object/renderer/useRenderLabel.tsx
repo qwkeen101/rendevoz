@@ -362,12 +362,9 @@ const useRenderLabel = (opts: {
 const LabelRelatedItem = ({ metaId }: { metaId: number }) => {
   const { renderInline } = useRenderObject({ metaObjectId: metaId })
   return renderInline({
-    showCircle: false,
-    showHoverObjectDetails: false,
     ellipsisLine: 2,
     renderObjectDetailsOnParent: true,
     renderAttOnParent: true,
-    showMoreOptions: true,
     containerStyle: { width: '100%', fontSize: 13 }
   })
 }

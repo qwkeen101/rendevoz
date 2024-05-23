@@ -182,6 +182,7 @@ const WebpageContentRenderer = ({
       case 'deleteLabel': {
         const webpage = currentWepbage
         if (!webpage?.labels) return
+        await ObjectStore('webpageLabel').deleteOneById(e.labelId, { force: true })
         return await ObjectStore('webpage').updateOne({ id: webpage.id, labels: webpage?.labels?.filter(i => i !== e.labelId) })
       }
       case 'labelDrag': {

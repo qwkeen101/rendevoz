@@ -206,17 +206,13 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
         return initializedLocalStore.deleteOneById(() => {
           deleteCallback(one, force)
           options?.afterDeleteProcess?.(one)
-          const objectIdToMetaObjectIdMap = globalStore.get(objectIdToMetaObjectIdMapAtom)
-          const targetMeta = objectIdToMetaObjectIdMap?.get(id)
+          const targetMeta = MetaStore.getMetaObjectByObjectId(id)
 
           if (targetMeta) {
-            const includesMeta = MetaStore.getMetaObjectsMap().get(targetMeta)
-            if (includesMeta) {
-              MetaStore.deleteMetaObject(targetMeta, {
-                silent: true,
-                force: true
-              })
-            }
+            MetaStore.deleteMetaObject(targetMeta.id, {
+              silent: true,
+              force: true
+            })
           }
         })(id, { ...opts, force })
       }

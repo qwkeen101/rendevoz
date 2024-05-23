@@ -90,7 +90,7 @@ export const useAssignPdfInstance = (pdfId: number) => {
     },
     deleteLabel: async label => {
       await ObjectStore('pdfLabel')
-        .deleteOneById(label)
+        .deleteOneById(label, { force: true })
         .then(() =>
           ObjectStore('pdf').updateOne({
             id: pdfId,

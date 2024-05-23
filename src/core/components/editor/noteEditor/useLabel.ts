@@ -16,7 +16,7 @@ const useLabel = (note?: INote) => {
 
   const handleDeleteLable = async (id: number) => {
     if (!note) return
-    console.log(id, labels)
+    await ObjectStore('noteLabel').deleteOneById(id, { force: true })
     const newLabels = labels.filter(i => i !== id)
     await ObjectStore('note').updateOne({ id: note.id, labels: newLabels })
   }

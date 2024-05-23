@@ -47,6 +47,7 @@ const useMediaLabelChapter = (
       }
       case 'deleteLabel': {
         await updater({ id: id, labels: labels.filter(i => i !== e.labelId) })
+        ObjectStore(labelType).deleteOneById(id, { force: true })
         return
       }
       case 'deleteChapter': {

@@ -4,6 +4,7 @@ import { IDBTransaction } from '@/api/sync/db/types'
 import { GlobalInstance, useDb } from '@/hooks'
 import { needSkipKeys } from '@/api/sync/db/commitDbActions'
 import refreshLocalFromDB from '@/api/stores/refreshLocalFromDB'
+import removeFromCacheAtom from '@/api/stores/removeFromCacheAtom'
 
 export default (dbTransactions: IDBTransaction[]) => {
   const dbKeys = new Set<string | number>()
@@ -33,6 +34,7 @@ export default (dbTransactions: IDBTransaction[]) => {
       if (t.type === 'delete') {
         needSkipKeys.add(key)
         db.delete(key)
+        removeFromCacheAtom(t.database, key)
         if (t.database === 'metaObjects' && typeof key === 'number') {
           processDeleteMeta(key)
         }

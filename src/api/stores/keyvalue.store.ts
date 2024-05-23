@@ -170,7 +170,7 @@ const createKeyvalueStore = () => {
       const map = new Map(globalStore.get(keyvalueAtom))
       const prev = map.get(key)
       const value = await keyvalueDb.get(key)
-      map.set(key, value)
+      map.set(key, { ...value })
       globalStore.set(keyvalueAtom, map)
       if (key === 'currentWorkspace') {
         if (value?.id !== prev?.id) {

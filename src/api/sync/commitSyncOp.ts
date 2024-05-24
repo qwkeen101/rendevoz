@@ -86,16 +86,16 @@ const removeRepeatDBTransactions = (c: typeof cache) => {
     if (i.key) {
       if (alreadyExistId.has(i.key) || forbidId.has(i.key)) return
       alreadyExistId.add(i.key)
-      finalOps.push(i)
+      finalOps.unshift(i)
       return
     }
     if ('value' in i) {
       if ('id' in i.value) {
         if (alreadyExistId.has(i.value.id) || forbidId.has(i.value.id)) return
         alreadyExistId.add(i.value.id)
-        finalOps.push(i)
+        finalOps.unshift(i)
       } else {
-        finalOps.push(i)
+        finalOps.unshift(i)
       }
     }
   })

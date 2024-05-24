@@ -88,6 +88,7 @@ export default ({ propId }: { propId: number }) => {
                 )
               }
             }
+            console.log(v.value)
             KeyvalueStore.updateOne(`prop_${propId}_group`, v.value)
           }
           if (v.type === 'groupMetaChange') {

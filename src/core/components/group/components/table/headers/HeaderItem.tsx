@@ -24,7 +24,7 @@ const GroupHeaderItem = ({
   item: MetaGroupProperty
   onDragEnd: VoidFunction
   onDragStart: VoidFunction
-  onResizeStart?:VoidFunction
+  onResizeStart?: VoidFunction
   constrainRef: RefObject<HTMLDivElement>
   isReorder: boolean
   onResize: (currItem: MetaGroupProperty & { width: number }) => void
@@ -38,7 +38,14 @@ const GroupHeaderItem = ({
   const instance = useGroupInstance()
   const prop = ObjectStore('metaProp').useValue(item.id)
   if (item.type === 'custom' && !prop) {
-    instance.viewOps?.deleteCustomProperty(item.id)
+    ObjectStore('metaProp')
+      .fetchOneById(item.id)
+      .then(res => {
+        if (!res) {
+          instance.viewOps?.deleteCustomProperty(item.id)
+        }
+      })
+
     return null
   }
   return (

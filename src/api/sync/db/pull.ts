@@ -7,7 +7,7 @@ import refreshLocalFromDB from '@/api/stores/refreshLocalFromDB'
 import removeFromCacheAtom from '@/api/stores/removeFromCacheAtom'
 import SyncAPI from '@/api/sync'
 
-export default (dbTransactions: IDBTransaction[]) => {
+export default async (dbTransactions: IDBTransaction[]) => {
   const dbKeys = new Set<string | number>()
   const finalDbTransactions: (IDBTransaction & { timestamp: number })[] = []
   dbTransactions.forEach(t => {
@@ -28,35 +28,59 @@ export default (dbTransactions: IDBTransaction[]) => {
   })
   console.log(finalDbTransactions)
   const modifyTable = syncDB.table('modify')
-  finalDbTransactions.forEach(async t => {
-    const key = (t.key || t.value?.id) as string | number | undefined
-    if (key) {
-      const db = useDb(t.database)
-      if (t.type === 'delete') {
-        needSkipKeys.add(key)
-        db.delete(key)
-        removeFromCacheAtom(t.database, key)
-        if (t.database === 'metaObjects' && typeof key === 'number') {
-          processDeleteMeta(key)
-        }
-      } else {
-        if (shouldProcessLabels(t.value)) {
-          if (await processLabelTrans(t, finalDbTransactions)) {
+  // first commit to db, then refresh cache
+  const needRefreshRecords: {
+    db: string
+    key: any
+  }[] = []
+  await Promise.all(
+    finalDbTransactions.map(async t => {
+      try {
+      } catch (e) {
+        console.error(e)
+      }
+      const key = (t.key || t.value?.id) as string | number | undefined
+      if (key) {
+        const db = useDb(t.database)
+        if (t.type === 'delete') {
+          needSkipKeys.add(key)
+          db.delete(key)
+          removeFromCacheAtom(t.database, key)
+          if (t.database === 'metaObjects' && typeof key === 'number') {
+            processDeleteMeta(key)
+          }
+        } else {
+          if (shouldProcessLabels(t.value)) {
+            if (await processLabelTrans(t, finalDbTransactions)) {
+              needRefreshRecords.push({
+                db: t.database,
+                key
+              })
+              return
+            }
+          }
+          const localModifyTime = await modifyTable.get(key)
+          if (localModifyTime && localModifyTime > t.timestamp) {
             return
+          } else {
+            needSkipKeys.add(key)
+            await db.put(t.value, key)
+            needRefreshRecords.push({
+              db: t.database,
+              key
+            })
+            // await modifyTable.put(t.timestamp, key)
+            // refreshLocalFromDB(t.database, key)
           }
         }
-        const localModifyTime = await modifyTable.get(key)
-        if (localModifyTime && localModifyTime > t.timestamp) {
-          return
-        } else {
-          needSkipKeys.add(key)
-          await db.put(t.value, key)
-          // await modifyTable.put(t.timestamp, key)
-          refreshLocalFromDB(t.database, key)
-        }
       }
-    }
-  })
+    })
+  )
+  if (needRefreshRecords.length) {
+    needRefreshRecords.forEach(i => {
+      refreshLocalFromDB(i.db, i.key)
+    })
+  }
 }
 
 const processDeleteMeta = (id: number) => {
@@ -103,7 +127,6 @@ const processLabelTrans = async (trans: IDBTransaction, allTrans: IDBTransaction
     needSkipKeys.add(key)
     await db.put({ ...value, labels: finalLabels }, key)
     // await modifyTable.put(t.timestamp, key)
-    refreshLocalFromDB(trans.database, key)
     return true
   }
 }

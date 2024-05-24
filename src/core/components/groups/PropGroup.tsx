@@ -74,7 +74,6 @@ export default ({ propId }: { propId: number }) => {
         value={data}
         on={v => {
           if (v.type === 'groupDataChange') {
-            setData(v.value)
             if (v.value.values !== data.values) {
               const itemIds = new Set(propIdToMetaIds?.get(propId))
               const filtered = v.value.values?.filter(i => !itemIds.has(i.id)) || []

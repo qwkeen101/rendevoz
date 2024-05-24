@@ -90,10 +90,6 @@ const GroupHeaderItem = ({
         }}
         onResize={(event, direction, elementRef) => {
           const newItem = { ...item, width: elementRef.clientWidth }
-          const parent = elementRef.parentElement
-          if (parent) {
-            parent.style.width = `${elementRef.clientWidth + 1}px`
-          }
           onResize(newItem)
         }}
         onResizeStart={() => {

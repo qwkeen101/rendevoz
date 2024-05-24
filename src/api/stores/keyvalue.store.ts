@@ -185,6 +185,7 @@ const createKeyvalueStore = () => {
         }
       }
       if (key === 'userSetting') {
+        SyncAPI.states.settingPulled = true
         GlobalSetting.setSetting(value)
       }
     },

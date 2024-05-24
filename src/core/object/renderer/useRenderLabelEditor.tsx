@@ -111,12 +111,12 @@ const useRenderLabelEditor = function <T extends ILabel>(opts?: {
             }}
             placeholder={t('general.Add note')}
           />
-          <Content flex gap={8} alignItems={'center'}>
+          <Content flex gap={6} alignItems={'center'}>
             {opts?.showMoveTo !== false && (
               <Icon
                 name={'park-corner-up-right'}
                 style={{
-                  color: Colors.Font.SuperTransparent
+                  color: Colors.Font.Transparent
                 }}
                 onClick={() => {
                   if (labelMeta?.id) {
@@ -126,21 +126,21 @@ const useRenderLabelEditor = function <T extends ILabel>(opts?: {
                     handleInsertNote()
                   }
                 }}
-                size={17}
-                className={ClassName.flatButton(4, '3px')}
+                size={16}
+                className={ClassName.flatButton(4, '4px')}
               />
             )}
             {opts?.showTags !== false && (
               <Icon
                 name={'park-tag-one'}
                 style={{
-                  color: Colors.Font.SuperTransparent
+                  color: Colors.Font.Transparent
                 }}
                 onClick={() => {
                   GlobalInstance.metaOps?.quickAdd(labelMeta?.id ?? TEMP_META_ID, 'tags')
                 }}
-                size={17}
-                className={ClassName.flatButton(4, '3px')}
+                size={16}
+                className={ClassName.flatButton(4, '4px')}
               />
             )}
             <Icon

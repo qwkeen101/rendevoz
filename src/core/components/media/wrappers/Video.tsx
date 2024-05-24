@@ -14,6 +14,7 @@ export default ({ videoId, ...rest }: { videoId: number } & MediaProps) => {
   const mediaState = {
     ...video,
     ...externalMediaState,
+    defaultActiveSidebar: video?.defaultActiveSidebar ?? (video ? 'hide' : undefined),
     url: video?.url || externalMediaState?.url,
     description: videoMeta?.description || externalMediaState?.description,
     name: videoMeta?.name || externalMediaState?.name || 'Unnamed video',

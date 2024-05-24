@@ -11,6 +11,7 @@ export default ({ audioId, ...rest }: { audioId?: number } & MediaProps) => {
   const mediaState = {
     ...audio,
     url: audio?.url,
+    defaultActiveSidebar: audio?.defaultActiveSidebar ?? (audio ? 'hide' : undefined),
     thumbnail: audioMeta?.coverImgSrc,
     description: audioMeta?.description || rest.mediaState?.description,
     name: audioMeta?.name || 'Unnamed audio',

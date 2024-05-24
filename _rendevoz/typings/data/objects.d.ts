@@ -1,5 +1,5 @@
 // TODO: Migrate all object types to IObject: PDF, PDFLABEL, NOTE, WHITEBOARD....
-import { IMetaProperty, MetaLink, MetaObject, PartialWithId } from '..'
+import { ILabelContainerProps, IMetaProperty, MetaLink, MetaObject, PartialWithId } from '..'
 import { IDraggableElement } from '../globalInstances/dragDrop'
 import { IBase } from './base'
 import { IPDFLabel as _IPdfLabel } from './label'
@@ -54,7 +54,7 @@ export interface IWebpage extends IBase {
   showOriginal?: boolean
 }
 
-export interface IMedia extends IBase {
+export interface IMedia extends IBase, ILabelContainerProps {
   url: string
   // seconds
   lastPlayedTime: number

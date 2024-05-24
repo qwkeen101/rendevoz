@@ -104,7 +104,7 @@ const Pdf = (props: PdfProps) => {
       styles: props.styles,
       autoWidth: props.autoWidth
     })
-    if (pdf?.defaultActiveSidebar) {
+    if (pdf) {
       defaultSidebarChanged.current = true
       store.set(PdfBarStateAtom, { ...store.get(PdfBarStateAtom), sidebarActive: pdf.defaultActiveSidebar ?? 'hide' })
     }
@@ -122,7 +122,7 @@ const Pdf = (props: PdfProps) => {
       ...pdfState,
       document: pdf
     })
-    if (pdf?.defaultActiveSidebar && !defaultSidebarChanged.current) {
+    if (pdf && !defaultSidebarChanged.current) {
       defaultSidebarChanged.current = true
       store.set(PdfBarStateAtom, { ...store.get(PdfBarStateAtom), sidebarActive: pdf.defaultActiveSidebar ?? 'hide' })
     }

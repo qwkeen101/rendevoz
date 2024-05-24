@@ -63,7 +63,7 @@ const NoteEditor = ({
         labelSortMode: note?.labelSortMode,
         labelPriority: note?.labelPriority,
         labelScrollOffset: note?.labelScrollOffset,
-        defaultActiveSidebar: note?.defaultActiveSidebar,
+        defaultActiveSidebar: note?.defaultActiveSidebar ?? (note ? 'hide' : undefined),
         defaultSidebarWidth: note?.defaultSidebarWidth,
         ...rest.state
       }}

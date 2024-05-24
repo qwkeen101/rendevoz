@@ -65,6 +65,7 @@ const FeedList = () => {
             maxWidth: 800,
             margin: '0 auto'
           })}
+          getKey={i => i}
           renderItem={i => (
             <MagazineFeedItem
               onClick={() => {
@@ -92,11 +93,12 @@ const FeedList = () => {
               }
             }
           })}
+          getKey={i => i}
           style={{
             paddingRight: '8px',
             height: '100%'
           }}
-          overscan={15}
+          overscan={5}
           renderItem={i => (
             <TitleFeedItem
               onClick={() => {

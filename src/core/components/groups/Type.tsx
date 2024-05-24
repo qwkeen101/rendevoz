@@ -77,7 +77,7 @@ function TypeGroup({ type }: { type: MetaObject['type'] }) {
           }),
           []
         )}
-        value={{ ...data }}
+        value={{ ...data, ...typeGroup, values: data.values }}
         on={v => {
           if (v.type === 'groupDataChange') {
             setData(v.value)

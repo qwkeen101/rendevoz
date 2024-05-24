@@ -66,7 +66,7 @@ export default ({ propId }: { propId: number }) => {
           showDescription: false,
           showTitleActions: false
         }}
-        value={data}
+        value={{ ...data, ...propGroup, values: data.values }}
         on={v => {
           if (v.type === 'groupDataChange') {
             setData(v.value)

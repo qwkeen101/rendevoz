@@ -80,7 +80,7 @@ function TagGroup({ id }: { id: number }) {
           }),
           []
         )}
-        value={data}
+        value={{ ...data, ...tagGroup, values: data.values }}
         on={v => {
           if (v.type === 'groupDataChange') {
             const metaMap = MetaStore.getMetaObjectsMap()
@@ -89,7 +89,10 @@ function TagGroup({ id }: { id: number }) {
               v.value.values?.forEach(i => {
                 const m = metaMap.get(i.id)?.tags
                 if (!m?.includes(id)) {
-                  MetaStore.updateMetaObject({ id: i.id, tags: [...(m || []), id] })
+                  MetaStore.updateMetaObject({
+                    id: i.id,
+                    tags: [...(m || []), id]
+                  })
                 }
               })
             }
@@ -103,7 +106,10 @@ function TagGroup({ id }: { id: number }) {
             const m = MetaStore.getMetaObjectsMap().get(v.metaId)
             if (m) {
               debounce.run()
-              MetaStore.updateMetaObject({ id: v.metaId, tags: m.tags?.filter(i => i !== id) })
+              MetaStore.updateMetaObject({
+                id: v.metaId,
+                tags: m.tags?.filter(i => i !== id)
+              })
             }
           }
         }}

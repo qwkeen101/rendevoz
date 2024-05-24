@@ -67,7 +67,7 @@ export default ({ id }: { id: number }) => {
           showDescription: false,
           showTitleActions: false
         }}
-        value={data}
+        value={{ ...data, ...collectionGroup, values: data.values }}
         on={v => {
           if (v.type === 'groupDataChange') {
             setData(v.value)

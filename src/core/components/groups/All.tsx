@@ -87,7 +87,7 @@ export default memo(() => {
             paddingTop: 40
           }
         }}
-        value={data}
+        value={{ ...data, ...allGroup, values: data.values }}
         on={v => {
           if (v.type === 'groupDataChange') {
             setData(v.value)

@@ -7,6 +7,7 @@ const PopupWrapper = forwardRef(({ box, children, style }: { box: Box; children:
     <div
       ref={ref}
       role={'popup-wrapper'}
+      onContextMenu={e => e.stopPropagation()}
       style={{
         position: 'fixed',
         top: box.top,

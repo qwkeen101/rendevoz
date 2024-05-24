@@ -1,6 +1,6 @@
 import { MetaStore, ObjectStore } from '@/api/stores'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import GroupStore from '../../../api/stores/group.store'
 import { Content, Icon } from '@/components'
 import TabTitle from '@/components/layout/TabTitle'
@@ -20,6 +20,11 @@ export default ({ propId }: { propId: number }) => {
       autoAddto: 'first'
     }
   )
+  useLayoutEffect(() => {
+    if (propGroup) {
+      setData(s => ({ ...s, ...propGroup, values: s.values }))
+    }
+  }, [propGroup])
   useEffect(() => {
     const set = propIdToMetaIds?.get(propId)
     if (set) {
@@ -66,7 +71,7 @@ export default ({ propId }: { propId: number }) => {
           showDescription: false,
           showTitleActions: false
         }}
-        value={{ ...data, ...propGroup, values: data.values }}
+        value={data}
         on={v => {
           if (v.type === 'groupDataChange') {
             setData(v.value)

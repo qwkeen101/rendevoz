@@ -32,6 +32,11 @@ export default memo(() => {
       ]
     }
   )
+  useLayoutEffect(() => {
+    if (allGroup) {
+      setData(s => ({ ...s, ...allGroup, values: s.values }))
+    }
+  }, [allGroup])
   const metaMap = MetaStore.useMetaObjectsMap()
   useLayoutEffect(() => {
     const metas = Array.from(metaMap.values()).filter(i => !i.deleted)
@@ -87,7 +92,7 @@ export default memo(() => {
             paddingTop: 40
           }
         }}
-        value={{ ...data, ...allGroup, values: data.values }}
+        value={data}
         on={v => {
           if (v.type === 'groupDataChange') {
             setData(v.value)

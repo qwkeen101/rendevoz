@@ -1,8 +1,5 @@
 import MetaGroup, { IMetaGroupProps } from '@/core/components/group/MetaGroup'
 import { MetaStore, ObjectStore } from '@/api/stores'
-import TabTitle from '@/components/layout/TabTitle'
-import { Icon } from '@/components'
-import { Rendevoz } from '@/core/rendevoz'
 import { useMemo } from 'react'
 
 export default ({ groupId, ...rest }: { groupId?: number } & IMetaGroupProps) => {

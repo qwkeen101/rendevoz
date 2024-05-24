@@ -21,6 +21,7 @@ const useGroupGlobalKey = () => {
           return
         }
         if (!instance.values.isFocused) return
+        if (e.target instanceof HTMLElement && e.target.closest('input, textarea, [contenteditable="true"]')) return
         handleCommonKey(e)
         handleTableCellControlKey(e)
         handleTableRowControlKey(e)

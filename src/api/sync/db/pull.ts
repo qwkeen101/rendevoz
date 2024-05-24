@@ -5,6 +5,7 @@ import { GlobalInstance, useDb } from '@/hooks'
 import { needSkipKeys } from '@/api/sync/db/commitDbActions'
 import refreshLocalFromDB from '@/api/stores/refreshLocalFromDB'
 import removeFromCacheAtom from '@/api/stores/removeFromCacheAtom'
+import SyncAPI from '@/api/sync'
 
 export default (dbTransactions: IDBTransaction[]) => {
   const dbKeys = new Set<string | number>()
@@ -49,6 +50,9 @@ export default (dbTransactions: IDBTransaction[]) => {
           return
         } else {
           needSkipKeys.add(key)
+          if (key === 'userSetting') {
+            SyncAPI.states.settingPulled = true
+          }
           await db.put(t.value, key)
           // await modifyTable.put(t.timestamp, key)
           refreshLocalFromDB(t.database, key)

@@ -58,11 +58,11 @@ const ComponentSetting = () => {
     },
     {
       title: t('settings.drop file auto object'),
-      children: <Switch value={setting.whiteboard.dropFileAutoObject} onChange={() => toggleSetting('whiteboard', 'dropFileAutoObject')} />
+      children: <Switch value={!!setting.whiteboard.dropFileAutoObject} onChange={() => toggleSetting('whiteboard', 'dropFileAutoObject')} />
     },
     {
       title: t('settings.Only erase hand draw'),
-      children: <Switch value={setting.whiteboard.onlyEraseFreeDraw} onChange={() => toggleSetting('whiteboard', 'onlyEraseFreeDraw')} />
+      children: <Switch value={!!setting.whiteboard.onlyEraseFreeDraw} onChange={() => toggleSetting('whiteboard', 'onlyEraseFreeDraw')} />
     },
     {
       title: t('settings.Scroll behavior in select mode'),
@@ -108,7 +108,7 @@ const ComponentSetting = () => {
       : undefined,
     {
       title: t('settings.object auto become inline when dragged into editor'),
-      children: <Switch value={setting.editor.objectAutoBecomeInline} onChange={() => toggleSetting('editor', 'objectAutoBecomeInline')} />
+      children: <Switch value={!!setting.editor.objectAutoBecomeInline} onChange={() => toggleSetting('editor', 'objectAutoBecomeInline')} />
     },
     {
       title: t('settings.Custom editor format'),

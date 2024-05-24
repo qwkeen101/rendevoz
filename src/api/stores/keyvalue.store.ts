@@ -7,6 +7,7 @@ import { MetaFilterGroup, MetaGroup, MetaObject } from '~/typings'
 import { Atom } from 'jotai/vanilla'
 import { selectAtom } from 'jotai/utils'
 import Workspace from '@/api/common/workspace'
+import SyncAPI from '@/api/sync'
 
 export type SidebarDatabaseCache = {
   viewMode?: 'title' | 'thumbnail'

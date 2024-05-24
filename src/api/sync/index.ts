@@ -46,6 +46,9 @@ const SyncAPI = {
     uploading: {},
     downloading: {},
     connection: 'unconnected'
-  })
+  }),
+  states: {
+    settingPulled: false
+  }
 }
 export default SyncAPI

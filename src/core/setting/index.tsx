@@ -205,7 +205,7 @@ function useSelectSettingAtom<K extends Keys>(key: K): Values<K> {
 const useSetting = () => useAtom(SettingAtom, { store: globalStore })
 const setSetting = (updater: ((curr: Setting) => Setting) | Setting) => {
   const curr = globalStore.get(SettingAtom)
-  globalStore.set(SettingAtom, typeof updater === 'object' ? curr : updater(curr))
+  globalStore.set(SettingAtom, typeof updater === 'object' ? updater : updater(curr))
 }
 
 const SettingDialog = () => {

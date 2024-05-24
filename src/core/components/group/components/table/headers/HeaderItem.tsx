@@ -72,7 +72,8 @@ const GroupHeaderItem = ({
         alignItems: 'center',
         cursor: 'pointer',
         userSelect: 'none',
-        flexShrink: 0
+        flexShrink: 0,
+        width: (item.width ?? 0) + 1
       }}
       onDragStart={() => {
         onDragStart()
@@ -89,6 +90,10 @@ const GroupHeaderItem = ({
         }}
         onResize={(event, direction, elementRef) => {
           const newItem = { ...item, width: elementRef.clientWidth }
+          const parent = elementRef.parentElement
+          if (parent) {
+            parent.style.width = `${elementRef.clientWidth + 1}px`
+          }
           onResize(newItem)
         }}
         onResizeStart={() => {

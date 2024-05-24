@@ -4,7 +4,7 @@ import { collectionsAtom } from '@/api/stores/collection.store'
 import MetaGroup from '@/core/components/group/MetaGroup'
 import { Content, Icon } from '@/components'
 import TabTitle from '@/components/layout/TabTitle'
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import GroupStore from '../../../api/stores/group.store'
 import { MetaObject } from '~/typings'
@@ -21,11 +21,6 @@ export default ({ id }: { id: number }) => {
       autoAddto: 'first'
     }
   )
-  useLayoutEffect(() => {
-    if (collectionGroup) {
-      setData(s => ({ ...s, ...collectionGroup, values: s.values }))
-    }
-  }, [collectionGroup])
   useEffect(() => {
     if (collection?.items) {
       const metaMap = MetaStore.getMetaObjectsMap()
@@ -72,7 +67,7 @@ export default ({ id }: { id: number }) => {
           showDescription: false,
           showTitleActions: false
         }}
-        value={data}
+        value={{ ...data, ...collectionGroup, values: data.values }}
         on={v => {
           if (v.type === 'groupDataChange') {
             setData(v.value)

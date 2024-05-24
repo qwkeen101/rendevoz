@@ -1,4 +1,4 @@
-import { memo, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import { MetaObject } from '~/typings'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { MetaStore } from '@/api/stores'
@@ -22,11 +22,6 @@ function TypeGroup({ type }: { type: MetaObject['type'] }) {
       autoAddto: 'first'
     }
   )
-  useLayoutEffect(() => {
-    if (typeGroup) {
-      setData(s => ({ ...s, ...typeGroup, values: s.values }))
-    }
-  }, [typeGroup])
   useEffect(() => {
     if (allMetas?.size) {
       const map = MetaStore.getMetaObjectsMap()
@@ -82,7 +77,7 @@ function TypeGroup({ type }: { type: MetaObject['type'] }) {
           }),
           []
         )}
-        value={data}
+        value={{ ...data, ...typeGroup, values: data.values }}
         on={v => {
           if (v.type === 'groupDataChange') {
             setData(v.value)

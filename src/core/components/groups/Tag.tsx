@@ -1,4 +1,4 @@
-import { memo, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import GroupStore from '../../../api/stores/group.store'
@@ -23,11 +23,6 @@ function TagGroup({ id }: { id: number }) {
       autoAddto: 'first'
     }
   )
-  useLayoutEffect(() => {
-    if (tagGroup) {
-      setData(s => ({ ...s, ...tagGroup, values: s.values }))
-    }
-  }, [tagGroup])
   useEffect(() => {
     if (tagMetas) {
       const filtered = tagMetas.filter(i => !i.deleted && i.tags?.includes(id))
@@ -85,7 +80,7 @@ function TagGroup({ id }: { id: number }) {
           }),
           []
         )}
-        value={data}
+        value={{ ...data, ...tagGroup, values: data.values }}
         on={v => {
           if (v.type === 'groupDataChange') {
             const metaMap = MetaStore.getMetaObjectsMap()

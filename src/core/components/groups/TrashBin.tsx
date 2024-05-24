@@ -83,7 +83,7 @@ export default memo(({ onInstanceInitialized }: { onInstanceInitialized?: (i: IG
           }),
           []
         )}
-        value={data}
+        value={{ ...data, ...recycleGroup, values: data.values }}
         on={v => {
           if (v.type === 'deleteRow') {
             const id = v.metaId

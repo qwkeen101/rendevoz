@@ -71,9 +71,10 @@ export default ({ propId }: { propId: number }) => {
           showDescription: false,
           showTitleActions: false
         }}
-        value={data}
+        value={{ ...data, ...propGroup, values: data.values }}
         on={v => {
           if (v.type === 'groupDataChange') {
+            setData(v.value)
             if (v.value.values !== data.values) {
               const itemIds = new Set(propIdToMetaIds?.get(propId))
               const filtered = v.value.values?.filter(i => !itemIds.has(i.id)) || []
@@ -88,11 +89,14 @@ export default ({ propId }: { propId: number }) => {
                 )
               }
             }
-            console.log(v.value)
             KeyvalueStore.updateOne(`prop_${propId}_group`, v.value)
           }
           if (v.type === 'groupMetaChange') {
-            ObjectStore('metaProp').updateOne({ id: propId, name: v.value.name ?? prop.name, icon: v.value.icon ?? prop?.icon })
+            ObjectStore('metaProp').updateOne({
+              id: propId,
+              name: v.value.name ?? prop.name,
+              icon: v.value.icon ?? prop?.icon
+            })
           }
           if (v.type === 'deleteRow') {
             if (metaRef.current.length === 0) {

@@ -25,6 +25,7 @@ const subSettingChange = () => {
   unsub = globalStore.sub(GlobalSetting.settingAtom, () => {
     if (SyncAPI.states.settingPulled) {
       SyncAPI.states.settingPulled = false
+      KeyvalueStore.updateOne('userSetting', GlobalSetting.getSetting(), false)
       return
     }
     KeyvalueStore.updateOne('userSetting', GlobalSetting.getSetting())

@@ -147,12 +147,14 @@ const createKeyvalueStore = () => {
       })
       globalStore.set(keyvalueAtom, map)
     },
-    updateOne: async <T extends keyof CurrentKeyValues>(key: T, value: CurrentKeyValues[T]) => {
+    updateOne: async <T extends keyof CurrentKeyValues>(key: T, value: CurrentKeyValues[T], db = true) => {
       const map = new Map(globalStore.get(keyvalueAtom))
       const newValue = value
       map.set(key, newValue)
       globalStore.set(keyvalueAtom, map)
-      await keyvalueDb.put(newValue, key)
+      if (db) {
+        await keyvalueDb.put(newValue, key)
+      }
     },
     getOne: <T extends keyof CurrentKeyValues>(key: T): CurrentKeyValues[T] | undefined => {
       return globalStore.get(keyvalueAtom).get(key)

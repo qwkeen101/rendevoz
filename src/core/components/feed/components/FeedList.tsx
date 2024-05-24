@@ -3,7 +3,7 @@ import { Content, Icon, VirtualList } from '@/components'
 import MagazineFeedItem from '@/core/components/feed/components/items/MagazineFeedItem'
 import keyvalueStore from '@/api/stores/keyvalue.store'
 import CardFeedItem from '@/core/components/feed/components/items/CardFeedItem'
-import { useEffect, useState, memo, useRef } from 'react'
+import { useEffect, useState, memo, useRef, useMemo } from 'react'
 import { ObjectStore } from '@/api/stores'
 import TitleFeedItem from '@/core/components/feed/components/items/TitleFeedItem'
 import { useMeasure } from 'react-use'
@@ -11,7 +11,7 @@ import { css } from '@emotion/css'
 import readItem from '@/core/components/feed/utils/service/readItem'
 import { ClassName } from 'rendevoz'
 import useFeedInstance from '@/core/components/feed/hooks/useFeedInstance'
-import { useSelectAtomValue } from '@/hooks'
+import { useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import { useSetAtom } from 'jotai'
 import UseMeasure from '@/hooks/utils/useMeasure'
 
@@ -23,7 +23,7 @@ const FeedList = () => {
   const setFeedState = useSetAtom(FeedStateAtom)
   const itemMode = keyvalueStore.useValue('feedCardView') || 'magazine'
   const instance = useFeedInstance()
-  const handleNavigate = async (id: number) => {
+  const handleNavigate = useMemoizedFn(async (id: number) => {
     readItem(id, currentCollection?.id)
     const idx = items.findIndex(i => i === id)
     const range = items.slice(Math.max(idx - 2, 0), Math.min(idx + 2, items.length))
@@ -33,7 +33,7 @@ const FeedList = () => {
       currentFocusedFeedItemId: id,
       modalOpen: true
     }))
-  }
+  })
   const currentCollection = ObjectStore('feedCollection').useValue(currentCollectionId)
 
   const [ref, { width }] = useMeasure()

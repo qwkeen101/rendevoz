@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
-import { getSetting, SettingAtom } from '@/core'
+import { GlobalSetting } from '@/core'
 import { Content } from '@/components'
 import CodeEditor from '@/core/components/code/CodeEditor'
-import { useDebounceEffect, useGlobalSetAtom } from '@/hooks'
+import { useDebounceEffect } from '@/hooks'
 import { useTranslation } from 'react-i18next'
 
 export default () => {
   const [code, setCode] = useState<string>()
   const { t } = useTranslation()
-  const setSetting = useGlobalSetAtom(SettingAtom)
+  const getSetting = GlobalSetting.getSetting
+  const setSetting = GlobalSetting.setSetting
   useEffect(() => {
     const s = getSetting()
     setCode(s.general.globalCSS)

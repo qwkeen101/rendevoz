@@ -1,9 +1,9 @@
-import { IShortCutSetting, useSetting } from '@/core'
+import { GlobalSetting, IShortCutSetting  } from '@/core'
 import { useEffect } from 'react'
 import { useMemoizedFn } from '../utils'
 
 export const useShortcut = (shortcutName: keyof IShortCutSetting['shortcut'], onTrigger: VoidFunction) => {
-  const [setting] = useSetting()
+  const [setting] = GlobalSetting.useSetting()
 
   const shortcutHandler = useMemoizedFn((e: KeyboardEvent) => {
     const shortcut = setting.shortcut[shortcutName]

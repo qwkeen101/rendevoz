@@ -1,7 +1,7 @@
 import '@icon-park/react/styles/index.less'
 import './styles/global.less'
 import './styles/font.less'
-import { GlobalDragOverlay, GlobalScreenShot, SettingAtom } from '@/core'
+import { GlobalDragOverlay, GlobalScreenShot, GlobalSetting } from '@/core'
 import '@/styles/dock.less'
 import SvgMarker from './components/svg/Marker'
 import { Fragment, useEffect, useRef } from 'react'
@@ -26,7 +26,7 @@ import { KeyToRegisteredGlobalElements } from './core/plugin/RegisterMap'
 import GlobalUtils from '@/core/global/GlobalUtils'
 import { BuiltInDraggableElement, BuiltInDropOn, BuiltInMetaObjectTypes, BuiltInObjectTypes, BuiltInTabTypes } from '~/typings'
 import { GlobalBaidudisk } from '@/api/components/fileImporter/baidudisk/BaidudiskDisplayer'
-import { useSelectGlobalAtomValue } from '@/hooks'
+import { useGlobalAtomValue } from '@/hooks'
 import GlobalCollection from '@/core/global/components/CollectionSelector'
 import { GlobalObjectDetails } from '@/core/object/details'
 import GlobalPreviewPanel from '@/core/global/components/ObjectPreviewer'
@@ -81,7 +81,7 @@ declare module 'rendevoz' {
 const App = () => {
   pdfjsLib.GlobalWorkerOptions.workerSrc = PdfJsUrl
   useGlobalShortcutHandler()
-  const lang = useSelectGlobalAtomValue(SettingAtom, s => s.general.language)
+  const lang = GlobalSetting.useSelectSettingAtom('language')
   const { i18n } = useTranslation()
   const executed = useRef(false)
   if (!executed.current) {

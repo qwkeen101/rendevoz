@@ -1,8 +1,6 @@
 import { CSSProperties, useRef, useState } from 'react'
-import { SettingAtoms, useRenderLabel } from '@/core'
-import { AnimatePopover, Icon, WithBorder } from '@/components'
-import { Colors } from '@/consts'
-import { useGlobalAtomValue } from '@/hooks'
+import { GlobalSetting, useRenderLabel } from '@/core'
+import { Icon, WithBorder } from '@/components'
 import UseClickOutside from '@/hooks/utils/useClickOutside'
 
 const LabelNoteRenderer = ({
@@ -32,8 +30,8 @@ const LabelNoteRenderer = ({
   labelId: number
   style?: CSSProperties
 }) => {
-  const show = useGlobalAtomValue(SettingAtoms.pdfShowHighlightText)
-  const defaultExpanded = useGlobalAtomValue(SettingAtoms.pdfDefaultExpandHighlightDetails)
+  const show = GlobalSetting.useSelectSettingAtom('pdfShowHighlightText')
+  const defaultExpanded = GlobalSetting.useSelectSettingAtom('pdfDefaultExpandHighlightDetails')
   const [expanded, setExpanded] = useState(!!defaultExpanded)
   const r = useRef<HTMLDivElement>()
   UseClickOutside(

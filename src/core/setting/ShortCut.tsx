@@ -7,7 +7,7 @@ import { memo, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Content, Icon } from '../../components/base'
 import { ISettingItem } from './SettingItem'
-import { useSetting } from '.'
+import GlobalSetting from '.'
 import { IShortCutSetting } from './types'
 import SettingGroup from '@/core/setting/SettingGroup'
 import { Colors } from '@/consts'
@@ -63,7 +63,7 @@ const ShortCutSetting = () => {
 }
 
 const ShortCutItem = memo(({ shortCutName }: { shortCutName: keyof IShortCutSetting['shortcut'] }) => {
-  const [setting, setSetting] = useSetting()
+  const [setting, setSetting] = GlobalSetting.useSetting()
   const shortCut = setting.shortcut?.[shortCutName]
   const [isSelected, setIsSelected] = useState(false)
   const [conflictState, setConflictState] = useState<

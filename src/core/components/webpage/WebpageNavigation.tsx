@@ -8,10 +8,10 @@ import { css } from '@emotion/css'
 import isHotkey from 'is-hotkey'
 import { CSSProperties, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSetting } from '../../setting'
 import { searchToUrl } from './utils'
 import { useLatest } from 'react-use'
 import { Rendevoz } from '@/core/rendevoz'
+import { GlobalSetting } from '@/core'
 
 export type NavigationEvent =
   | {
@@ -38,7 +38,7 @@ const WebpageNavigation = ({
   const { loaded, displayUrl, canSave, readerMode } = navigationState
   const [currentUrl, setCurrentUrl] = useState<string>()
   const { t } = useTranslation()
-  const [setting] = useSetting()
+  const [setting] = GlobalSetting.useSetting()
   const [allSuggestResults, setAutoSuggestResults] = useState<string[]>()
   const latestCurrentUrl = useLatest(currentUrl)
   const containerRef = useRef<HTMLElement>(null)

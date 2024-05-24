@@ -2,7 +2,7 @@ import produce from 'immer'
 import { useTranslation } from 'react-i18next'
 import { AnimatePopover, Button, Content, Switch } from '../../components/base'
 import { ISettingItem } from './SettingItem'
-import { useSetting } from '.'
+import GlobalSetting from '.'
 import Select from '@/components/base/select'
 import { ChromePicker } from 'react-color'
 import { useEffect, useRef } from 'react'
@@ -17,7 +17,7 @@ import EditorSetting from '@/core/setting/Editor'
 
 const ComponentSetting = () => {
   const { t } = useTranslation()
-  const [setting, setSetting] = useSetting()
+  const [setting, setSetting] = GlobalSetting.useSetting()
   function toggleSetting<K extends keyof IComponentSetting>(key: K, v: keyof IComponentSetting[K]) {
     setSetting(s =>
       produce(s, draft => {

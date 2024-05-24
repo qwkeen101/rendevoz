@@ -3,14 +3,13 @@ import { useToaster } from 'react-hot-toast'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Icon } from '@/components'
 import './notification.less'
-import { useSelectGlobalAtomValue } from '@/hooks'
-import { SettingAtom } from '@/core'
+import { GlobalSetting } from '@/core'
 
 const Notification = () => {
   const { toasts, handlers } = useToaster({
     duration: 3500
   })
-  const enableSetting = useSelectGlobalAtomValue(SettingAtom, s => s.notification.enabled)
+  const enableSetting = GlobalSetting.useSelectSettingAtom('enableNotification')
   const { calculateOffset, updateHeight } = handlers
   if (enableSetting === false) {
     return null

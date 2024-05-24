@@ -1,15 +1,14 @@
-import ClassName from '@/styles/classNames'
 import produce from 'immer'
 import { useTranslation } from 'react-i18next'
 import { Switch } from '../../components/base'
 import SettingItem from './SettingItem'
-import { IObjectsAndLinkSetting, useSetting } from '.'
+import GlobalSetting, { IObjectsAndLinkSetting } from '.'
 import SettingGroup from '@/core/setting/SettingGroup'
 import Select from '@/components/base/select'
 
 const ObjectsAndLinksSetting = () => {
   const { t } = useTranslation()
-  const [setting, setSetting] = useSetting()
+  const [setting, setSetting] = GlobalSetting.useSetting()
   const toggleSetting = (key: keyof IObjectsAndLinkSetting['objectAndLink']) => {
     if ((key !== 'enableAll' && setting.objectAndLink.enableAll) || key === 'enableAll') {
       setSetting(s =>

@@ -1,6 +1,6 @@
 import KeyvalueStore, { CurrentKeyValues } from '@/api/stores/keyvalue.store'
 import { globalStore } from '@/api/stores'
-import { defaultSetting, SettingAtom } from '@/core'
+import { GlobalSetting } from '@/core'
 import _ from 'lodash'
 import { getDefaultUserFilePath, shouldChangeToNewDefaultUserFilePath } from '@/utils'
 
@@ -21,17 +21,17 @@ export const DefaultEditorSettings: CurrentKeyValues['editorSettings'] = {
 let unsub: VoidFunction | undefined = undefined
 const subSettingChange = () => {
   unsub?.()
-  unsub = globalStore.sub(SettingAtom, () => {
-    KeyvalueStore.updateOne('userSetting', globalStore.get(SettingAtom))
+  unsub = globalStore.sub(GlobalSetting.settingAtom, () => {
+    KeyvalueStore.updateOne('userSetting', GlobalSetting.getSetting())
   })
 }
 export default async () => {
   const inDatabaseSetting = await KeyvalueStore.fetchOne('userSetting')
 
   if (!inDatabaseSetting) {
-    await KeyvalueStore.updateOne('userSetting', defaultSetting)
+    await KeyvalueStore.updateOne('userSetting', GlobalSetting.defaultSetting)
   }
-  const mergedSetting = _.merge(structuredClone(defaultSetting), inDatabaseSetting)
+  const mergedSetting = _.merge(structuredClone(GlobalSetting.defaultSetting), inDatabaseSetting)
 
   const path = await getDefaultUserFilePath()
   let changeToNewDefault = false
@@ -42,8 +42,7 @@ export default async () => {
   if (mergedSetting.general.userFilePath === undefined || changeToNewDefault) {
     mergedSetting.general.userFilePath = path
   }
-
-  globalStore.set(SettingAtom, mergedSetting)
+  GlobalSetting.setSetting(mergedSetting)
   await KeyvalueStore.updateOne('userSetting', mergedSetting)
   subSettingChange()
 }

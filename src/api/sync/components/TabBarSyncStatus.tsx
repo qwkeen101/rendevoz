@@ -1,10 +1,10 @@
-import { useGlobalAtom, useGlobalSetAtom, useSelectGlobalAtomValue } from '@/hooks'
+import { useGlobalAtom } from '@/hooks'
 import { ClassName } from 'rendevoz'
 import { AnimatePopover, Content, Icon, WithBorder } from '@/components'
-import { memo, useEffect, useState } from 'react'
+import { memo, useState } from 'react'
 import { formatBytes } from '@/utils/fetchProcess'
 import { Colors } from '@/consts'
-import { getSetting, SettingAtom } from '@/core'
+import { GlobalSetting } from '@/core'
 import SyncAPI from '@/api/sync'
 import { DateFormat } from '@/utils'
 import toast from 'react-hot-toast'
@@ -17,8 +17,8 @@ export default memo(() => {
   const [isPulling, setIsPulling] = useState(false)
   const [showMoreDownloads, setShowMoreDownloads] = useState(false)
   const [showMoreUploads, setShowMoreUploads] = useState(false)
-  const setSetting = useGlobalSetAtom(SettingAtom)
-  const syncSetting = useSelectGlobalAtomValue(SettingAtom, s => s.sync)
+  const setSetting = GlobalSetting.setSetting
+  const syncSetting = GlobalSetting.useSelectSettingAtom('sync')
   let connection = syncState.connection
   if (Object.values(syncState.downloading).some(i => i.progress < 1) || Object.values(syncState.uploading).some(i => i.progress < 1)) {
     connection = 'syncing'

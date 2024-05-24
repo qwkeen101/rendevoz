@@ -8,7 +8,7 @@ import { MetaStore } from '@/api/stores'
 import { calculateFilterObjects } from '@/core/object/filter/useBetterFilter'
 import { go } from 'fuzzysort'
 import { calculateSortObjects } from '@/core/object/filter/BetterSorter'
-import { previewCollectionContentAtom, previewSidebarTitleAtom, SettingAtom, SimpleObject, useDropObjectArea } from '@/core'
+import { GlobalSetting, SimpleObject, useDropObjectArea } from '@/core'
 import { Rendevoz } from '@/core/rendevoz'
 import Colors from '../../../consts/colors'
 import { AnimatePopover, Button, Content, Icon, IconWithPopover, Menu, Tooltip, VirtualList, WithBorder } from '@/components'
@@ -337,7 +337,7 @@ export default memo(() => {
   )
 })
 const TitleList = ({ items }: { items: MetaObject[] }) => {
-  const preview = useGlobalAtomValue(previewSidebarTitleAtom)
+  const preview = useGlobalAtomValue(GlobalSetting.atoms.previewSidebarTitleAtom)
   return (
     <VirtualList
       items={items}

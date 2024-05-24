@@ -1,6 +1,6 @@
 import { AnimatePopover, Content, WithBorder } from '@/components'
 import { GlobalEventEmitter } from '@/events'
-import { GlobalInstance, useGlobalAtomValue, useIsIn } from '@/hooks'
+import { useGlobalAtomValue, useIsIn } from '@/hooks'
 import { CollectionStore, MetaStore } from '@/api/stores'
 import { metaObjectsAtom } from '@/api/stores/meta/meta.store'
 import { selectAtom } from 'jotai/utils'
@@ -13,15 +13,13 @@ import { toast } from 'react-hot-toast'
 import ClassName from '@/styles/classNames'
 import FontSize from '@/consts/font'
 import { Rendevoz } from '@/core/rendevoz'
-import { DraggableElement, previewCollectionContentAtom } from '@/core'
-import InnerContentDisplayer from '@/core/components/group/components/gallery/items/InnerContentDisplayer'
-import { useLatest } from 'react-use'
+import { DraggableElement, GlobalSetting } from '@/core'
 import usePreviewItem from '@/components/layout/sidebar/usePreviewItem'
 
 const SidebarObjectItem: FC<ISidebarItem> = ({ parentId, parentType, id, draggable = true }) => {
   const metaObjectAtom = useMemo(() => selectAtom(metaObjectsAtom, m => m.get(id)), [id])
   const metaObject = useGlobalAtomValue(metaObjectAtom)
-  const preview = useGlobalAtomValue(previewCollectionContentAtom)
+  const preview = useGlobalAtomValue(GlobalSetting.atoms.previewCollectionContentAtom)
   const icon = Rendevoz.Utils.Object.getMetaObjectIcon(metaObject?.type)
   const { ref, wrapper } = usePreviewItem(!!preview, id)
   draggable &&

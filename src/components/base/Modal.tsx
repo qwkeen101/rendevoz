@@ -8,8 +8,8 @@ import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts/key'
 import Icon from './Icon'
 import { Colors } from '@/consts'
-import { useMemoizedFn, useSelectGlobalAtomValue } from '@/hooks'
-import { SettingAtom } from '@/core'
+import { useMemoizedFn } from '@/hooks'
+import { GlobalSetting } from '@/core'
 
 interface ModalProps {
   visible: boolean
@@ -39,7 +39,7 @@ document.addEventListener('keydown', e => {
   ModalInnerEventHandlerQueue[0]?.(e)
 })
 const Backdrop = ({ children, onMouseDown, disableAnimation, enableClickEvent }) => {
-  const darkMode = useSelectGlobalAtomValue(SettingAtom, s => s.general.darkMode)
+  const darkMode = GlobalSetting.useSelectSettingAtom('darkMode')
   return (
     <motion.div
       role="backdrop"

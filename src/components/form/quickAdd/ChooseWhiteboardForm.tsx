@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { IWhiteboardEvents, IWhiteboardInstance, MetaObject } from '~/typings'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { Content, Icon, Menu } from '@/components'
-import { DraggableElement, useSetting, Whiteboard } from '@/core'
+import { DraggableElement, GlobalSetting, Whiteboard } from '@/core'
 import { ClassName } from 'rendevoz'
 import { Rendevoz } from '@/core/rendevoz'
 import { useTranslation } from 'react-i18next'
@@ -19,7 +19,7 @@ import useMoveToCache from '@/components/form/quickAdd/useMoveToCache'
 export default ({ onBack, onClose, metaId }: { onBack: VoidFunction; onClose: VoidFunction; metaId: number[] }) => {
   const cache = useMoveToCache()?.whiteboard
 
-  const [setting, setSetting] = useSetting()
+  const [setting, setSetting] = GlobalSetting.useSetting()
   const index = MetaStore.useMetaObjectsMap()
   const [whiteboardInstance, setInstance] = useState<IWhiteboardInstance>()
   const moveToShowInvisible = KeyvalueStore.useValue('moveToShowInvisible')

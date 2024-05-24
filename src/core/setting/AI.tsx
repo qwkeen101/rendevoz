@@ -1,22 +1,20 @@
 import { ISettingItem } from '@/core/setting/SettingItem'
-import { useSetting } from '@/core'
+import { GlobalSetting } from '@/core'
 import produce from 'immer'
 import { ButtonChooser, Content, Modal, Switch } from '@/components'
 import { useTranslation } from 'react-i18next'
 import SettingGroup from '@/core/setting/SettingGroup'
 import Select from '@/components/base/select'
-import { IQuestion } from '~/typings'
 import { ClassName, Utils } from 'rendevoz'
-import ButtonSelect from '@/components/base/ButtonSelect'
 import langs from '@/consts/langs'
 import { Line } from 'rc-progress'
-import { useIsUserPro, useUser } from '@/api/services/login.service'
+import { useUser } from '@/api/services/login.service'
 import { useToggle } from '@/hooks'
 import BuyCredit from '@/components/BuyCredit'
 import { memo } from 'react'
 
 export default memo(() => {
-  const [setting, setSetting] = useSetting()
+  const [setting, setSetting] = GlobalSetting.useSetting()
   const { t } = useTranslation()
   const [user] = useUser()
 

@@ -1,7 +1,7 @@
-import { Editor, useSetting, IconNameRenderer } from '@/core'
+import { Editor, GlobalSetting } from '@/core'
 import { Content, Icon, Menu } from '@/components'
 import ButtonSelect from '@/components/base/ButtonSelect'
-import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { memo, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { IEditorInstance, MetaObject } from '~/typings'
 import { MetaStore, NoteStore, ObjectStore } from '@/api/stores'
 import Id from '@/utils/id'
@@ -20,11 +20,10 @@ import quickAdd from '@/components/form/quickAdd/quickAdd'
 import useMoveToCache from '@/components/form/quickAdd/useMoveToCache'
 
 export default memo(({ metaId, onBack, onClose }: { metaId: number[]; onBack: VoidFunction; onClose: VoidFunction }) => {
-  const [setting, setSetting] = useSetting()
+  const [setting, setSetting] = GlobalSetting.useSetting()
   const cache = useMoveToCache()?.note
   const notePosition = setting.quickAdd.addIntoNote
   const metaType = setting.quickAdd.noteMetaType
-  const hideObject = setting.quickAdd.addIntoNoteHideObject
   const moveToShowInvisible = KeyvalueStore.useValue('moveToShowInvisible')
 
   const [currentValue, setCurrentValue] = useState<import('slate').Descendant[]>([])

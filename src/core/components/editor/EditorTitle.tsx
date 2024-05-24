@@ -1,5 +1,5 @@
 import { KEY } from '@/consts/key'
-import { useDebounceFn } from '@/hooks'
+import { useDebounceFn, useGlobalAtomValue } from '@/hooks'
 import { css } from '@emotion/css'
 import isHotkey from 'is-hotkey'
 import { forwardRef, memo, useEffect, useRef } from 'react'
@@ -10,7 +10,7 @@ import { CustomEditor, EditorProps } from '~/typings'
 import useReadOnlyEditor from './hooks/useReadOnly'
 import { Colors } from '@/consts'
 import MetaPropDisplayer from '@/core/object/renderer/properties/MetaPropDisplayer'
-import { ReactEditor, useSelectSetting } from '@/core'
+import { GlobalSetting, ReactEditor } from '@/core'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import { Transforms } from 'slate'
 import Id from '@/utils/id'
@@ -71,7 +71,7 @@ const EditorTitle: ForwardRefComponent<HTMLDivElement, EditorTitleProps> = forwa
     const { t } = useTranslation()
     const readOnly = useReadOnlyEditor()
     const titleRef = useRef<HTMLDivElement>(null)
-    const showCustomProps = useSelectSetting(s => s.object.showPropertiesInComponentPage)
+    const showCustomProps = useGlobalAtomValue(GlobalSetting.atoms.showPropertiesInComponentPage)
     useEffect(() => {
       if (titleRef.current) {
         if (document.activeElement !== titleRef.current) {

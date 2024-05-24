@@ -10,14 +10,14 @@ import { useUpdate } from 'react-use'
 import { ISettingItem } from '@/core/setting/SettingItem'
 import SettingGroup from '@/core/setting/SettingGroup'
 import { editorPageWidth, fontSizes, lineSpacings } from '@/core/components/editor/components/setting/PageSetting'
-import { useSetting } from '@/core'
+import { GlobalSetting } from '@/core'
 import produce from 'immer'
 
 const EditorSetting = () => {
   const { t } = useTranslation()
   const editorSetting = KeyvalueStore.useValue('editorSettings') || DefaultEditorSettings
   const parentRef = useRef<HTMLElement>(null)
-  const [setting, setSetting] = useSetting()
+  const [setting, setSetting] = GlobalSetting.useSetting()
   const update = useUpdate()
   useEffect(() => {
     update()

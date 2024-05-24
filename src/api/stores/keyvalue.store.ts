@@ -2,13 +2,11 @@ import { atom } from 'jotai'
 import { useDb, useGlobalAtomValue } from '@/hooks'
 import { globalStore } from '@/api/stores/index'
 import { useEffect } from 'react'
-import { Setting } from '@/core'
+import { GlobalSetting, Setting } from '@/core'
 import { MetaFilterGroup, MetaGroup, MetaObject } from '~/typings'
-import { ISidebarState } from '@/components/layout/sidebar'
 import { Atom } from 'jotai/vanilla'
 import { selectAtom } from 'jotai/utils'
 import Workspace from '@/api/common/workspace'
-import BaseStore from '@/api/stores/base.store'
 
 export type SidebarDatabaseCache = {
   viewMode?: 'title' | 'thumbnail'
@@ -182,6 +180,9 @@ const createKeyvalueStore = () => {
         if (value?.id !== prev?.id) {
           Workspace.switchWorkspace(value.id)
         }
+      }
+      if (key === 'userSetting') {
+        GlobalSetting.setSetting(value)
       }
     },
     useValue: <T extends keyof CurrentKeyValues>(key: T): CurrentKeyValues[T] | undefined => {

@@ -3,8 +3,8 @@ import { useEffect } from 'react'
 import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { loginStateAtom } from '@/components/Login'
-import { SettingAtom } from '@/core'
-import { useGlobalAtom, useGlobalAtomValue } from '@/hooks'
+import { GlobalSetting } from '@/core'
+import { useGlobalAtom } from '@/hooks'
 import { ipcInstance } from '@/electron'
 import LoginService, { userAtom } from '../services/login.service'
 import { globalStore } from '@/api/stores'
@@ -24,7 +24,7 @@ const Initializer = () => {
   const [loginState] = useGlobalAtom(loginStateAtom)
   const [, setUser] = useGlobalAtom(userAtom)
   const { t } = useTranslation()
-  const setting = useGlobalAtomValue(SettingAtom)
+  const [setting] = GlobalSetting.useSetting()
   useEffect(() => {
     if (setting.general.userFilePath) {
       // const pluginsFolder = `${setting.general.userFilePath}/plugins`

@@ -1,13 +1,13 @@
 import { useEffect, useLayoutEffect } from 'react'
-import { useMount } from '../../hooks'
+import { useMount } from '@/hooks'
 import ClassName from '../../styles/classNames'
-import { useSetting } from '../../core'
 import { GlobalTheme } from '@/consts'
 import { createPortal } from 'react-dom'
 import { getOS } from '@/App'
+import { GlobalSetting } from '@/core'
 
 const ThemeSwitcher = () => {
-  const [setting, setSetting] = useSetting()
+  const [setting, setSetting] = GlobalSetting.useSetting()
   useMount(() => {
     document.body.classList.add(ClassName.defaultFont('1rem', 400))
     const os = getOS()

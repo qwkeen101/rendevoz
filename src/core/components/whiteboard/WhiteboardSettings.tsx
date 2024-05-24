@@ -1,5 +1,5 @@
 import { AnimatePopover, Button, Content, Icon, Modal, Tooltip, WithBorder } from '@/components'
-import { useSetting } from '@/core'
+import { GlobalSetting } from '@/core'
 import produce from 'immer'
 import { ClassName } from 'rendevoz'
 import { useTranslation } from 'react-i18next'
@@ -10,7 +10,7 @@ import ExportPanel from '@/core/components/whiteboard/toolbars/ExportPanel'
 import { memo } from 'react'
 
 const WhiteboardSettings = memo(() => {
-  const [setting, setSetting] = useSetting()
+  const [setting, setSetting] = GlobalSetting.useSetting()
   const { t } = useTranslation()
   const [exportModalVisible, toggleExportModalVisible] = useToggle(false)
   const whiteboardLineType = useSelectAtomValue(WhiteboardAtom, s => s?.lineType)

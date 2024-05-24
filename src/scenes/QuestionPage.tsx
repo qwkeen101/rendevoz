@@ -6,12 +6,13 @@ import { Rendevoz } from '@/core/rendevoz'
 import { memo } from 'react'
 import MetaPropDisplayer from '@/core/object/renderer/properties/MetaPropDisplayer'
 import { useTranslation } from 'react-i18next'
-import { useSelectSetting } from '@/core'
+import { GlobalSetting } from '@/core'
+import { useGlobalAtomValue } from '@/hooks'
 
 export default memo(({ id }: { id: number }) => {
   const q = MetaStore.useObjectToMetaValue(id)
   const { t } = useTranslation()
-  const showProps = useSelectSetting(s => s.object.showPropertiesInComponentPage)
+  const showProps = useGlobalAtomValue(GlobalSetting.atoms.showPropertiesInComponentPage)
   return (
     <Content
       flex

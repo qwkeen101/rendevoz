@@ -8,7 +8,7 @@ import { Button, Content, Switch, Modal, Icon, ButtonChooser } from '@/component
 import useFileUpload from '../../components/base/useFileUpload'
 import { ISettingItem } from './SettingItem'
 import { useTranslation } from 'react-i18next'
-import { useSetting } from '.'
+import GlobalSetting from '.'
 import Select from '@/components/base/select'
 import { SelectOptionProps } from '../../components/base/select/SelectOption'
 import produce from 'immer'
@@ -50,7 +50,7 @@ const GeneralSetting = () => {
   const hasExporting = useRef(false)
   const lastBackUp = getAppState().lastBackupDate
   const { t } = useTranslation()
-  const [setting, setSetting] = useSetting()
+  const [setting, setSetting] = GlobalSetting.useSetting()
   const [validCustomSearchEngine, setValidSearchEngine] = useState(false)
   const [cssVisible, setCssVisible] = useState(false)
   const handleImportData = async (file?: File) => {

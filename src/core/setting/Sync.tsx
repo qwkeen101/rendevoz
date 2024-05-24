@@ -1,7 +1,7 @@
 import { Button, Content } from '@/components'
 import { ISettingItem } from '@/core/setting/SettingItem'
 import SettingGroup from '@/core/setting/SettingGroup'
-import { useSetting } from '@/core'
+import { GlobalSetting } from '@/core'
 import { useGlobalAtom, useUpdateEffect } from '@/hooks'
 import SyncAPI from '@/api/sync'
 import { memo, useEffect, useState } from 'react'
@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next'
 import getClientInfo from '@/api/sync/utils/getClientInfo'
 
 export default memo(() => {
-  const [setting, setSetting] = useSetting()
+  const [setting, setSetting] = GlobalSetting.useSetting()
   const [syncState, setSyncState] = useGlobalAtom(SyncAPI.stateAtom)
   const [isPushing, setIsPushing] = useState(false)
   const [isPulling, setIsPulling] = useState(false)

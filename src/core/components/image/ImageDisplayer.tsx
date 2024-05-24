@@ -5,7 +5,6 @@ import { atom, Provider } from 'jotai'
 import CanvasManager from '@/components/base/canvas/CanvasManager'
 import Colors from '@/consts/colors'
 import { css } from '@emotion/css'
-import { useSetting } from '../../setting'
 import classNames from 'classnames'
 import Id from '@/utils/id'
 import { Excalidraw, exportToBlob } from '@excalidraw/excalidraw'
@@ -14,7 +13,7 @@ import { renderPageInNormalMode } from '../pdf/core/utils/renderer'
 import { imageToDataUrl } from '@/utils/img'
 import transformUrlToData from './transformUrlToData'
 import saveExcalidraw from './saveExcalidraw'
-import { t } from 'i18next'
+import { GlobalSetting } from '@/core'
 
 const defaultData = {
   appState: {
@@ -37,7 +36,7 @@ const ImageDisplayer = forwardRef<
 >(({ imageId, imageUrl: outerImageUrl, initialData }, ref) => {
   const image = ObjectStore('image').useValue(imageId)
   const [excalidrawInitialData, setInitialData] = useState<ExcalidrawInitialDataState>()
-  const [setting] = useSetting()
+  const [setting] = GlobalSetting.useSetting()
   const containerRef = useRef<HTMLDivElement>(null)
   const getSizeOfImage = (image: HTMLImageElement) => {
     const container = containerRef.current!

@@ -27,11 +27,12 @@ import {
 import WorkspaceSetting from '@/core/setting/Workspace'
 import { Colors } from '@/consts'
 import { atom } from 'jotai'
-import { useSelectGlobalAtomValue } from '@/hooks'
+import { useGlobalAtomValue, useSelectGlobalAtomValue } from '@/hooks'
 import SyncSetting from './Sync'
 import { ClassName } from 'rendevoz'
 import { Icon } from '@/components'
 import { selectAtom } from 'jotai/utils'
+import { Atom } from 'jotai/vanilla'
 
 enum Settings {
   'general',
@@ -65,7 +66,7 @@ export type Setting = INotificationSetting &
   IAppearanceSetting &
   ISyncSetting
 
-export const defaultSetting: Setting = {
+const defaultSetting: Setting = {
   notification: {
     enabled: true,
     pdf: true,
@@ -179,17 +180,34 @@ export const defaultSetting: Setting = {
 }
 
 export const SettingAtom = atom<Setting>(defaultSetting)
-export const SettingAtoms = {
+const SettingAtoms = {
+  darkMode: selectAtom(SettingAtom, s => s.general.darkMode),
+  sync: selectAtom(SettingAtom, s => s.sync),
+  addSpacingInReaderMode: selectAtom(SettingAtom, s => s.editor.addSpacingInReaderMode),
+  enableNotification: selectAtom(SettingAtom, s => s.notification.enabled),
+  language: selectAtom(SettingAtom, s => s.general.language),
   pdfShowHighlightText: selectAtom(SettingAtom, s => s.pdf.showHighlightText),
   editorShowHighlightText: selectAtom(SettingAtom, s => s.editor.showHighlightText),
   pdfDefaultExpandHighlightDetails: selectAtom(SettingAtom, s => s.pdf.defaultExpandHighlightText),
-  editorDefaultExpandHighlightDetails: selectAtom(SettingAtom, s => s.editor.defaultExpandHighlightText)
+  editorDefaultExpandHighlightDetails: selectAtom(SettingAtom, s => s.editor.defaultExpandHighlightText),
+  enableCustomEditorStateAtom: selectAtom(SettingAtom, s => s.editor.enableFormat),
+  previewSidebarTitleAtom: selectAtom(SettingAtom, s => s.sidebar.previewTitleMode),
+  previewCollectionContentAtom: selectAtom(SettingAtom, s => s.sidebar.previewCollectionContent),
+  showPropertiesInComponentPage: selectAtom(SettingAtom, s => s.object.showPropertiesInComponentPage)
+} as const
+type extractGeneric<Type> = Type extends Atom<infer X> ? X : never
+type Keys = keyof typeof SettingAtoms
+type Values<K extends Keys> = extractGeneric<(typeof SettingAtoms)[K]>
+function useSelectSettingAtom<K extends Keys>(key: K): Values<K> {
+  const a = SettingAtoms[key]
+  return useGlobalAtomValue(a) as Values<K>
 }
-export const enableCustomEditorStateAtom = selectAtom(SettingAtom, s => s.editor.enableFormat)
-export const useSetting = () => useAtom(SettingAtom, { store: globalStore })
-export const previewSidebarTitleAtom = selectAtom(SettingAtom, s => s.sidebar.previewTitleMode)
-export const previewCollectionContentAtom = selectAtom(SettingAtom, s => s.sidebar.previewCollectionContent)
-export const useSelectSetting = <T, Slice>(selector: (s: Setting) => Slice) => useSelectGlobalAtomValue(SettingAtom, selector)
+const useSetting = () => useAtom(SettingAtom, { store: globalStore })
+const setSetting = (updater: ((curr: Setting) => Setting) | Setting) => {
+  const curr = globalStore.get(SettingAtom)
+  globalStore.set(SettingAtom, typeof updater === 'object' ? curr : updater(curr))
+}
+
 const SettingDialog = () => {
   const { t } = useTranslation()
   const [currentSettingPanel, setCurrentSettingPanel] = useState<keyof typeof Settings>('general')
@@ -294,4 +312,16 @@ const SettingDialog = () => {
   )
 }
 
-export default SettingDialog
+const GlobalSetting = {
+  SettingDialog,
+  atoms: SettingAtoms,
+  useSetting,
+  useSelectSettingAtom,
+  setSetting,
+  getSetting: () => {
+    return globalStore.get(SettingAtom)
+  },
+  settingAtom: SettingAtom,
+  defaultSetting
+}
+export default GlobalSetting

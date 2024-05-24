@@ -12,7 +12,7 @@ import useIsDragging from './hooks/useIsDragging'
 import { withShortcuts, withCustomComponent, withHtml } from './plugins'
 import { ID_TO_ELEMENTS_MAP } from './weakMaps'
 import { normalizeEditorDragBlocksToGlobalDraggingDetails } from './hooks/drag/useEditorDrag'
-import { enableCustomEditorStateAtom, useGlobalIsDragging } from '@/core'
+import { GlobalSetting, useGlobalIsDragging } from '@/core'
 import { createStore } from 'jotai/vanilla'
 import { Provider, useSetAtom } from 'jotai/react'
 import EditorTitle from './EditorTitle'
@@ -89,7 +89,7 @@ export const EditorV1: FC<EditorProps> = memo(
     const [globalIsDragging] = useGlobalIsDragging()
     const scrollElementRef = useRef<HTMLDivElement>(null)
     const defaultV = useMemo(() => defaultSlateValue(), [])
-    const enableCustomFormat = useGlobalAtomValue(enableCustomEditorStateAtom)
+    const enableCustomFormat = useGlobalAtomValue(GlobalSetting.atoms.enableCustomEditorStateAtom)
     const userSetting = KeyvalueStore.useValue('editorSettings')
     const defaultEditorSetting = enableCustomFormat ? userSetting || DefaultEditorSettings : DefaultEditorSettings
     const setBlockHandle = useSetAtom(EditorBlockHandleAtom)

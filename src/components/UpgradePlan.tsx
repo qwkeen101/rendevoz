@@ -1,8 +1,8 @@
 import ClassName from '@/styles/classNames'
 import { Button, Content, Icon } from './base'
-import { useSetting } from '@/core'
+import { GlobalSetting } from '@/core'
 import Colors from '@/consts/colors'
-import LoginService, { useUser } from '@/api/services/login.service'
+import { useUser } from '@/api/services/login.service'
 import { useToggle } from '@/hooks'
 import FontSize from '@/consts/font'
 import { useEffect, useState } from 'react'
@@ -38,7 +38,7 @@ const LifetimePlanIncludes = [
 ]
 
 const UpgradePlan = () => {
-  const [setting] = useSetting()
+  const [setting] = GlobalSetting.useSetting()
   const [user, setUser] = useUser()
   const [upgradeDetails, setUpgradeDetails] = useState<{
     method: 'monthly' | 'yearly' | 'lifetime'

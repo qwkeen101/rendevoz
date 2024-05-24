@@ -1,11 +1,11 @@
 import { useDebounceFn, useGlobalAtomValue, useMemoizedFn, useSelectAtomValue, useSelectGlobalAtomValue } from '@/hooks'
 import isHotkey from 'is-hotkey'
-import { CSSProperties, FC, memo, RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { CSSProperties, FC, memo, RefObject, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Descendant, Editor, Node, Path, Transforms } from 'slate'
 import { Editable, ReactEditor, RenderElementProps, RenderLeafProps, Slate, useSlateStatic } from './slate-react'
 import EditorToolbar from './components/EditorSelectionToolbar'
 import HOTKEYS from './consts/hotkeys'
-import { CustomEditor, CustomElement, INoteLabel } from '~/typings'
+import { CustomEditor } from '~/typings'
 import Divider from './Divider'
 import { Block } from './elements'
 import Id from '@/utils/id'
@@ -13,8 +13,6 @@ import { InlineElements } from './consts/elements'
 import { EDITOR_TO_CHANGED, ID_TO_FIRST_LAYER_EXCEPET_HIDEN_MAP, ID_TO_FIRST_LAYER_MAP, ID_TO_PATH_MAP } from './weakMaps'
 import useScopedEventEmitter from '@/events/useEventEmitter'
 import { defaultScrollSelectionIntoView, EditableProps } from './slate-react/components/editable'
-import { css } from '@emotion/css'
-import ClassName from '@/styles/classNames'
 import classNames from 'classnames'
 import useEditorSlashMenu from './hooks/useEditorSlashMenu'
 import { DraggableElement, DraggingElement } from '../../global'
@@ -32,14 +30,10 @@ import EditorClasses from '@/core/components/editor/consts/classes'
 import { assignProperties } from '@/utils'
 import { Colors } from '@/consts'
 import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
-import { DEFAULT_BACKGROUND_COLORS } from '@/components/picker/colorPicker'
 import useGlobalKey from '@/core/components/editor/hooks/keyboards/useGlobalKey'
-import { SettingAtom, SettingAtoms, useRenderLabel } from '@/core'
-import { ObjectStore } from '@/api/stores'
-import { atom } from 'jotai'
+import { GlobalSetting, useRenderLabel } from '@/core'
 import { selectAtom } from 'jotai/utils'
 import { useAtomValue } from 'jotai/react'
-import { useLatest } from 'react-use'
 import { Icon } from '@/components'
 import UseClickOutside from '@/hooks/utils/useClickOutside'
 
@@ -212,7 +206,7 @@ const InnerEditor: FC<InnerEditorProps> = memo(
       },
       [scrollElement]
     )
-    const addParagraphSpacing = useSelectGlobalAtomValue(SettingAtom, s => s.editor.addSpacingInReaderMode)
+    const addParagraphSpacing = GlobalSetting.useSelectSettingAtom('addSpacingInReaderMode')
     const globalKeydownHandler = useMemoizedFn((e: KeyboardEvent) => {
       handleTabKey(e)
     })
@@ -485,10 +479,10 @@ const HighlightLeaf = (props: RenderLeafProps & { style?: CSSProperties }) => {
     objectId: leaf.highlight,
     type: labelType
   })
-  const defaultExpanded = useGlobalAtomValue(SettingAtoms.editorDefaultExpandHighlightDetails)
+  const defaultExpanded = GlobalSetting.useSelectSettingAtom('editorDefaultExpandHighlightDetails')
   const [expanded, setExpanded] = useState(!!defaultExpanded)
   const [renderName, setRenderName] = useState(false)
-  const show = useGlobalAtomValue(SettingAtoms.editorShowHighlightText)
+  const show = GlobalSetting.useSelectSettingAtom('editorShowHighlightText')
   const r = useRef()
   UseClickOutside(
     () => {

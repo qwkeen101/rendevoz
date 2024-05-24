@@ -1,15 +1,15 @@
-import { memo, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { memo, useMemo, useState } from 'react'
 import { MetaObject } from '~/typings'
-import { GroupStore, MetaStore, ObjectStore } from '@/api/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { Content, Icon, Menu } from '@/components'
-import { IconNameRenderer, useSetting } from '@/core'
+import { GlobalSetting } from '@/core'
 import { Rendevoz } from '@/core/rendevoz'
 import { ClassName } from 'rendevoz'
 import ButtonSwitch from '@/components/base/ButtonSwitch'
 import produce from 'immer'
 import { useDebounceEffect, useMemoizedFn } from '@/hooks'
 import fuzzysort from 'fuzzysort'
-import { Colors, KEY } from '@/consts'
+import { KEY } from '@/consts'
 import { useTranslation } from 'react-i18next'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import updateMovetoCache from '@/components/form/quickAdd/updateMovetoCache'
@@ -30,7 +30,7 @@ export default memo(
     onPickGroup?: (groupMetaId: number) => void
   }) => {
     const cache = useMoveToCache()?.group
-    const [setting, setSetting] = useSetting()
+    const [setting, setSetting] = GlobalSetting.useSetting()
     const [search, setSearch] = useState('')
     const [displayGroups, setDisplayGroups] = useState<MetaObject[]>()
 

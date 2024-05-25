@@ -12,7 +12,6 @@ import { IUser } from '~/typings/data'
 import Login, { indicatorClassName, loginInputClassName } from '@/components/Login'
 import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
-import FontSize from '@/consts/font'
 import Colors from '@/consts/colors'
 import UserService from '@/api/services/user.service'
 
@@ -60,16 +59,16 @@ const SidebarUser = memo(() => {
               <Content flex onClick={togglePopoverVisible} alignItems="center" style={{ cursor: 'pointer' }}>
                 {user?.photoURL && <Image width={25} src={user.photoURL} className={css({ borderRadius: 4 })} />}
                 <div
+                  className={'font-size-12'}
                   style={{
-                    width: 28,
-                    height: 28,
+                    width: 26,
+                    height: 26,
                     borderRadius: 999,
                     userSelect: 'none',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontWeight: 500,
-                    fontSize: '12px',
                     backgroundColor: Colors.Background.ButtonHover
                   }}
                 >
@@ -148,7 +147,6 @@ const UserPopover = ({ onUpgradePlan, onUpdateUser }: { onUpgradePlan: VoidFunct
             gap={8}
             style={{
               fontWeight: 600,
-              fontSize: 13,
               color: Colors.Emphasis.Emphasis
             }}
           >
@@ -240,7 +238,7 @@ const UpdateUser = ({ onClose }: { onClose: VoidFunction }) => {
         />
       </div> */}
       <div>
-        <div style={{ fontSize: '0.857rem' }} className={indicatorClassName}>
+        <div className={indicatorClassName}>
           Name
         </div>
         <input
@@ -283,11 +281,11 @@ const UpdateUser = ({ onClose }: { onClose: VoidFunction }) => {
         className={ClassName.circleButton()}
         style={{ position: 'absolute', top: 0, right: 0 }}
       />
-      <div style={{ fontSize: FontSize.Secondary }} className={indicatorClassName}>
+      <div className={indicatorClassName}>
         Current Email Address
       </div>
       <div style={{ marginBottom: 20 }}>{user.email}</div>
-      <div style={{ fontSize: FontSize.Secondary }} className={indicatorClassName}>
+      <div className={indicatorClassName}>
         New Email Address
       </div>
       <input placeholder="Input your new email address" style={{ background: 'transparent' }} className={loginInputClassName}></input>

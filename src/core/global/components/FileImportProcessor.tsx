@@ -8,10 +8,8 @@ import { createPortal } from 'react-dom'
 import ClassName from '@/styles/classNames'
 import { Content, Icon, WithBorder } from '@/components'
 import { useTranslation } from 'react-i18next'
-import FontSize from '@/consts/font'
 import { Rendevoz } from '../../rendevoz'
 import Colors from '@/consts/colors'
-import { css } from '@emotion/css'
 export const GlobalImporterInstance: GlobalInstances.NoteImporterInstance = {}
 
 export default () => {
@@ -124,7 +122,7 @@ export default () => {
           maxWidth: 400
         }}
       >
-        <Content flex alignItems="center" fullWidth gap={12} style={{ padding: '6px 8px' }} className={ClassName.title(FontSize['15px'])}>
+        <Content flex alignItems="center" fullWidth gap={12} style={{ padding: '6px 8px' }} className={'font-size-15 normal-font'}>
           {completed ? <Icon name="park-check" /> : <Icon name="park-loading-four" spin />}
           <div>{completed ? t('general.import completed') : t('general.importing')}</div>
           <Icon
@@ -135,7 +133,7 @@ export default () => {
           />
         </Content>
         {notes.length && completed ? (
-          <div style={{ margin: '0px 8px 6px' }} className={ClassName.description(FontSize['12px'])}>
+          <div style={{ margin: '0px 8px 6px' }} className={'font-size-12 transparent-font'}>
             {t('general.import details', {
               total: notes.length,
               success,
@@ -159,9 +157,7 @@ export default () => {
                 gap={20}
                 className={ClassName.flatButton()}
               >
-                <div className={css([ClassName.title(FontSize['14px']), ClassName.ellipsisFont(1)])} style={{ textTransform: 'none' }}>
-                  {i.name}
-                </div>
+                <div className={'ellipsis-font-1'}>{i.name}</div>
                 <div
                   style={{
                     marginLeft: 'auto',

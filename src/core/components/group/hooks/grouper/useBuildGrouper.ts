@@ -12,7 +12,7 @@ import { debounce } from 'lodash'
 import checkboxGroupCalculator from '@/core/components/group/hooks/grouper/calculator/checkbox'
 import dateGroupCalculator from '@/core/components/group/hooks/grouper/calculator/date'
 import calculateSort from '@/core/components/group/hooks/grouper/sort/calculateSort'
-import { IMetaGroupGrouper, MetaGroupChild, MetaObject } from '~/typings'
+import { IGroupGrouper, IMetaGroupGrouper, MetaGroupChild, MetaObject } from '~/typings'
 import { DEFAULT_GROUP_PROPERTY_OBJ } from '@/core/components/group/consts/defaultProperties'
 import assignTempRowId from '@/core/components/group/hooks/grouper/assignTempRowId'
 import numberGroupCalculator, {
@@ -22,6 +22,7 @@ import numberGroupCalculator, {
 import DEFAULT_GROUPER from '@/core/components/group/components/grouper/consts/DEFAULT_GROUPER'
 import { Group } from '@/core/components/group/hooks/weakmaps'
 import metaTypeGroupCalculator from '@/core/components/group/hooks/grouper/calculator/metaType'
+import containedInGroupCaculator from '@/core/components/group/hooks/grouper/calculator/containedIn'
 
 export const EMPTY_GROUPER_NAME = DEFAULT_GROUPER.EMPTY_GROUPER_NAME
 export default () => {
@@ -41,26 +42,32 @@ export default () => {
     )
     const groupRuleAtom = selectAtom(GroupStateAtom, s => s.currentView?.group)
     const metaChangeAtom = selectAtom(GroupStateAtom, s => s.metaChanged)
-    const debounceBuild = (groupRule: IMetaGroupGrouper, finalValues: MetaGroupChild[]) => {
+    const finished = {
+      current: true
+    }
+    const debounceBuild = async (groupRule: IMetaGroupGrouper, finalValues: MetaGroupChild[]) => {
       const groupState = store.get(GroupStateAtom)
       const existedGroupers = groupState.currentView?.storedGroups || groupState.groups
       console.log('build')
       let prop = undefined
+      let result: IGroupGrouper[] | undefined = undefined
       let propGetter: ((o: MetaObject) => any) | undefined = undefined
-      if (groupRule.propertyGroupType === 'basic') {
+      if (groupRule.fieldType === 'containedIn') {
+        result = await containedInGroupCaculator(finalValues, structuredClone(existedGroupers))
+      }
+      if (groupRule.propertyGroupType === 'basic' && groupRule.propertyId) {
         prop = DEFAULT_GROUP_PROPERTY_OBJ[groupRule.propertyId]
         if (prop) {
           propGetter = o => o[prop.name]
         }
       }
-      if (groupRule.propertyGroupType === 'custom') {
+      if (groupRule.propertyGroupType === 'custom' && groupRule.propertyId) {
         prop = MetaStore.getPropDetails(groupRule.propertyId)
         if (prop) {
           propGetter = o => o.properties?.[prop.id]?.value
         }
       }
       if (prop && 'propType' in prop && propGetter) {
-        let result = undefined
         switch (prop?.propType) {
           case 'string':
             result = stringGroupCalculator(
@@ -132,44 +139,44 @@ export default () => {
               structuredClone(existedGroupers)
             )
         }
-        if (result) {
-          // cancel changed group select
-          const prevRowIdToGroupId: Record<number, number> = {}
-          existedGroupers?.forEach(g => {
-            g.values.forEach(v => {
-              prevRowIdToGroupId[v.rowId] = g.id
-            })
+      }
+      if (result) {
+        // cancel changed group select
+        const prevRowIdToGroupId: Record<number, number> = {}
+        existedGroupers?.forEach(g => {
+          g.values.forEach(v => {
+            prevRowIdToGroupId[v.rowId] = g.id
           })
-          if (!existedGroupers) {
-            const emptyValues = result.find(i => i.name === EMPTY_GROUPER_NAME)
-            if (emptyValues) {
-              result = [...result.filter(i => i.name !== EMPTY_GROUPER_NAME), emptyValues]
-            }
+        })
+        if (!existedGroupers) {
+          const emptyValues = result.find(i => i.name === EMPTY_GROUPER_NAME)
+          if (emptyValues) {
+            result = [...result.filter(i => i.name !== EMPTY_GROUPER_NAME), emptyValues]
           }
-          result.some(r =>
-            r.values.some(v => {
-              if (prevRowIdToGroupId[v.rowId] !== r.id) {
-                instance.selectOps?.clearAllSelect()
-                instance.viewOps?.tableOps?.deselectCell()
-                return true
-              }
-            })
-          )
-          // sort by original groups
-          if (existedGroupers && groupRule.sort === 'manual') {
-            const idWithPos: Record<number, number> = {}
-            existedGroupers.forEach((g, index) => {
-              idWithPos[g.id] = index
-            })
-            result.sort((b, a) => (idWithPos[b.id] ?? Number.MAX_SAFE_INTEGER) - (idWithPos[a.id] ?? 0))
-          }
-          if ('sort' in groupRule) {
-            calculateSort(result, groupRule)
-          }
-          result = assignTempRowId(result, instance, existedGroupers)
-          console.log(result, 'updated')
-          setGroupState(s => ({ ...s, groups: result }))
         }
+        result.some(r =>
+          r.values.some(v => {
+            if (prevRowIdToGroupId[v.rowId] !== r.id) {
+              instance.selectOps?.clearAllSelect()
+              instance.viewOps?.tableOps?.deselectCell()
+              return true
+            }
+          })
+        )
+        // sort by original groups
+        if (existedGroupers && groupRule.sort === 'manual') {
+          const idWithPos: Record<number, number> = {}
+          existedGroupers.forEach((g, index) => {
+            idWithPos[g.id] = index
+          })
+          result.sort((b, a) => (idWithPos[b.id] ?? Number.MAX_SAFE_INTEGER) - (idWithPos[a.id] ?? 0))
+        }
+        if ('sort' in groupRule) {
+          calculateSort(result, groupRule)
+        }
+        result = assignTempRowId(result, instance, existedGroupers)
+        console.log(result, 'updated')
+        setGroupState(s => ({ ...s, groups: result }))
       }
     }
     let prev = undefined
@@ -195,7 +202,12 @@ export default () => {
           })
         }
         prev = curr
-        debounceBuild(groupRule, finalValues)
+        if (finished.current) {
+          finished.current = false
+          debounceBuild(groupRule, finalValues).finally(() => {
+            finished.current = true
+          })
+        }
       } else {
         const groupState = store.get(GroupStateAtom)
         if (groupState.groupedValues || groupState.groups || groupState.currentView?.storedGroups) {

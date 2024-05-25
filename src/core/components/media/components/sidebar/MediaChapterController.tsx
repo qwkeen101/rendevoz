@@ -1,4 +1,4 @@
-import { Button, Content, Icon, IconWithPopover, WithBorder } from '@/components'
+import { Button, Content, IconWithPopover, WithBorder } from '@/components'
 import { useMediaInstance } from '../../hooks/useMediaInstance'
 import useMediaState from '../../hooks/useMediaState'
 import ClassName from '@/styles/classNames'
@@ -6,16 +6,13 @@ import Colors from '@/consts/colors'
 import { normalizeSecondsToTime } from '../../utils'
 import { useMemo, useRef, useState } from 'react'
 import { IMediaChapter } from '~/typings'
-import FontSize from '@/consts/font'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
-import { css } from '@emotion/css'
 import { useTranslation } from 'react-i18next'
 import classnames from 'classnames'
 
 const MediaChapterController = () => {
   const [mediaState] = useMediaState()
-  console.log(mediaState.sortedChapters)
   return (
     <Content
       flex
@@ -125,7 +122,7 @@ const Chapter = ({ chapter, canDelete }: { chapter: IMediaChapter; canDelete: bo
             ></input>
           </Content>
         ) : (
-          <div className={css([ClassName.title(FontSize['14px']), ClassName.ellipsisFont(3)])} style={{ width: 'fit-content' }}>
+          <div className={'ellipsis-font-3 normal-font'} style={{ width: 'fit-content' }}>
             {chapter.name}
           </div>
         )}

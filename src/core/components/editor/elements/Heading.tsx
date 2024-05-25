@@ -2,13 +2,12 @@ import { Icon } from '@/components'
 import useScopedEventEmitter from '@/events/useEventEmitter'
 import { useDebounceFn, useToggle } from '@/hooks'
 import { cloneElement, FC, ReactElement, useEffect, useRef, useState } from 'react'
-import { Editor, Range, Transforms } from 'slate'
+import { Transforms } from 'slate'
 import { ReactEditor, RenderElementProps, useSlateStatic } from '../slate-react'
 import { CustomElement, HeadingElement } from '~/typings'
 import { useEventHandler } from '@/events'
 import useReadOnlyEditor from '../hooks/useReadOnly'
 import Colors from '@/consts/colors'
-import FontSize from '@/consts/font'
 import useEditorInstance from '../hooks/useEditorInstance'
 import { ID_TO_VISIBLE_HEADING_MAP } from '../weakMaps'
 
@@ -123,12 +122,11 @@ const Heading: FC<RenderElementProps> = ({ element, children }) => {
     containElements > 0 && folded && (
       <span
         contentEditable={false}
+        className={'transparent-font font-size-13'}
         style={{
           padding: '5px',
           borderRadius: 4,
           background: Colors.Background.ButtonHover,
-          color: Colors.Font.Description,
-          fontSize: FontSize['13px'],
           position: 'absolute',
           right: 0,
           top: '50%',

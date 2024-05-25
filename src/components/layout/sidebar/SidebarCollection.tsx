@@ -17,8 +17,7 @@ import SidebarCollectionItem from './items/SidebarCollectionItem'
 import { sidebarDraggingState } from './useSidebarItemDrag'
 import { useTranslation } from 'react-i18next'
 import { Rendevoz } from '@/core/rendevoz'
-import FontSize from '@/consts/font'
-import { ICollection, ICollectionItem } from '~/typings'
+import { ICollectionItem } from '~/typings'
 import { Colors } from '@/consts'
 
 const SidebarCollection = ({

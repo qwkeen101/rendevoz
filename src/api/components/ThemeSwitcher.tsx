@@ -9,7 +9,6 @@ import { GlobalSetting } from '@/core'
 const ThemeSwitcher = () => {
   const [setting, setSetting] = GlobalSetting.useSetting()
   useMount(() => {
-    document.body.classList.add(ClassName.defaultFont('1rem', 400))
     const os = getOS()
     if (os === 'windows') {
       document.documentElement.setAttribute('custom-scrollbar', 'true')

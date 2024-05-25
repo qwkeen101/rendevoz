@@ -5,9 +5,6 @@ import ClassName from '@/styles/classNames'
 import isHotkey from 'is-hotkey'
 import { CSSProperties, useRef, useState } from 'react'
 import AutosizeTextarea from '@/components/custom/input/AutoSizeTextArea'
-import { useTranslation } from 'react-i18next'
-import FontSize from '@/consts/font'
-import NoteEditor from '@/core/components/editor/noteEditor/NoteEditor'
 import SimpleEditor from '@/core/components/editor/SimpleEditor'
 
 const NameEditor = ({

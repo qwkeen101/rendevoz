@@ -10,7 +10,6 @@ import { NodeFakeHiddenOpacity } from '../consts/opacity'
 import { oppositeEdgesMapAtom } from '../hooks/useEdges'
 import { useStore } from 'jotai'
 import Colors from '@/consts/colors'
-import FontSize from '@/consts/font'
 import { Rendevoz } from '@/core/rendevoz'
 
 interface EdgeProps {
@@ -213,7 +212,6 @@ const Edge: FC<EdgeProps> = memo(({ edge }) => {
             strokeWidth={2}
           ></rect>
           <text
-            fontSize={FontSize['14px']}
             fontWeight={600}
             fontStyle="italic"
             dy="0.1em"

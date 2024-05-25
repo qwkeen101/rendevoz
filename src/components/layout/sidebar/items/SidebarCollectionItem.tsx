@@ -12,7 +12,6 @@ import useSidebarItemContextMenu from '../useSidebarItemContextMenu'
 import useSidebarItemDrag, { sidebarDraggingState } from '../useSidebarItemDrag'
 import { ISidebarItem } from './type'
 import SidebarObjectItem from './SidebarObjectItem'
-import FontSize from '@/consts/font'
 import { Rendevoz } from '@/core/rendevoz'
 import { DraggableElement } from '@/core'
 import { droppableItemHovered } from '@/styles/classNames/drag'
@@ -128,8 +127,8 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(
           padding={10}
           content={
             <div
+              className={'font-size-13'}
               style={{
-                fontSize: FontSize['12px'],
                 background: 'rgba(0,0,0,0.8)',
                 color: 'white',
                 borderRadius: 4,
@@ -191,7 +190,7 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(
                       }
                       Rendevoz.Actions.Open.Group.openCollectionGroup(collection.id)
                     }}
-                    style={{ fontSize: FontSize['13px'] }}
+                    className={'font-size-13'}
                     name={collection.name || 'Unnamed Collection'}
                     color={collection.color}
                     icon={collection.icon || 'park-folder-close'}

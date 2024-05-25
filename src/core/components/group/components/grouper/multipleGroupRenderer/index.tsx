@@ -11,6 +11,7 @@ import { useRef } from 'react'
 import GalleryRenderer from '@/core/components/group/components/gallery/GalleryRenderer'
 import KanbanRenderer from '@/core/components/group/components/kanban/KanbanRenderer'
 import { assignProperties } from '@/utils'
+import GalleryHideLabelSource from '@/core/components/group/components/grouper/multipleGroupRenderer/GalleryHideLabelSource'
 
 export default function GroupGrouperRenderer() {
   const instance = useGroupInstance()
@@ -66,6 +67,9 @@ export default function GroupGrouperRenderer() {
             if (group) {
               if (group.hidden) return null
               let showAddMore = true
+              if (groupFieldType === 'containedIn') {
+                showAddMore = false
+              }
               if (groupFieldType === 'metaType') {
                 showAddMore = !!GlobalInstance.metaOps?.canCreateDirectly(group.name)
               }
@@ -95,6 +99,9 @@ export default function GroupGrouperRenderer() {
             if (group) {
               if (group.hidden) return null
               let showAddMore = true
+              if (groupFieldType === 'containedIn') {
+                showAddMore = false
+              }
               if (groupFieldType === 'metaType') {
                 showAddMore = !!GlobalInstance.metaOps?.canCreateDirectly(group.name)
               }
@@ -140,6 +147,9 @@ export default function GroupGrouperRenderer() {
             if (group) {
               if (group.hidden) return null
               let showAddMore = true
+              if (groupFieldType === 'containedIn') {
+                showAddMore = false
+              }
               if (groupFieldType === 'metaType') {
                 showAddMore = !!GlobalInstance.metaOps?.canCreateDirectly(group.name)
               }
@@ -155,9 +165,14 @@ export default function GroupGrouperRenderer() {
                     }}
                     group={group}
                   />
-                  {group.visible !== false && (
-                    <GalleryRenderer showAddMore={showAddMore} grouperId={group.id} enableVirtualizer={false} value={group.values} />
-                  )}
+                  {group.visible !== false &&
+                    (groupFieldType === 'containedIn' ? (
+                      <GalleryHideLabelSource group={group}>
+                        <GalleryRenderer showAddMore={showAddMore} grouperId={group.id} enableVirtualizer={false} value={group.values} />
+                      </GalleryHideLabelSource>
+                    ) : (
+                      <GalleryRenderer showAddMore={showAddMore} grouperId={group.id} enableVirtualizer={false} value={group.values} />
+                    ))}
                 </div>
               )
             }

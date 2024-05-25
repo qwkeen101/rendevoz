@@ -27,7 +27,6 @@ import classnames from 'classnames'
 import { FromCell, RelatedCell, TagCell } from '@/core/components/group/components/table/cells'
 import FileProp from '@/core/object/renderer/properties/FileProp'
 import ContentDisplayer from '@/core/components/group/components/gallery/items/FixedHeightContentDisplayer'
-import { useUpdate } from 'react-use'
 
 export const WrapperClassName = css({
   ':empty': {

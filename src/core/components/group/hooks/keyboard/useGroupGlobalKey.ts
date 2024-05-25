@@ -15,7 +15,15 @@ const useGroupGlobalKey = () => {
   const handleCommonKey = useGroupCommonActions(instance)
   useEffect(() => {
     const keyboardHandler = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) {
+        return
+      }
+      if (!instance.values.isFocused) return
+      if (e.target instanceof HTMLElement && e.target.closest('input, textarea, [contenteditable="true"]')) return
       // timeout here to ensure high priorty work first
+      // table cell and table row keys can not be delay, otherwise will scroll the page
+      handleTableCellControlKey(e)
+      handleTableRowControlKey(e)
       setTimeout(() => {
         if (e.defaultPrevented) {
           return
@@ -23,8 +31,6 @@ const useGroupGlobalKey = () => {
         if (!instance.values.isFocused) return
         if (e.target instanceof HTMLElement && e.target.closest('input, textarea, [contenteditable="true"]')) return
         handleCommonKey(e)
-        handleTableCellControlKey(e)
-        handleTableRowControlKey(e)
         handleEscKey(e)
         handleDeleteKey(e)
       })

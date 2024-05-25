@@ -1,4 +1,4 @@
-import { AnimatePopover, Content, Icon, Toolbar, WithBorder } from '@/components'
+import { AnimatePopover, Toolbar, WithBorder } from '@/components'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import { useWhiteboardEdges } from '@/core/components/whiteboard/StateHooks'
 import { IWhiteboardEdge } from '~/typings'
@@ -6,8 +6,6 @@ import { Colors } from '@/consts'
 import BlockColorPicker from '@/core/components/editor/components/BlockColorPicker'
 import { defaultBgColor } from '@/components/picker/colorPicker'
 import { useTranslation } from 'react-i18next'
-import ClassName from '@/styles/classNames'
-import FontSize from '@/consts/font'
 import { getSetting } from '@/core'
 const types = {
   straight: {

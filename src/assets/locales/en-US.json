@@ -1,5 +1,7 @@
 {
   "general": {
+    "Hide all": "Hide all",
+    "Show all": "Show all",
     "More sync files": "And {{num}} more files",
     "Tools": "Tools",
     "More": "More",

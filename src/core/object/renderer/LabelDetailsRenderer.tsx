@@ -13,7 +13,13 @@ import Video from '@/core/components/media/wrappers/Video'
 import Audio from '@/core/components/media/wrappers/Audio'
 import classnames from 'classnames'
 import { LabelDetailsContext } from '@/core/object/renderer/LabelDetailsContext'
+import { css } from '@emotion/css'
 
+const firstChildPaddingTop = css({
+  ':first-child': {
+    paddingTop: '6px !important'
+  }
+})
 export default memo(
   ({
     metaId,
@@ -25,6 +31,7 @@ export default memo(
     showAudio,
     imageStyle,
     sourceStyle,
+    textStyle,
     noteStyle
   }: {
     metaId: number
@@ -35,7 +42,8 @@ export default memo(
     showAudio?: boolean
     autoPlay?: boolean
     noteStyle?: CSSProperties
-    sourceStyle?: CSSProperties
+    textStyle?: CSSProperties
+    sourceStyle?: CSSProperties | ((hasDisplayer: boolean) => CSSProperties)
     imageStyle?: CSSProperties | ((m?: MetaObject) => CSSProperties)
   }) => {
     const context = useContext(LabelDetailsContext)
@@ -162,8 +170,9 @@ export default memo(
         onPointerEnter={() => {
           setShowToolbar(true)
         }}
-        style={{ ...style }}
+        style={{ display: 'flex', flexDirection: 'column', gap: 6, ...style }}
         fullWidth
+        className={'font-size-14'}
         onPointerMove={() => !showToolbar && setShowToolbar(true)}
       >
         {displayer}
@@ -174,8 +183,8 @@ export default memo(
             justifyContent={'space-between'}
             className={'font-size-13'}
             style={{
-              padding: '8px 12px',
-              ...sourceStyle
+              padding: displayer ? '4px 12px 0px' : '6px 12px 0px',
+              ...(typeof sourceStyle === 'function' ? sourceStyle(!!displayer) : sourceStyle)
             }}
             gap={6}
           >
@@ -188,7 +197,7 @@ export default memo(
                 }}
               >
                 <Icon size={16} name={from.icon} />
-                <div className={ClassName.ellipsisFont(1)}>{from.name}</div>
+                <div className={'ellipsis-font-1'}>{from.name || t('general.Unnamed')}</div>
                 {normalizedTime && <div style={{ flexShrink: 0 }}> - {normalizedTime}</div>}
               </Content>
             )}
@@ -223,13 +232,12 @@ export default memo(
             }}
             style={{
               width: '100%',
-              marginBottom: noteVisible && context.showSource !== false ? 8 : 0,
               display: 'block',
-              padding: '4px 10px 4px 10px',
+              padding: '4px 10px',
               resize: 'none',
               lineHeight: 1.57,
-              borderLeft: `3px solid ${Colors.getAdaptColor(label.color) || 'var(--emphasis)'}`
-              // background: Colors.Background.ButtonHover
+              borderLeft: `3px solid ${Colors.getAdaptColor(label.color) || 'var(--emphasis)'}`,
+              ...textStyle
             }}
           ></AutosizeTextarea>
         )}
@@ -247,13 +255,13 @@ export default memo(
               resize: 'none',
               display: 'block',
               width: '100%',
-              padding: audioLabelMode || context.showSource === false ? '8px 12px 8px' : '0px 12px 8px',
+              padding: '0px 12px 8px',
               lineHeight: 1.57,
               ...noteStyle
             }}
+            className={firstChildPaddingTop}
             value={metaObject?.name}
             placeholder={t('general.Add note')}
-            className={ClassName.noStyleInput}
           />
         ) : null}
       </Content>

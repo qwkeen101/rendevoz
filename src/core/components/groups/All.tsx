@@ -88,9 +88,7 @@ export default memo(() => {
           showTitle: false
         }}
         styles={{
-          containerStyle: {
-            paddingTop: 40
-          }
+          actionPaddingTop: 40
         }}
         value={data}
         on={v => {

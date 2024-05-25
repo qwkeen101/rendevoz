@@ -1,7 +1,6 @@
-import { Button, Content, Icon, Tooltip, WithBorder } from '@/components'
+import { Content, Icon, WithBorder } from '@/components'
 import { IconNameItem } from '@/components/layout/sidebar/SidebarCollection'
 import { Zindexes } from '@/consts'
-import FontSize from '@/consts/font'
 import { GlobalInstance, useGlobalAtom, useShortcut } from '@/hooks'
 import TranslateService from '@/api/services/translate.service'
 import { globalStore, MetaStore } from '@/api/stores'
@@ -194,7 +193,7 @@ const TranslatePanel = () => {
     if (translateState.loading) {
       return (
         <Content flex auto centered>
-          <Content style={{ fontSize: FontSize['16px'], marginTop: -30 }} flex gap={16}>
+          <Content className={'font-size-16 normal-font'} style={{ marginTop: -30 }} flex gap={16}>
             <Icon name="park-loading-four" spin />
             <div>{t('general.translating')}...</div>
           </Content>

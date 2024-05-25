@@ -26,7 +26,7 @@ import * as Serializer from './Serializer'
 import * as DragManager from './dragdrop/DragManager'
 import { clearObjectCache } from './Algorithm'
 import { LayoutIdToTabMap } from '@/components/layout'
-
+import './index.less'
 export interface LayoutProps {
   /**
    * when there are multiple DockLayout, by default, you can't drag panel between them

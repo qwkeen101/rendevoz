@@ -8,6 +8,7 @@ import { useSetAtom } from 'jotai'
 import GrouperHeader from '@/core/components/group/components/grouper/headers'
 import { css } from '@emotion/css'
 import { useTranslation } from 'react-i18next'
+import produce from 'immer'
 export default () => {
   const instance = useGroupInstance()
   const setGroupState = useSetAtom(GroupStateAtom)
@@ -23,6 +24,9 @@ export default () => {
   const [isDragging, setIsDragging] = useState<number>()
   let reorderable = false
   const { t } = useTranslation()
+  if (currentGroupRule?.fieldType === 'containedIn') {
+    reorderable = true
+  }
   if (currentGroupRule && 'sort' in currentGroupRule && currentGroupRule.sort === 'manual') {
     reorderable = true
   }
@@ -37,15 +41,31 @@ export default () => {
     <Content style={{ maxWidth: 360 }}>
       {visible.length ? (
         <>
-          <div
+          <Content
+            flex
+            justifyContent={'space-between'}
             className={'transparent-font font-size-12 normal-font border-top'}
             style={{
               padding: '6px 8px 4px',
               marginTop: 4
             }}
           >
-            {t('general.Visible groups')}
-          </div>
+            <div>{t('general.Visible groups')}</div>
+            <div
+              onClick={() => {
+                setGroupState(w =>
+                  produce(w, draft => {
+                    draft.groups?.forEach(g => {
+                      g.hidden = true
+                    })
+                  })
+                )
+              }}
+              className={'select-color-font pointer'}
+            >
+              {t('general.Hide all')}
+            </div>
+          </Content>
           <Reorder.Group
             as={'div'}
             axis={'y'}
@@ -98,15 +118,31 @@ export default () => {
       ) : null}
       {hidden.length ? (
         <>
-          <div
+          <Content
+            flex
+            justifyContent={'space-between'}
             className={'transparent-font font-size-12 normal-font border-top'}
             style={{
               padding: '6px 8px 4px',
               marginTop: 4
             }}
           >
-            {t('general.Hidden groups')}
-          </div>
+            <div>{t('general.Hidden groups')}</div>
+            <div
+              onClick={() => {
+                setGroupState(w =>
+                  produce(w, draft => {
+                    draft.groups?.forEach(g => {
+                      g.hidden = false
+                    })
+                  })
+                )
+              }}
+              className={'select-color-font pointer'}
+            >
+              {t('general.Show all')}
+            </div>
+          </Content>
           <div style={{ marginBottom: 6 }}>
             {hidden.map(i => (
               <GrouperHeader

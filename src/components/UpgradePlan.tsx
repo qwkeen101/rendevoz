@@ -4,7 +4,6 @@ import { GlobalSetting } from '@/core'
 import Colors from '@/consts/colors'
 import { useUser } from '@/api/services/login.service'
 import { useToggle } from '@/hooks'
-import FontSize from '@/consts/font'
 import { useEffect, useState } from 'react'
 import BorderInput from './base/BorderInput'
 import wechatpay from '@/assets/wechatpay.png'
@@ -102,7 +101,7 @@ const UpgradePlan = () => {
               <div className={ClassName.title()}>免费账户</div>
               <div className={ClassName.description()}>￥0 / 月</div>
             </Content>
-            <Content flex column gap={6} style={{ width: 250, fontSize: 14 }}>
+            <Content flex column gap={6} style={{ width: 250 }}>
               {FreePlanIncludes.map(i => (
                 <Content flex gap={6} key={i}>
                   <Icon fill={'rgb(34,197,94)'} name="park-check" />
@@ -127,7 +126,7 @@ const UpgradePlan = () => {
                 <div>￥108 / 年 (永久会员优惠价)</div>
               </Content>
             </Content>
-            <Content flex column gap={6} style={{ width: 250, fontSize: 14 }}>
+            <Content flex column gap={6} style={{ width: 250 }}>
               {ProPlanIncludes.map(i => (
                 <Content flex gap={6} key={i}>
                   <Icon fill={'rgb(34,197,94)'} name="park-check" />
@@ -147,7 +146,7 @@ const UpgradePlan = () => {
                 <div>￥238</div>
               </Content>
             </Content>
-            <Content flex column gap={6} style={{ width: 250, fontSize: 14 }}>
+            <Content flex column gap={6} style={{ width: 250 }}>
               {LifetimePlanIncludes.map(i => (
                 <Content flex gap={6} key={i}>
                   <Icon fill={'rgb(34,197,94)'} name="park-check" />
@@ -158,7 +157,7 @@ const UpgradePlan = () => {
           </Content>
         </Content>
         <Content flex column gap={10}>
-          <div className={ClassName.title(FontSize['15px'])}>升级为会员</div>
+          <div className={'font-size-15'}>升级为会员</div>
           <div className={ClassName.description()}>订阅方式</div>
           <Content flex gap={6}>
             <Button.IconButton

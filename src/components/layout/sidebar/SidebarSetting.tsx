@@ -12,7 +12,7 @@ const SidebarSetting = () => {
         <GlobalSetting.SettingDialog />
       </Modal>
       <MenuItem onClick={toggleModalVisible}>
-        <Icon size={20} name="park-setting-two" />
+        <Icon size={18} name="park-setting-two" />
       </MenuItem>
     </>
   )

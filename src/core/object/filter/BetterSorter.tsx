@@ -4,9 +4,6 @@ import { Button, Content, Icon } from '@/components'
 import BetterFilter from '@/core/object/filter/BetterFilter'
 import produce from 'immer'
 import Id from '@/utils/id'
-import { Colors } from '@/consts'
-import { css } from '@emotion/css'
-import FontSize from '@/consts/font'
 import { MetaObject } from '~/typings'
 import _ from 'lodash'
 import { ClassName } from 'rendevoz'
@@ -59,23 +56,21 @@ const BetterSorter = ({ root, onChange }: { root?: SorterGroup; onChange?: (sort
       flex
       column
       gap={6}
-      className={css({
-        minWidth: 180,
-        '*': {
-          fontSize: FontSize['12px']
-        }
-      })}
+      style={{
+        maxWidth: 180
+      }}
+      className={'font-size-12'}
     >
       {rootSorter?.sorters.map(i => <SorterItem sorter={i} onChange={handleChange} onDelete={handleDelete} key={i.id} />)}
       <Button.IconButton
         size={11}
         gap={6}
+        className={'border'}
         style={{
-          fontSize: '12px',
-          border: `1px solid ${Colors.Background.Border}`,
           padding: '2px 6px 2px 4px',
           width: 'fit-content',
-          borderRadius: 8
+          borderRadius: 8,
+          ...BetterFilter.commonStyle
         }}
         onClick={() => {
           setRootSorterer(s =>

@@ -61,7 +61,7 @@ const ObjectDetails = ({
           top: 0,
           background: Colors.Background.Popover,
           justifyContent: 'space-between',
-          padding: '6px 8px 4px 16px',
+          padding: '8px 8px 4px 16px',
           cursor: 'grab',
           width: '100%',
           borderRadius: 12,

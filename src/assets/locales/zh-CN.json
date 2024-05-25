@@ -1,5 +1,7 @@
 {
   "general": {
+    "Hide all": "隐藏全部",
+    "Show all": "显示全部",
     "More sync files": "与其他{{num}}个文件",
     "Tools": "工具",
     "More": "更多",

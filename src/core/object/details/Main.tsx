@@ -32,6 +32,7 @@ const flatButton = css([
   }
 ])
 
+const SectionMargin = '20px 0px 8px'
 const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolean }) => {
   const object = MetaStore.useValue(metaId)
   const { renderWhole, metaObject } = useRenderObject({ metaObjectId: metaId })
@@ -168,7 +169,7 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
         gap={8}
         style={{
           fontSize: 14,
-          margin: '16px 0'
+          margin: SectionMargin
         }}
       >
         <Icon name={'park-tag-one'} size={16} />
@@ -228,7 +229,7 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
         gap={8}
         style={{
           fontSize: 14,
-          margin: '16px 0'
+          margin: SectionMargin
         }}
       >
         <Icon name={'custom-property'} size={18} />
@@ -250,7 +251,7 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
         gap={8}
         style={{
           fontSize: 14,
-          margin: '16px 0'
+          margin: SectionMargin
         }}
       >
         <Icon name={'park-share-one'} size={16} />
@@ -274,7 +275,7 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
         gap={8}
         style={{
           fontSize: 14,
-          margin: '16px 0'
+          margin: SectionMargin
         }}
       >
         <Icon name={'park-link-three'} size={16} />

@@ -165,11 +165,9 @@ export default ({ collectionId, parentFolderId }: { collectionId: number; parent
         >
           <Content flex alignItems={'center'} gap={10}>
             {c.icon && <img src={c.icon} width={20} height={20} style={{ objectFit: 'cover', borderRadius: 999 }} />}
-            <div className={ClassName.ellipsisFont(1)}>{c.name}</div>
+            <div className={'ellipsis-font-1'}>{c.name}</div>
           </Content>
-          {c.unreadCount !== undefined && c.unreadCount > 0 && (
-            <div style={{ fontSize: 13, color: Colors.Font.Transparent }}>{c.unreadCount}</div>
-          )}
+          {c.unreadCount !== undefined && c.unreadCount > 0 && <div className={'font-size-12 transparent-font'}>{c.unreadCount}</div>}
         </Content>
       )}
     </ContextMenu>

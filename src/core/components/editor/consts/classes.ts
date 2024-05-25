@@ -1,6 +1,5 @@
 import { css } from '@emotion/css'
 import { Colors } from '@/consts'
-import FontSize from '@/consts/font'
 
 const EditorWrapper = css({
   maxWidth: '100%',

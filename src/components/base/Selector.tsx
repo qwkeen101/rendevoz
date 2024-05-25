@@ -1,4 +1,3 @@
-import { ObjectStore } from '@/api/stores'
 import { Content, Icon, IconWithPopover, VirtualList, WithBorder } from '@/components'
 import { ClassName } from 'rendevoz'
 import { CSSProperties, ForwardedRef, forwardRef, useEffect, useLayoutEffect, useRef, useState } from 'react'
@@ -6,7 +5,6 @@ import isHotkey from 'is-hotkey'
 import { Colors, KEY } from '@/consts'
 import fuzzysort from 'fuzzysort'
 import BlockColorPicker from '@/core/components/editor/components/BlockColorPicker'
-import FontSize from '@/consts/font'
 import { Virtualizer } from '@tanstack/react-virtual'
 import { useTranslation } from 'react-i18next'
 import _ from 'lodash'
@@ -101,7 +99,6 @@ function Selector<T extends { name?: string; color?: string; id: number }>(
           <Content
             style={{
               padding: '0px 6px',
-              fontSize: 14,
               borderRadius: 3,
               lineHeight: '20px',
               color: Colors.getAdaptFontColor(i.color),
@@ -119,7 +116,7 @@ function Selector<T extends { name?: string; color?: string; id: number }>(
           placeholder={!selectedItems?.length ? t('general.Type to search') + '...' : undefined}
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className={ClassName.noStyleInput}
+          className={'font-size-13'}
           autoFocus
           onKeyDown={e => {
             if (isHotkey(KEY.Backspace, e)) {
@@ -130,17 +127,17 @@ function Selector<T extends { name?: string; color?: string; id: number }>(
               }
             }
           }}
-          style={{ flex: '1 1 60px', overflow: 'hidden', fontSize: '13px', lineHeight: '20px' }}
+          style={{ flex: '1 1 60px', overflow: 'hidden', lineHeight: '20px' }}
         />
       </Content>
-      <div style={{ padding: '4px 8px 2px', color: Colors.Font.Secondary, fontSize: 12, fontWeight: 600 }}>
+      <div style={{ padding: '4px 8px 2px' }} className={'font-size-12 transparent-font normal-font'}>
         {selectMode
           ? mode === 'single'
             ? t('general.Select an option')
             : t('general.Select options')
           : mode === 'single'
-          ? t('general.Select an option or create one')
-          : t('general.Select options or create one')}
+            ? t('general.Select an option or create one')
+            : t('general.Select options or create one')}
       </div>
       <VirtualList
         estimateSize={26}
@@ -215,11 +212,10 @@ function Item<T extends { name?: string; color?: string; id: number }>({
           color: Colors.getAdaptFontColor(item.color),
           background: Colors.getAdaptColor(item.color),
           padding: '0px 6px',
-          fontSize: 14,
           borderRadius: 3,
           width: 'fit-content'
         }}
-        className={ClassName.ellipsisFont(1)}
+        className={'ellipsis-font-1'}
       >
         {item.name}
       </div>
@@ -241,13 +237,11 @@ function Item<T extends { name?: string; color?: string; id: number }>({
                   onBlur={e => {
                     onItemUpdate?.({ ...item, name: e.target.value })
                   }}
-                  className={ClassName.noStyleInput}
+                  className={'font-size-13 border'}
                   style={{
-                    border: `1px solid ${Colors.Background.Border}`,
                     flex: 1,
                     borderRadius: 4,
-                    padding: '2px 6px',
-                    fontSize: FontSize['13px']
+                    padding: '2px 6px'
                   }}
                 />
 

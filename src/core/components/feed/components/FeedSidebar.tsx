@@ -77,15 +77,11 @@ const FeedSidebar = () => {
     <Resizable
       defaultSize={{ width: 240, height: '100%' }}
       enable={{ right: true }}
+      className={'normal-font border-right flex-column'}
       style={{
-        fontWeight: 600,
-        fontSize: 14,
-        display: 'flex',
-        flexDirection: 'column',
         paddingTop: 8,
         zIndex: 10,
         opacity: feedState.sidebarCollapsed ? 0 : 1,
-        borderRight: `1px solid ${Colors.Background.Border}`,
         transform: feedState.sidebarCollapsed ? 'translateX(-100%)' : 'unset',
         position: feedState.sidebarCollapsed ? 'absolute' : 'relative',
         top: 0,
@@ -113,10 +109,9 @@ const FeedSidebar = () => {
       <Content flex column style={{ padding: '0px 8px 10px', overflowY: 'auto', flexGrow: 1 }}>
         <div
           style={{
-            fontSize: 13,
-            color: Colors.Font.Transparent,
             margin: '6px 4px 4px'
           }}
+          className={'font-size-13 transparent-font'}
         >
           {t('general.Feeds')}
         </div>
@@ -126,10 +121,9 @@ const FeedSidebar = () => {
         </Content>
         <div
           style={{
-            fontSize: 13,
-            color: Colors.Font.Transparent,
             margin: '6px 4px 4px'
           }}
+          className={'font-size-13 transparent-font'}
         >
           {t('general.Podcasts')}
         </div>

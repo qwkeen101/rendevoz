@@ -51,7 +51,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   keyboardClose = true,
   reposition = true,
   keepAlign = false,
-  disableNudge = false,
+  disableNudge = true,
   position,
   openOnClick = true,
   openOnClickCapture = false,

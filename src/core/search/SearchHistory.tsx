@@ -1,9 +1,7 @@
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { Content, Icon } from '@/components'
 import { ClassName } from 'rendevoz'
-import FontSize from '@/consts/font'
 import { useTranslation } from 'react-i18next'
-import { useIsIn } from '@/hooks'
 import classnames from 'classnames'
 
 type SearchHistoryProps = {

@@ -8,8 +8,6 @@ import requestVideoSubtitle from '@/api/components/fileImporter/baidudisk/reques
 import toWebVTT from 'srt-webvtt'
 import Id from '@/utils/id'
 import { toast } from 'react-hot-toast'
-import { ClassName } from 'rendevoz'
-import FontSize from '@/consts/font'
 import { Colors } from '@/consts'
 import { useMediaInstance } from '@/core/components/media/hooks/useMediaInstance'
 import FileSystem from '@/api/fileSystem'
@@ -111,7 +109,7 @@ const MediaSubtitleImporter = ({ visible, onChange }: Props) => {
   return (
     <Modal visible={visible} onClose={onChange}>
       <div style={{ width: 400, display: 'flex', flexDirection: 'column', gap: 10, padding: 16 }}>
-        <div className={ClassName.title(FontSize['18px'])}>{t('general.import subtitles')}</div>
+        <div className={'font-size-17 bold-font'}>{t('general.import subtitles')}</div>
         <Content flex justifyContent="space-between">
           <div>{t('general.Choose language')}</div>
           <Select

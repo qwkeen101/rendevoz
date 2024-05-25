@@ -3,7 +3,6 @@ import styles from './index.module.less'
 import { MenuItem } from './Item'
 import classNames from 'classnames'
 import { css } from '@emotion/css'
-import FontSize from '@/consts/font'
 import { KeyToRegisteredSidebarElement } from '@/core/plugin/RegisterMap'
 import React, { useEffect, useRef, useState } from 'react'
 import { useGlobalAtom } from '@/hooks'
@@ -53,7 +52,7 @@ const SidebarIcons = ({
         buildIn.element
       ) : (
         <MenuItem onClick={buildIn.onClick}>
-          <Icon name={buildIn.icon || 'park-help'} size={20} />
+          <Icon name={buildIn.icon || 'park-help'} size={18} />
         </MenuItem>
       )
       return (
@@ -130,8 +129,8 @@ const SidebarIcons = ({
             background: dragInto
               ? Colors.Common.SelectColorTransparent
               : panelState.leftOpen
-              ? Colors.Background.Secondary
-              : Colors.Background.Global,
+                ? Colors.Background.Secondary
+                : Colors.Background.Global,
             minWidth: dragInto ? 44 : 1,
             padding: direction === 'left' && items.length === 0 ? 0 : undefined
             // marginTop: direction === 'right' ? 38 : undefined
@@ -139,15 +138,13 @@ const SidebarIcons = ({
           className={classNames(
             styles.list,
             'border-right',
+            'font-size-13',
             css({
               display: 'flex',
               paddingBottom: '20px',
               paddingTop: 8,
               flexDirection: 'column',
-              gap: 8,
-              '*': {
-                fontSize: FontSize['13px']
-              }
+              gap: 8
             })
           )}
           axis={'y'}

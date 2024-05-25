@@ -4,7 +4,6 @@ import { CSSProperties, useRef, useState } from 'react'
 import { css } from '@emotion/css'
 import Colors from '@/consts/colors'
 import ClassName from '@/styles/classNames'
-import FontSize from '@/consts/font'
 import { Reorder } from 'framer-motion'
 import useDropObjectArea from './useDropObjectArea'
 import { MetaObject } from '~/typings'
@@ -218,7 +217,7 @@ const AttachmentList = ({
           ))}
         </Reorder.Group>
         {attachments.length > 0 && (
-          <Content flex alignItems="center" justifyContent="space-between" gap={6} className={ClassName.description(FontSize['12px'])}>
+          <Content flex alignItems="center" justifyContent="space-between" gap={6} className={'font-size-12 transparent-font'}>
             {attachments.length ? <div>{t('general.num attachments', { num: attachments.length })}</div> : null}
             <Content
               className={css({

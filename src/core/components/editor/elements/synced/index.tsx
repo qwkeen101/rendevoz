@@ -1,7 +1,7 @@
 import { RenderElementProps } from 'slate-react'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { SyncedBlockElement } from '~/typings/components/editor/outerElements'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { Editor, Node, Range, Transforms } from 'slate'
 import { ReactEditor, useRenderObject, useSlate, useSlateStatic } from '@/core'
 import { GlobalInstance, useDebounceEffect, useIsIn, useMemoizedFn, useSelectAtomValue } from '@/hooks'
@@ -9,7 +9,6 @@ import { Colors } from '@/consts'
 import { AnimatePopover, Button, Content, Icon, IconWithPopover, WithBorder } from '@/components'
 import { ClassName } from 'rendevoz'
 import useCheckSyncInWhere from '@/core/components/editor/elements/synced/useCheckSyncInWhere'
-import FontSize from '@/consts/font'
 import _ from 'lodash'
 import { HistoryEditor } from 'slate-history'
 import { useTranslation } from 'react-i18next'
@@ -153,13 +152,12 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
               zIndex: 20,
               transition: 'opacity 0.2s ease'
             }}
-            className={ClassName.description(FontSize['12px'])}
+            className={'transparent-font font-size-12'}
           >
             <Content
               flex
               gap={4}
               style={{
-                fontSize: 12,
                 background: Colors.Background.Global,
                 border: Colors.Consts.Border,
                 marginLeft: 'auto',
@@ -175,7 +173,7 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
                 withClickCover={true}
                 positions={['bottom', 'top']}
                 content={
-                  <WithBorder style={{ fontSize: 14, maxWidth: 300 }} padding={'4px 8px'} width={140}>
+                  <WithBorder style={{ maxWidth: 300 }} padding={'4px 8px'} width={140}>
                     {blockDetails?.syncedMetaIds.map(i => <InlinePageRenderer syncMetaId={syncMeta.id} metaId={i} />)}
                   </WithBorder>
                 }

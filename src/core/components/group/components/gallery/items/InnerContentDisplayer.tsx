@@ -81,14 +81,18 @@ export default ({
               : undefined
           }
           showAudio={mode === 'content'}
-          sourceStyle={{
-            padding: meta?.name ? '6px 8px' : '7px 8px'
-          }}
+          sourceStyle={d => ({
+            padding: d ? '1px 8px 0px' : '6px 8px 0px',
+            fontSize: 12
+          })}
           style={{
             fontSize: 12
           }}
           noteStyle={{
             padding: '0px 8px 8px'
+          }}
+          textStyle={{
+            padding: '4px 8px'
           }}
           showAddNote={false}
           showVideo={false}

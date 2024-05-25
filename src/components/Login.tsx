@@ -38,9 +38,9 @@ const loginTextClassName = css({
   marginBottom: 20
 })
 export const indicatorClassName = css({
-  fontSize: '1rem',
   fontWeight: 500,
-  textTransform: 'capitalize'
+  textTransform: 'capitalize',
+  color: Colors.Font.Transparent
 })
 const validateEmail = (email?: string) => {
   const validRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/

@@ -14,6 +14,7 @@ export default (metaIds: number | number[], grouperId: number, instance: InnerGr
   const metaMap = MetaStore.getMetaObjectsMap()
   const updateProp = (value: any, updateArr?: boolean) => {
     if (!currentGroupRule) return
+    if (!currentGroupRule.propertyId) return
     if (currentGroupRule.propertyGroupType === 'custom') {
       ids.forEach(id => {
         const meta = metaMap.get(id)
@@ -52,7 +53,7 @@ export default (metaIds: number | number[], grouperId: number, instance: InnerGr
       })
     }
   }
-  if (currentGroupRule && currentGrouper) {
+  if (currentGroupRule && currentGrouper && currentGroupRule.propertyId) {
     let prop = undefined
     if (currentGroupRule.propertyGroupType === 'custom') {
       prop = MetaStore.getPropDetails(currentGroupRule.propertyId)

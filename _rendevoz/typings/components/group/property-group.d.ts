@@ -33,4 +33,15 @@ export type MetaTypeGroupRule = {
   sort: 'manual'
 }
 
-export type IGroupRule = SelectGroupRule | NumberGroupRule | StringGroupRule | DateGroupRule | CheckboxGroupRule | MetaTypeGroupRule
+export type MetaContainedInGroupRule = {
+  fieldType: 'containedIn'
+}
+
+export type IGroupRule =
+  | MetaContainedInGroupRule
+  | SelectGroupRule
+  | NumberGroupRule
+  | StringGroupRule
+  | DateGroupRule
+  | CheckboxGroupRule
+  | MetaTypeGroupRule

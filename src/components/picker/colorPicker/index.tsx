@@ -2,8 +2,8 @@ import { FC, memo } from 'react'
 import * as material from 'material-colors'
 import { Content } from '../../base'
 import { css } from '@emotion/css'
-import FontSize from '@/consts/font'
 import { default as ConstColors } from '@/consts/colors'
+import classnames from 'classnames'
 interface ColorPickerProps {
   colors?: string[][]
   onPick: (color: string) => void
@@ -97,26 +97,28 @@ const ColorPicker: FC<ColorPickerProps> = ({
         })}
       >
         <div
-          className={css({
-            width: 22,
-            height: 22,
-            borderRadius: 3,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: FontSize['16px'],
-            fontWeight: 500,
-            position: 'relative'
-            // opacity: 0.8
-          })}
+          className={classnames(
+            'font-size-16',
+            css({
+              width: 22,
+              height: 22,
+              borderRadius: 3,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 500,
+              position: 'relative'
+              // opacity: 0.8
+            })
+          )}
           style={{
             background: isFont
               ? 'white'
               : color === defaultFontColor || color === defaultBgColor
-              ? ConstColors.Background.Secondary
-              : showLess === false
-              ? color
-              : ConstColors.getAdaptColor(color),
+                ? ConstColors.Background.Secondary
+                : showLess === false
+                  ? color
+                  : ConstColors.getAdaptColor(color),
             color: isFont ? color : undefined,
             boxShadow: 'rgb(15 15 15 / 10%) 0px 0px 0px 1px inset'
           }}

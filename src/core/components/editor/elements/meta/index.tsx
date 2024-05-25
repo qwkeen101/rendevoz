@@ -1,15 +1,13 @@
-import { FC, memo, useState } from 'react'
+import { FC, memo } from 'react'
 import { RenderElementProps } from 'slate-react'
 import NoteCard from '../cards/NoteCard'
 import { useRenderObject } from '@/core'
 import { Content } from '@/components'
 import { Colors } from '@/consts'
-import FontSize from '@/consts/font'
 import LabelDetailsRenderer from '@/core/object/renderer/LabelDetailsRenderer'
 import UncontrolledGroup from '@/core/components/group/UncontrolledGroup'
 import Audio from '@/core/components/media/wrappers/Audio'
 import Video from '@/core/components/media/wrappers/Video'
-import Image from '@/core/components/editor/elements/image'
 import { ObjectStore } from '@/api/stores'
 import { IImage } from '~/typings'
 import ResizeWrapper from '@/core/components/editor/elements/ResizeWrapper'
@@ -144,7 +142,7 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
           },
           descriptionOptions: {
             style: {
-              fontSize: FontSize['12px']
+              fontSize: 12
             }
           },
           renderOptions: {

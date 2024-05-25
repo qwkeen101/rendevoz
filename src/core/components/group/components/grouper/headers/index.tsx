@@ -17,6 +17,7 @@ import { Colors } from '@/consts'
 import { useTranslation } from 'react-i18next'
 import NumberGroupHeader from '@/core/components/group/components/grouper/headers/NumberGroupHeader'
 import MetaTypeGrouperHeader from '@/core/components/group/components/grouper/headers/MetaTypeGrouperHeader'
+import ContainedInGrouperHeader from '@/core/components/group/components/grouper/headers/ContainedInGrouperHeader'
 
 export default function GrouperHeader({
   group,
@@ -39,8 +40,10 @@ export default function GrouperHeader({
   const setGroupState = useSetAtom(GroupStateAtom)
   let fieldType = currentViewGrouper?.fieldType
   if (currentViewGrouper?.propertyGroupType === 'custom') {
-    const prop = MetaStore.getPropDetails(currentViewGrouper.propertyId)
-    fieldType = prop?.propType
+    if (currentViewGrouper.propertyId) {
+      const prop = MetaStore.getPropDetails(currentViewGrouper.propertyId)
+      fieldType = prop?.propType
+    }
   }
   if (!currentViewGrouper) {
     return null
@@ -49,6 +52,9 @@ export default function GrouperHeader({
     console.log(fieldType)
     if (group.name === EMPTY_GROUPER_NAME) {
       return <div>{t('general.No value')}</div>
+    }
+    if (fieldType === 'containedIn') {
+      return <ContainedInGrouperHeader canOpen={showToggle} id={Number(group.name)} />
     }
     if (fieldType === 'singleSelect' || fieldType === 'multiSelect') {
       return <SelectGrouperHeader optionId={Number(group.name)} />

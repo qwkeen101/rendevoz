@@ -20,7 +20,7 @@ export default memo(
     }
     onClick?: React.MouseEventHandler
   }) => {
-    const { titleSize = 15, titleWeight = 600 } = styles || {}
+    const { titleWeight = 500 } = styles || {}
     const item = ObjectStore('feed').useValue(id)
     const isRead = useFeedIsRead(id)
     if (!item) return null
@@ -39,7 +39,6 @@ export default memo(
       >
         <div
           style={{
-            fontSize: titleSize,
             fontWeight: titleWeight,
             flex: 1
           }}

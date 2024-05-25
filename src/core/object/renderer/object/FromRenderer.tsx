@@ -1,18 +1,10 @@
 import { IconNameItem } from '@/components/layout/sidebar/SidebarCollection'
 import Colors from '@/consts/colors'
-import { globalStore, MetaStore } from '@/api/stores'
-import { CSSProperties, useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { MetaStore } from '@/api/stores'
+import { CSSProperties } from 'react'
 import { MetaObject } from '~/typings'
-import { delay } from '@/utils/functions'
-import FontSize from '@/consts/font'
 import { css } from '@emotion/css'
-import { Content, Tooltip } from '@/components'
-import ClassName from '@/styles/classNames'
-import { PAGE_SPACING } from '../../../components/pdf/core/layouts/Layout'
 import { Rendevoz } from '../../../rendevoz'
-import { normalizeSecondsToTime } from '../../../components/media/utils'
-import { metaObjectsAtom } from '@/api/stores/meta/meta.store'
 
 export type FromRendererProps = {
   style?: CSSProperties

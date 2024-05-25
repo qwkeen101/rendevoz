@@ -10,7 +10,6 @@ export default (instance: IGroupInstance) => {
     if (currSelectCell) return
     if (!currSelectOneRow) return
     if (document.querySelector('[role="popup-wrapper"]')) return
-    if (e.target instanceof HTMLElement && e.target.closest('input,textarea,[contenteditable="true"]')) return
     if (isHotkey(KEY.ArrowUp, e)) {
       const currentRowId = instance.values.selectedRowIdSet.keys().next().value as number
       e.preventDefault()

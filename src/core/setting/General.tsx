@@ -18,7 +18,6 @@ import { ipcInstance } from '@/electron'
 import semver from 'semver'
 import Colors from '@/consts/colors'
 import BorderInput from '@/components/base/BorderInput'
-import FontSize from '@/consts/font'
 import { isValidHttpUrl } from '../components/webpage/utils'
 import { changeFilePath, openDatabaseFolder } from '@/utils/file'
 import SettingGroup from '@/core/setting/SettingGroup'
@@ -408,7 +407,7 @@ const GeneralSetting = () => {
           column: true,
           children: (
             <Content flex fullWidth column gap={5}>
-              <div style={{ textTransform: 'none' }} className={ClassName.description(FontSize['12px'])}>
+              <div style={{ textTransform: 'none' }} className={'font-size-12 transparent-font'}>
                 {t('settings.search engine example')}
               </div>
               <div

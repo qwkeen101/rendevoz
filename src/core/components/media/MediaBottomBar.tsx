@@ -9,7 +9,6 @@ import { normalizeSecondsToTime } from './utils'
 import ClassName from '@/styles/classNames'
 import useMediaToolbarState from './hooks/useMediaToolbarState'
 import Colors from '@/consts/colors'
-import FontSize from '@/consts/font'
 import MediaProgressLabelPin from './MediaProgressLabelPin'
 import { useSetAtom } from 'jotai'
 import { VideoSidebarStateAtom } from './hooks/useMediaSidebarState'
@@ -102,8 +101,8 @@ const MediaBottomBar = () => {
               flex
               column
               alignItems="center"
+              className={'font-size-12'}
               style={{
-                fontSize: '12px',
                 textShadow: mediaState.mode !== 'audio' ? '0 0 4px rgba(0,0,0,0.45)' : undefined,
                 padding: '5px 9px',
                 color: mediaState.mode === 'audio' ? Colors.Font.Transparent : Colors.Font.White,
@@ -254,7 +253,7 @@ const MediaBottomBar = () => {
               gap={6}
               flex
               alignItems="center"
-              className={ClassName.description(FontSize['12px'])}
+              className={'transparent-font font-size-12'}
               style={{ marginLeft: 6, flexShrink: 1, overflow: 'hidden' }}
             >
               <div>
@@ -327,11 +326,10 @@ const MediaBottomBar = () => {
                     text={`${i}`}
                     selected={mediaState.speed === i ? true : undefined}
                     key={i}
+                    className={'normal-font font-size-13'}
                     style={{
                       textAlign: 'center',
-                      fontWeight: 600,
                       width: '100%',
-                      fontSize: FontSize['13px'],
                       padding: '2px 6px'
                     }}
                     onClick={() => {

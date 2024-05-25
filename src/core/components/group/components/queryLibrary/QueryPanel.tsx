@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { CheckBox, Content, Switch, VirtualList } from '@/components'
+import { CheckBox, Content, VirtualList } from '@/components'
 import { ClassName } from 'rendevoz'
-import FontSize from '@/consts/font'
-import { MetaStore, ObjectStore } from '@/api/stores'
+import { MetaStore } from '@/api/stores'
 import { transformFilterGroupToFilterArray } from '@/core/object/filter/useBetterFilter'
 import { getAllMetasInTable } from '@/core/components/group/actions/search'
 import { useRenderObject } from '@/core'
@@ -62,7 +61,7 @@ const QueryPanel = ({ onClose, groupValue }: { onClose: VoidFunction; groupValue
     <Content flex column style={{ width: 700, height: 'auto', maxHeight: '70vh', borderRadius: 12 }}>
       <Content flex column style={{ padding: 24, paddingBottom: 6 }}>
         <Content flex column gap={12} style={{ lineHeight: 1, marginBottom: 16 }}>
-          <div className={ClassName.title(FontSize['14px'])}>{t('general.Filter and add objects into group')}</div>
+          <div className={'normal-font'}>{t('general.Filter and add objects into group')}</div>
         </Content>
         <div className={'border-box-shadow'} style={{ borderRadius: 6 }}>
           <BetterFilter showSave={false} root={queryRule} onChange={r => setQueryRule(r)} />
@@ -194,7 +193,6 @@ const ResultItem = ({
       <Content>
         {renderInline({
           ellipsisLine: 1,
-          containerStyle: { fontSize: 14 },
           onClick: () => {
             onSelect(!selected)
           }

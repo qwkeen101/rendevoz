@@ -29,13 +29,10 @@ export default memo(({ metaId, visible }: { metaId: number; visible?: boolean })
           gap={8}
           style={{
             fontSize: 14,
-            margin: '16px 0'
+            margin: '20px 0 8px'
           }}
         >
-          <Icon
-            name={'park-arrow-up'}
-            size={16}
-          />
+          <Icon name={'park-arrow-up'} size={16} />
           {t('general.Appear in')}
         </Content>
         <Content className={'border-box-shadow'} column gap={5} flex style={{ borderRadius: 8, padding: 8 }}>

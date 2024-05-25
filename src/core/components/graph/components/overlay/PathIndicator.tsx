@@ -6,8 +6,6 @@ import { Content, Icon } from '@/components'
 import { useTranslation } from 'react-i18next'
 import { globalStore } from '@/api/stores'
 import { metaObjectsAtom } from '@/api/stores/meta/meta.store'
-import ClassName from '@/styles/classNames'
-import FontSize from '@/consts/font'
 
 const PathIndicator = () => {
   const pathFilter = useAtomValue(GraphPathFilterAtom)
@@ -42,10 +40,10 @@ const PathIndicator = () => {
     <Content style={{ maxWidth: 350, overflow: 'hidden', padding: '2px 6px' }}>
       {indicatorState?.pathsNum ? (
         <>
-          <div className={ClassName.ellipsisFont(1)} style={{ fontSize: FontSize['12px'] }}>
+          <div className={'ellipsis-font-1 font-size-12'}>
             {t('graph.found paths from', { num: indicatorState?.pathsNum })} {indicatorState?.startNodeName}
           </div>
-          <Content flex gap={16} className={ClassName.description(FontSize['11px'])}>
+          <Content flex gap={16} className={'font-size-12 transparent-font'}>
             <span>
               {t('graph.shortest path length')} {indicatorState?.shortest}
             </span>

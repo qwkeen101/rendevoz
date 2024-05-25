@@ -7,7 +7,6 @@ import { MarkerColor } from '@/consts'
 import { useSelectAtomValue, useToggle, useUpdateEffect } from '@/hooks'
 import Colors from '@/consts/colors'
 import { css, keyframes } from '@emotion/css'
-import FontSize from '@/consts/font'
 import { getSmoothPolyPath } from '@/core/components/whiteboard/utils/getSmoothPoly'
 import useEraseEdge from '@/core/components/whiteboard/edge/useEraseEdge'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
@@ -365,7 +364,7 @@ const TreeEdge: FC<{
                   onClick={() => setTimeout(() => toggleIsEditingLabel(true))}
                   style={{
                     maxWidth: '16em',
-                    fontSize: isMindmapConnection ? 12 : FontSize['14px'],
+                    fontSize: isMindmapConnection ? 12 : 14,
                     padding: isMindmapConnection ? '3px' : '6px',
                     minWidth: 1,
                     pointerEvents: pointerMode === 'pan' ? 'none' : 'auto'

@@ -9,7 +9,6 @@ import { pinnedCollectionsAtom } from '@/api/stores/collection.store'
 import SidebarCollectionItem from './items/SidebarCollectionItem'
 import { useToggle } from '@/hooks'
 import { useTranslation } from 'react-i18next'
-import FontSize from '@/consts/font'
 import { Colors } from '@/consts'
 
 const SidebarPinned = memo(() => {
@@ -24,7 +23,8 @@ const SidebarPinned = memo(() => {
         flex
         alignItems="center"
         justifyContent="space-between"
-        style={{ fontSize: 13, color: Colors.Font.Transparent, padding: '12px 12px 6px 12px' }}
+        className={'font-size-13 transparent-font'}
+        style={{ padding: '12px 12px 6px 12px' }}
       >
         <div style={{ cursor: 'pointer', userSelect: 'none' }} onClick={toggleCollapsed}>
           {t('sidebar.pinned')}

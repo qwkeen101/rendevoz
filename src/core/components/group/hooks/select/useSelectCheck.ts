@@ -3,7 +3,7 @@ import { Box, MetaGroupChild } from '~/typings'
 import { boxesIntersect } from '@/utils'
 import { getDistanceBetweenElementAndScrollableElement } from '@/core/components/editor/utils/scroll'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
-import scroll from 'scroll-into-view-if-needed'
+import scrollIntoViewIfNeeded from 'scroll-into-view-if-needed'
 /**
  * 检查是否被选中，支持表格，列表，画廊视图等
  */
@@ -22,7 +22,8 @@ const useSelectCheck = (containerRef: RefObject<HTMLElement>, rowDetails: MetaGr
   const scrollIntoView = () => {
     const c = containerRef.current
     if (c) {
-      scroll(containerRef.current, { behavior: 'auto', scrollMode: 'if-needed', block: 'center' })
+      console.log(c)
+      scrollIntoViewIfNeeded(c, { behavior: 'auto', scrollMode: 'if-needed' })
     }
   }
   const checkIntersect = (box: Box) => {

@@ -81,7 +81,7 @@ export default () => {
           </Content>
         ))}
       </Content>
-      <div style={{ padding: 4 }}>
+      <div style={{ padding: '4px' }}>
         {showCardSetting && (
           <>
             <ButtonSwitch

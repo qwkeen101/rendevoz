@@ -4,7 +4,6 @@ import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { useState } from 'react'
 import produce from 'immer'
 import { ClassName } from 'rendevoz'
-import FontSize from '@/consts/font'
 import { KEY } from '@/consts'
 import { useDb } from '@/hooks'
 import isHotkey from 'is-hotkey'
@@ -109,7 +108,7 @@ const WorkspaceSetting = () => {
         style={{
           paddingBottom: 8
         }}
-        className={classnames(ClassName.title(FontSize['16px']), 'border-bottom')}
+        className={'border-bottom bold-font font-size-15'}
       >
         {t('settings.Current workspace')}
       </div>
@@ -121,7 +120,7 @@ const WorkspaceSetting = () => {
         className={'border-bottom'}
         style={{ marginTop: 10, paddingBottom: 8 }}
       >
-        <div className={ClassName.title(FontSize['16px'])}>{t('settings.All workspaces')}</div>
+        <div className={'bold-font font-size-15'}>{t('settings.All workspaces')}</div>
         <div style={{ width: 'fit-content' }} onClick={() => handleCreateWorkspace()} className={ClassName.selectButton()}>
           {t('settings.Create new workspace')}
         </div>

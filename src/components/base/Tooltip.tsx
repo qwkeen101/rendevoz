@@ -4,8 +4,6 @@ import { useMemoizedFn, useMergedRef } from '@/hooks'
 import Zindexes from '@/consts/zindex'
 import { waitFor } from '@/utils/functions'
 import { AnimatePopoverProps } from './AnimatePopover'
-import FontSize from '@/consts/font'
-import { Colors } from '@/consts'
 
 interface ToolTipProps {
   content?: string | ReactNode | ((s: (v: boolean) => void) => ReactNode)
@@ -71,9 +69,9 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
       document.addEventListener('pointerup', pointerUphandler)
       setOpen(false)
     }
-    if (e.type === 'pointerenter') {
-      console.log(e)
-      if (e.target !== e.currentTarget) return
+    if (e.type === 'pointerover') {
+      if (isInRef.current) return
+      if (!childRef.current?.contains(e.target)) return
       isInRef.current = true
       if (delay) {
         setTimeout(() => {
@@ -116,12 +114,12 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
     const child = childRef.current
     if (child && content) {
       child.addEventListener('pointerdown', handleMouseEvent)
-      child.addEventListener('pointerenter', handleMouseEvent)
+      child.addEventListener('pointerover', handleMouseEvent)
       child.addEventListener('pointerleave', handleMouseEvent)
     }
     return () => {
       child?.removeEventListener('pointerdown', handleMouseEvent)
-      child?.removeEventListener('pointerenter', handleMouseEvent)
+      child?.removeEventListener('pointerover', handleMouseEvent)
       child?.removeEventListener('pointerleave', handleMouseEvent)
     }
   }, [childRef, content])

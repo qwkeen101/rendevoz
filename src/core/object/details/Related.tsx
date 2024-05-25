@@ -1,11 +1,10 @@
 import { CSSProperties, memo, useMemo, useRef, useState } from 'react'
 import { GlobalInstance, useGlobalAtomValue } from '@/hooks'
-import { indexedMetaLinksAtom, metaLinksAtom, metaObjectsAtom } from '@/api/stores/meta/meta.store'
+import { indexedMetaLinksAtom } from '@/api/stores/meta/meta.store'
 import { useTranslation } from 'react-i18next'
-import { globalStore, MetaStore } from '@/api/stores'
-import { AnimatePopover, Button, Content, ContentEditor, Icon, IconWithPopover, TabPane, Tabs, WithBorder } from '@/components'
+import { MetaStore } from '@/api/stores'
+import { Button, Content, ContentEditor, Icon, IconWithPopover, TabPane, Tabs, WithBorder } from '@/components'
 import { css } from '@emotion/css'
-import FontSize from '@/consts/font'
 import Colors from '@/consts/colors'
 import { ClassName, MetaObject } from 'rendevoz'
 import _ from 'lodash'
@@ -126,7 +125,7 @@ export const RelatedPanel = memo(({ metaId, style }: { metaId: number; style?: C
     >
       <Tabs
         tabNavStyle={{
-          fontSize: FontSize['12px'],
+          fontSize: 12,
           padding: '2px 8px'
         }}
         onTabClick={key => {
@@ -141,7 +140,7 @@ export const RelatedPanel = memo(({ metaId, style }: { metaId: number; style?: C
               onSelect={v => setGroupType(v[0])}
               style={{ fontSize: '0.9rem', padding: '0px 6px', width: 120, height: 24 }}
               menuStyle={{
-                fontSize: '13px',
+                fontSize: 13,
                 overflowY: 'auto',
                 maxHeight: 240
               }}

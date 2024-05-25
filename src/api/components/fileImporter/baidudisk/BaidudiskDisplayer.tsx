@@ -2,7 +2,6 @@ import { memo, useEffect, useRef, useState } from 'react'
 import getAllFilesAndFolders from '@/api/components/fileImporter/baidudisk/getAllFilesAndFolders'
 import { Button, Content, Icon, IconWithPopover, Modal, WithBorder } from '@/components'
 import { ClassName } from 'rendevoz'
-import FontSize from '@/consts/font'
 import { assignProperties, DateFormat } from '@/utils'
 import { Colors } from '@/consts'
 import { IBaidudiskInstance, MetaObject } from '~/typings'
@@ -255,7 +254,7 @@ const FileItemRenderer = ({ file, onClick }: { file: BaiduFile; onClick: VoidFun
         {categoryToIcon[file.category] && <Icon name={categoryToIcon[file.category]} />}
         {file.filename}
       </Content>
-      <Content flex gap={10} className={ClassName.description(FontSize['12px'])}>
+      <Content flex gap={10} className={'font-size-12 transparent-font'}>
         {file.size !== 0 && <span>{formatBytes(file.size)}</span>}
         <span>{DateFormat.format(file.createdAt, DateFormat.Formats.withMinute)}</span>
       </Content>

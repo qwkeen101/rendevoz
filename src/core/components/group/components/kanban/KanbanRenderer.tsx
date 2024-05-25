@@ -9,6 +9,7 @@ import { assignProperties } from '@/utils'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import { Virtualizer } from '@tanstack/react-virtual'
 import scrollIntoView from 'scroll-into-view-if-needed'
+import GalleryHideLabelSource from '@/core/components/group/components/grouper/multipleGroupRenderer/GalleryHideLabelSource'
 
 type View = MetaGroup['views'][0]
 export default memo(() => {
@@ -66,6 +67,9 @@ export default memo(() => {
         if (groupFieldType === 'metaType') {
           showAddMore = !!GlobalInstance.metaOps?.canCreateDirectly(i.name)
         }
+        if (groupFieldType === 'containedIn') {
+          showAddMore = false
+        }
         return (
           <Content data-idx={idx} key={i.id} style={{ flexShrink: 0, width: size }}>
             <GrouperHeader
@@ -75,15 +79,29 @@ export default memo(() => {
               group={i}
               showToggle={false}
             />
-            <KanbanList
-              onVirtualizerInitialized={v => {
-                idxToVirtualizerRef.current[idx] = v
-              }}
-              showAddMore={showAddMore}
-              grouperId={i.id}
-              key={i.id}
-              values={i.values}
-            />
+            {groupFieldType === 'containedIn' ? (
+              <GalleryHideLabelSource group={i}>
+                <KanbanList
+                  onVirtualizerInitialized={v => {
+                    idxToVirtualizerRef.current[idx] = v
+                  }}
+                  showAddMore={showAddMore}
+                  grouperId={i.id}
+                  key={i.id}
+                  values={i.values}
+                />
+              </GalleryHideLabelSource>
+            ) : (
+              <KanbanList
+                onVirtualizerInitialized={v => {
+                  idxToVirtualizerRef.current[idx] = v
+                }}
+                showAddMore={showAddMore}
+                grouperId={i.id}
+                key={i.id}
+                values={i.values}
+              />
+            )}
           </Content>
         )
       })}

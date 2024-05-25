@@ -1,9 +1,8 @@
-import { AnimatePopover, Content, Icon, IconWithPopover, Tooltip, WithBorder, ContentEditor } from '@/components'
+import { AnimatePopover, Content, Icon, IconWithPopover, WithBorder, ContentEditor } from '@/components'
 import { MetaStore, ObjectStore } from '@/api/stores'
-import { CSSProperties, useEffect, useState } from 'react'
+import { CSSProperties, useState } from 'react'
 import { DraggableElement } from '../../global'
 import ClassName from '@/styles/classNames'
-import FontSize from '@/consts/font'
 import LabelActionMenu, { LabelActionEvent } from '../menus/LabelActionMenu'
 import { AttachmentWrapper, useRenderObject } from '../index'
 import { useTranslation } from 'react-i18next'
@@ -241,7 +240,7 @@ const useRenderLabel = (opts: {
               ...style
             }}
             onContextMenu={() => setLabelState(s => ({ ...s, addingDescription: true }))}
-            className={ClassName.description(FontSize['12px'])}
+            className={'font-size-12 transparent-font'}
           >
             {label.description}
           </div>

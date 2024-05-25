@@ -2,10 +2,7 @@ import { CheckBox, Content } from '@/components'
 import useRenderObject from './renderer/useRenderObject'
 import FontSize from '@/consts/font'
 import { IMetaAttachment } from '~/typings'
-import NameEditor from '../../components/base/ContentEditor'
-import { useToggle } from '@/hooks'
 import ClassName from '@/styles/classNames'
-import { useTranslation } from 'react-i18next'
 import AutosizeTextarea from '@/components/custom/input/AutoSizeTextArea'
 
 const AttachmentObject = ({
@@ -64,7 +61,7 @@ const AttachmentObject = ({
         alignItems="center"
         gap={6}
         style={{ cursor: 'pointer' }}
-        className={ClassName.description(FontSize['12px'])}
+        className={'transparent-font font-size-12'}
         onClick={() => {
           if (!showSelect) {
             return

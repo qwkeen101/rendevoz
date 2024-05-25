@@ -524,10 +524,12 @@ const HighlightLeaf = (props: RenderLeafProps & { style?: CSSProperties }) => {
           show &&
           (expanded ? (
             <div
+              onPointerOverCapture={e => e.stopPropagation()}
               onPointerDownCapture={e => e.nativeEvent.stopPropagation()}
               onPointerUpCapture={e => e.stopPropagation()}
               ref={r}
               onClick={e => {
+                e.preventDefault()
                 e.stopPropagation()
               }}
               style={{
@@ -547,8 +549,10 @@ const HighlightLeaf = (props: RenderLeafProps & { style?: CSSProperties }) => {
                 background: Colors.Background.Popover,
                 fontSize: 13,
                 borderRadius: 4,
+                pointerEvents: 'auto',
                 transform: 'translateY(-100%)',
-                fontWeight: 400
+                fontWeight: 400,
+                zIndex: 99
               }}
             >
               {label?.name}
@@ -557,18 +561,22 @@ const HighlightLeaf = (props: RenderLeafProps & { style?: CSSProperties }) => {
           ) : (
             <Icon
               size={16}
-              onPointerDownCapture={e => e.nativeEvent.stopPropagation()}
+              onPointerDownCapture={e => e.stopPropagation()}
               onPointerUpCapture={e => e.stopPropagation()}
               onClick={e => {
                 setExpanded(true)
                 e.stopPropagation()
+                e.preventDefault()
               }}
+              onPointerOverCapture={e => e.stopPropagation()}
               style={{
                 position: 'absolute',
                 top: -16,
                 left: -16,
                 cursor: 'pointer',
+                zIndex: 99,
                 color: 'var(--emphasis)',
+                pointerEvents: 'auto',
                 transform: 'rotateY(180deg)'
               }}
               theme={'filled'}

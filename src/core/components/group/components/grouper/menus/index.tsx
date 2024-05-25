@@ -58,17 +58,23 @@ export default function GroupGrouperMenu({
       }
       return false
     })
-    return groupable.map(i => {
+    const results = groupable.map(i => {
       if (i.type === 'basic') {
         return { ...DEFAULT_GROUP_PROPERTY_OBJ[i.id], name: t(i.display) }
       }
       return { ...MetaStore.getPropDetails(i.id), type: 'custom' }
     })
+    results.unshift({
+      type: 'custom',
+      propType: 'containedIn',
+      name: t('filter.Contained in'),
+      icon: 'park-hamburger-button'
+    })
+    return results
   }, [visibleProperties])
-
   console.log(groupableProperties, currentSub)
   const sortableGroups = ['string', 'date', 'number', 'singleSelect', 'multiSelect']
-  if (!currentGroupRule?.propertyId || currentSub === 'Group by') {
+  if (!currentGroupRule || currentSub === 'Group by') {
     return (
       <Content style={{ padding: '0px 4px 4px', maxHeight: 450, overflowY: 'auto' }}>
         {groupableProperties.map(
@@ -133,13 +139,13 @@ export default function GroupGrouperMenu({
     return <GroupNumberBy />
   }
   let groupPropertyName = ''
-  if (currentGroupRule.propertyGroupType === 'basic') {
+  if (currentGroupRule.propertyGroupType === 'basic' && currentGroupRule.propertyId) {
     const display = DEFAULT_GROUP_PROPERTIES.find(i => i.id === currentGroupRule.propertyId)?.display
     if (display) {
       groupPropertyName = t(display)
     }
   }
-  if (currentGroupRule.propertyGroupType === 'custom') {
+  if (currentGroupRule.propertyGroupType === 'custom' && currentGroupRule.propertyId) {
     const prop = MetaStore.getPropDetails(currentGroupRule.propertyId)
     if (prop) {
       groupPropertyName = prop.name

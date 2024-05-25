@@ -13,9 +13,7 @@ import {
 import Content from '../Content'
 import { AnimatePresence, motion } from 'framer-motion'
 import styles from './index.module.less'
-import Colors from '@/consts/colors'
 import ClassName from '@/styles/classNames'
-import FontSize from '@/consts/font'
 import classnames from 'classnames'
 
 export interface TabNavListProps {
@@ -44,7 +42,7 @@ const TabNavList: FC<TabNavListProps> = ({ leftExtra, navs, onTabClick, defaultA
         {leftExtra}
         {navs.map(nav => (
           <div
-            className={classnames(ClassName.flatButton(), nav.key === selectedTabKey && 'active-button')}
+            className={classnames(ClassName.flatButton(), nav.key === selectedTabKey && 'active-button', 'font-size-13')}
             onClick={e => {
               onTabClick(nav.key, e)
               setSelectedTabKey(nav.key)
@@ -52,7 +50,6 @@ const TabNavList: FC<TabNavListProps> = ({ leftExtra, navs, onTabClick, defaultA
             style={{
               userSelect: 'none',
               padding: '2px 8px',
-              fontSize: FontSize['13px'],
               ...style
             }}
             key={nav.key}

@@ -4,14 +4,13 @@ import { useGlobalAtomValue, useIsIn } from '@/hooks'
 import { CollectionStore, MetaStore } from '@/api/stores'
 import { metaObjectsAtom } from '@/api/stores/meta/meta.store'
 import { selectAtom } from 'jotai/utils'
-import { FC, useEffect, useMemo, useRef, useState } from 'react'
+import { FC, useMemo} from 'react'
 import { IconNameItem } from '../SidebarCollection'
 import useSidebarItemContextMenu from '../useSidebarItemContextMenu'
 import useSidebarItemDrag from '../useSidebarItemDrag'
 import { ISidebarItem } from './type'
 import { toast } from 'react-hot-toast'
 import ClassName from '@/styles/classNames'
-import FontSize from '@/consts/font'
 import { Rendevoz } from '@/core/rendevoz'
 import { DraggableElement, GlobalSetting } from '@/core'
 import usePreviewItem from '@/components/layout/sidebar/usePreviewItem'
@@ -84,7 +83,7 @@ const SidebarObjectItem: FC<ISidebarItem> = ({ parentId, parentType, id, draggab
       >
         {contextMenuPortal}
         <IconNameItem
-          style={{ fontSize: FontSize['12px'] }}
+          className={'font-size-12'}
           icon={metaObject?.icon || icon}
           name={metaObject?.name || metaObject?.placeholderName}
           color={metaObject?.color}

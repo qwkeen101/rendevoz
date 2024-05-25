@@ -1,10 +1,8 @@
 import { KEY } from '@/consts'
-import FontSize from '@/consts/font'
 import { isHotkey } from 'is-hotkey'
 import { CSSProperties, FC, Fragment, MouseEventHandler, ReactElement, ReactNode, useEffect, useRef, useState } from 'react'
 import Content from '../Content'
 import MenuItem from './MenuItem'
-import ClassName from '@/styles/classNames'
 import _ from 'lodash'
 import scrollIntoView from 'scroll-into-view-if-needed'
 import { GlobalInstance, useMemoizedFn } from '@/hooks'
@@ -26,7 +24,7 @@ const Menu: IMenu = ({ title, children, extra, footer, style, onClick }) => {
   return (
     <div style={style} onClick={onClick}>
       <Content style={{ marginBottom: 8 }} flex alignItems="center" justifyContent="space-between">
-        {title && <div className={ClassName.title(FontSize['16px'])}>{title}</div>}
+        {title && <div className={'normal-font font-size-15'}>{title}</div>}
         {extra}
       </Content>
       <Content position="relative" fullHeight fullWidth style={{ flexGrow: 1 }}>

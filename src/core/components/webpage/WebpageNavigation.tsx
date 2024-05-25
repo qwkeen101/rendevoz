@@ -1,7 +1,6 @@
 import { AnimatePopover, Content, Icon, Menu, Tooltip, WithBorder } from '@/components'
 import { KEY, Zindexes } from '@/consts'
 import Colors from '@/consts/colors'
-import FontSize from '@/consts/font'
 import ClassName from '@/styles/classNames'
 import { Regexp } from '@/utils'
 import { css } from '@emotion/css'
@@ -110,8 +109,8 @@ const WebpageNavigation = ({
       flex
       gap={6}
       alignItems="center"
+      className={'font-size-13'}
       style={{
-        fontSize: FontSize['13px'],
         padding: '6px 6px',
         flexShrink: 0,
         background: Colors.Background.Secondary,

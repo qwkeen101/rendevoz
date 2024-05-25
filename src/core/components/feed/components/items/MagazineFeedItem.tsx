@@ -31,8 +31,8 @@ const MagazineFeedItem = memo(
         width: 180,
         height: 108
       },
-      titleSize = 16,
-      titleWeight = 600,
+      titleSize = 15,
+      titleWeight = 500,
       mainGap = 20
     } = styles || {}
     const item = ObjectStore('feed').useValue(id)

@@ -1,7 +1,7 @@
 import { IWhiteboardNode, MetaObject } from '~/typings'
 import { MetaStore, ObjectStore } from '@/api/stores'
 
-type AppearIn = {
+export type AppearIn = {
   parent: MetaObject
   children: MetaObject[]
 }

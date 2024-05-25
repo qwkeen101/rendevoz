@@ -2,7 +2,6 @@ import { useWhiteboardState } from '@/core/components/whiteboard/hooks/useWhiteb
 import { Content, Icon, Tooltip, WithBorder } from '@/components'
 import { Colors } from '@/consts'
 import { ClassName } from 'rendevoz'
-import FontSize from '@/consts/font'
 import { useFlow } from '@/core/components/whiteboard/StateHooks'
 import WhiteboardMinimap from '@/core/components/whiteboard/minimap/WhiteboardMinimap'
 import { memo, useEffect, useState } from 'react'
@@ -174,7 +173,7 @@ const WhiteboardControlBar = memo(() => {
               flow.panzoom?.smoothZoomAbs(bounding.width / 2, bounding.height / 2, 1)
             }
           }}
-          style={{ fontSize: FontSize['12px'], fontWeight: 600, fontFamily: 'Muli', cursor: 'pointer' }}
+          className={'font-size-12 bold-font pointer'}
         >
           {(whiteboardState.zoom * 100).toFixed(0)}%
         </div>

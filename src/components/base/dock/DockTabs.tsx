@@ -76,7 +76,7 @@ export const TabItem = ({ data }: { data: TabData }) => {
       })}
     >
       {icon && <div style={{ flexShrink: 0 }}>{icon}</div>}
-      <div className={styles.title}>{title}</div>
+      <div className={'dock-tab-title font-size-13'}>{title}</div>
       <div className={styles.closeButtonWrapper}>
         <Icon className={classNames(styles.closeButton, ClassName.circleButton(3))} size={12} onClick={onCloseClick} name="park-close" />
       </div>

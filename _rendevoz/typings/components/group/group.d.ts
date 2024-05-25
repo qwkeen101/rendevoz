@@ -54,7 +54,7 @@ export type MetaGroupViewProperty = {
 }
 
 export type IMetaGroupGrouper = {
-  propertyId: number
+  propertyId?: number
   propertyGroupType: 'basic' | 'custom'
 } & IGroupRule
 

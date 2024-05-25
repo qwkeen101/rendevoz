@@ -53,13 +53,13 @@ const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
     >
       <Content
         flex
-        gap={6}
+        gap={8}
         style={{
           background: 'var(--tabs-bg)',
           height: 38,
           paddingTop: 3,
           paddingRight: 12,
-          paddingLeft: os === 'macos' && !fullScreen ? 40 : 8,
+          paddingLeft: os === 'macos' && !fullScreen ? 48 : 8,
           fontSize: 18,
           color: Colors.Font.Transparent,
           borderBottom: `1px solid ${Colors.Background.BoxShadowBorder}`,
@@ -77,7 +77,7 @@ const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
               s.leftVisible = 'database'
             })
           }
-          className={classnames(ClassName.flatButton(4, '4px 6px'), panelState.leftVisible === 'database' && 'active-button')}
+          className={classnames(ClassName.flatButton(4, '4px'), panelState.leftVisible === 'database' && 'active-button')}
         />
         <Icon
           style={{
@@ -89,7 +89,7 @@ const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
               s.leftVisible = 'collections'
             })
           }
-          className={classnames(ClassName.flatButton(4, '4px 6px'), panelState.leftVisible === 'collections' && 'active-button')}
+          className={classnames(ClassName.flatButton(4, '4px'), panelState.leftVisible === 'collections' && 'active-button')}
         />
         <Icon
           style={{
@@ -101,7 +101,7 @@ const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
               s.leftVisible = 'category'
             })
           }
-          className={classnames(ClassName.flatButton(4, '4px 6px'), panelState.leftVisible === 'category' && 'active-button')}
+          className={classnames(ClassName.flatButton(4, '4px'), panelState.leftVisible === 'category' && 'active-button')}
         />
         <Icon
           style={{
@@ -113,7 +113,7 @@ const SidebarPanel = ({ direction }: { direction: 'right' | 'left' }) => {
               s.leftVisible = 'webSearch'
             })
           }
-          className={classnames(ClassName.flatButton(4, '4px 6px'), panelState.leftVisible === 'webSearch' && 'active-button')}
+          className={classnames(ClassName.flatButton(4, '4px'), panelState.leftVisible === 'webSearch' && 'active-button')}
         />
         <Icon
           onClick={() =>

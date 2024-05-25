@@ -41,7 +41,7 @@ export default async () => {
         })
       )) as ISyncOperation[]
       if (data.length) {
-        const timestamp = data[data.length - 1].timestamp
+        const timestamp = data[data.length - 1].uploadTime
         await syncDB.table('state').put(timestamp + 1, 'lastSynced')
       }
       data = data.filter(i => i.deviceId !== deviceId)

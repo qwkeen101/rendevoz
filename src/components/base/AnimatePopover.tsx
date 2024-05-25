@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { PopoverProps } from 'react-tiny-popover'
 import { Popover } from './popover/Popover'
 import useUnmount from '@/hooks/utils/useUnmount'
-import { useMergedRef, useUpdateEffect } from '@/hooks'
+import { GlobalInstance, useMergedRef, useUpdateEffect } from '@/hooks'
 import { KEY, Zindexes } from '@/consts'
 import { LeftTopPosition, Position } from '~/typings'
 import { SetStateAction } from 'jotai'
@@ -137,7 +137,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
     }
     if (isOpen) {
       if (keyboardClose) {
-        document.addEventListener('keydown', keydownHandler)
+        GlobalInstance.values.keydownHandlers.unshift(keydownHandler)
       }
       const containerDockPane = intersectionRef.current?.closest(`[role='tabpane']`)
       if (containerDockPane) {
@@ -156,7 +156,9 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
           attributeFilter: ['style']
         })
         return () => {
-          document.removeEventListener('keydown', keydownHandler)
+          GlobalInstance.values.keydownHandlers = GlobalInstance.values.keydownHandlers.filter(
+            i => i !== keydownHandler
+          )
           visiblityWatcher.disconnect()
         }
       }

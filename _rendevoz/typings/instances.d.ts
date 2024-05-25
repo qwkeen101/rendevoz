@@ -130,6 +130,7 @@ export type IGlobalInstance = Partial<{
   values: {
     copiedObjectIds?: number[]
     copiedWhiteboardData?: IWhiteboardNode[]
+    keydownHandlers: ((e: KeyboardEvent) => void)[]
     registeredKeynavigationHandlers: ((e: KeyboardEvent) => void)[]
   }
 }

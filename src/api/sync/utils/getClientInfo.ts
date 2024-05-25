@@ -1,5 +1,5 @@
 import parser from 'ua-parser-js'
-export default async () => {
+export default async (now?: number) => {
   const ipInfo = await fetch('https://api.incolumitas.com/').then(i => i.json())
   if (ipInfo) {
     const parsed = parser(navigator.userAgent)
@@ -9,7 +9,7 @@ export default async () => {
       region: ipInfo.location.state,
       country: ipInfo.location.country,
       ip: ipInfo.ip,
-      time: Date.now()
+      time: now ?? Date.now()
     }
     return res
   }

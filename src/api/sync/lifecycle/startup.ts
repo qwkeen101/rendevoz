@@ -7,6 +7,7 @@ import { debounce, isEqual } from 'lodash'
 import GlobalStates from '@/api/global/states'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { initializeFileSizeMap } from '@/api/sync/file/listNeedUpload'
+import { syncDB } from '@/utils'
 
 export default async () => {
   try {
@@ -20,6 +21,7 @@ export default async () => {
       if (setting.sync.enableAutoSync && setting.sync.conflictResolved) {
         GlobalStates.setState('loading', s => ({ ...s, currentState: 'loading remote data' }))
         await SyncAPI.restoreFromDB(true)
+        await syncDB.table('state').put(Date.now(), 'lastSynced')
         GlobalStates.setState('remoteDataFetched', true)
       }
     }

@@ -36,9 +36,10 @@ export const commitManually = async () => {
       fileTransactions: [],
       noteUpdateIds: []
     }
+    const now = Date.now()
     const lastUpload = await syncDB.table('state').get('lastUploaded')
     // upload files modified after last upload
-    syncDB.table('state').put(Date.now(), 'lastUploaded')
+    syncDB.table('state').put(now, 'lastUploaded')
     removeRepeatDBTransactions(cloned)
     removeRepeatNoteIds(cloned)
     if (!cloned.noteUpdateIds?.length) {
@@ -58,14 +59,16 @@ export const commitManually = async () => {
     if (!cloned.noteUpdateIds?.length && !cloned.fileTransactions?.length && !cloned.databaseTranscations?.length) {
       return
     }
-    const now = Date.now()
+    const uploadTime = Date.now()
     cloudClient.uploadData(
-      `commits/${now}`,
-      new Blob([compressSync(strToU8(JSON.stringify({ ...cloned, timestamp: Date.now(), deviceId: await FileSystem.fs.getMachineId() })))])
+      `commits/${uploadTime}`,
+      new Blob([
+        compressSync(strToU8(JSON.stringify({ ...cloned, timestamp: now, uploadTime, deviceId: await FileSystem.fs.getMachineId() })))
+      ])
     )
     const data = await exportData()
     cloudClient.uploadData('all-data.zip', data)
-    getClientInfo().then(res => {
+    getClientInfo(now).then(res => {
       if (res) {
         cloudClient.uploadData('client-info.json', JSON.stringify(res))
       }

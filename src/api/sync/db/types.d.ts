@@ -26,6 +26,7 @@ export type ISyncOperation = {
   timestamp: number
   deviceId: string
   noteUpdateIds?: number[]
+  uploadTime: number
   databaseTranscations?: IDBTransaction[]
   fileTransactions?: IFileTransaction[]
 }

@@ -8,7 +8,7 @@ import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts/key'
 import Icon from './Icon'
 import { Colors } from '@/consts'
-import { useMemoizedFn } from '@/hooks'
+import { GlobalInstance, useMemoizedFn } from '@/hooks'
 import { GlobalSetting } from '@/core'
 
 interface ModalProps {
@@ -32,12 +32,6 @@ interface ModalProps {
   enableClickEvent?: boolean
   hideBackground?: boolean
 }
-// late in first execute queue to ensure modal escape key works fine
-const ModalInnerEventHandlerQueue: ((e: KeyboardEvent) => void)[] = []
-
-document.addEventListener('keydown', e => {
-  ModalInnerEventHandlerQueue[0]?.(e)
-})
 const Backdrop = ({ children, onMouseDown, disableAnimation, enableClickEvent }) => {
   const darkMode = GlobalSetting.useSelectSettingAtom('darkMode')
   return (
@@ -95,21 +89,16 @@ const Modal: FC<ModalProps> = ({
 }) => {
   const keyDownHandler = useMemoizedFn((e: KeyboardEvent) => {
     if (isHotkey(KEY.Escape, e) && visible) {
-      setTimeout(() => {
-        if (e.defaultPrevented) return
-        e.stopImmediatePropagation()
-        onClose?.()
-      })
+      if (e.defaultPrevented) return
+      e.preventDefault()
+      onClose?.()
     }
   })
   useEffect(() => {
     if (visible) {
-      ModalInnerEventHandlerQueue.unshift(keyDownHandler)
+      GlobalInstance.values.keydownHandlers.unshift(keyDownHandler)
       return () => {
-        const idx = ModalInnerEventHandlerQueue.findIndex(i => i === keyDownHandler)
-        if (idx >= 0) {
-          ModalInnerEventHandlerQueue.splice(idx, 1)
-        }
+        GlobalInstance.values.keydownHandlers = GlobalInstance.values.keydownHandlers.filter(i => i !== keyDownHandler)
       }
     }
   }, [visible])

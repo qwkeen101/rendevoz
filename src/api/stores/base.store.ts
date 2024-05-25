@@ -273,7 +273,7 @@ export function initializeLocalStore<T>(
         if (allInCache) {
           return ids.map(id => map.get(id)) as T[]
         }
-        const arr = (await database.bulkGet(ids)).map(i => (outOptions?.transformData ? outOptions.transformData(i) : i))
+        const arr = (await database.bulkGet(ids)).map(i => (outOptions?.transformData ? outOptions.transformData(i) : i)).filter(i => i)
         if (cache) {
           globalStore.set(atom, BaseStore.bulkAdd(arr, globalStore.get(atom)))
         }

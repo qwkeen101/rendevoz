@@ -13,10 +13,16 @@ import KeyvalueStore from '@/api/stores/keyvalue.store'
 import updateSidebarState from '@/components/layout/sidebar/updateSidebarState'
 const GlobalInstance: IGlobalInstance = {
   values: {
-    registeredKeynavigationHandlers: []
+    // only one can work
+    registeredKeynavigationHandlers: [],
+    // all work
+    keydownHandlers: []
   }
 }
 document.addEventListener('keydown', e => {
+  GlobalInstance.values.keydownHandlers.forEach(v => {
+    v(e)
+  })
   GlobalInstance.values.registeredKeynavigationHandlers[0]?.(e)
 })
 assignProperties(GlobalInstance, {

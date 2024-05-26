@@ -88,7 +88,7 @@ const SidebarUser = memo(() => {
           </>
         ) : (
           <>
-            <Icon onClick={() => toggleLoginVisible(true)} name={'park-user'} size={20} className={ClassName.flatButton(6, '4px')} />
+            <Icon onClick={() => toggleLoginVisible(true)} name={'park-user'} size={18} className={ClassName.flatButton(4, '4px')} />
             <Modal visible={loginVisible} onClose={toggleLoginVisible} noStyle>
               <div
                 style={{

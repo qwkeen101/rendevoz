@@ -172,7 +172,7 @@ export default () => {
             size={20}
             style={{
               height: '100%',
-              padding: '6px'
+              padding: '5px'
             }}
           />
         </Content>

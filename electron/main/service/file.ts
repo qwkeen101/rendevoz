@@ -8,6 +8,15 @@ const DEFAULT_USER_DATA_PATH = app.getPath('documents')
 
 export const DefaultRendevozDataPath = path.join(DEFAULT_USER_DATA_PATH, 'Rendevoz')
 
+const normalizePath = (path: string) => {
+  const isExtendedLengthPath = path.startsWith('\\\\?\\')
+
+  if (isExtendedLengthPath) {
+    return path
+  }
+
+  return path.replace(/\\/g, '/')
+}
 const getRendeFileFolderPath = () => {
   return path.resolve(process.env.FILE_PATH || DefaultRendevozDataPath)
 }
@@ -63,7 +72,7 @@ const writeFile = async (data: string, filePath: string, type: 'base64' | 'utf8'
   const protocolPath = absolutePath.replace(folderPath, 'rendefile://')
   return new Promise(resolve => {
     fs.writeFile(absolutePath, data, { encoding: type }, () => {
-      resolve(protocolPath)
+      resolve(normalizePath(protocolPath))
     })
   })
 }
@@ -75,80 +84,9 @@ const copyFile = async (from: string, to: string) => {
   const protocolPath = 'rendefile://' + to
   return new Promise(resolve => {
     fs.copyFile(from, absolutePath, () => {
-      resolve(protocolPath)
+      resolve(normalizePath(protocolPath))
     })
   })
-}
-
-const saveBuffer = async (
-  buffer: Buffer | ArrayBuffer,
-  fileName: string,
-  filePath?: string,
-  fileSavePath: 'files' | 'imgs' | 'backup' | 'root' = 'files'
-) => {
-  checkFileFolderGenerated()
-  const folderPath = getRendeFileFolderPath()
-  const rendevozFilePath = path.join(folderPath, fileSavePath === 'root' ? '' : fileSavePath)
-  const savePath = `/${fileSavePath}/`
-  const finalPathName =
-    filePath
-      ?.replace('rendefile://', '')
-      .replace('file://', '')
-      .replace(rendevozFilePath, '')
-      .replace('/rendevoz', '')
-      .replace(savePath, '') || fileName
-  const newPath = path.join(rendevozFilePath, finalPathName)
-
-  const protocolPath = 'rendefile://' + savePath + finalPathName
-  return new Promise(resolve => {
-    if (buffer instanceof ArrayBuffer) {
-      fs.writeFile(newPath, Buffer.from(buffer), () => {
-        resolve(protocolPath)
-      })
-    } else {
-      fs.writeFile(newPath, buffer, () => {
-        resolve(protocolPath)
-      })
-    }
-  })
-}
-
-const saveImage = async (imgName: string, imgData: string) => {
-  checkFileFolderGenerated()
-  const imgPath = path.join(getRendeFileFolderPath(), 'imgs')
-  const data = imgData.split(',').pop()
-  const buf = Buffer.from(data, 'base64')
-  const digest = digestBuffer(buf)
-  const newPath = path.join(imgPath, `${digest}.png`)
-
-  const protocolPath = 'rendefile://' + '/imgs/' + `${digest}.png`
-
-  if (!fs.existsSync(newPath)) {
-    return new Promise(resolve => {
-      fs.writeFile(newPath, buf, () => {
-        resolve(protocolPath)
-      })
-    })
-  } else {
-    return protocolPath
-  }
-}
-
-const saveFile = async (filePath: string, fileName: string) => {
-  checkFileFolderGenerated()
-  const rendevozFilePath = path.join(getRendeFileFolderPath(), 'files')
-  const newPath = path.join(rendevozFilePath, fileName)
-
-  const protocolPath = 'rendefile://' + '/files/' + fileName
-  if (!fs.existsSync(newPath)) {
-    return new Promise(resolve => {
-      fs.copyFile(filePath, newPath, () => {
-        resolve(protocolPath)
-      })
-    })
-  } else {
-    return protocolPath
-  }
 }
 
 const openFolder = async (folderPath: string) => {
@@ -260,12 +198,9 @@ const FileService = {
   utimes,
   stat,
   openLocalFile,
-  saveFile,
   readDir,
-  saveBuffer,
   copyFile,
   readFile,
-  saveImage,
   writeFile,
   openFolder,
   getRendeFileFolderPath

@@ -2,6 +2,7 @@ import { FeedItem } from '@/core/components/feed/types'
 import { NoteStore, ObjectStore } from '@/api/stores'
 import { FEED_CONTENT_CACHE } from '@/core/components/feed/contentCache'
 import FileSystem from '@/api/fileSystem'
+import { Notes } from '@icon-park/react'
 
 export default async (item: FeedItem) => {
   let imageSrc: string | undefined = undefined
@@ -38,5 +39,8 @@ export default async (item: FeedItem) => {
       }
     }
   )
+  if (webpageMeta) {
+    NoteStore.saveNoteAsSearch(webpageContent, webpageMeta.id)
+  }
   return webpageMeta
 }

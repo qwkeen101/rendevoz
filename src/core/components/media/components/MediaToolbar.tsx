@@ -16,14 +16,9 @@ import { GlobalSetting } from '@/core'
 
 const clazz = css({
   borderRadius: `999px !important`,
-  backgroundColor: 'transparent',
   border: '1px solid var(--border-background)',
   cursor: 'pointer',
-  transition: 'all 0.16s ease-out',
-  height: '32px',
-  ':hover': {
-    backgroundColor: `${Colors.Background.ButtonActive} !important`
-  }
+  height: '32px'
 })
 export default ({ showDetails }: { showDetails: boolean }) => {
   const [mediaState, setMediaState] = useMediaState()
@@ -33,6 +28,7 @@ export default ({ showDetails }: { showDetails: boolean }) => {
   const subtitleInSidebar = GlobalSetting.useSelectSettingAtom('subtitleInSidebar')
   const [subtitleImporterVisible, setSubtitleImporterVisible] = useState(false)
   const canHighlight = mediaState.currentTime !== undefined && mediaState.loaded
+  const validSubtitleIcon = mediaState.subtitleList?.length || sidebarState.subtitleOpen
   return (
     <Content flex column gap={10} fullWidth>
       {mediaState.mode === 'web' && showDetails && (
@@ -101,9 +97,13 @@ export default ({ showDetails }: { showDetails: boolean }) => {
               icon={'custom-CC'}
               style={{
                 padding: '4px 12px',
-                cursor: mediaState.subtitleList?.length ? 'pointer' : 'not-allowed',
-                background: mediaState.subtitleList?.length ? undefined : 'transparent',
-                color: mediaState.subtitleList?.length ? undefined : Colors.Font.SuperTransparent
+                ...(validSubtitleIcon
+                  ? {}
+                  : {
+                      cursor: 'not-allowed',
+                      background: 'transparent',
+                      color: Colors.Font.SuperTransparent
+                    })
               }}
               className={classnames(clazz, sidebarState.subtitleOpen && 'active-button select-color-border')}
               onClick={() =>
@@ -164,7 +164,7 @@ export default ({ showDetails }: { showDetails: boolean }) => {
               </WithBorder>
             )}
           >
-            <Content flex gap={10} className={clazz} style={{ padding: '4px 12px' }}>
+            <Content flex gap={10} className={classnames(ClassName.flatButton(), clazz)} style={{ padding: '4px 12px' }}>
               <Icon size={18} name={'custom-right-bar'} />
               <div>{t('general.Sidebar view')}</div>
               <Icon size={14} name={'park-down'} />

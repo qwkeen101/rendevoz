@@ -1,7 +1,7 @@
-import KeyvalueStore from '@/api/stores/keyvalue.store'
+import useFeedState from '@/core/components/feed/hooks/useFeedState'
+import { useAtomValue } from 'jotai/react'
 
 export default (feedItemId: number) => {
-  const allReadIds = KeyvalueStore.useValue('feedReadIds') || []
-  const isRead = allReadIds.includes(feedItemId)
+  const isRead = useAtomValue(useFeedState.alreadyReadIdsAtom).has(feedItemId)
   return isRead
 }

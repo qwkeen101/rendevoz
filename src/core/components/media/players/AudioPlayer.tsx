@@ -11,7 +11,6 @@ import { useAtomValue } from 'jotai'
 import { MediaLayoutAtom } from '@/core/components/media/hooks/useVideoLayout'
 import { ClassName } from 'rendevoz'
 import useMediaSidebarState from '@/core/components/media/hooks/useMediaSidebarState'
-import { GlobalSetting } from '@/core'
 
 export default () => {
   const [mediaState, setMediaState] = useMediaState()
@@ -20,23 +19,21 @@ export default () => {
   const a = audioRef.current
   const columnLayout = useAtomValue(MediaLayoutAtom)
   const [sidebarState] = useMediaSidebarState()
-  const subtitleInSidebar = GlobalSetting.useSelectSettingAtom('subtitleInSidebar')
-  const sidebarOpen =
-    sidebarState.rightBarActive !== 'hide' && (subtitleInSidebar === false ? sidebarState.rightBarActive !== 'subtitle' : true)
   const instance = useMediaInstance()
   const containerRef = useRef<HTMLElement>(null)
   const [ref, { width }] = useMeasure()
   const columnMode = width < 800
   const floated = mediaState.floated
+  const { subtitleUnderMain, sidebarOpened } = sidebarState
   let showImage = !floated && mediaState.layout?.showAudioThumbnail !== false
   if (columnLayout) {
-    if (sidebarOpen || (subtitleInSidebar === false && sidebarState.subtitleOpen)) {
+    if (subtitleUnderMain) {
       showImage = false
     }
   }
   if (columnMode) {
     if (!columnLayout) {
-      if (sidebarOpen && subtitleInSidebar === false && sidebarState.subtitleOpen) {
+      if (sidebarOpened && subtitleUnderMain) {
         showImage = false
       }
     }
@@ -132,13 +129,14 @@ export default () => {
               fontSize: floated ? 14 : columnMode ? 18 : 24,
               cursor: floated ? 'grab' : 'unset',
               width: 'fit-content',
+              margin: floated ? undefined : 'auto',
               ...mediaState.styles?.titleStyle
             }}
           >
             {mediaState.name}
           </div>
         )}
-        {!floated && !(columnLayout && sidebarOpen) && mediaState.layout?.showDescription !== false && (
+        {!floated && !(columnLayout && (sidebarOpened || subtitleUnderMain)) && mediaState.layout?.showDescription !== false && (
           <div
             className={mediaState.styles?.descriptionEllispsis ? ClassName.ellipsisFont(mediaState.styles.descriptionEllispsis) : undefined}
             style={{

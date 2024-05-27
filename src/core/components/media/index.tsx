@@ -1,6 +1,6 @@
 import { Content, Icon } from '@/components'
 import { useAssignMediaInstance, useMediaInstance, MediaInstanceAtom } from './hooks/useMediaInstance'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createStore, Provider, useAtomValue } from 'jotai'
 import MediaCore from './MediaCore'
 import MediaBottomBar from './MediaBottomBar'
@@ -29,6 +29,8 @@ import QuickLabelPopover from '@/core/components/media/components/QuickLabelPopo
 import useMediaSidebarState, { VideoSidebarStateAtom } from '@/core/components/media/hooks/useMediaSidebarState'
 import { GlobalSetting } from '@/core'
 import Subtitle from '@/core/components/media/components/sidebar/Subtitle'
+import { Resizable } from 're-resizable'
+import getLayout from '@/core/components/media/getLayout'
 export interface MediaProps {
   onInstanceInitialized?: (instance: Partial<IMediaInstance>) => void
   onlyCore?: boolean
@@ -40,8 +42,9 @@ export interface MediaProps {
 const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = true }: MediaProps) => {
   const [playIconVisible, setPlayIconVisible] = useState(false)
   const [, setToolbarState] = useMediaToolbarState()
+  const [cachedSubtitleHeight, setCachedSubtitleHeight] = useState<number>()
   const [mediaState, setMediaState] = useMediaState()
-  const [sidebarState] = useMediaSidebarState()
+  const [sidebarState, setSidebarState] = useMediaSidebarState()
   const outerContainerRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const instance = useMediaInstance()
@@ -116,14 +119,34 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
     )
   }, [])
   const lastMovedRef = useRef(0)
-  const showDetails =
-    !audioMode &&
-    !(
-      subtitleInSidebar === false &&
-      sidebarState.subtitleOpen &&
-      (columnLayout || (sidebarState.rightBarActive !== 'hide' && sidebarState.rightBarActive !== 'subtitle'))
-    ) &&
-    (!columnLayout || sidebarState.rightBarActive === 'hide' || (subtitleInSidebar === false && sidebarState.rightBarActive === 'subtitle'))
+  useMemo(() => {
+    const { subtitleUnderMain, sidebarOpened } = getLayout(sidebarState, columnLayout, {
+      subtitleInSidebar
+    })
+    if (subtitleUnderMain !== sidebarState.subtitleUnderMain || sidebarOpened !== sidebarState.sidebarOpened) {
+      setSidebarState(s => ({ ...s, subtitleUnderMain, sidebarOpened }))
+    }
+  }, [sidebarState, columnLayout, subtitleInSidebar])
+  const { subtitleUnderMain, sidebarOpened } = sidebarState
+  const subtitleResizeRef = useRef<Resizable>()
+  useEffect(() => {
+    const resize = subtitleResizeRef.current
+    if (resize) {
+      if (sidebarOpened === false) {
+        resize.updateSize({
+          width: '100%',
+          height: 0
+        })
+        resize.resizable?.style.setProperty('flex-basis', '0%')
+      } else {
+        resize.updateSize({
+          width: '100%',
+          height: cachedSubtitleHeight ?? 260
+        })
+      }
+    }
+  }, [subtitleUnderMain, sidebarOpened])
+  const showDetails = !audioMode && !subtitleUnderMain && (!columnLayout || !sidebarOpened)
   const renderCore = () => {
     return (
       <Content
@@ -228,7 +251,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
           zIndex: Zindexes.VideoFloatWindow,
           boxShadow: Colors.Background.BoxShadow,
           borderRadius: 12,
-          background: Colors.Background.Secondary
+          background: Colors.Background.Popover
         }}
         onResizeStop={(e, dir, element) => {
           element.style.height = 'auto'
@@ -321,28 +344,39 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
             {mediaState.floated ? renderFloated() : renderCore()}
             {showDetails && <div style={{ fontWeight: 500, fontSize: 18, width: '100%', lineHeight: 1.4 }}>{mediaState.name}</div>}
             {!audioMode && <MediaToolbar showDetails={showDetails} />}
-            {subtitleInSidebar === false &&
-              sidebarState.subtitleOpen &&
-              (columnLayout || (sidebarState.rightBarActive !== 'hide' && sidebarState.rightBarActive !== 'subtitle')) && (
-                <div
-                  className={'border'}
-                  style={{
-                    width: '100%',
-                    flex: 1,
-                    display: 'flex',
-                    maxHeight:
-                      columnLayout && sidebarState.rightBarActive !== 'hide' && sidebarState.rightBarActive !== 'subtitle'
-                        ? '280px'
-                        : undefined,
-                    flexDirection: 'column',
-                    height: 0,
-                    overflow: 'hidden',
-                    borderRadius: 12
-                  }}
-                >
-                  <Subtitle />
-                </div>
-              )}
+            {subtitleUnderMain && (
+              <Resizable
+                onResizeStop={(event, direction, elementRef) => {
+                  setCachedSubtitleHeight(elementRef.clientHeight)
+                }}
+                enable={
+                  sidebarOpened && columnLayout
+                    ? {
+                        bottom: true
+                      }
+                    : false
+                }
+                defaultSize={{
+                  width: '100%',
+                  height: sidebarOpened ? cachedSubtitleHeight ?? 0 : 0
+                }}
+                minHeight={150}
+                ref={subtitleResizeRef}
+                maxHeight={sidebarOpened && columnLayout ? '600px' : undefined}
+                className={'border'}
+                style={{
+                  width: '100%',
+                  flexShrink: 1,
+                  flex: sidebarOpened && columnLayout ? undefined : 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden',
+                  borderRadius: 12
+                }}
+              >
+                <Subtitle />
+              </Resizable>
+            )}
           </Content>
         </Content>
         <MediaSidebar />

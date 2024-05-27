@@ -1,5 +1,4 @@
-import { FeedItem } from '@/core/components/feed/types'
-import { Button, Content, Icon, IconWithPopover, Menu, WithBorder } from '@/components'
+import { Content, Icon, IconWithPopover, Menu, WithBorder } from '@/components'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { DateFormat } from '@/utils'
@@ -14,11 +13,12 @@ import addFeedAsMeta from '@/core/components/feed/utils/service/addFeedAsMeta'
 import { useTranslation } from 'react-i18next'
 import { GlobalInstance } from '@/hooks'
 import toast from 'react-hot-toast'
+import { useAtomValue } from 'jotai/react'
 
 const ItemsToolbar = ({ itemId }: { itemId: number }) => {
   const item = ObjectStore('feed').useValue(itemId)
   const currentReadLater = KeyvalueStore.useValue('feedReadLaterIds') || []
-  const isReadLater = currentReadLater?.includes(itemId)
+  const isReadLater = useAtomValue(useFeedState.readLaterIdsAtom).has(itemId)
   const currentCollectionId = useFeedState()[0].currentCollectionId
   const { isMeta, metaId } = useFeedIsMeta(itemId)
   const { t } = useTranslation()
@@ -80,7 +80,9 @@ const ItemsToolbar = ({ itemId }: { itemId: number }) => {
         <IconWithPopover
           placement={['right', 'left']}
           name={'park-more'}
+          align={'start'}
           size={13}
+          padding={6}
           renderOnParent={false}
           onClick={e => e.stopPropagation()}
           className={ClassName.flatButton(4, '3px')}

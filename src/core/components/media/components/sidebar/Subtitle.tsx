@@ -91,7 +91,7 @@ const MediaSubtitle = memo(() => {
         }
       }
     }
-  }, [subtitleLang])
+  }, [subtitleLang, subtitles.length])
   useEffect(() => {
     if (visible) return
     if (!searchState.visible) {
@@ -132,7 +132,6 @@ const MediaSubtitle = memo(() => {
         .values()
     )
     results.sort((b, a) => b.obj.idx - a.obj.idx)
-    console.log(results)
     setSearchState(s => ({ ...s, results: results.map(i => i.obj.idx), currIdx: results[0]?.obj.idx ?? 0 }))
   }
   const handleNavigateSearch = (direction: 'up' | 'down') => {
@@ -174,7 +173,7 @@ const MediaSubtitle = memo(() => {
   return (
     <Content fullWidth style={{ height: 0, flex: 1 }} flex column>
       {renderPopover()}
-      <Content flex gap={8} fullWidth style={{ padding: '6px 10px' }} className={'font-size-14'} alignItems={'center'}>
+      <Content flex gap={8} fullWidth style={{ padding: '6px 10px 6px 14px' }} className={'font-size-14'} alignItems={'center'}>
         <div style={{ fontWeight: 500 }} className={'ellipsis-font-1'}>
           {subtitleLang || 'Unselected subtitle'}
         </div>
@@ -242,7 +241,7 @@ const MediaSubtitle = memo(() => {
           )}
           placement={['bottom']}
         />
-        <Content flex gap={4} alignItems={'center'} style={{ flexShrink: 0 }} className={'font-size-14'}>
+        <Content flex gap={4} alignItems={'center'} style={{ flexShrink: 0 }}>
           {currentSubtitles.some(i => i.translation) ? (
             <ButtonSwitch
               style={{
@@ -346,7 +345,7 @@ const MediaSubtitle = memo(() => {
             <VirtualList
               rangeExtractor={r => rangeExtractor(r)}
               paddingEnd={100}
-              style={{ width: '100%', height: '0', flex: 1, padding: '8px' }}
+              style={{ width: '100%', height: '0', flex: 1, padding: '6px' }}
               estimateSize={30}
               items={currentSubtitles}
               ref={virtualizerRef}
@@ -392,11 +391,10 @@ const ArticleSubtitleItem = memo(
     return (
       <span
         data-subtitle-index={index}
-        className={ClassName.flatButton(4, '0px')}
+        className={classnames(ClassName.flatButton(4, '0px'), selected && 'active-button')}
         style={{
           paddingLeft: 6,
           borderRadius: 4,
-          background: selected ? Colors.Common.SelectColorTransparent : undefined,
           userSelect: 'text'
         }}
         ref={ref}

@@ -13,7 +13,11 @@ export default () => {
   const [feedState, setFeedState] = useFeedState()
   const lastFetched = KeyvalueStore.useValue('feedLastSyncTime')
   const readRule = KeyvalueStore.useValue('feedReadRule') || 'all'
-  const alreadyRead = KeyvalueStore.useValue('feedReadIds') || []
+  const alreadyRead = KeyvalueStore.useValue('feedReadIds')
+  const readLater = KeyvalueStore.useValue('feedReadLaterIds')
+  useEffect(() => {
+    setFeedState(s => ({ ...s, alreadyReadIds: new Set(alreadyRead), readLaterIds: new Set(readLater) }))
+  }, [readLater, alreadyRead])
   useEffect(() => {
     if (!lastFetched) {
       setFeedState(s => ({ ...s, isSyncing: true }))

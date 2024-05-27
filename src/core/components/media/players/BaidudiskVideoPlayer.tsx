@@ -1,4 +1,3 @@
-import { PlayerCommonProps } from '@/core/components/media/players/types'
 import { useEffect, useRef, useState } from 'react'
 import useMediaState from '@/core/components/media/hooks/useMediaState'
 import { toast } from 'react-hot-toast'

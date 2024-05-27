@@ -20,9 +20,8 @@ const MediaSidebar = memo(() => {
   const labelType = useSelectAtomValue(MediaStateAtom, s => s.labelType)
   const labelIds = useSelectAtomValue(MediaStateAtom, s => s.labels)
   const subtitleInSidebar = GlobalSetting.useSelectSettingAtom('subtitleInSidebar')
-  const visible =
-    (sidebarState.rightBarActive !== 'hide' && (subtitleInSidebar === false ? sidebarState.rightBarActive !== 'subtitle' : true)) ||
-    (subtitleInSidebar === false && sidebarState.subtitleOpen && !column)
+  const { sidebarOpened } = sidebarState
+  const visible = sidebarOpened
   const metaId = useSelectAtomValue(MediaStateAtom, s => s.metaId)
   const instance = useMediaInstance()
   useUpdateEffect(() => {
@@ -104,10 +103,7 @@ const MediaSidebar = memo(() => {
             </TabPane>
           ) : null}
         </Tabs>
-        {subtitleInSidebar === false &&
-        sidebarState.subtitleOpen &&
-        !column &&
-        (sidebarState.rightBarActive === 'hide' || sidebarState.rightBarActive === 'subtitle') ? (
+        {sidebarOpened && (sidebarState.rightBarActive === 'hide' || sidebarState.rightBarActive === 'subtitle') ? (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column' }}>
             <Subtitle />
           </div>

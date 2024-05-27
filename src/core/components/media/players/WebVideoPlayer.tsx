@@ -64,11 +64,9 @@ const WebVideoPlayer = () => {
   useEffect(() => {
     if (url.includes('youtube')) {
       youtubeCaptionScrapper(url.split('embed/')[1]).then(res => {
-        console.log(res)
         res.forEach(async i => {
           const text = await fetch(i.baseUrl).then(res => res.text())
           const data = YoutubeCaptionParser(text)
-          console.log(i.name.simpleText)
           setMediaState(s => ({
             ...s,
             subtitleLang: i.name.simpleText,

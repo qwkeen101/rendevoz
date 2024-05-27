@@ -1,6 +1,7 @@
 import { atom, useAtom } from 'jotai'
+import { IMediaLayout } from '@/core/components/media/getLayout'
 
-type IMediaSidebarState = {
+export type IMediaSidebarState = {
   currentSubtitleLang?: string
   subtitleDisplayMode: 'list' | 'article'
   rightBarVisible: boolean
@@ -8,7 +9,7 @@ type IMediaSidebarState = {
   rightBarActive: 'label' | 'chapter' | 'subtitle' | 'hide' | 'attachments'
   rightBarRealtimeWidth: number
   subtitleOpen?: boolean
-}
+} & Partial<IMediaLayout>
 export const VideoSidebarStateAtom = atom<IMediaSidebarState>({
   rightBarActive: 'hide',
   rightBarVisible: false,

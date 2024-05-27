@@ -7,7 +7,6 @@ import { AnimatePopoverProps } from './AnimatePopover'
 interface Props {
   disableNudge?: boolean
   disableCloseOutside?: boolean
-  disableIntersection?: boolean
   name: string
   content: AnimatePopoverProps['content']
   tooltip?: string
@@ -85,7 +84,7 @@ const IconWithPopover: FC<Props> = (
   }, [])
   useEffect(() => {
     onVisiblityChange?.(visible)
-  },[visible])
+  }, [visible])
   return (
     <Content
       ref={mergedRef}
@@ -108,7 +107,6 @@ const IconWithPopover: FC<Props> = (
         align={align}
         padding={padding}
         onClickOutside={e => {
-          console.log(e)
           onClickOutside?.(e, setVisible)
           if (e.target instanceof Element && e.target.closest('[role="modal"]')) {
             return
@@ -133,7 +131,25 @@ const IconWithPopover: FC<Props> = (
         disableNudge={disableNudge}
         disableIntersection={disableIntersection}
       >
-        <Tooltip content={tooltip} position={tooltipPosition}>
+        {tooltip ? (
+          <Tooltip content={tooltip} position={tooltipPosition}>
+            <Icon
+              style={{ color, ...style }}
+              containerStyle={iconContainerStyle}
+              cursor="pointer"
+              size={size}
+              role={'icon'}
+              data-active={visible}
+              strokeWidth={strokeWidth}
+              className={className}
+              onClick={e => {
+                setVisible(!visible)
+                onClick?.(e)
+              }}
+              name={name}
+            />
+          </Tooltip>
+        ) : (
           <Icon
             style={{ color, ...style }}
             containerStyle={iconContainerStyle}
@@ -149,7 +165,7 @@ const IconWithPopover: FC<Props> = (
             }}
             name={name}
           />
-        </Tooltip>
+        )}
       </AnimatePopover>
     </Content>
   )

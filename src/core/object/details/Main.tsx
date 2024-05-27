@@ -2,7 +2,6 @@ import { MetaStore } from '@/api/stores'
 import { AnimatePopover, Button, Content, Icon, IconWithPopover, Image, WithBorder } from '@/components'
 import { useTranslation } from 'react-i18next'
 import { AttachmentWrapper, GlobalGraphInstance, useRenderObject } from '@/core'
-import ClassName from '@/styles/classNames'
 import { css } from '@emotion/css'
 import { Colors } from '@/consts'
 import { Rendevoz } from '@/core/rendevoz'
@@ -17,13 +16,15 @@ import Backlinks from '@/core/object/details/Backlinks'
 import { useEffect, useState } from 'react'
 import calculateContains from '@/core/object/objectList/calculateContains'
 import classnames from 'classnames'
+import './index.less'
 
 const flatButton = classnames([
   css({
     padding: '4px 12px 4px 10px !important',
     borderRadius: '6px !important'
   }),
-  'border-box-shadow'
+  'border-box-shadow',
+  'hover-s-transparent-box-shadow'
 ])
 
 const SectionMargin = '20px 0px 8px'
@@ -105,12 +106,18 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
             Rendevoz.Actions.Open.Meta.openEditMetaDialog(metaId)
             GlobalInstance.metaOps?.closeDetails()
           }}
+          style={{
+            background: 'transparent'
+          }}
           text={t('general.edit')}
           icon={'park-edit'}
           className={flatButton}
         ></Button.IconButton>
         {showContains && (
           <Button.IconButton
+            style={{
+              background: 'transparent'
+            }}
             icon={'park-hamburger-button'}
             text={t('general.View included objects')}
             onClick={() => {
@@ -124,6 +131,9 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
             GlobalInstance.metaOps?.closeDetails()
             GlobalInstance.metaOps?.openGraph(metaId)
           }}
+          style={{
+            background: 'transparent'
+          }}
           text={t('general.graph')}
           icon={'park-share-one'}
           className={flatButton}
@@ -133,6 +143,9 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
           onClick={() => {
             GlobalInstance.metaOps?.copyLink(metaId)
           }}
+          style={{
+            background: 'transparent'
+          }}
           icon={'park-link'}
           className={flatButton}
         />
@@ -140,8 +153,7 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
           text={t('general.delete')}
           icon={'park-delete-one'}
           dangerous={true}
-          className={flatButton}
-          style={{ boxShadow: '0 0 0 1px rgba(255, 83, 83, 0.6)' }}
+          className={'details-hover-delete-button'}
           onClick={() => {
             GlobalInstance.metaOps?.closeDetails()
             MetaStore.deleteMetaObject(metaId)

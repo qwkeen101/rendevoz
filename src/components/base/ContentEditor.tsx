@@ -14,8 +14,6 @@ const NameEditor = ({
   contentMode = 'textarea',
   placeholder = 'Edit content...',
   onCancel,
-  onDelete,
-  showDelete,
   editorStyle
 }: {
   value?: string
@@ -24,8 +22,6 @@ const NameEditor = ({
   placeholder?: string
   onCancel?: VoidFunction
   editorStyle?: CSSProperties
-  onDelete?: VoidFunction
-  showDelete?: boolean
   contentMode?: 'textarea' | 'editor'
 }) => {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -80,17 +76,6 @@ const NameEditor = ({
         <SimpleEditor fontSize={13} textareaMode={true} placeholder={placeholder} value={value} onChange={e => setInnerValue(e)} />
       )}
       <Content flex gap={6} justifyContent={'flex-end'} alignItems={'center'} style={{ width: 'min-content' }}>
-        {showDelete && (
-          <Icon
-            name={'park-delete'}
-            style={{
-              color: Colors.Common.Red
-            }}
-            onClick={() => onDelete?.()}
-            size={18}
-            className={ClassName.circleButton()}
-          />
-        )}
         <Icon
           name={'park-up-small'}
           size={15}

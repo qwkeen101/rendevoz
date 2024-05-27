@@ -197,7 +197,7 @@ export default function GroupGrouperMenu({
       {currentViewType !== 'kanban' && (
         <div style={{ padding: '4px', marginTop: 4 }} className={'border-top'}>
           <Button.IconButton
-            icon={'park-delete'}
+            icon={'park-delete-one'}
             text={t('general.Remove grouping')}
             dangerous
             onClick={() => {

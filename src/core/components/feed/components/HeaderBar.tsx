@@ -139,7 +139,7 @@ const FeedHeaderBar = () => {
                     >
                       <div>{m.name || m.placeholderName}</div>
                       <Icon
-                        name={'park-delete'}
+                        name={'park-delete-one'}
                         className={classnames(ClassName.flatButton(4, '4px'), 'transparent-font')}
                         onClick={e => {
                           e.stopPropagation()

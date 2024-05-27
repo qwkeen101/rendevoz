@@ -74,6 +74,7 @@ export default () => {
         </Content>
       </Content>
       <input
+        autoFocus
         onChange={e => setNewFeedUrl(e.target.value)}
         value={newFeedUrl}
         placeholder={t('feed.Type RSS feed URL')}

@@ -198,7 +198,7 @@ const WorkspaceSetting = () => {
                         type: 'item',
                         key: 'delete',
                         disabled: !canDelete,
-                        icon: 'park-delete',
+                        icon: 'park-delete-one',
                         text: t('general.delete'),
                         onSelect: () => {
                           setV(false)

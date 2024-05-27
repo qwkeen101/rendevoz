@@ -95,7 +95,7 @@ const EditorBlockMenu = ({ editor, manager }: { editor: CustomEditor; manager: E
               key: 'delete',
               text: t('general.delete'),
               type: 'item',
-              icon: 'park-delete',
+              icon: 'park-delete-one',
               onSelect: () => {
                 handleDeleteElement()
                 instance.overlayOps?.close()

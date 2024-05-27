@@ -223,7 +223,7 @@ const MediaSubtitle = memo(() => {
                     setMediaState(s => ({ ...s, subtitleList: [...copyed] }))
                     instance.on?.({ type: 'subtitleUpdated', subtitleList: [...copyed] })
                   }}
-                  suffixIcon={'park-delete'}
+                  suffixIcon={'park-delete-one'}
                 />
               ))}
               <div style={{ width: '100%', height: 1, margin: '2px 0px', background: Colors.Background.Border }}></div>

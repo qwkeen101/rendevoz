@@ -29,7 +29,7 @@ const ColumnMenu = ({
       text: t('editor.clear column content')
     },
     {
-      icon: 'park-delete',
+      icon: 'park-delete-one',
       onClick: () => on('delete'),
       text: t('general.delete'),
       dangerous: true

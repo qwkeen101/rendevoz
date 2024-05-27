@@ -17,7 +17,7 @@ export default ({ value, onDelete, onChange }: { value: string; onDelete?: VoidF
             }}
             size={16}
             className={ClassName.circleButton()}
-            name={'park-delete'}
+            name={'park-delete-one'}
             onClick={e => {
               e.stopPropagation()
               onDelete?.()

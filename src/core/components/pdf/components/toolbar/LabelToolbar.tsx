@@ -108,7 +108,7 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
           background: 'unset',
           padding: '0px'
         }}
-        icon={'park-delete'}
+        icon={'park-delete-one'}
         text={t('general.delete')}
       />
     </Toolbar.Item>

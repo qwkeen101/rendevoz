@@ -29,7 +29,7 @@ const RowMenu = ({
       text: t('editor.clear row content')
     },
     {
-      icon: 'park-delete',
+      icon: 'park-delete-one',
       onClick: () => on('delete'),
       text: t('general.delete'),
       dangerous: true

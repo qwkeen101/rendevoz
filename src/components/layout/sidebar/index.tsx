@@ -63,7 +63,7 @@ export const BuiltInSidebarItems: Record<string, RegisteredSidebarItem> = {
   },
   recycleBin: {
     key: 'recycleBin',
-    icon: 'park-delete',
+    icon: 'park-delete-one',
     text: () => t('general.Trash'),
     onClick: () => {
       Rendevoz.Actions.Open.openRecycleBin()

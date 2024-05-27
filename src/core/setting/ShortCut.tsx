@@ -185,7 +185,7 @@ const ShortCutItem = memo(({ shortCutName }: { shortCutName: keyof IShortCutSett
         <Icon
           size={16}
           className={ClassName.flatButton(4, '4px')}
-          name="park-delete"
+          name="park-delete-one"
           onClick={() => {
             setSetting(s =>
               produce(s, draft => {

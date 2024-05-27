@@ -41,7 +41,7 @@ export default ({ folderId }: { folderId: number }) => {
               }}
             />
             <Button.IconButton
-              icon={'park-delete'}
+              icon={'park-delete-one'}
               text={t('general.delete')}
               onClick={() => {
                 ObjectStore('feedFolder').deleteOneById(folderId)

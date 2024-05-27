@@ -506,7 +506,7 @@ export default (
       key: 'delete',
       text: t('general.delete'),
       suffix: WhiteboardDefaultKeyboardShortcut.Delete.text,
-      icon: 'park-delete',
+      icon: 'park-delete-one',
       onSelect: () => {
         if (selected?.length) {
           instance.nodeOps?.deleteNode(selected?.map(i => i.id))

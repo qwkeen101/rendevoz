@@ -44,7 +44,7 @@ export default ({
         </div>
         {isEditing && (
           <Icon
-            name={'park-delete'}
+            name={'park-delete-one'}
             className={ClassName.circleButton()}
             onClick={() => {
               onDelete?.()
@@ -87,19 +87,10 @@ export default ({
         </div>
         {isEditing && (
           <Icon
-            name={'park-delete'}
+            name={'park-delete-one'}
             className={ClassName.circleButton()}
             onClick={() => {
               onDelete?.()
-              // if (question?.answerPointers) {
-              //   const newOriginals = produce(question.answerPointers, draft => {
-              //     draft.splice(
-              //       draft.findIndex(o => o.id === i.id),
-              //       1
-              //     )
-              //   })
-              //   ObjectStore('question').updateOne({ id: question.id, answerPointers: newOriginals })
-              // }
             }}
           />
         )}

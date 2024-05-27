@@ -55,6 +55,7 @@ export default () => {
       >
         <Icon name={isLoading ? 'park-loading-four' : 'park-search'} spin={isLoading} />
         <input
+          autoFocus
           placeholder={t('general.Type to search') + '...'}
           value={searchInput}
           onChange={e => setSearchInput(e.target.value)}

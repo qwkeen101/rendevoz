@@ -40,12 +40,12 @@ export default memo(({ onInstanceInitialized }: { onInstanceInitialized?: (i: IG
 
   return (
     <Content fullHeight fullWidth>
-      <TabTitle title={t('general.Trash')} icon={<Icon name={'park-delete'} />} />
+      <TabTitle title={t('general.Trash')} icon={<Icon name={'park-delete-one'} />} />
       <MetaGroup
         title={useMemo(
           () => ({
             title: t('general.Trash'),
-            icon: 'park-delete',
+            icon: 'park-delete-one',
             titleEditable: false
           }),
           []
@@ -61,7 +61,7 @@ export default memo(({ onInstanceInitialized }: { onInstanceInitialized?: (i: IG
                 visible: true,
                 id: 111,
                 editable: false,
-                icon: 'park-delete'
+                icon: 'park-delete-one'
               }
             ],
             canDrag: false,

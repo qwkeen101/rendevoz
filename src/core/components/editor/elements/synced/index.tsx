@@ -207,7 +207,7 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
                         }}
                       />
                       <Button.IconButton icon={'park-unlink'} onClick={handleUnsync} text={t('editor.unsync in this note')} />
-                      <Button.IconButton icon={'park-delete'} text={t('general.delete')} onClick={handleDelete} dangerous />
+                      <Button.IconButton icon={'park-delete-one'} text={t('general.delete')} onClick={handleDelete} dangerous />
                     </WithBorder>
                   )}
                   name={'park-more'}

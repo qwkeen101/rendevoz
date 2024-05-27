@@ -138,7 +138,7 @@ const Link = ({ element, attributes, children }: RenderElementProps) => {
                   onClick={() => {
                     handleRemoveLink()
                   }}
-                  name="park-delete"
+                  name="park-delete-one"
                   containerStyle={{
                     height: 28
                   }}
@@ -220,7 +220,7 @@ const LinkObjectRenderer = ({
         onClick={() => {
           onRemove()
         }}
-        name="park-delete"
+        name="park-delete-one"
         containerStyle={{
           height: 28
         }}

@@ -154,7 +154,7 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
               }}
             ></div>
             <Button.IconButton
-              icon={'park-delete'}
+              icon={'park-delete-one'}
               dangerous
               style={{
                 margin: '0px 4px 4px'

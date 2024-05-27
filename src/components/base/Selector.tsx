@@ -246,7 +246,7 @@ function Item<T extends { name?: string; color?: string; id: number }>({
                 />
 
                 <Icon
-                  name={'park-delete'}
+                  name={'park-delete-one'}
                   onClick={() => {
                     setV(false)
                     onDelete?.()

@@ -94,7 +94,7 @@ export default ({
               </Tooltip>
               <Tooltip content={t('general.delete')}>
                 <Icon
-                  name={'park-delete'}
+                  name={'park-delete-one'}
                   className={ClassName.circleButton()}
                   style={{
                     color: Colors.Common.Red

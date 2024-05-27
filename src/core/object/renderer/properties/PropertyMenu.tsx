@@ -41,12 +41,10 @@ export default ({
           style={{
             padding: '3px 6px',
             lineHeight: '20px',
-            borderRadius: 3,
-            border: '1px solid var(--border-background)',
-            fontSize: 14,
+            borderRadius: 4,
             cursor: editable ? 'text' : 'not-allowed'
           }}
-          className={ClassName.noStyleInput}
+          className={'focus-input border-box-shadow'}
           disabled={!editable}
           onBlur={e => {
             const v = e.target.value
@@ -66,7 +64,7 @@ export default ({
                 text: t('general.delete'),
                 type: 'item',
                 key: 'delete',
-                icon: 'park-delete',
+                icon: 'park-delete-one',
                 onSelect: async () => {
                   instance.viewOps?.deleteCustomProperty?.(property.id, false)
                   MetaStore.deleteProperty(property.id)

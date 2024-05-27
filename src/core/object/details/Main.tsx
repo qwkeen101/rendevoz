@@ -16,20 +16,14 @@ import ParentItems from '@/core/object/details/ParentItems'
 import Backlinks from '@/core/object/details/Backlinks'
 import { useEffect, useState } from 'react'
 import calculateContains from '@/core/object/objectList/calculateContains'
+import classnames from 'classnames'
 
-const flatButton = css([
-  ClassName.flatButton(4, '3px 10px'),
-  {
-    // backgroundColor: Colors.Background.ButtonHover,
-    // fontWeight: 600,
-    borderRadius: '4px !important',
-    fontSize: 14,
-    gap: 4,
-    alignItems: 'center',
-    ':hover': {
-      backgroundColor: `${Colors.Background.ButtonActive} !important`
-    }
-  }
+const flatButton = classnames([
+  css({
+    padding: '4px 12px 4px 10px !important',
+    borderRadius: '6px !important'
+  }),
+  'border-box-shadow'
 ])
 
 const SectionMargin = '20px 0px 8px'
@@ -105,16 +99,7 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
           )}
         </Content>
       </Content>
-      <Content style={{ marginTop: 16, flexWrap: 'wrap' }} flex gap={4}>
-        <Button.IconButton
-          text={t('general.Open')}
-          icon={'park-share'}
-          onClick={() => {
-            Rendevoz.Actions.Open.Meta.openMetaObject(metaId)
-            GlobalInstance.metaOps?.closeDetails()
-          }}
-          className={flatButton}
-        ></Button.IconButton>
+      <Content style={{ marginTop: 16, flexWrap: 'wrap' }} flex gap={12}>
         <Button.IconButton
           onClick={() => {
             Rendevoz.Actions.Open.Meta.openEditMetaDialog(metaId)
@@ -153,9 +138,10 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
         />
         <Button.IconButton
           text={t('general.delete')}
-          icon={'park-delete'}
+          icon={'park-delete-one'}
           dangerous={true}
-          style={{ padding: '3px 10px', fontSize: 13 }}
+          className={flatButton}
+          style={{ boxShadow: '0 0 0 1px rgba(255, 83, 83, 0.6)' }}
           onClick={() => {
             GlobalInstance.metaOps?.closeDetails()
             MetaStore.deleteMetaObject(metaId)

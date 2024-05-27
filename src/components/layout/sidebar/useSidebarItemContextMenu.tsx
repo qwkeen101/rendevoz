@@ -160,7 +160,7 @@ const useSidebarItemContextMenu = (
                 {
                   type: 'item',
                   key: 'delete',
-                  icon: 'park-delete',
+                  icon: 'park-delete-one',
                   text: t('general.delete'),
                   onSelect: () => {
                     onDelete?.()

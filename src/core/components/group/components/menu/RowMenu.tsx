@@ -66,7 +66,7 @@ export default memo(
       },
       deleteCompleted: {
         text: t('general.Delete completed'),
-        icon: 'park-delete',
+        icon: 'park-delete-one',
         type: 'item',
         key: 'delete-complete',
         onSelect: () => {
@@ -164,7 +164,7 @@ export default memo(
       },
       deleteObject: {
         text: t('general.delete object'),
-        icon: 'park-delete',
+        icon: 'park-delete-one',
         type: 'item',
         suffix: actionToShortcut['delete-obj'].text,
         key: 'delete-obj',

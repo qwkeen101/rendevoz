@@ -283,7 +283,7 @@ const ObjectActionMenu: FC<
           {
             type: 'item',
             text: t('general.delete'),
-            icon: 'park-delete',
+            icon: 'park-delete-one',
             onSelect: () => {
               deleteMetaObject(metaObject.id)
               onClose?.()

@@ -111,7 +111,7 @@ export default ({ collectionId, parentFolderId }: { collectionId: number; parent
                 type: 'item',
                 key: 'delete',
                 text: t('general.delete'),
-                icon: 'park-delete',
+                icon: 'park-delete-one',
                 onSelect: () => {
                   deleteCollection(collectionId)
                   setV(false)

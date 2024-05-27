@@ -105,7 +105,7 @@ export default ({
                     <div className={ClassName.ellipsisFont(1)}>{i.name}</div>
                   )}
                   <Icon
-                    name={'park-delete'}
+                    name={'park-delete-one'}
                     size={14}
                     onClick={e => {
                       e.stopPropagation()

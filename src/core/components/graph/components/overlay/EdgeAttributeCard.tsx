@@ -97,7 +97,7 @@ const EdgeAttributeCard = ({ currentEdge }: { currentEdge?: GraphEdge }) => {
         ></IconWithPopover>
       </Toolbar.Item>
       <Toolbar.Item
-        iconName="park-delete"
+        iconName="park-delete-one"
         onClick={() => {
           currentEdge?.id && graph?.deleteEdges([currentEdge.id])
           MetaStore.deleteMetaLink(currentEdge.id, true)

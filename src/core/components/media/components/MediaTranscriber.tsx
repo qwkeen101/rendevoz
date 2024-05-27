@@ -292,7 +292,7 @@ export default () => {
                     getAvailableModels().then(res => setTranscribeState(s => ({ ...s, availableModels: res })))
                   })
                 }}
-                icon={'park-delete'}
+                icon={'park-delete-one'}
               />
               {transcribeState.loaded && (
                 <Button.IconButton

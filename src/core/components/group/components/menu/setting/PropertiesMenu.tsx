@@ -215,7 +215,7 @@ function Item({ value, onStop, onVisibleChange, isDragging, bound, onDragStart }
         {typeof value === 'object' && value.type === 'custom' && (
           <Icon
             className={ClassName.flatButton(4, '4px')}
-            name={'park-delete'}
+            name={'park-delete-one'}
             onClick={e => {
               e.stopPropagation()
               instance.viewOps?.deleteCustomProperty(value.id)

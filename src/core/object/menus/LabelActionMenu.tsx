@@ -164,7 +164,7 @@ const LabelActionMenu = ({ on, objectId, type, onClose }: Props) => {
           {
             type: 'item',
             text: t('general.delete'),
-            icon: 'park-delete',
+            icon: 'park-delete-one',
             onSelect: () => {
               actions('delete')
             },

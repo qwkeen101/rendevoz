@@ -2,10 +2,7 @@ import { useState } from 'react'
 import { useDebounceEffect } from '@/hooks'
 import fetchGoogleNews from '@/core/components/feed/utils/googleNewsScraper'
 import { Content, Icon } from '@/components'
-import { ObjectStore } from '@/api/stores'
 import { ClassName } from 'rendevoz'
-import { Colors } from '@/consts'
-import { css } from '@emotion/css'
 import availableLangs from '../../google/AvailableLangAndRegions.json'
 import Select from '@/components/base/select'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
@@ -85,6 +82,7 @@ const GoogleNewsSearch = () => {
       >
         <Icon name={isLoading ? 'park-loading-four' : 'park-search'} spin={isLoading} />
         <input
+          autoFocus
           placeholder={t('general.Type to search') + '...'}
           value={searchInput}
           onChange={e => setSearchInput(e.target.value)}

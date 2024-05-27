@@ -707,6 +707,7 @@
     "code-block": "代码块"
   },
   "settings": {
+    "View subtitle in sidebar": "在侧边栏中查看字幕",
     "Position": "位置",
     "Device": "设备",
     "Auto sync desc": "如果开启，数据与文件将自动与云端同步",

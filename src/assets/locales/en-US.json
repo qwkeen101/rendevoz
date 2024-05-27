@@ -711,6 +711,7 @@
     "code-block": "Code block"
   },
   "settings": {
+    "View subtitle in sidebar": "View subtitles in sidebar",
     "Auto sync desc": "If enabled, data and files will auto-sync with the cloud",
     "Sync files": "Sync files",
     "Folder path": "Folder path",

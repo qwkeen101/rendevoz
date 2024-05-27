@@ -93,6 +93,7 @@ const MediaSubtitle = memo(() => {
     }
   }, [subtitleLang])
   useEffect(() => {
+    if (visible) return
     if (!searchState.visible) {
       if (isIn || !subtitleFollow) return
     }
@@ -115,7 +116,7 @@ const MediaSubtitle = memo(() => {
     }
   }, [currentSelectedIndex, subtitleMode])
   const instance = useMediaInstance()
-  const { renderPopover, containerRef, rangeExtractor } = useSubtitleSelectAsLabel(currentSubtitles)
+  const { renderPopover, containerRef, rangeExtractor, visible } = useSubtitleSelectAsLabel(currentSubtitles)
   const mergedRef = useMergedRef(containerRef, ref)
   const searchSubtitle = (q: string) => {
     const results = Array.from(
@@ -171,7 +172,7 @@ const MediaSubtitle = memo(() => {
       </Content>
     )
   return (
-    <Content fullWidth fullHeight style={{ minHeight: 240 }} flex column>
+    <Content fullWidth style={{ height: 0, flex: 1 }} flex column>
       {renderPopover()}
       <Content flex gap={8} fullWidth style={{ padding: '6px 10px' }} className={'font-size-14'} alignItems={'center'}>
         <div style={{ fontWeight: 500 }} className={'ellipsis-font-1'}>
@@ -331,13 +332,21 @@ const MediaSubtitle = memo(() => {
           ) : null}
         </Content>
       )}
-      <Content fullHeight fullWidth ref={mergedRef} style={{ height: 0, flex: 1 }} role={'subtitle-container'} className={'border-top'}>
+      <Content
+        flex
+        column
+        fullWidth
+        ref={mergedRef}
+        style={{ height: 0, flex: 1, minHeight: 120 }}
+        role={'subtitle-container'}
+        className={'border-top'}
+      >
         {subtitleMode === 'list' ? (
           currentSubtitles?.length ? (
             <VirtualList
               rangeExtractor={r => rangeExtractor(r)}
-              paddingEnd={200}
-              style={{ width: '100%', height: '100%', padding: '8px' }}
+              paddingEnd={100}
+              style={{ width: '100%', height: '0', flex: 1, padding: '8px' }}
               estimateSize={30}
               items={currentSubtitles}
               ref={virtualizerRef}
@@ -354,7 +363,7 @@ const MediaSubtitle = memo(() => {
             />
           ) : null
         ) : (
-          <Content style={{ height: '100%', overflowY: 'auto', padding: '10px 12px 100px' }} className={'font-size-14'}>
+          <Content style={{ height: 0, flex: 1, overflowY: 'auto', padding: '10px 12px 100px' }} className={'font-size-14'}>
             {currentSubtitles?.map((i, idx) => (
               <ArticleSubtitleItem index={idx} scrollable={subtitleFollow && !isIn} subtitle={i} selected={idx === currentSelectedIndex} />
             ))}
@@ -415,10 +424,12 @@ const SubtitleItem = memo(
         className={ClassName.flatButton()}
         onPointerLeave={() => setHovered(false)}
         onPointerMove={() => setHovered(true)}
-        onClick={() => {
-          if (window.getSelection()?.isCollapsed) {
-            instance.actionOps?.jumpTo(subtitle.startTime)
-          }
+        onClick={e => {
+          setTimeout(() => {
+            if (window.getSelection()?.isCollapsed) {
+              instance.actionOps?.jumpTo(subtitle.startTime)
+            }
+          })
         }}
         style={{
           background: selected ? Colors.Common.SelectColorTransparent : undefined
@@ -440,12 +451,19 @@ const SubtitleItem = memo(
           className={ClassName.flatButton(4, '4px')}
           onClick={e => {
             e.stopPropagation()
+            const parentBounding = e.currentTarget.parentElement!.getBoundingClientRect()
             instance.insertLabel?.(
               {
                 time: subtitle.startTime,
                 name: subtitle.text
               },
-              false
+              {
+                shouldJumpBack: false,
+                popoverPosition: {
+                  x: parentBounding.left + parentBounding.width / 2,
+                  y: parentBounding.bottom
+                }
+              }
             )
           }}
         />

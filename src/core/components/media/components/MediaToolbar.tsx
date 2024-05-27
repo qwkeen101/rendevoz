@@ -12,6 +12,7 @@ import { useAtomValue } from 'jotai/index'
 import { MediaLayoutAtom } from '@/core/components/media/hooks/useVideoLayout'
 import MediaMoreMenu from '@/core/components/media/components/MediaMoreMenu'
 import classnames from 'classnames'
+import { GlobalSetting } from '@/core'
 
 const clazz = css({
   borderRadius: `999px !important`,
@@ -19,21 +20,22 @@ const clazz = css({
   border: '1px solid var(--border-background)',
   cursor: 'pointer',
   transition: 'all 0.16s ease-out',
+  height: '32px',
   ':hover': {
     backgroundColor: `${Colors.Background.ButtonActive} !important`
   }
 })
-export default () => {
+export default ({ showDetails }: { showDetails: boolean }) => {
   const [mediaState, setMediaState] = useMediaState()
   const [sidebarState, setSidebarState] = useMediaSidebarState()
   const instance = useMediaInstance()
   const { t } = useTranslation()
-  const columnLayout = useAtomValue(MediaLayoutAtom)
+  const subtitleInSidebar = GlobalSetting.useSelectSettingAtom('subtitleInSidebar')
   const [subtitleImporterVisible, setSubtitleImporterVisible] = useState(false)
   const canHighlight = mediaState.currentTime !== undefined && mediaState.loaded
   return (
     <Content flex column gap={10} fullWidth>
-      {mediaState.mode === 'web' && (!columnLayout || sidebarState.rightBarActive === 'hide') && (
+      {mediaState.mode === 'web' && showDetails && (
         <div
           style={{
             width: '100%',
@@ -60,7 +62,7 @@ export default () => {
       )}
       <Content flex fullWidth alignItems={'center'} justifyContent={'space-between'} gap={30}>
         <MediaSubtitleImporter visible={subtitleImporterVisible} onChange={() => setSubtitleImporterVisible(false)} />
-        <Content flex gap={8}>
+        <Content flex gap={8} style={{ flexWrap: 'wrap' }}>
           <Button.IconButton
             size={18}
             theme={mediaState.isPinned ? 'filled' : undefined}
@@ -92,6 +94,24 @@ export default () => {
             }}
             text={t('general.Media highlight')}
           ></Button.IconButton>
+          {subtitleInSidebar === false && (
+            <Button.IconButton
+              size={18}
+              text={t('general.Subtitles')}
+              icon={'custom-CC'}
+              style={{
+                padding: '4px 12px',
+                cursor: mediaState.subtitleList?.length ? 'pointer' : 'not-allowed',
+                background: mediaState.subtitleList?.length ? undefined : 'transparent',
+                color: mediaState.subtitleList?.length ? undefined : Colors.Font.SuperTransparent
+              }}
+              className={classnames(clazz, sidebarState.subtitleOpen && 'active-button select-color-border')}
+              onClick={() =>
+                (sidebarState.subtitleOpen || mediaState.subtitleList?.length) &&
+                setSidebarState(s => ({ ...s, subtitleOpen: !s.subtitleOpen }))
+              }
+            ></Button.IconButton>
+          )}
           <AnimatePopover
             padding={10}
             positions={['bottom', 'top']}
@@ -125,11 +145,13 @@ export default () => {
                       key: 'chapter',
                       text: t('general.Chapters')
                     },
-                    {
-                      type: 'item',
-                      key: 'subtitle',
-                      text: t('general.Subtitles')
-                    },
+                    subtitleInSidebar
+                      ? {
+                          type: 'item',
+                          key: 'subtitle',
+                          text: t('general.Subtitles')
+                        }
+                      : undefined,
                     mediaState.metaId
                       ? {
                           type: 'item',

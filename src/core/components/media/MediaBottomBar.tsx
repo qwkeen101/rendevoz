@@ -184,9 +184,9 @@ const MediaBottomBar = () => {
       </div>
       <Content
         style={{
-          height: audioMode ? 55 : 44,
+          height: 44,
           padding: audioMode ? 0 : '0px 12px',
-          margin: audioMode ? '0px -6px' : undefined,
+          margin: audioMode ? '4px -6px 0px' : undefined,
           ...mediaState.styles?.controlBarStyle
         }}
         flex
@@ -345,7 +345,7 @@ const MediaBottomBar = () => {
               {mediaState.speed}X
             </div>
           </AnimatePopover>
-          {mediaState.toolbar?.addLabel !== false && (
+          {mediaState.toolbar?.addLabel !== false && mediaState.fullScreen && (
             <Button.IconButton
               onClick={() => {
                 instance.insertLabel?.({

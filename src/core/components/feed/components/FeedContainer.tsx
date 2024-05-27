@@ -106,6 +106,7 @@ const FeedContainer = () => {
           enable={{
             left: true
           }}
+          className={'border-left'}
           defaultSize={{
             height: '100%',
             width: '50%'
@@ -124,6 +125,7 @@ const FeedContainer = () => {
             height: '100%',
             width: '45vw'
           }}
+          className={'border-left'}
           style={{
             position: 'absolute',
             top: 0,

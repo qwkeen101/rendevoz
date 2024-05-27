@@ -36,28 +36,32 @@ export const useAssignMediaInstance = (containerRef: RefObject<HTMLElement>) => 
     updateChapter: async chapter => {
       await mediaInstance.on?.({ type: 'updateChapter', currentChapter: chapter })
     },
-    insertLabel: async (label, shouldJumpBack = true, skipCaptureImage = false) => {
-      if (!label.time) return
+    insertLabel: async (label, opts) => {
+      if (label.time === undefined) return
       const setting = getSetting()
+      const shouldJumpBack = opts?.shouldJumpBack ?? true
       const goBack = setting.video.goBackWhenMakingLabel || 0
       const time = shouldJumpBack ? Math.max(0, label.time - goBack) : label.time
       if (goBack > 0 && shouldJumpBack) {
         mediaInstance.actionOps?.jumpTo(time)
         await delay(500)
       }
-      if (!time) return Promise.reject()
+      if (time === undefined) return Promise.reject()
       let imgPath: string | undefined = undefined
-      if (!skipCaptureImage) {
+      if (!opts?.skipCaptureImage) {
         const img = await mediaInstance.imageOps?.captureCurrentImage()
         if (img) {
           imgPath = await saveImageLocally(img)
         }
       }
-      mediaInstance.openLabelEditor?.({
-        time,
-        selectedText: label.name,
-        imageUrl: imgPath
-      })
+      mediaInstance.openLabelEditor?.(
+        {
+          time,
+          selectedText: label.name,
+          imageUrl: imgPath
+        },
+        opts?.popoverPosition
+      )
     },
     getMarkerContainer: () => {
       return containerRef.current?.querySelector("[role='video-process-marker']")

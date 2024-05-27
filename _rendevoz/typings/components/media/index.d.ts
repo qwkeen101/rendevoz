@@ -1,5 +1,5 @@
 import { PartialWithId } from '@/types'
-import { ILabelContainerProps, IMedia, IMediaChapter, IMediaLabel, IMetaAttachment, IVideoLabel } from '../..'
+import { ILabelContainerProps, IMedia, IMediaChapter, IMediaLabel, IMetaAttachment, IVideoLabel, XYPosition } from '../..'
 import { VideoState } from '@/core/video/hooks/useVideoState'
 import { Size } from '../common'
 import { IMediaEvent } from '~/typings/components/media/event'
@@ -129,7 +129,7 @@ export type IMediaInstance = Partial<{
   getPlayerElement: () => HTMLElement | undefined | null
   getOffscreenVideo: () => HTMLVideoElement | undefined
   getVideoState: () => VideoState
-  openLabelEditor: (labelDetails: Partial<IMediaLabel>) => void
+  openLabelEditor: (labelDetails: Partial<IMediaLabel>, position?: XYPosition) => void
   openThumbnailAtTime: (
     time: number,
     options?: {
@@ -142,7 +142,14 @@ export type IMediaInstance = Partial<{
   insertChapters: (chapters: IMediaChapter[]) => Promise<void>
   deleteChapter: (chapterId: number) => Promise<void>
   updateChapter: (newChapter: PartialWithId<IMediaChapter>) => Promise<void>
-  insertLabel: (label: Partial<IMediaLabel>, shouldJumpBack?: boolean, skipCaptureImage?: boolean) => Promise<void>
+  insertLabel: (
+    label: Partial<IMediaLabel>,
+    opts?: {
+      shouldJumpBack?: boolean
+      skipCaptureImage?: boolean
+      popoverPosition?: XYPosition
+    }
+  ) => Promise<void>
   deleteLabel: (labelId: number) => Promise<void>
   getMarkerContainer: () => HTMLElement | undefined | null
 }>

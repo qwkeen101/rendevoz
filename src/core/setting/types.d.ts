@@ -211,5 +211,6 @@ export type IComponentSetting = {
   media: {
     openPopoverWhenHighlight?: boolean
     clipWhenHighlight?: boolean
+    subtitleInSidebar?: boolean
   }
 }

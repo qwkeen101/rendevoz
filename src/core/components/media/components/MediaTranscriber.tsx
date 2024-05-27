@@ -178,7 +178,18 @@ export default () => {
           session.current?.destroy()
           setMediaState(s => ({ ...s, isTranscribing: false }))
         }
-        setMediaState(s => ({ ...s, isTranscribing: true, subtitles: !s.subtitleLang ? [] : s.subtitles }))
+        setMediaState(s => ({
+          ...s,
+          isTranscribing: true,
+          subtitleList: [
+            ...(s.subtitleList || []),
+            {
+              lang: 'Transcription'
+            }
+          ],
+          subtitleLang: 'Transcription',
+          subtitles: []
+        }))
         await initialize()
         let options = new DecodingOptionsBuilder().setTask('transcribe').build()
         console.log(options)

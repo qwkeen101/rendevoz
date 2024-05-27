@@ -27,6 +27,8 @@ import MediaToolbar from '@/core/components/media/components/MediaToolbar'
 import _ from 'lodash'
 import QuickLabelPopover from '@/core/components/media/components/QuickLabelPopover'
 import useMediaSidebarState, { VideoSidebarStateAtom } from '@/core/components/media/hooks/useMediaSidebarState'
+import { GlobalSetting } from '@/core'
+import Subtitle from '@/core/components/media/components/sidebar/Subtitle'
 export interface MediaProps {
   onInstanceInitialized?: (instance: Partial<IMediaInstance>) => void
   onlyCore?: boolean
@@ -47,8 +49,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
   const showIcon = mediaState.mode === 'video' && playIconVisible && mediaState.loaded
   const mediaLayout = useAtomValue(MediaLayoutAtom)
   const audioMode = mediaState.mode === 'audio'
-  const containerWidth = useChangeVideoLayout(outerContainerRef)
-
+  useChangeVideoLayout(outerContainerRef)
   const columnLayout = mediaLayout
   const getPopIcon = () => {
     if (mediaState.jumpIndicator) {
@@ -98,6 +99,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
   }, [mediaState.muted, mediaState.volume, mediaState.loop, mediaState.currentTime, mediaState.totalPlayedTime, mediaState.totalTime])
   useMediaShortcut(outerContainerRef)
   useAssignMediaInstance(containerRef)
+  const subtitleInSidebar = GlobalSetting.useSelectSettingAtom('subtitleInSidebar')
   const latestVideoLoaded = useLatest(mediaState.loaded)
 
   useEffect(() => {
@@ -114,6 +116,14 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
     )
   }, [])
   const lastMovedRef = useRef(0)
+  const showDetails =
+    !audioMode &&
+    !(
+      subtitleInSidebar === false &&
+      sidebarState.subtitleOpen &&
+      (columnLayout || (sidebarState.rightBarActive !== 'hide' && sidebarState.rightBarActive !== 'subtitle'))
+    ) &&
+    (!columnLayout || sidebarState.rightBarActive === 'hide' || (subtitleInSidebar === false && sidebarState.rightBarActive === 'subtitle'))
   const renderCore = () => {
     return (
       <Content
@@ -290,6 +300,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
             height: columnLayout ? 'fit-content' : '100%',
             overflowY: columnLayout ? undefined : 'auto',
             padding: '16px 16px 10px',
+            maxHeight: '100%',
             display: 'flex'
           }}
         >
@@ -301,16 +312,37 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
             style={{
               width: '100%',
               maxWidth: 'calc((100vh - 260px) * (1/0.6))',
-              minWidth: 'calc(250px * (1 / 0.5625))',
+              minWidth: 'calc(200px * (1 / 0.5625))',
               height: 'fit-content',
+              maxHeight: '100%',
               margin: audioMode ? 'auto' : '0 auto'
             }}
           >
             {mediaState.floated ? renderFloated() : renderCore()}
-            {!audioMode && (!columnLayout || sidebarState.rightBarActive === 'hide') && (
-              <div style={{ fontWeight: 500, fontSize: 18, width: '100%', lineHeight: 1.4 }}>{mediaState.name}</div>
-            )}
-            {!audioMode && <MediaToolbar width={containerWidth} />}
+            {showDetails && <div style={{ fontWeight: 500, fontSize: 18, width: '100%', lineHeight: 1.4 }}>{mediaState.name}</div>}
+            {!audioMode && <MediaToolbar showDetails={showDetails} />}
+            {subtitleInSidebar === false &&
+              sidebarState.subtitleOpen &&
+              (columnLayout || (sidebarState.rightBarActive !== 'hide' && sidebarState.rightBarActive !== 'subtitle')) && (
+                <div
+                  className={'border'}
+                  style={{
+                    width: '100%',
+                    flex: 1,
+                    display: 'flex',
+                    maxHeight:
+                      columnLayout && sidebarState.rightBarActive !== 'hide' && sidebarState.rightBarActive !== 'subtitle'
+                        ? '280px'
+                        : undefined,
+                    flexDirection: 'column',
+                    height: 0,
+                    overflow: 'hidden',
+                    borderRadius: 12
+                  }}
+                >
+                  <Subtitle />
+                </div>
+              )}
           </Content>
         </Content>
         <MediaSidebar />

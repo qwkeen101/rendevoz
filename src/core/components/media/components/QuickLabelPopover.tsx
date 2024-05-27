@@ -74,7 +74,7 @@ export default memo(() => {
     }
   })
   assignProperties(instance, {
-    openLabelEditor: l => {
+    openLabelEditor: (l, position) => {
       const setting = getSetting()
       if (setting.media.openPopoverWhenHighlight === false && !l.id) {
         setTimeout(() => handleInsertNote(l))
@@ -86,13 +86,26 @@ export default memo(() => {
       open(l, {
         width: 0,
         height: 0,
-        left: bounding.left + bounding.width / 2,
-        top: bounding.bottom
+        left: position?.x ?? bounding.left + bounding.width / 2,
+        top: position?.y ?? bounding.bottom
       })
       setMediaState(s => ({ ...s, labelPopoverVisible: true }))
       isPlayRef.current = !store.get(MediaStateAtom).paused
       instance.actionOps?.pause()
     }
   })
-  return renderPopover()
+  return renderPopover({
+    extra: labelDetails?.selectedText ? (
+      <div
+        className={'font-size-12 transparent-font'}
+        style={{
+          borderLeft: '2px solid var(--emphasis)',
+          padding: '3px 6px',
+          marginBottom: 4
+        }}
+      >
+        {labelDetails.selectedText}
+      </div>
+    ) : null
+  })
 })

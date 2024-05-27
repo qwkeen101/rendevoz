@@ -58,7 +58,9 @@ const ComponentSetting = () => {
     },
     {
       title: t('settings.drop file auto object'),
-      children: <Switch value={!!setting.whiteboard.dropFileAutoObject} onChange={() => toggleSetting('whiteboard', 'dropFileAutoObject')} />
+      children: (
+        <Switch value={!!setting.whiteboard.dropFileAutoObject} onChange={() => toggleSetting('whiteboard', 'dropFileAutoObject')} />
+      )
     },
     {
       title: t('settings.Only erase hand draw'),
@@ -108,7 +110,9 @@ const ComponentSetting = () => {
       : undefined,
     {
       title: t('settings.object auto become inline when dragged into editor'),
-      children: <Switch value={!!setting.editor.objectAutoBecomeInline} onChange={() => toggleSetting('editor', 'objectAutoBecomeInline')} />
+      children: (
+        <Switch value={!!setting.editor.objectAutoBecomeInline} onChange={() => toggleSetting('editor', 'objectAutoBecomeInline')} />
+      )
     },
     {
       title: t('settings.Custom editor format'),
@@ -342,6 +346,12 @@ const ComponentSetting = () => {
           }}
         />
       )
+    },
+    {
+      title: t('settings.View subtitle in sidebar'),
+      type: 'switch',
+      value: !!setting.media.subtitleInSidebar,
+      onChange: v => setSetting(s => ({ ...s, media: { ...s.media, subtitleInSidebar: v } }))
     },
     {
       title: t('settings.jump back when making label'),

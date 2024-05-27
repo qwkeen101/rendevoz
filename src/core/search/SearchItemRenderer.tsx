@@ -76,7 +76,10 @@ export default ({
             {size ? <div className={'transparent-font font-size-13'}>({size})</div> : null}
           </Content>
           {(content || description) && (
-            <div className={ClassName.description('0.85rem')} dangerouslySetInnerHTML={{ __html: content || description }}></div>
+            <div
+              className={'font-size-13 transparent-font ellipsis-font-3'}
+              dangerouslySetInnerHTML={{ __html: content || description }}
+            ></div>
           )}
         </Content>
         <IconWithPopover

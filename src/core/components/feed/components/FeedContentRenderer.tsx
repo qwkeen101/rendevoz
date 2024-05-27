@@ -64,7 +64,6 @@ const FeedContentRenderer = () => {
   if (currentItem?.feedType === 'youtube' || currentItem?.feedType === 'bilibili') {
     return (
       <Content
-        className={'border-left'}
         style={{
           height: '100%',
           width: '100%'
@@ -96,7 +95,6 @@ const FeedContentRenderer = () => {
           height: '100%',
           width: '100%',
           borderRadius: displayMode === 'center' ? 12 : 0,
-          borderLeft: displayMode !== 'center' ? `1px solid ${Colors.Background.Border}` : undefined,
           overflow: 'hidden'
         }}
       >
@@ -122,8 +120,7 @@ const FeedContentRenderer = () => {
             height: '100%',
             width: '100%',
             overflow: 'hidden',
-            borderRadius: displayMode === 'center' ? 12 : 0,
-            borderLeft: displayMode !== 'center' ? `1px solid ${Colors.Background.Border}` : undefined
+            borderRadius: displayMode === 'center' ? 12 : 0
           }}
         >
           <Content fullHeight fullWidth>
@@ -191,8 +188,7 @@ const FeedContentRenderer = () => {
         flex
         centered
         style={{
-          background: Colors.Background.Global,
-          borderLeft: displayMode === 'rightBar' ? '1px solid var(--border-background)' : undefined
+          background: Colors.Background.Global
         }}
       >
         <div className={ClassName.title()}>No article selected</div>

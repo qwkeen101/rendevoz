@@ -115,7 +115,8 @@ const defaultSetting: Setting = {
     followSystemTheme: false
   },
   media: {
-    openPopoverWhenHighlight: true
+    openPopoverWhenHighlight: true,
+    subtitleInSidebar: false
   },
   objectAndLink: {
     enableAll: true,
@@ -186,6 +187,7 @@ const SettingAtoms = {
   addSpacingInReaderMode: selectAtom(SettingAtom, s => s.editor.addSpacingInReaderMode),
   enableNotification: selectAtom(SettingAtom, s => s.notification.enabled),
   language: selectAtom(SettingAtom, s => s.general.language),
+  subtitleInSidebar: selectAtom(SettingAtom, s => s.media.subtitleInSidebar),
   pdfShowHighlightText: selectAtom(SettingAtom, s => s.pdf.showHighlightText),
   editorShowHighlightText: selectAtom(SettingAtom, s => s.editor.showHighlightText),
   pdfDefaultExpandHighlightDetails: selectAtom(SettingAtom, s => s.pdf.defaultExpandHighlightText),

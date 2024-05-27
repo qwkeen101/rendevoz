@@ -11,17 +11,36 @@ import { useAtomValue } from 'jotai'
 import { MediaLayoutAtom } from '@/core/components/media/hooks/useVideoLayout'
 import { ClassName } from 'rendevoz'
 import useMediaSidebarState from '@/core/components/media/hooks/useMediaSidebarState'
+import { GlobalSetting } from '@/core'
 
 export default () => {
   const [mediaState, setMediaState] = useMediaState()
   const audioRef = useRef<HTMLAudioElement>(null)
-  const { loaded, paused, currentTime = 0, totalTime = 0, jumpTime, volume = 0, speed = 1 } = mediaState
+  const { loaded, paused, currentTime = 0, jumpTime, volume = 0, speed = 1 } = mediaState
   const a = audioRef.current
   const columnLayout = useAtomValue(MediaLayoutAtom)
-  const sidebarOpen = useMediaSidebarState()[0].rightBarActive !== 'hide'
+  const [sidebarState] = useMediaSidebarState()
+  const subtitleInSidebar = GlobalSetting.useSelectSettingAtom('subtitleInSidebar')
+  const sidebarOpen =
+    sidebarState.rightBarActive !== 'hide' && (subtitleInSidebar === false ? sidebarState.rightBarActive !== 'subtitle' : true)
   const instance = useMediaInstance()
   const containerRef = useRef<HTMLElement>(null)
   const [ref, { width }] = useMeasure()
+  const columnMode = width < 800
+  const floated = mediaState.floated
+  let showImage = !floated && mediaState.layout?.showAudioThumbnail !== false
+  if (columnLayout) {
+    if (sidebarOpen || (subtitleInSidebar === false && sidebarState.subtitleOpen)) {
+      showImage = false
+    }
+  }
+  if (columnMode) {
+    if (!columnLayout) {
+      if (sidebarOpen && subtitleInSidebar === false && sidebarState.subtitleOpen) {
+        showImage = false
+      }
+    }
+  }
   assignProperties(instance, {
     getAudioFile: async () => {
       const res = await fetch(mediaState.url).then(res => res.blob())
@@ -77,8 +96,6 @@ export default () => {
     }
   }, [speed, loaded])
 
-  const columnMode = width < 800
-  const floated = mediaState.floated
   return (
     <Content
       flex
@@ -89,30 +106,14 @@ export default () => {
       ref={ref}
       column={columnMode}
     >
-      {!floated &&
-        mediaState.layout?.showAudioThumbnail !== false &&
-        !(columnLayout && sidebarOpen) &&
-        (mediaState.thumbnail ? (
-          <img
-            src={mediaState.thumbnail}
-            height={columnMode ? 200 : 300}
-            width={columnMode ? 200 : 300}
-            style={{ objectFit: 'cover', borderRadius: floated ? 4 : 24 }}
-          />
-        ) : (
-          <Content
-            flex
-            centered
-            style={{
-              background: Colors.Background.RadialGradient,
-              color: Colors.Font.Tertiary,
-              padding: 60,
-              borderRadius: 24
-            }}
-          >
-            <Icon size={120} name={'park-music'} theme={'filled'} />
-          </Content>
-        ))}
+      {showImage && mediaState.thumbnail && (
+        <img
+          src={mediaState.thumbnail}
+          height={columnMode ? 180 : 240}
+          width={columnMode ? 180 : 240}
+          style={{ objectFit: 'cover', borderRadius: floated ? 4 : 24 }}
+        />
+      )}
       <Content
         flex
         column
@@ -125,16 +126,16 @@ export default () => {
       >
         {mediaState.layout?.showTitle !== false && (
           <div
-            className={'video-drag-handle'}
+            className={'video-drag-handle ellipsis-font-1'}
             style={{
               fontWeight: 600,
-              fontSize: floated ? 14 : columnMode ? 18 : 30,
+              fontSize: floated ? 14 : columnMode ? 18 : 24,
               cursor: floated ? 'grab' : 'unset',
               width: 'fit-content',
               ...mediaState.styles?.titleStyle
             }}
           >
-            <div className={'ellipsis-font-1'}>{mediaState.name}</div>
+            {mediaState.name}
           </div>
         )}
         {!floated && !(columnLayout && sidebarOpen) && mediaState.layout?.showDescription !== false && (

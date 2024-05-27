@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { XYPosition } from '~/typings'
 import { AnimatePopover, Button, WithBorder } from '@/components'
 import { useMediaInstance } from '@/core/components/media/hooks/useMediaInstance'
@@ -6,6 +6,9 @@ import { IMediaState } from '@/core/components/media/hooks/useMediaState'
 import { defaultRangeExtractor, Range } from '@tanstack/react-virtual'
 import { useMemoizedFn } from '@/hooks'
 import { useTranslation } from 'react-i18next'
+import isHotkey from 'is-hotkey'
+import { KEY } from '@/consts'
+import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
 
 type Subtitle = Required<IMediaState>['subtitles'][0]
 const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subtitles']) => {
@@ -71,9 +74,13 @@ const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subt
           if (anchor && focus && container.contains(anchor) && container.contains(focus)) {
             const subtitleContainer = (anchor as HTMLElement).closest('[role="subtitle-container"]')
             if (!subtitleContainer) return
-            const bounding = selection.getRangeAt(0).getBoundingClientRect()
-            const aI = addLabelState?.anchorIdx ?? -1
-            const fI = addLabelState?.focusIdx ?? -1
+            const bounding = selection.getRangeAt(0).getClientRects().item(0)
+            if (!bounding) return
+            const anchorIndex = (anchor as HTMLElement).closest('[data-subtitle-index]')?.getAttribute('data-subtitle-index')
+            const focusIndex = (focus as HTMLElement).closest('[data-subtitle-index]')?.getAttribute('data-subtitle-index')
+            if (!anchorIndex || !focusIndex) return
+            const aI = Number(anchorIndex)
+            const fI = Number(focusIndex)
             if (aI >= 0 && fI >= 0) {
               const endOffset = (focus.textContent?.length || 0) - r.endOffset
               setTimeout(() => {
@@ -82,7 +89,7 @@ const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subt
                   anchorIdx: aI,
                   focusIdx: fI,
                   position: {
-                    x: bounding.x + bounding.width / 2,
+                    x: bounding?.left + bounding.width / 2,
                     y: Math.max(bounding.top, subtitleContainer.getBoundingClientRect().top)
                   },
                   anchorSubtitle: currentSubtitles[aI],
@@ -109,10 +116,40 @@ const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subt
         }
       }
     }
-
+    const keydownHandler = (e: KeyboardEvent) => {
+      if (isHotkey(KEY.Enter, e) && addLabelState?.visible) {
+        setAddLabelState(s => ({ ...s, visible: false }))
+        setTimeout(() => {
+          setAddLabelState(undefined)
+        }, 500)
+        if (addLabelState?.anchorSubtitle && addLabelState.text) {
+          let selection = window.getSelection()
+          if (!selection) return
+          e.preventDefault()
+          const getRange = selection.getRangeAt(0)
+          const bounding = getRange.getClientRects().item(0)
+          if (!bounding) return
+          instance.insertLabel?.(
+            {
+              name: addLabelState.text,
+              time: addLabelState.anchorSubtitle.startTime
+            },
+            {
+              shouldJumpBack: false,
+              popoverPosition: {
+                x: bounding.left + bounding.width / 2,
+                y: bounding.top + bounding.height
+              }
+            }
+          )
+        }
+      }
+    }
+    document.addEventListener('keydown', keydownHandler)
     document.addEventListener('pointerdown', selectionC)
     document.addEventListener('pointerup', pointerUpHandler)
     return () => {
+      document.removeEventListener('keydown', keydownHandler)
       document.removeEventListener('pointerup', pointerUpHandler)
       document.removeEventListener('pointerdown', selectionC)
     }
@@ -152,31 +189,64 @@ const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subt
       padding={10}
       disableNudge={true}
       content={
-        <WithBorder padding={4}>
+        <WithBorder borderRadius={4} style={{ display: 'flex' }}>
           <Button.IconButton
             style={{
-              padding: '3px 8px',
-              fontSize: 14
+              padding: '4px 12px',
+              borderRadius: 0,
+              height: 32
             }}
-            onClick={() => {
+            className={'border-right'}
+            onPointerDown={e => {
+              e.preventDefault()
+            }}
+            onClick={e => {
+              setAddLabelState(s => ({ ...s, visible: false }))
+              setTimeout(() => {
+                setAddLabelState(undefined)
+              }, 500)
               if (addLabelState?.anchorSubtitle && addLabelState.text) {
-                window.getSelection()?.empty()
+                let selection = window.getSelection()
+                if (!selection) return
+                e.preventDefault()
+                const getRange = selection.getRangeAt(0)
+                const bounding = getRange.getClientRects().item(0)
+                if (!bounding) return
                 instance.insertLabel?.(
                   {
                     name: addLabelState.text,
                     time: addLabelState.anchorSubtitle.startTime
                   },
-                  false,
-                  true
+                  {
+                    shouldJumpBack: false,
+                    popoverPosition: {
+                      x: bounding.left + bounding.width / 2,
+                      y: bounding.top + bounding.height
+                    }
+                  }
                 )
               }
+            }}
+            text={t('general.Media highlight')}
+            icon={'park-high-light'}
+          />
+          <Button.IconButton
+            icon={'park-search'}
+            text={t('general.search')}
+            style={{
+              padding: '4px 12px',
+              height: 32,
+              borderRadius: 0
+            }}
+            onClick={e => {
               setAddLabelState(s => ({ ...s, visible: false }))
               setTimeout(() => {
                 setAddLabelState(undefined)
               }, 500)
+              GlobalSearchInstance.open?.({
+                query: addLabelState?.text
+              })
             }}
-            text={t('general.Highlight')}
-            icon={'park-high-light'}
           />
         </WithBorder>
       }
@@ -191,7 +261,8 @@ const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subt
   return {
     renderPopover,
     containerRef,
-    rangeExtractor
+    rangeExtractor,
+    visible: !!addLabelState?.visible
   }
 }
 

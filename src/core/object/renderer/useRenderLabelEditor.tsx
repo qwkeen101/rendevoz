@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { ReactNode, useEffect, useRef, useState } from 'react'
 import { Box, ILabel, XYPosition } from '~/typings'
 import { AnimatePopover, AutosizeTextarea, Content, Icon, WithBorder } from '@/components'
 import isHotkey from 'is-hotkey'
@@ -52,7 +52,7 @@ const useRenderLabelEditor = function <T extends ILabel>(opts?: {
     opts?.onInsert?.(value, tags)
     shouldClose && close()
   }
-  const renderPopover = () => (
+  const renderPopover = (options?: { extra?: ReactNode }) => (
     <AnimatePopover
       keyboardClose={false}
       positions={direction === 'bottom' ? ['bottom', 'top'] : ['top', 'bottom']}
@@ -76,85 +76,91 @@ const useRenderLabelEditor = function <T extends ILabel>(opts?: {
         <WithBorder
           padding={'9px 8px 8px 12px'}
           style={{
-            display: 'flex',
-            flexWrap: 'wrap',
             width: 470,
             maxWidth: '90vw',
-            gap: 4,
-            alignItems: 'center',
-            pointerEvents: popoverState.visible ? 'auto' : 'none',
-            justifyContent: 'flex-end'
+            pointerEvents: popoverState.visible ? 'auto' : 'none'
           }}
         >
-          <AutosizeTextarea
-            ref={inputRef}
+          {options?.extra}
+          <Content
             style={{
-              flexGrow: 1,
-              width: value.length && value.includes('\n') ? '100%' : undefined
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 4,
+              alignItems: 'center',
+              justifyContent: 'flex-end'
             }}
-            value={value}
-            onChange={e => {
-              setValue(e)
-            }}
-            autoFocus
-            onKeyDown={e => {
-              if (isHotkey(KEY.Enter, e)) {
-                e.preventDefault()
-                handleInsertNote()
-              }
-              if (isHotkey(KEY.Escape, e)) {
-                close()
-                if (!labelMeta) {
-                  opts?.onCancel?.()
-                }
-              }
-            }}
-            placeholder={t('general.Add note')}
-          />
-          <Content flex gap={6} alignItems={'center'}>
-            {opts?.showMoveTo !== false && (
-              <Icon
-                name={'park-corner-up-right'}
-                style={{
-                  color: Colors.Font.Transparent
-                }}
-                onClick={() => {
-                  if (labelMeta?.id) {
-                    GlobalInstance.metaOps?.quickAdd(labelMeta?.id)
-                  } else {
-                    useRenderLabelEditor.labelNeedMoveTo = true
-                    handleInsertNote()
-                  }
-                }}
-                size={16}
-                className={ClassName.flatButton(4, '4px')}
-              />
-            )}
-            {opts?.showTags !== false && (
-              <Icon
-                name={'park-tag-one'}
-                style={{
-                  color: Colors.Font.Transparent
-                }}
-                onClick={() => {
-                  GlobalInstance.metaOps?.quickAdd(labelMeta?.id ?? TEMP_META_ID, 'tags')
-                }}
-                size={16}
-                className={ClassName.flatButton(4, '4px')}
-              />
-            )}
-            <Icon
-              name={'park-up-small'}
-              size={16}
-              strokeWidth={5}
-              onClick={handleInsertNote}
-              className={ClassName.selectButton()}
+          >
+            <AutosizeTextarea
+              ref={inputRef}
               style={{
-                color: 'white',
-                padding: 3,
-                borderRadius: 999
+                flexGrow: 1,
+                width: value.length && value.includes('\n') ? '100%' : undefined
               }}
+              value={value}
+              onChange={e => {
+                setValue(e)
+              }}
+              autoFocus
+              onKeyDown={e => {
+                if (isHotkey(KEY.Enter, e)) {
+                  e.preventDefault()
+                  handleInsertNote()
+                }
+                if (isHotkey(KEY.Escape, e)) {
+                  close()
+                  if (!labelMeta) {
+                    opts?.onCancel?.()
+                  }
+                }
+              }}
+              placeholder={t('general.Add note')}
             />
+            <Content flex gap={6} alignItems={'center'}>
+              {opts?.showMoveTo !== false && (
+                <Icon
+                  name={'park-corner-up-right'}
+                  style={{
+                    color: Colors.Font.Transparent
+                  }}
+                  onClick={() => {
+                    if (labelMeta?.id) {
+                      GlobalInstance.metaOps?.quickAdd(labelMeta?.id)
+                    } else {
+                      useRenderLabelEditor.labelNeedMoveTo = true
+                      handleInsertNote()
+                    }
+                  }}
+                  size={16}
+                  className={ClassName.flatButton(4, '4px')}
+                />
+              )}
+              {opts?.showTags !== false && (
+                <Icon
+                  name={'park-tag-one'}
+                  style={{
+                    color: Colors.Font.Transparent
+                  }}
+                  onClick={() => {
+                    GlobalInstance.metaOps?.quickAdd(labelMeta?.id ?? TEMP_META_ID, 'tags')
+                  }}
+                  size={16}
+                  className={ClassName.flatButton(4, '4px')}
+                />
+              )}
+              <Icon
+                name={'park-up-small'}
+                size={16}
+                strokeWidth={5}
+                onClick={handleInsertNote}
+                className={ClassName.selectButton()}
+                style={{
+                  color: 'white',
+                  padding: 3,
+                  borderRadius: 999
+                }}
+              />
+            </Content>
           </Content>
         </WithBorder>
       }

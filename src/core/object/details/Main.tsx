@@ -105,7 +105,7 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
           )}
         </Content>
       </Content>
-      <Content className={'border-box-shadow'} style={{ marginTop: 16, flexWrap: 'wrap', borderRadius: 8, padding: '8px' }} flex gap={4}>
+      <Content style={{ marginTop: 16, flexWrap: 'wrap' }} flex gap={4}>
         <Button.IconButton
           text={t('general.Open')}
           icon={'park-share'}

@@ -103,7 +103,7 @@ const MediaSidebar = memo(() => {
             </TabPane>
           ) : null}
         </Tabs>
-        {sidebarOpened && (sidebarState.rightBarActive === 'hide' || sidebarState.rightBarActive === 'subtitle') ? (
+        {sidebarOpened && subtitleInSidebar === false && (sidebarState.rightBarActive === 'hide' || sidebarState.rightBarActive === 'subtitle') ? (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column' }}>
             <Subtitle />
           </div>

@@ -192,7 +192,7 @@ const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subt
         <WithBorder borderRadius={4} style={{ display: 'flex' }}>
           <Button.IconButton
             style={{
-              padding: '4px 12px',
+              padding: '4px 12px 4px 10px',
               borderRadius: 0,
               height: 32
             }}
@@ -234,7 +234,7 @@ const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subt
             icon={'park-search'}
             text={t('general.search')}
             style={{
-              padding: '4px 12px',
+              padding: '4px 12px 4px 10px',
               height: 32,
               borderRadius: 0
             }}

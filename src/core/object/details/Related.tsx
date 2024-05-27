@@ -289,7 +289,6 @@ const RelatedGroup = ({
               className={'font-size-12 transparent-font'}
               text={t('general.New')}
               style={{
-                marginBottom: 1,
                 padding: '3px 6px',
                 width: 'fit-content',
                 minWidth: 140,

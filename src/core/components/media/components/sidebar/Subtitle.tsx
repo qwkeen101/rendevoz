@@ -4,7 +4,7 @@ import { Button, Content, Icon, IconWithPopover, Tooltip, VirtualList, WithBorde
 import { useMediaInstance } from '@/core/components/media/hooks/useMediaInstance'
 import { normalizeSecondsToTime } from '@/core/components/media/utils'
 import { ClassName } from 'rendevoz'
-import { memo, useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Colors from '@/consts/colors'
 import { useTranslation } from 'react-i18next'
 import { WebVTTParser } from 'webvtt-parser'
@@ -39,7 +39,7 @@ const MediaSubtitle = memo(() => {
   const [currentSelectedIndex, setCurrentSelectedIndex] = useState(0)
   const { ref, isIn } = useIsIn()
   const virtualizerRef = useRef<Virtualizer<any, any>>()
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (searchState.visible) return
     if (currentTime && currentSubtitles) {
       const index = currentSubtitles.findLastIndex(i => i.startTime <= currentTime && i.endTime >= currentTime)
@@ -92,7 +92,7 @@ const MediaSubtitle = memo(() => {
       }
     }
   }, [subtitleLang, subtitles.length])
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (visible) return
     if (!searchState.visible) {
       if (isIn || !subtitleFollow) return
@@ -101,11 +101,9 @@ const MediaSubtitle = memo(() => {
     if (subtitleMode === 'list') {
       const virtualizer = virtualizerRef.current
       if (virtualizer && !isIn && subtitleFollow) {
-        setTimeout(() =>
-          virtualizer.scrollToIndex(currentSelectedIndex, {
-            align: 'center'
-          })
-        )
+        virtualizer.scrollToIndex(currentSelectedIndex, {
+          align: 'center'
+        })
       }
     }
     if (subtitleMode === 'article') {

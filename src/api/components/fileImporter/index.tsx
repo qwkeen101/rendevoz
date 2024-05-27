@@ -31,6 +31,7 @@ import { Colors } from '@/consts'
 import isHotkey from 'is-hotkey'
 import FileSystem from '@/api/fileSystem'
 import React from 'react'
+import { debounce } from 'lodash'
 
 const keyToCreateType: Record<string, string> = {
   1: 'note',
@@ -46,6 +47,7 @@ const keyToCreateType: Record<string, string> = {
   f2: 'localFile',
   f3: 'tweet'
 }
+const debounceNotifyBaiduDisk = () => toast.success('导入成功')
 const typeToKey = Object.fromEntries(Object.entries(keyToCreateType).map(i => [i[1], i[0]]))
 const FileImporter = ({
   onClose,
@@ -246,13 +248,19 @@ const FileImporter = ({
             if (file) {
               ObjectStore('video')
                 .addOneWithMeta({ url: `baidudisk${file.path}` }, { currentMeta: { name: file.filename, coverImgSrc: thumb } })
-                .then(o => createHandler?.(o.meta))
+                .then(o => {
+                  createHandler?.(o.meta)
+                  debounceNotifyBaiduDisk()
+                })
             }
           }
           if (file.category === 4) {
             ObjectStore('pdf')
               .addOneWithMeta({ webFileUrl: `baidudisk/${file.fs_id}` }, { currentMeta: { name: file.filename, coverImgSrc: thumb } })
-              .then(o => createHandler?.(o.meta))
+              .then(o => {
+                createHandler?.(o.meta)
+                debounceNotifyBaiduDisk()
+              })
           }
         }
       }

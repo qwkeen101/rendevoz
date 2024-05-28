@@ -50,4 +50,5 @@ export type ISearchEvent =
 export type ISearchResult = (ISearchableDocument & {
   // key -> matched string with highlight
   matched: Record<string, string>
+  terms: string[]
 })[]

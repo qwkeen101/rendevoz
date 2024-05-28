@@ -9,6 +9,8 @@ import { CSSProperties } from 'react'
 import { ObjectActionMenu } from '@/core'
 import classnames from 'classnames'
 import { useTranslation } from 'react-i18next'
+import globalInstance from '@/api/global/GlobalInstance'
+import highlightAndTruncate from '@/api/textSearch/highlightAndTruncate'
 
 export default ({
   hit,
@@ -26,12 +28,26 @@ export default ({
   className?: string
 }) => {
   const { t } = useTranslation()
-  const name = hit.matched?.['name'] || hit.name || t('general.Unnamed')
+  let name = hit.matched?.['name'] || hit.name || t('general.Unnamed')
   const noName = !hit.matched?.['name'] && !hit.name
   const description = hit.matched?.['description'] || hit.description
-  const content = hit.matched?.['content']
+  let content = hit.matched?.['content']
   const meta = MetaStore.useValue(hit.metaId)
+  let showName = true
   if (!meta || meta.deleted) return null
+  if (meta.type.includes('Label')) {
+    if (meta.placeholderName) {
+      content = highlightAndTruncate(meta.placeholderName, hit.terms, 9999)
+    }
+    if (!meta.name) {
+      name = ''
+      showName = false
+      if (!meta.placeholderName) {
+        name = t('general.Unnamed')
+        showName = true
+      }
+    }
+  }
   return (
     <Content
       title={meta.name || meta.placeholderName}
@@ -67,14 +83,16 @@ export default ({
         )}
       </Content>
       <Content flex alignItems={'flex-start'} justifyContent={'space-between'} gap={8} style={{ flex: 1 }}>
-        <Content>
-          <Content flex gap={4} alignItems={'center'}>
-            <div
-              className={classnames('bold-font', 'font-size-14', 'ellipsis-font-1', noName && 'super-transparent-font')}
-              dangerouslySetInnerHTML={{ __html: name }}
-            ></div>
-            {size ? <div className={'transparent-font font-size-13'}>({size})</div> : null}
-          </Content>
+        <Content style={{ alignSelf: 'center' }}>
+          {showName && (
+            <Content flex gap={4} alignItems={'center'}>
+              <div
+                className={classnames('bold-font', 'font-size-14', 'ellipsis-font-1', noName && 'super-transparent-font')}
+                dangerouslySetInnerHTML={{ __html: name }}
+              ></div>
+              {size ? <div className={'transparent-font font-size-13'}>({size})</div> : null}
+            </Content>
+          )}
           {(content || description) && (
             <div
               className={'font-size-13 transparent-font ellipsis-font-3'}

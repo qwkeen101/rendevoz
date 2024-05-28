@@ -67,12 +67,14 @@ export default memo(
       onClose()
       if (selectedGroup) {
         const groupId = selectedGroup
-        if (groupId && metaId) {
+        if (groupId) {
           const groupMeta = MetaStore.getMetaObjectByObjectId(groupId)
           if (groupMeta) {
             onPickGroup?.(groupMeta.id)
           }
-          quickAdd(metaId, 'group', selectedGroup)
+          if (metaId) {
+            quickAdd(metaId, 'group', selectedGroup)
+          }
         }
       }
     })

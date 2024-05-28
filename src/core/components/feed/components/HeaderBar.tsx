@@ -64,7 +64,7 @@ const FeedHeaderBar = () => {
         <ChooseGroupForm
           onPickGroup={async m => {
             if (currentCollection && !currentCollection?.relatedGroups?.includes(m)) {
-              const metas = await transformItemsIntoMetas(currentCollection.items)
+              const metas = (await transformItemsIntoMetas(currentCollection.items)).filter(i => i)
               const groupMeta = MetaStore.getCachedMetaObject(m)
               if (groupMeta?.objectId) {
                 GroupStore.insertMetaIntoGroup(

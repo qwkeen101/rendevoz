@@ -40,7 +40,7 @@ enum Settings {
   'components',
   'shortcuts',
   'object and link',
-  // 'sync',
+  'sync',
   'AI',
   'resource usage'
   // 'about'

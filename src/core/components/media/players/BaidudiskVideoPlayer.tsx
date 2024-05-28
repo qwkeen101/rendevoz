@@ -10,6 +10,7 @@ import { assignProperties } from '@/utils'
 import { captureVideoFrame } from '@/core/components/media/utils'
 import loginBaidudisk from '@/api/components/fileImporter/baidudisk/loginBaidudisk'
 import { useUnmount } from 'react-use'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
 
 const BaidudiskVideoPlayer = () => {
   const [mediaState, setMediaState] = useMediaState()
@@ -50,7 +51,7 @@ const BaidudiskVideoPlayer = () => {
   }, [mediaState.speed, mediaState.loaded])
 
   useEffect(() => {
-    const bda = localStorage.getItem('bda')
+    const bda = KeyvalueStore.getOne('baiduAccessToken')
     console.log(url)
     if (!bda) {
       loginBaidudisk()

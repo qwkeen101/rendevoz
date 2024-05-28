@@ -24,6 +24,7 @@ export type CurrentKeyValues = {
     name: string
     createdAt: number
   }
+  baiduAccessToken?: string
   filePickerType: 'local' | 'web' | 'baidudisk'
   moveToShowInvisible?: boolean
   // workspace to cache

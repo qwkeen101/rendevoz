@@ -207,7 +207,7 @@ const openRendevozLink = async (link: string) => {
     if (search.has('code')) {
       ipcInstance.send('loginBaidudisk', search.get('code')).then(res => {
         if (res) {
-          localStorage.setItem('bda', res.data.access_token)
+          KeyvalueStore.updateOne('baiduAccessToken', res.data.access_token)
           toast.success('登录网盘成功！')
         }
       })
@@ -222,17 +222,6 @@ const openLocalFile = async (fileId: number) => {
   }
 }
 
-const openSyncedEditor = (syncMetaId: number) => {
-  return new Promise(res => {
-    Rendevoz.Actions.Layout.openNewTab({
-      data: {
-        type: 'synced',
-        objectId: syncMetaId
-      }
-    })
-    MetaStore.updateMetaObject({ id: syncMetaId, viewAt: Date.now() })
-  })
-}
 const openAudio = async (audioId: number): Promise<IMediaInstance> => {
   return new Promise(res => {
     Rendevoz.Actions.Layout.openNewTab?.({

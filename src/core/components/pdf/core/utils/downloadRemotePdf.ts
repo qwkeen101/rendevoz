@@ -2,11 +2,12 @@ import { ErrorMaker } from '@/consts'
 import { request } from '@/utils/request'
 import FileSystem from '@/api/fileSystem'
 import fetchProcess from '@/utils/fetchProcess'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
 
 const downloadRemotePdf = async (remotePdfUrl: string, onProgress?: (p: number) => void) => {
   if (remotePdfUrl.startsWith('baidudisk')) {
     const fsid = Number(remotePdfUrl.replace('baidudisk/', ''))
-    const access = localStorage.getItem('bda')
+    const access = KeyvalueStore.getOne('baiduAccessToken')
     if (!access) {
       throw new Error(ErrorMaker.createError('BAIDU_AUTH_ERROR'))
     }

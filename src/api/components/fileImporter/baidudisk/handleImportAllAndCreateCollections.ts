@@ -3,13 +3,14 @@ import { request } from '@/utils/request'
 import { CollectionStore, ObjectStore } from '@/api/stores'
 import { MetaObject } from '~/typings'
 import { BaidudiskInstance } from '@/api/components/fileImporter/baidudisk/BaidudiskDisplayer'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
 
 export const handleImportAllAndCreateCollections = async (
   currentFolder = '/',
   enable?: { all?: boolean; video?: boolean; audio?: boolean; image?: boolean }
 ) => {
-  if (localStorage.getItem('bda')) {
-    const access = localStorage.getItem('bda')!
+  if (KeyvalueStore.getOne('baiduAccessToken')) {
+    const access = KeyvalueStore.getOne('baiduAccessToken')!
     let start = 0
     let dataArr = []
     const listall = async () => {

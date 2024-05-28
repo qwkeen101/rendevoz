@@ -1,8 +1,9 @@
 import { toast } from 'react-hot-toast'
 import loginBaidudisk from '@/api/components/fileImporter/baidudisk/loginBaidudisk'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
 
 const requestBaiduVideoSubtitle = async (path: string) => {
-  const bda = localStorage.getItem('bda')
+  const bda = KeyvalueStore.getOne('baiduAccessToken')
   if (!bda) {
     loginBaidudisk()
   }

@@ -1,8 +1,9 @@
 import loginBaidudisk from '@/api/components/fileImporter/baidudisk/loginBaidudisk'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
 
 const getAllFilesAndFolders = async (currentPath = '/', category?: number) => {
-  if (localStorage.getItem('bda')) {
-    const access = localStorage.getItem('bda')!
+  if (KeyvalueStore.getOne('baiduAccessToken')) {
+    const access = KeyvalueStore.getOne('baiduAccessToken')!
     let method = ''
     if (category === undefined) {
       method = 'list'

@@ -32,6 +32,7 @@ import isHotkey from 'is-hotkey'
 import FileSystem from '@/api/fileSystem'
 import React from 'react'
 import { debounce } from 'lodash'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
 
 const keyToCreateType: Record<string, string> = {
   1: 'note',
@@ -233,7 +234,7 @@ const FileImporter = ({
       image: baidudisk,
       onClick: () => {
         onClose?.()
-        if (!localStorage.getItem('bda')) {
+        if (KeyvalueStore.getOne('baiduAccessToken')) {
           toast.error('请先在网盘中授权！')
           loginBaidudisk()
           return

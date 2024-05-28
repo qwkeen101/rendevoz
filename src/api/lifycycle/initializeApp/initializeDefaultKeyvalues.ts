@@ -17,7 +17,8 @@ export default async () => {
     feedReadIds: [],
     feedReadLaterIds: [],
     feedRecentlyReadIds: [],
-    homeGalleryRows: 1
+    homeGalleryRows: 1,
+    baiduAccessToken: localStorage.getItem('bda') ?? undefined
   }
   const kvDb = useDb('keypairs')
   const all = kvDb.toCollection()

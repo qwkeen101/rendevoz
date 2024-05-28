@@ -1,5 +1,7 @@
+import KeyvalueStore from '@/api/stores/keyvalue.store'
+
 const loginBaidudisk = () => {
-  localStorage.removeItem('bda')
+  KeyvalueStore.deleteOne('baiduAccessToken')
   window.open(
     'http://openapi.baidu.com/oauth/2.0/authorize?\n' +
       '    response_type=code&\n' +

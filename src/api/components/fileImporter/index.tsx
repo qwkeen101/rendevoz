@@ -234,7 +234,7 @@ const FileImporter = ({
       image: baidudisk,
       onClick: () => {
         onClose?.()
-        if (KeyvalueStore.getOne('baiduAccessToken')) {
+        if (!KeyvalueStore.getOne('baiduAccessToken')) {
           toast.error('请先在网盘中授权！')
           loginBaidudisk()
           return

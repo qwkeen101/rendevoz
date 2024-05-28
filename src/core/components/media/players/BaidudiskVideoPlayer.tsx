@@ -11,6 +11,7 @@ import { captureVideoFrame } from '@/core/components/media/utils'
 import loginBaidudisk from '@/api/components/fileImporter/baidudisk/loginBaidudisk'
 import { useUnmount } from 'react-use'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
+import getBaidudiskSubtitles from '@/api/components/fileImporter/baidudisk/getBaidudiskSubtitles'
 
 const BaidudiskVideoPlayer = () => {
   const [mediaState, setMediaState] = useMediaState()
@@ -58,6 +59,13 @@ const BaidudiskVideoPlayer = () => {
       toast.error('身份验证已失效，请重新登录网盘后再打开')
     } else {
       const path = url.replace('baidudisk', '')
+      if (!mediaState.subtitleList?.length) {
+        getBaidudiskSubtitles(path).then(res => {
+          if (res) {
+            setMediaState(s => ({ ...s, subtitleList: res, subtitleLang: res[0].lang }))
+          }
+        })
+      }
       requestVideo(path).then(res => {
         setM3u8Source(res.data)
       })

@@ -4,7 +4,7 @@ import { WebVTTParser } from 'webvtt-parser'
 export default async (url: string) => {
   const path = url.replace('baidudisk', '')
   try {
-    const info = await requestVideoSubtitle(path)
+    const info = await requestVideoSubtitle(path, false)
     if (info) {
       const lines = info.split(/[\r\n]/)
       if (lines[1] === '#MEDIA:SUBTITLES') {

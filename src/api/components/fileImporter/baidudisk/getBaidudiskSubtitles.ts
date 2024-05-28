@@ -1,6 +1,6 @@
 import requestVideoSubtitle from '@/api/components/fileImporter/baidudisk/requestVideoSubtitle'
 import toWebVTT from 'srt-webvtt'
-import { WebVTTParser } from 'webvtt-parser'
+
 export default async (url: string) => {
   const path = url.replace('baidudisk', '')
   try {

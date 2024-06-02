@@ -137,7 +137,7 @@ export const HomePage: FC = () => {
                 })
               }
               style={{
-                padding: '3px 12px 3px 8px'
+                padding: '3px 10px 3px 7px'
               }}
               className={'select-button ml-6'}
             ></Button.IconButton>

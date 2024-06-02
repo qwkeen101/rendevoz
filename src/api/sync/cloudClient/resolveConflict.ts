@@ -14,7 +14,6 @@ import getClientInfo from '@/api/sync/utils/getClientInfo'
 export default async (method: 'pull' | 'push') => {
   const client = SyncAPI.cloudClient()
   if (client) {
-    SyncAPI.file.syncLocalFiles()
     if (method === 'pull') {
       GlobalStates.setState('initialized', false)
       try {

@@ -70,6 +70,13 @@ export default memo(() => {
   useUpdateEffect(() => {
     setSyncState(s => ({ ...s, connection: 'unconnected' }))
     SyncAPI.cloudClient()?.cancelAllTasks()
+    setTimeout(() => {
+      setSyncState(s => ({
+        ...s,
+        uploading: Object.fromEntries(Object.entries(s.uploading).filter(i => i[1].progress === 1)),
+        downloading: Object.fromEntries(Object.entries(s.downloading).filter(i => i[1].progress === 1))
+      }))
+    })
     if (setting.sync.conflictResolved) {
       setSetting(s => ({ ...s, sync: { ...s.sync, conflictResolved: false, enableAutoSync: false } }))
     }

@@ -246,14 +246,12 @@ const ImageDisplayer = forwardRef<
               }}
             ></Button.IconButton>
             <Excalidraw
-              ref={r =>
-                r?.readyPromise?.then(v => {
-                  excalidrawRef.current = v
-                  if (ref) {
-                    typeof ref === 'function' ? ref(v) : (ref.current = v)
-                  }
-                })
-              }
+              excalidrawAPI={api => {
+                excalidrawRef.current = api
+                if (ref) {
+                  typeof ref === 'function' ? ref(api) : (ref.current = api)
+                }
+              }}
               langCode={langToLangCode()}
               initialData={{
                 ...excalidrawInitialData,
@@ -266,7 +264,6 @@ const ImageDisplayer = forwardRef<
             />
           </>
         )}
-        {/* {image?.imageUrl && <ImageCanvas imageUrl={image.imageUrl} />} */}
       </Provider>
     </Content>
   )

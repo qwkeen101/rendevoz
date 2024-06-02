@@ -109,9 +109,9 @@ const FeedSidebar = () => {
       <Content flex column style={{ padding: '0px 8px 10px', overflowY: 'auto', flexGrow: 1 }}>
         <div
           style={{
-            margin: '6px 4px 4px'
+            margin: '6px 6px 4px'
           }}
-          className={'font-size-13 transparent-font'}
+          className={'font-size-12 transparent-font'}
         >
           {t('general.Feeds')}
         </div>
@@ -121,9 +121,9 @@ const FeedSidebar = () => {
         </Content>
         <div
           style={{
-            margin: '6px 4px 4px'
+            margin: '6px 6px 4px'
           }}
-          className={'font-size-13 transparent-font'}
+          className={'font-size-12 transparent-font'}
         >
           {t('general.Podcasts')}
         </div>

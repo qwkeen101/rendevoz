@@ -15,24 +15,22 @@ import { GlobalInstance } from '@/hooks'
 import toast from 'react-hot-toast'
 import { useAtomValue } from 'jotai/react'
 
-const ItemsToolbar = ({ itemId }: { itemId: number }) => {
+const ItemsToolbar = ({ itemId, isFocused = false }: { itemId: number; isFocused: boolean }) => {
   const item = ObjectStore('feed').useValue(itemId)
-  const currentReadLater = KeyvalueStore.useValue('feedReadLaterIds') || []
   const isReadLater = useAtomValue(useFeedState.readLaterIdsAtom).has(itemId)
-  const currentCollectionId = useFeedState()[0].currentCollectionId
   const { isMeta, metaId } = useFeedIsMeta(itemId)
   const { t } = useTranslation()
-  const isRead = useFeedIsRead(itemId)
   if (!item) return null
   return (
-    <Content gap={10} flex justifyContent={'space-between'} style={{ color: Colors.Font.Transparent, fontSize: 13 }}>
-      {item.date && DateFormat.formatDistanceToNowStrict(item.date)}
+    <Content gap={10} flex justifyContent={'space-between'} className={'font-size-13' + (!isFocused ? ' transparent-font' : '')}>
+      {item.date && <span className={'font-size-12'}>{DateFormat.formatDistanceToNowStrict(item.date)}</span>}
       <Content flex alignItems={'center'} gap={4}>
         <Icon
-          className={ClassName.flatButton(4, '3px')}
+          className={'button p-3'}
           name={'park-star'}
           onClick={e => {
             e.stopPropagation()
+            const currentReadLater = KeyvalueStore.getOne('feedReadLaterIds') || []
             if (isReadLater) {
               KeyvalueStore.updateOne(
                 'feedReadLaterIds',
@@ -47,34 +45,33 @@ const ItemsToolbar = ({ itemId }: { itemId: number }) => {
             color: isReadLater ? Colors.Emphasis.Emphasis : undefined
           }}
         />
+        {/*<Icon*/}
+        {/*  style={{*/}
+        {/*    color: isRead ? Colors.Common.SelectColor : undefined*/}
+        {/*  }}*/}
+        {/*  onClick={e => {*/}
+        {/*    e.stopPropagation()*/}
+        {/*    if (isRead) {*/}
+        {/*      unreadItem(itemId, currentCollectionId)*/}
+        {/*    } else {*/}
+        {/*      readItem(itemId, currentCollectionId)*/}
+        {/*    }*/}
+        {/*  }}*/}
+        {/*  className={ClassName.flatButton(4, '3px')}*/}
+        {/*  name={isRead ? 'park-preview-open' : 'park-preview-close'}*/}
+        {/*/>*/}
         <Icon
           style={{
-            color: isRead ? Colors.Common.SelectColor : undefined
+            color: metaId ? Colors.Emphasis.Emphasis : undefined
           }}
+          theme={metaId ? 'filled' : undefined}
           onClick={e => {
             e.stopPropagation()
-            if (isRead) {
-              unreadItem(itemId, currentCollectionId)
-            } else {
-              readItem(itemId, currentCollectionId)
-            }
-          }}
-          className={ClassName.flatButton(4, '3px')}
-          name={isRead ? 'park-preview-open' : 'park-preview-close'}
-        />
-        <Icon
-          style={{
-            color: metaId ? Colors.Common.SelectColor : undefined
-          }}
-          onClick={e => {
-            e.stopPropagation()
-            if (metaId) {
-              MetaStore.deleteMetaObject(metaId)
-            } else {
+            if (!metaId) {
               addFeedAsMeta(itemId)
             }
           }}
-          className={ClassName.flatButton(4, '3px')}
+          className={'button p-3'}
           name={'park-share-one'}
         />
         <IconWithPopover
@@ -85,7 +82,7 @@ const ItemsToolbar = ({ itemId }: { itemId: number }) => {
           padding={6}
           renderOnParent={false}
           onClick={e => e.stopPropagation()}
-          className={ClassName.flatButton(4, '3px')}
+          className={'button p-3'}
           content={setV => (
             <WithBorder onClick={e => e.stopPropagation()} padding={'0.4rem 0'} width={180}>
               <Menu.NavigationMenu

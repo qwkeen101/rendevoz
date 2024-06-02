@@ -6,7 +6,7 @@ export default () =>
     beforeAddProcess: async o => {
       if (o.parentPropName) {
         const map = globalStore.get(ObjectStore('metaPropSelectOption').objectMapAtom)
-        const allOptions = MetaStore.getPropOptions()[o.parentPropName]
+        const allOptions = MetaStore.property.getPropOptions()[o.parentPropName]
         o.order = Math.max(...Array.from(allOptions?.values() || []).map(i => map.get(i)?.order ?? -1)) + 1
       }
     }

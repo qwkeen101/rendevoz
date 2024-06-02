@@ -22,12 +22,12 @@ export default (metaIds: number | number[], grouperId: number, instance: InnerGr
           if (updateArr && value !== undefined) {
             const currArr = meta.properties?.[currentGroupRule.propertyId]?.value as number[] | undefined
             if (currArr?.includes(value)) return
-            MetaStore.updateProperty(id, currentGroupRule.propertyId, {
+            MetaStore.property.updateProperty(id, currentGroupRule.propertyId, {
               value: [...(currArr || []), value]
             })
           } else {
             if (meta.properties?.[currentGroupRule.propertyId]?.value !== value) {
-              MetaStore.updateProperty(id, currentGroupRule.propertyId, {
+              MetaStore.property.updateProperty(id, currentGroupRule.propertyId, {
                 value
               })
             }
@@ -56,7 +56,7 @@ export default (metaIds: number | number[], grouperId: number, instance: InnerGr
   if (currentGroupRule && currentGrouper && currentGroupRule.propertyId) {
     let prop = undefined
     if (currentGroupRule.propertyGroupType === 'custom') {
-      prop = MetaStore.getPropDetails(currentGroupRule.propertyId)
+      prop = MetaStore.property.getPropDetails(currentGroupRule.propertyId)
     }
     if (currentGroupRule.propertyGroupType === 'basic') {
       prop = DEFAULT_GROUP_PROPERTY_OBJ[currentGroupRule.propertyId]

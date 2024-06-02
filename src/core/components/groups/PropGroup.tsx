@@ -25,7 +25,7 @@ export default ({ propId }: { propId: number }) => {
       setData(s => ({ ...s, ...propGroup, values: s.values }))
     }
   }, [propGroup])
-  useEffect(() => {
+  useLayoutEffect(() => {
     const set = propIdToMetaIds?.get(propId)
     if (set) {
       const metaMap = MetaStore.getMetaObjectsMap()
@@ -47,7 +47,7 @@ export default ({ propId }: { propId: number }) => {
       })
       setData(s => ({ ...s, values: sorted.map(i => ({ rowId: i.id, type: 'metaObject', id: i.id })) }))
     }
-  }, [propIdToMetaIds?.get(propId)])
+  }, [propIdToMetaIds])
   const metaRef = useRef<number[]>([])
   if (!prop) return null
   return (
@@ -79,7 +79,7 @@ export default ({ propId }: { propId: number }) => {
               const itemIds = new Set(propIdToMetaIds?.get(propId))
               const filtered = v.value.values?.filter(i => !itemIds.has(i.id)) || []
               if (filtered.length) {
-                MetaStore.updateProperty(
+                MetaStore.property.updateProperty(
                   filtered.map(i => i.id),
                   propId,
                   {
@@ -105,7 +105,7 @@ export default ({ propId }: { propId: number }) => {
                 const ids = new Set(metaRef.current)
                 metaRef.current = []
                 ids.forEach(id => {
-                  MetaStore.updateProperty(id, propId, null)
+                  MetaStore.property.updateProperty(id, propId, null)
                 })
               })
             } else {

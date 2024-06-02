@@ -37,7 +37,7 @@ export default ({ showDetails }: { showDetails: boolean }) => {
             gap: 4,
             alignItems: 'center'
           }}
-          className={'transparent-font font-size-13'}
+          className={'transparent-font font-size-12'}
         >
           <Icon name={'park-link-one'} />
           <a

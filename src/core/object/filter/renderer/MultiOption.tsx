@@ -14,7 +14,7 @@ export default function MultiOptionFilter({
   onChange: (newRule: PropertyFilterRule & { propType: 'multiSelect' }) => void
 }) {
   const { t } = useTranslation()
-  const opts = MetaStore.usePropOptions(rule.field)
+  const opts = MetaStore.property.usePropOptions(rule.field)
   const options = ObjectStore('metaPropSelectOption').useMultiple(opts)
 
   const selectedOptions = ObjectStore('metaPropSelectOption').useMultiple(rule.value)

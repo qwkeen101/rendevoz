@@ -37,7 +37,7 @@ export default ({
         if (mode === 'number') {
           const extracted = extractNum(valueRef.current ?? '')
           if (Number.isNaN(extracted)) return
-          onChange?.(extracted === 0 ? '' : extracted)
+          onChange?.(extracted)
           return
         } else {
           onChange?.(valueRef.current)
@@ -54,7 +54,12 @@ export default ({
     <>
       <div
         role={'prop-container'}
-        style={{ width: '100%', height: '100%', color: placeholder && !value ? Colors.Font.Transparent : style?.color, ...style }}
+        style={{
+          width: '100%',
+          height: '100%',
+          color: placeholder && value === undefined ? Colors.Font.Transparent : style?.color,
+          ...style
+        }}
         onClick={e => {
           const parent = e.currentTarget.parentElement
           console.log(parent)
@@ -62,7 +67,7 @@ export default ({
           openPopover(popoverElement || parent)
         }}
       >
-        {value || placeholder}
+        {value ?? placeholder}
       </div>
       {renderPopover(box => (
         <PopupWrapper box={box}>

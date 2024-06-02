@@ -20,13 +20,15 @@ const BlockColorPicker = ({
   showMoreFontOption,
   showBorder,
   onPickBorderColor,
-  style
+  style,
+  onClick
 }: {
   onPickFontColor?: PickColorFunc
   onPickBackgroundColor?: PickColorFunc
   onPickBorderColor?: PickColorFunc
   showBg?: boolean
   showFont?: boolean
+  onClick?: React.MouseEventHandler
   showBorder?: boolean
   fontBackDefault?: boolean
   bgBackDefault?: boolean
@@ -42,6 +44,7 @@ const BlockColorPicker = ({
   const { t } = useTranslation()
   return (
     <WithBorder
+      onClickCapture={onClick}
       className={css({
         padding: 6,
         display: 'flex',

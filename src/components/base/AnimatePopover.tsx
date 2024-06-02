@@ -60,7 +60,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   boundaryInset = 10,
   innerRef,
   contentDraggable,
-  duration = 0.12,
+  duration = 0.1,
   clickOutsideCapture = true,
   containerStyle: _containerStyle = {
     borderRadius: '8px',

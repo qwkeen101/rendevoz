@@ -62,7 +62,7 @@ export default () => {
         }
       }
       if (groupRule.propertyGroupType === 'custom' && groupRule.propertyId) {
-        prop = MetaStore.getPropDetails(groupRule.propertyId)
+        prop = MetaStore.property.getPropDetails(groupRule.propertyId)
         if (prop) {
           propGetter = o => o.properties?.[prop.id]?.value
         }

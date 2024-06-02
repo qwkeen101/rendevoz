@@ -23,7 +23,7 @@ export default ({
   optionStyle?: CSSProperties
   onChange?: (ids: number[]) => void
 }) => {
-  const allOptionIds = MetaStore.usePropOptions(fieldName)
+  const allOptionIds = MetaStore.property.usePropOptions(fieldName)
   const options = ObjectStore('metaPropSelectOption').useMultiple(allOptionIds)
 
   const selected = value
@@ -81,7 +81,7 @@ export default ({
                 ObjectStore('metaPropSelectOption')
                   .addOne({ name, color, parentPropName: fieldName })
                   .then(i => {
-                    MetaStore.updateProperty(metaId, fieldName, {
+                    MetaStore.property.updateProperty(metaId, fieldName, {
                       value: [...(selected || []), i.id]
                     })
                   })

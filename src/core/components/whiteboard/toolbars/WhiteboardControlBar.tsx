@@ -9,6 +9,7 @@ import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import { getBoxOfNodes } from '@/core/components/whiteboard/utils'
 import TooltipWithCmd from '@/components/TooltipWithCmd'
 import { useTranslation } from 'react-i18next'
+import classnames from 'classnames'
 
 const WhiteboardControlBar = memo(() => {
   const [whiteboardState, setWhiteboardState] = useWhiteboardState()
@@ -55,16 +56,11 @@ const WhiteboardControlBar = memo(() => {
       {!whiteboardState.readOnly && (
         <>
           {(showUndo || transformHistory.redos.length > 0) && (
-            <WithBorder
-              borderRadius={6}
-              borderBoxShadow
-              padding={5}
-              style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 7 }}
-            >
+            <Content flex alignItems={'center'} gap={7} className={'br-6 p-5 border-box-shadow bg-global'}>
               {showUndo && (
                 <Tooltip content={<TooltipWithCmd cmd={'Shift+E'} name={t('whiteboard.Undo view change')} />}>
                   <Icon
-                    className={ClassName.circleButton(6, 6)}
+                    className={'button p-6 br-6'}
                     name={'park-back-one'}
                     onClick={() => {
                       instance.containerOps?.undoTransform()
@@ -75,7 +71,7 @@ const WhiteboardControlBar = memo(() => {
               {transformHistory.redos.length > 0 && (
                 <Tooltip content={<TooltipWithCmd cmd={'Shift+Q'} name={'Redo view change'} />}>
                   <Icon
-                    className={ClassName.circleButton(6, 6)}
+                    className={'button p-6 br-6'}
                     name={'park-go-ahead'}
                     onClick={() => {
                       instance.containerOps?.redoTransform()
@@ -83,17 +79,12 @@ const WhiteboardControlBar = memo(() => {
                   />
                 </Tooltip>
               )}
-            </WithBorder>
+            </Content>
           )}
-          <WithBorder
-            borderBoxShadow
-            borderRadius={6}
-            padding={5}
-            style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 7 }}
-          >
+          <Content flex alignItems={'center'} gap={7} className={'br-6 p-5 border-box-shadow bg-global'}>
             <Tooltip content={<TooltipWithCmd cmd={'Cmd+Z'} name={t('general.Undo')} />}>
               <Icon
-                className={ClassName.circleButton(6, 6)}
+                className={'button p-6 br-6'}
                 name={'park-back'}
                 onClick={() => flow.undo?.()}
                 style={{
@@ -104,7 +95,7 @@ const WhiteboardControlBar = memo(() => {
             </Tooltip>
             <Tooltip content={<TooltipWithCmd cmd={'Cmd+Y'} name={t('general.Redo')} />}>
               <Icon
-                className={ClassName.circleButton(6, 6)}
+                className={'button p-6 br-6'}
                 name={'park-share-two'}
                 onClick={() => flow.redo?.()}
                 style={{
@@ -113,15 +104,10 @@ const WhiteboardControlBar = memo(() => {
                 }}
               />
             </Tooltip>
-          </WithBorder>
+          </Content>
         </>
       )}
-      <WithBorder
-        borderBoxShadow
-        padding={5}
-        borderRadius={6}
-        style={{ background: Colors.Background.Popover, display: 'flex', alignItems: 'center', gap: 7 }}
-      >
+      <Content flex alignItems={'center'} gap={7} className={'br-6 p-5 border-box-shadow bg-global'}>
         <Icon
           onClick={() => {
             setWhiteboardState(s => ({
@@ -132,10 +118,9 @@ const WhiteboardControlBar = memo(() => {
             }))
           }}
           style={{
-            background: whiteboardState.currentTool ? undefined : Colors.Background.ButtonActive,
             pointerEvents: whiteboardState.readOnly ? 'none' : 'auto'
           }}
-          className={ClassName.circleButton(6, 6)}
+          className={classnames('button p-6 br-6', !whiteboardState.currentTool && 'active-button')}
           name={
             whiteboardState.readOnly ||
             whiteboardState.isPanning ||
@@ -156,7 +141,7 @@ const WhiteboardControlBar = memo(() => {
             flow.panzoom?.smoothZoom(containerBounding.width / 2, containerBounding.height / 2, 0.5)
           }}
           name={'park-minus'}
-          className={ClassName.circleButton(6, 6)}
+          className={'button p-6 br-6'}
         />
         <div
           onClick={() => {
@@ -186,11 +171,11 @@ const WhiteboardControlBar = memo(() => {
             flow.panzoom?.smoothZoom(containerBounding.width / 2, containerBounding.height / 2, 2)
           }}
           name={'park-plus'}
-          className={ClassName.circleButton(6, 6)}
+          className={'button p-6 br-6'}
         />
         <Icon
           name={'park-map-draw'}
-          className={ClassName.circleButton(6, 6)}
+          className={'button p-6 br-6'}
           onClick={() => setWhiteboardState(s => ({ ...s, openMinimap: !s.openMinimap }))}
         />
         <div
@@ -205,7 +190,7 @@ const WhiteboardControlBar = memo(() => {
         >
           <WhiteboardMinimap />
         </div>
-      </WithBorder>
+      </Content>
     </Content>
   )
 })

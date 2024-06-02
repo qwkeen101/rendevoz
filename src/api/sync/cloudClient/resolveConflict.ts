@@ -40,6 +40,7 @@ export default async (method: 'pull' | 'push') => {
     if (method === 'push') {
       const data = await exportData()
       await client.uploadData('all-data.zip', data)
+      globalStore.set(SyncAPI.stateAtom, { ...globalStore.get(SyncAPI.stateAtom), lastSynced: Date.now() })
       getClientInfo().then(res => {
         if (res) {
           client.uploadData('client-info.json', JSON.stringify(res))

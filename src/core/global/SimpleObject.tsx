@@ -51,14 +51,13 @@ export const SimpleObject = memo(
                   '*': {
                     pointerEvents: 'none'
                   },
+                  boxShadow: '0 0 0 1px var(--border-background)',
                   ':hover': {
-                    boxShadow: 'var(--box-shadow-secondary)'
+                    boxShadow: 'var(--popover-box-shadow) !important'
                   }
                 })}
                 metaId={metaObjectId}
                 containerStyle={{
-                  transition: 'box-shadow 0.1s ease',
-                  border: '1px solid var(--border-background)',
                   borderRadius: 6,
                   background: Colors.Background.Global,
                   overflow: 'hidden',
@@ -105,22 +104,14 @@ export const SimpleObject = memo(
               style={{
                 height: 32
               }}
-              className={ClassName.flatButton(6, '6px')}
+              className={'button br-6 p-6'}
             >
               {metaObject.coverImgSrc ? (
-                <Image src={metaObject.coverImgSrc} preview width={28} style={{ borderRadius: 6 }} />
+                <Image src={metaObject.coverImgSrc} preview width={28} className={'br-6'} />
               ) : (
-                <Icon name={Rendevoz.Utils.Object.getMetaObjectIcon(metaObject.type)} size={16} />
+                <Icon name={Rendevoz.Utils.Object.getMetaObjectIcon(metaObject.type)} className={'font-size-16'} />
               )}
-              <div
-                style={{
-                  fontSize: 12,
-                  fontWeight: 500
-                }}
-                className={ClassName.ellipsisFont(1)}
-              >
-                {metaObject.name || metaObject.placeholderName}
-              </div>
+              <div className={'ellipsis-font-1 font-size-12'}>{metaObject.name || metaObject.placeholderName}</div>
             </Content>
           )
         }

@@ -19,6 +19,14 @@ export default async (
   const filesToDelete: string[] = []
   const filesToDownload: string[] = []
   const filesToUpload: string[] = []
+  const downloadState = {
+    size: 0,
+    count: 0
+  }
+  const uploadState = {
+    size: 0,
+    count: 0
+  }
   await Promise.all(
     remoteFiles.map(async file => {
       const name = file.key
@@ -29,11 +37,17 @@ export default async (
           filesToDelete.push(name)
         } else {
           filesToDownload.push(name)
+          downloadState.count += 1
+          if (file.size) {
+            downloadState.size += file.size
+          }
         }
       } else {
         if (file.lastModified && file.size) {
           if (file.size !== local.size && file.lastModified > local.mtime) {
             filesToDownload.push(name)
+            downloadState.size += file.size
+            downloadState.count += 1
           }
         }
       }
@@ -47,12 +61,16 @@ export default async (
         if (protectLocal === false && direction === 'from remote to local') {
           filesToDelete.push(name)
         } else {
+          uploadState.count += 1
+          uploadState.size += file.size
           filesToUpload.push(name)
         }
       } else {
         if (remote.size && remote.lastModified) {
           if (remote.size !== file.size && file.mtime > remote.lastModified) {
             filesToUpload.push(name)
+            uploadState.size += file.size
+            uploadState.count += 1
           }
         }
       }
@@ -61,6 +79,8 @@ export default async (
   return {
     filesToUpload,
     filesToDownload,
-    filesToDelete
+    filesToDelete,
+    uploadState,
+    downloadState
   }
 }

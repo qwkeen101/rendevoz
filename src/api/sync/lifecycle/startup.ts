@@ -16,12 +16,12 @@ export default async () => {
     await initializeFileSizeMap('imgs')
     const setting = await KeyvalueStore.fetchOne('userSetting')
     if (setting && setting.sync.enableSync) {
-      SyncAPI.file.syncLocalFiles()
-      globalStore.set(SyncAPI.stateAtom, { ...globalStore.get(SyncAPI.stateAtom), lastSynced: Date.now() })
       if (setting.sync.enableAutoSync && setting.sync.conflictResolved) {
         GlobalStates.setState('loading', s => ({ ...s, currentState: 'loading remote data' }))
+        SyncAPI.file.syncLocalFiles()
         await SyncAPI.restoreFromDB(true)
         await syncDB.table('state').put(Date.now(), 'lastSynced')
+        globalStore.set(SyncAPI.stateAtom, { ...globalStore.get(SyncAPI.stateAtom), lastSynced: Date.now() })
         GlobalStates.setState('remoteDataFetched', true)
       }
     }

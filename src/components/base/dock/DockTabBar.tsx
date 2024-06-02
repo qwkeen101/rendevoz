@@ -365,7 +365,6 @@ const TabItem = ({ onClick, isSelected, item, onDragStart, isLast, onDragEnd, is
           onClick={onClick}
           value={item}
           drag={true}
-          role="tab-reorder-item"
           as="div"
           id={item.key}
           className={classNames(styles.tab, isSelected && styles.active, isLast && styles.isLast)}

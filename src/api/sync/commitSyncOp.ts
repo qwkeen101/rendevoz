@@ -67,7 +67,9 @@ export const commitManually = async () => {
       ])
     )
     const data = await exportData()
-    cloudClient.uploadData('all-data.zip', data)
+    cloudClient.uploadData('all-data.zip', data).then(() => {
+      syncDB.table('state').put(Date.now(), 'lastDatabaseUploaded')
+    })
     getClientInfo(now).then(res => {
       if (res) {
         cloudClient.uploadData('client-info.json', JSON.stringify(res))

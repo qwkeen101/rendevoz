@@ -170,7 +170,7 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
         height: '100%'
       }}
       itemClickPreventDefault
-      itemSize={18}
+      itemSize={16}
     >
       {toolbarRenderer()}
     </Toolbar>

@@ -45,7 +45,7 @@ export default function GroupGrouperMenu({
         }
       }
       if (i.type === 'custom') {
-        const prop = MetaStore.getPropDetails(i.id)
+        const prop = MetaStore.property.getPropDetails(i.id)
         switch (prop?.propType) {
           case 'singleSelect':
           case 'string':
@@ -62,7 +62,7 @@ export default function GroupGrouperMenu({
       if (i.type === 'basic') {
         return { ...DEFAULT_GROUP_PROPERTY_OBJ[i.id], name: t(i.display) }
       }
-      return { ...MetaStore.getPropDetails(i.id), type: 'custom' }
+      return { ...MetaStore.property.getPropDetails(i.id), type: 'custom' }
     })
     results.unshift({
       type: 'custom',
@@ -146,7 +146,7 @@ export default function GroupGrouperMenu({
     }
   }
   if (currentGroupRule.propertyGroupType === 'custom' && currentGroupRule.propertyId) {
-    const prop = MetaStore.getPropDetails(currentGroupRule.propertyId)
+    const prop = MetaStore.property.getPropDetails(currentGroupRule.propertyId)
     if (prop) {
       groupPropertyName = prop.name
     }

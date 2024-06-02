@@ -73,12 +73,15 @@ function Selector<T extends { name?: string; color?: string; id: number }>(
     }
     if (selectedItems?.some(i => i.id === item.id)) {
       onSelect?.(selectedItems)
+      setSearch('')
       return
     }
     if (mode === 'single') {
       onSelect?.([item])
+      setSearch('')
     } else {
       onSelect?.([...(selectedItems || []), item])
+      setSearch('')
     }
   }
 

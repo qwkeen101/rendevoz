@@ -35,13 +35,12 @@ export default function GrouperHeader({
   prevNode?: ReactElement
 }) {
   const currentViewGrouper = useSelectAtomValue(GroupStateAtom, s => s.currentView?.group)
-  const instance = useGroupInstance()
   const { t } = useTranslation()
   const setGroupState = useSetAtom(GroupStateAtom)
   let fieldType = currentViewGrouper?.fieldType
   if (currentViewGrouper?.propertyGroupType === 'custom') {
     if (currentViewGrouper.propertyId) {
-      const prop = MetaStore.getPropDetails(currentViewGrouper.propertyId)
+      const prop = MetaStore.property.getPropDetails(currentViewGrouper.propertyId)
       fieldType = prop?.propType
     }
   }

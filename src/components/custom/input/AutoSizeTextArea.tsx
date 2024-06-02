@@ -65,21 +65,21 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLDivElement, TextareaA
   useEffect(() => {
     const l = libRef.current
     if (l) {
-      l.innerText = props.value || props.defaultValue || ''
+      l.innerText = props.value ?? props.defaultValue ?? ''
     }
   }, [])
   useEffect(() => {
     if (props.defaultValue && !edited.current) {
       const l = libRef.current
       if (l) {
-        l.innerText = props.defaultValue || ''
+        l.innerText = props.defaultValue ?? ''
       }
     }
   }, [props.defaultValue])
   useLayoutEffect(() => {
     const l = libRef.current
     if (l && !isEditing.current) {
-      l.innerText = props.value || ''
+      l.innerText = props.value ?? ''
     }
   }, [props.value])
   return (

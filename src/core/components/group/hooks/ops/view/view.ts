@@ -215,7 +215,7 @@ export default function assignViewOps(instance: IGroupInstance) {
           })
         })
         if (deleteMetaProp) {
-          await MetaStore.deleteProperty(propertyName)
+          await MetaStore.property.deleteProperty(propertyName)
         }
         return
       },
@@ -253,15 +253,15 @@ export default function assignViewOps(instance: IGroupInstance) {
         const currentView = instance.getCurrentView?.()
         const data = instance.getGroupData?.()
         if (!currentView || !data) return
-        const nextName = MetaStore.getNewPropName(prop.name)
+        const nextName = MetaStore.property.getNewPropName(prop.name)
         const allMetas = instance.valueOps?.getAllMetasInGroup()
         const newProp = prop.id
-          ? MetaStore.getPropDetails(prop.id)
-          : await MetaStore.addNewProp({ name: nextName, icon: prop.icon, propType: prop.propType, id: prop.id })
+          ? MetaStore.property.getPropDetails(prop.id)
+          : await MetaStore.property.addNewProp({ name: nextName, icon: prop.icon, propType: prop.propType, id: prop.id })
         if (!newProp) return
         allMetas?.forEach(i => {
           if (!i['properties']?.[newProp.id]) {
-            MetaStore.updateProperty(i.id, newProp.id, {
+            MetaStore.property.updateProperty(i.id, newProp.id, {
               value: undefined
             })
           }
@@ -298,7 +298,7 @@ export default function assignViewOps(instance: IGroupInstance) {
         if (currentView && data) {
           const prop = data.properties?.find(i => i.id === id)
           if (!prop || prop.type !== 'custom') return
-          await MetaStore.changePropertyName(id, newName)
+          await MetaStore.property.changePropertyName(id, newName)
         }
       }
     }

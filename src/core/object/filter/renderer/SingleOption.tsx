@@ -14,7 +14,7 @@ export default function SingleOptionFilter({
   onChange: (newRule: PropertyFilterRule & { propType: 'singleSelect' }) => void
 }) {
   const { t } = useTranslation()
-  const opts = MetaStore.usePropOptions(rule.field)
+  const opts = MetaStore.property.usePropOptions(rule.field)
   const options = ObjectStore('metaPropSelectOption').useMultiple(opts)
   const selectedOptions = ObjectStore('metaPropSelectOption').useValue(rule.value)
 

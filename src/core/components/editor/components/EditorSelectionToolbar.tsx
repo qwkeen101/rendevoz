@@ -18,7 +18,6 @@ import { Icon } from '@/components'
 import isHotkey from 'is-hotkey'
 import { XYPosition } from '~/typings'
 import { ObjectStore } from '@/api/stores'
-import { lab } from 'd3'
 
 type EditorToolbarEvents =
   | {
@@ -74,13 +73,14 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
       ).length > 0
     )
   }, [floatPosition?.visible])
-  let currentElement
-  try {
-    currentElement = instance.blockOps?.getAboveBlock()
-  } catch (e) {
-    console.error(e)
-  }
-  const currentElementName = EditorTypeToElementMap.get(currentElement?.[0]?.type)?.name
+  const [currentElementName, setCurrentElementName] = useState<string>()
+  useEffect(() => {
+    if (floatPosition?.visible) {
+      const currentElement = instance.blockOps?.getAboveBlock()
+      const name = EditorTypeToElementMap.get(currentElement?.[0]?.type)?.name
+      setCurrentElementName(name)
+    }
+  }, [floatPosition?.visible])
   editor.onHighlightClick = id => {
     const location = instance.getHighlightLocation?.(id)
     if (location?.length) {
@@ -175,6 +175,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
   }
 
   const selectionRef = useRef<typeof editor.selection>()
+  const toolbarClicked = useRef(false)
   const handleScroll = e => {
     setFloatPosition(s => ({ ...s, visible: false }))
   }
@@ -225,12 +226,18 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
         })
       }
     }
+    const handleSelectionChange = () => {
+      if (toolbarClicked.current) return
+      setFloatPosition(s => ({ ...s, visible: false }))
+    }
     if (floatPosition?.visible) {
       selectionRef.current = editor.selection
+      document.addEventListener('selectionchange', handleSelectionChange)
       document.addEventListener('keydown', handleKeydown)
     }
     return () => {
       document.removeEventListener('keydown', handleKeydown)
+      document.removeEventListener('selectionchange', handleSelectionChange)
       selectionRef.current = undefined
     }
   }, [floatPosition?.visible])
@@ -281,7 +288,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
             if (bounding) {
               instance.overlayOps?.open('transformMenu', {
                 x: bounding.left + bounding.width / 2,
-                y: bounding.bottom - 20
+                y: bounding.bottom - 14
               })
             }
           }}
@@ -409,7 +416,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
         }}
         onClick={() => on({ action: 'italic' })}
       >
-        <span style={{ fontStyle: 'italic', fontWeight: 600 }}>i</span>
+        <span style={{ fontStyle: 'italic' }}>i</span>
       </Toolbar.Item>
       <Toolbar.Item
         tooltip={t('editor.underline')}
@@ -418,7 +425,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
         }}
         onClick={() => on({ action: 'underline' })}
       >
-        <span style={{ textDecoration: 'underline', fontWeight: 600 }}>U</span>
+        <span style={{ textDecoration: 'underline' }}>U</span>
       </Toolbar.Item>
       <Toolbar.Item
         tooltip={t('editor.code')}
@@ -430,27 +437,46 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
         }}
         onClick={() => on({ action: 'code' })}
       />
-      <Toolbar.Item style={{ padding: '0px 6px' }} tooltip={t('editor.font color')}>
-        <IconWithPopover
+      <Toolbar.Item style={{ padding: '0px' }} tooltip={t('editor.font color')}>
+        <AnimatePopover
           withClickCover={true}
-          placement={['bottom']}
-          renderOnParent={false}
+          positions={['bottom', 'top']}
           align="start"
-          zIndex={Zindexes.EditorSelectionToolbar + 10}
-          size={15}
-          style={{
-            color: getMark('fontColor'),
-            background: getMark('backgroundColor'),
-            borderRadius: 2
+          padding={6}
+          containerStyle={{
+            zIndex: `${Zindexes.EditorSelectionToolbar + 10}`
           }}
           content={
             <BlockColorPicker
+              onClick={() => {
+                toolbarClicked.current = true
+              }}
               onPickBackgroundColor={f => on({ action: 'changeBackgroundColor', backgroundColor: f })}
               onPickFontColor={f => on({ action: 'changeFontColor', fontColor: f })}
             />
           }
-          name="park-font-size-two"
-        ></IconWithPopover>
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              padding: '0px 6px',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+          >
+            <Icon
+              style={{
+                color: getMark('fontColor'),
+                background: Colors.getAdaptColor(getMark('backgroundColor')),
+                borderRadius: 2,
+                padding: getMark('backgroundColor') ? 2 : 0,
+                fontSize: getMark('backgroundColor') ? 11 : 13
+              }}
+              name={'park-font-size-two'}
+            />
+          </div>
+        </AnimatePopover>
       </Toolbar.Item>
       <Toolbar.Item
         tooltip={'Cloze'}
@@ -475,6 +501,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
         size={13}
         iconName={'park-search'}
         onClick={e => {
+          setFloatPosition(s => ({ ...s, visible: false }))
           if (editor.selection) {
             const str = Editor.string(editor, editor.selection)
             if (str) {
@@ -508,12 +535,19 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
         containerStyle={{ zIndex: String(Zindexes.EditorSelectionToolbar), borderRadius: 5 }}
         content={
           <WithBorder
+            onClick={() => {
+              console.log('yes')
+              toolbarClicked.current = true
+              setTimeout(() => {
+                toolbarClicked.current = false
+              }, 100)
+            }}
             borderRadius={5}
-            className={css({
+            style={{
               width: 'fit-content'
-            })}
+            }}
           >
-            <motion.div key={3}>{renderToolbar()}</motion.div>
+            <motion.div>{renderToolbar()}</motion.div>
           </WithBorder>
         }
       />,

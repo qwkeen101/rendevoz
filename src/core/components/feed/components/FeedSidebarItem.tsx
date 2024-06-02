@@ -160,6 +160,7 @@ export default ({ collectionId, parentFolderId }: { collectionId: number; parent
           }}
           className={ClassName.flatButton()}
           flex
+          alignItems={'center'}
           justifyContent={'space-between'}
           gap={10}
         >

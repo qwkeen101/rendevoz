@@ -34,14 +34,16 @@ export const FeedStateAtom = atom<IFeedState>({
 })
 
 const useFeedState = () => useAtom(FeedStateAtom)
-
+const currentFeedIdAtom = selectAtom(FeedStateAtom, s => s.currentFocusedFeedItemId)
 const alreadyReadIdsAtom = selectAtom(FeedStateAtom, s => s.alreadyReadIds)
 const readLaterIdsAtom = selectAtom(FeedStateAtom, s => s.readLaterIds)
 useFeedState.atom = FeedStateAtom
 useFeedState.alreadyReadIdsAtom = alreadyReadIdsAtom
 useFeedState.readLaterIdsAtom = readLaterIdsAtom
+useFeedState.currentFeedIdAtom = currentFeedIdAtom
 export default useFeedState as typeof useFeedState & {
   atom: typeof FeedStateAtom
   alreadyReadIdsAtom: typeof alreadyReadIdsAtom
   readLaterIdsAtom: typeof readLaterIdsAtom
+  currentFeedIdAtom: typeof currentFeedIdAtom
 }

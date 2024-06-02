@@ -2,13 +2,10 @@ import commit from './commit'
 import pull from './pull'
 import listNeedUpload from './listNeedUpload'
 import uploadModifiedLocalFiles from './uploadModifiedLocalFiles'
-import { syncDB } from '@/utils'
-import FileSystem from '@/api/fileSystem'
 import { globalStore } from '@/api/stores'
 import syncBetweenLocalFolderAndCloudFolder from '@/api/sync/cloudClient/syncBetweenLocalFolderAndCloudFolder'
 import SyncAPI from '@/api/sync'
 import { ICloudSyncClient } from '@/api/sync/cloudClient/types'
-import { throttle } from 'lodash'
 
 const changeState = (
   type: 'downloading' | 'uploading',
@@ -46,8 +43,10 @@ const clearTasks = () => {
 const syncFolder = async (dirName: string, client: ICloudSyncClient) => {
   const res = await syncBetweenLocalFolderAndCloudFolder(dirName)
   if (res) {
-    res.filesToDownload.length && (await client.downloadFile(res.filesToDownload))
-    res.filesToUpload.length && (await client.uploadFile(res.filesToUpload))
+    await Promise.all([
+      res.filesToDownload.length && client.queueFiles(res.filesToDownload, 'download'),
+      res.filesToUpload.length && client.queueFiles(res.filesToUpload, 'upload')
+    ])
   }
 }
 const syncLocalFiles = async () => {
@@ -55,6 +54,7 @@ const syncLocalFiles = async () => {
   if (!client) return
   syncFolder('backup', client)
   await Promise.all([syncFolder('imgs', client), syncFolder('files', client)])
+  globalStore.set(SyncAPI.stateAtom, { ...globalStore.get(SyncAPI.stateAtom), lastSynced: Date.now() })
 }
 const FileSync = {
   commit,

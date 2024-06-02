@@ -4,7 +4,7 @@ import SidebarCollection from '@/components/layout/sidebar/SidebarCollection'
 
 const SidebarFolder = () => {
   return (
-    <Content fullHeight flex column fullWidth style={{ overflowY: 'auto' }}>
+    <Content fullHeight flex column fullWidth style={{ overflowY: 'auto', paddingBottom: 100 }}>
       <SidebarPinned />
       <SidebarCollection />
     </Content>

@@ -85,7 +85,6 @@ const GroupHeaderItem = ({
         enable={{ right: true }}
         minWidth={32}
         style={{
-          transition: 'background 0.2s ease',
           background: isDragging ? Colors.Background.ButtonHover : undefined
         }}
         onResize={(event, direction, elementRef) => {
@@ -127,8 +126,9 @@ const GroupHeaderItem = ({
           align={'start'}
           openOnContextMenu
           positions={['bottom']}
-          content={
+          content={setV => (
             <ColumnMenu
+              onClose={() => setV(false)}
               property={{
                 name: item.type === 'custom' ? prop?.name : t(item.display),
                 icon: prop?.icon || item.icon,
@@ -136,11 +136,12 @@ const GroupHeaderItem = ({
               }}
               editable={item.editable}
               show={{
+                view: item.type === 'custom',
                 delete: true,
                 hide: true
               }}
             />
-          }
+          )}
         >
           <Content
             flex

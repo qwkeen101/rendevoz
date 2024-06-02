@@ -13,6 +13,7 @@ import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhite
 import TooltipWithCmd from '@/components/TooltipWithCmd'
 import { selectAtom } from 'jotai/utils'
 import { isEqual } from 'lodash'
+import classnames from 'classnames'
 const a = selectAtom(
   WhiteboardStateAtom,
   s => ({
@@ -37,21 +38,18 @@ export default memo(() => {
     <Content
       flex
       alignItems={'center'}
+      className={'border-box-shadow br-6 p-5 bg-global'}
       gap={4}
       style={{
         zIndex: 10,
         position: 'absolute',
         top: 20,
-        background: Colors.Background.Popover,
-        boxShadow: Colors.Background.BorderBoxShadow,
         right: 24,
-        width: 'fit-content',
-        padding: 5,
-        borderRadius: 6
+        width: 'fit-content'
       }}
     >
       {!readOnly && (
-        <Toolbar disableDefaultStyle={true} style={{ gap: 4 }} itemSize={16} itemSpace={4}>
+        <Toolbar disableDefaultStyle={true} itemRadius={6} style={{ gap: 4 }} itemSize={16} itemSpace={4}>
           <Toolbar.Item
             onClick={() =>
               setWhiteboardState(s => ({
@@ -61,17 +59,10 @@ export default memo(() => {
                 toolbarPointerMode: s.currentTool === 'freehand' ? s.toolbarPointerMode : 'select'
               }))
             }
-            style={{
-              padding: 5
-            }}
-            className={ClassName.flatButton(4, '5px')}
+            className={classnames('button p-5 br-6', currentTool === 'freehand' && 'active-button')}
             iconName="park-pencil"
-            isActive={currentTool === 'freehand'}
           />
           <Toolbar.Item
-            style={{
-              padding: 5
-            }}
             onClick={() =>
               setWhiteboardState(s => ({
                 ...s,
@@ -80,9 +71,8 @@ export default memo(() => {
                 toolbarPointerMode: s.currentTool === 'erase' ? s.toolbarPointerMode : 'select'
               }))
             }
-            className={ClassName.flatButton(4, '5px')}
+            className={classnames('button p-5 br-6', currentTool === 'erase' && 'active-button')}
             iconName="custom-eraser"
-            isActive={currentTool === 'erase'}
           />
           <div
             style={{
@@ -97,7 +87,7 @@ export default memo(() => {
       <Icon
         tooltip={<TooltipWithCmd cmd={'Cmd+P'} name={'Search'}></TooltipWithCmd>}
         name={'park-search'}
-        className={ClassName.flatButton(4, '5px')}
+        className={'br-6 button p-5'}
         size={16}
         onClick={() => {
           instance.searchOps?.toggleSearchPanel(true)
@@ -107,7 +97,7 @@ export default memo(() => {
         <Tooltip content={'Side peek'}>
           <Icon
             name={'park-share-one'}
-            className={ClassName.flatButton(4, '5px')}
+            className={'br-6 button p-5'}
             onClick={() => {
               setRightBarState(s => ({ ...s, visible: s.active === 'content' ? !s.visible : true, active: 'content' }))
             }}
@@ -191,13 +181,13 @@ export default memo(() => {
         tooltip={'Export'}
         size={16}
         name={'park-download-four'}
-        className={ClassName.flatButton(4, '5px')}
+        className={'br-6 button p-5'}
       />
       {layout?.showContents !== false && (
         <Tooltip content={'Contents'}>
           <Icon
             name={'park-view-list'}
-            className={ClassName.flatButton(4, '5px')}
+            className={'br-6 button p-5'}
             onClick={() => {
               setRightBarState(s => ({ ...s, visible: s.active === 'outline' ? !s.visible : true, active: 'outline' }))
             }}

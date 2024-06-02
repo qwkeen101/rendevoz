@@ -202,10 +202,9 @@ const GalleryRenderer = memo(
                                   alignItems: 'center',
                                   justifyContent: 'center',
                                   fontWeight: 500,
-                                  transition: 'background 0.25s ease',
-                                  boxShadow: Colors.Background.BorderBoxShadow
+                                  transition: 'background 0.25s ease'
                                 }}
-                                className={'bg-popover light-hover transparent-font'}
+                                className={'bg-popover border-box-shadow light-hover transparent-font'}
                               >
                                 <Content flex alignItems={'center'} gap={8}>
                                   <Icon name={'park-plus'} />
@@ -272,10 +271,9 @@ const GalleryRenderer = memo(
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontWeight: 500,
-                    transition: 'background 0.25s ease',
-                    boxShadow: Colors.Background.BorderBoxShadow
+                    transition: 'background 0.25s ease'
                   }}
-                  className={'bg-popover light-hover transparent-font'}
+                  className={'bg-popover light-hover transparent-font border-box-shadow'}
                 >
                   <Content flex alignItems={'center'} gap={8}>
                     <Icon name={'park-plus'} />

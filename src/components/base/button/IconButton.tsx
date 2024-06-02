@@ -85,14 +85,7 @@ const IconButton = forwardRef(
           style={{
             flexDirection: reverse && icon ? 'row-reverse' : 'row',
             justifyContent: spaceBetween ? 'space-between' : undefined,
-            background:
-              selected === true
-                ? dangerous
-                  ? 'rgb(253, 138, 138, 0.4)'
-                  : Colors.Background.ButtonHover
-                : selected === false
-                ? 'none'
-                : undefined,
+            background: selected === true ? Colors.Background.ButtonHover : selected === false ? 'none' : undefined,
             ...style
           }}
           className={classNames(

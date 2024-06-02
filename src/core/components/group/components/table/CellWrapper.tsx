@@ -52,7 +52,7 @@ const CellWrapper = memo(
     const selected = instance.viewOps?.tableOps?.useSelectedCell(rowId, index)
     const renderer = () => {
       if (type === 'custom') {
-        const propType = MetaStore.getPropDetails(field)?.propType
+        const propType = MetaStore.property.getPropDetails(field)?.propType
         if (!propType) return null
         const value = metaObject.properties?.[field]?.value
         const handleChange = v => {

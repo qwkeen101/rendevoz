@@ -29,7 +29,7 @@ export default (instance: IGroupInstance) => {
       const currentGroupPropIds = new Set(currentGroupCustomProps.map(i => i.id))
       propIds.forEach(id => {
         if (!currentGroupPropIds.has(id)) {
-          const details = MetaStore.getPropDetails(id)
+          const details = MetaStore.property.getPropDetails(id)
           details && availableNewProps.push(details)
         }
       })

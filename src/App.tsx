@@ -1,6 +1,7 @@
 import '@icon-park/react/styles/index.less'
 import './styles/global.less'
 import './styles/font.less'
+import './styles/styles.less'
 import { GlobalDragOverlay, GlobalScreenShot, GlobalSetting } from '@/core'
 import '@/styles/dock.less'
 import SvgMarker from './components/svg/Marker'
@@ -26,7 +27,6 @@ import { KeyToRegisteredGlobalElements } from './core/plugin/RegisterMap'
 import GlobalUtils from '@/core/global/GlobalUtils'
 import { BuiltInDraggableElement, BuiltInDropOn, BuiltInMetaObjectTypes, BuiltInObjectTypes, BuiltInTabTypes } from '~/typings'
 import { GlobalBaidudisk } from '@/api/components/fileImporter/baidudisk/BaidudiskDisplayer'
-import { useGlobalAtomValue } from '@/hooks'
 import GlobalCollection from '@/core/global/components/CollectionSelector'
 import { GlobalObjectDetails } from '@/core/object/details'
 import GlobalPreviewPanel from '@/core/global/components/ObjectPreviewer'
@@ -108,16 +108,6 @@ const App = () => {
 
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
-      {/* for unknown queryselector bug */}
-      <div
-        className={classNames(
-          'excalidraw',
-          css({
-            '--color-selection': '#6965db'
-          })
-        )}
-        style={{ display: 'none' }}
-      ></div>
       <APIComponents />
       <GlobalDownloadIndicator />
       <TextSearch />

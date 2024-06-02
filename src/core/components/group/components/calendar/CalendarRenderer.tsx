@@ -134,7 +134,8 @@ export default memo(({ value }: { value?: MetaGroupChild[] }) => {
               'font-size-14'
             ]),
             '.rbc-event-content': {
-              overflow: 'visible'
+              overflow: 'visible',
+              borderRadius: 6
             }
           })}
           localizer={localizer}

@@ -9,7 +9,10 @@ export default async (lastUploaded?: number) => {
       const needUpload = await listNeedUpload(dir, lastUploaded)
       console.log(needUpload, dir)
       if (needUpload.length) {
-        await client.uploadFile(needUpload.map(i => `${dir}/${i.name}`))
+        await client.queueFiles(
+          needUpload.map(i => `${dir}/${i.name}`),
+          'upload'
+        )
         needUpload.forEach(n => {
           changedFiles.push(`${dir}/${n.name}`)
         })

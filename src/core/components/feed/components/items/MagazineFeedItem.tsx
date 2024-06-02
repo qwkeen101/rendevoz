@@ -7,6 +7,8 @@ import { Colors } from '@/consts'
 import { DateFormat } from '@/utils'
 import ItemsToolbar from '@/core/components/feed/components/items/ItemsToolbar'
 import useFeedIsRead from '@/core/components/feed/hooks/useFeedIsRead'
+import useFeedIsFocused from '@/core/components/feed/hooks/useFeedIsFocused'
+import classnames from 'classnames'
 
 const MagazineFeedItem = memo(
   ({
@@ -21,8 +23,6 @@ const MagazineFeedItem = memo(
         width?: number
         height?: number
       }
-      titleWeight?: number
-      titleSize?: number
     }
     onClick?: React.MouseEventHandler
   }) => {
@@ -31,31 +31,28 @@ const MagazineFeedItem = memo(
         width: 180,
         height: 108
       },
-      titleSize = 15,
-      titleWeight = 500,
       mainGap = 20
     } = styles || {}
     const item = ObjectStore('feed').useValue(id)
     const isRead = useFeedIsRead(id)
+    const isFocused = useFeedIsFocused(id)
     if (!item) return null
     return (
       <Content
         flex
         onClick={onClick}
         gap={mainGap}
+        className={classnames('button py-6', isFocused && 'active-button', isRead && !isFocused && 'transparent-font')}
         style={{
-          cursor: 'pointer',
-          padding: '4px 0px',
-          width: '100%',
-          color: isRead ? Colors.Font.Transparent : undefined
+          width: '100%'
         }}
       >
         {item.image && (
           <img
             src={item.image}
+            className={'br-4'}
             style={{
               objectFit: 'cover',
-              borderRadius: 4,
               width: imageSize.width,
               height: imageSize.height,
               flexShrink: 0
@@ -63,28 +60,10 @@ const MagazineFeedItem = memo(
           ></img>
         )}
         <Content flex column auto>
-          <div
-            style={{
-              fontSize: titleSize,
-              fontWeight: titleWeight,
-              lineHeight: 1.25
-            }}
-          >
-            {item.title}
-          </div>
-          <div
-            style={{
-              fontSize: 13,
-              lineHeight: 1.4,
-              marginTop: 4,
-              marginBottom: 'auto'
-            }}
-            className={ClassName.ellipsisFont(2)}
-          >
-            {item.description}
-          </div>
+          <div className={'normal-font ellipsis-font-2'}>{item.title}</div>
+          <div className={classnames('ellipsis-font-2 font-size-13', !isFocused && 'transparent-font')}>{item.description}</div>
           <div style={{ width: '100%', marginTop: 6 }}>
-            <ItemsToolbar itemId={item.id} />
+            <ItemsToolbar isFocused={isFocused} itemId={item.id} />
           </div>
         </Content>
       </Content>

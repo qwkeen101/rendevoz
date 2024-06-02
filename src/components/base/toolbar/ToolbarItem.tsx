@@ -1,15 +1,6 @@
 import Icon from '@/components/base/Icon'
 import classNames from 'classnames'
-import {
-  cloneElement,
-  createElement,
-  CSSProperties,
-  FC,
-  forwardRef,
-  MouseEventHandler,
-  ReactElement,
-  ReactNode
-} from 'react'
+import { cloneElement, createElement, CSSProperties, FC, forwardRef, MouseEventHandler, ReactElement, ReactNode } from 'react'
 import Tooltip from '../Tooltip'
 import styles from './index.module.less'
 import ClassName from '@/styles/classNames'
@@ -76,9 +67,8 @@ const ToolbarItem: FC<ToolbarItemProps> = forwardRef(
           createElement('div'),
           {
             key: iconName,
-            'data-active': isActive,
             'data-disabled': disabled,
-            className: classNames(ClassName.circleButton(3, radius), className),
+            className: classNames(ClassName.circleButton(3, radius), className, isActive && 'active-button'),
             style: {
               ...style,
               display: 'flex',

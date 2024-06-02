@@ -37,7 +37,7 @@ const useGroupFilter = (groupData?: MetaGroup) => {
           search += `,${tags}`
           if (meta.properties) {
             Object.entries(meta.properties).forEach(([k, i]) => {
-              const propDetails = MetaStore.getPropDetails(k)
+              const propDetails = MetaStore.property.getPropDetails(k)
               if (propDetails) {
                 switch (propDetails.propType) {
                   case 'string':

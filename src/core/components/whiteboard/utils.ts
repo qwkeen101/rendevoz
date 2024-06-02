@@ -78,6 +78,7 @@ export const getHandlePosition = (nodeId: number, handlePosition: EdgePosition, 
       }
     }
   }
+  if (width === 0 || height === 0) return
   switch (handlePosition) {
     case 'top':
       return {

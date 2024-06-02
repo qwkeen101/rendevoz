@@ -26,7 +26,7 @@ const GraphPathFilter = () => {
   const { t } = useTranslation()
 
   return (
-    <Content flex column gap={6} style={{ width: 280 }}>
+    <Content flex column gap={6} style={{ width: 280, padding: 6 }}>
       {pathFilter?.startNodeId ? (
         <>
           <div>{t('graph.path start node')}</div>

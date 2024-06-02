@@ -50,14 +50,15 @@ const FeedList = () => {
     return (
       <Content
         fullHeight
-        style={{ padding: '20px 0px 20px 20px', overflowY: 'auto', flex: '1 1 auto', maxWidth: '100%', width: '100%' }}
+        style={{ padding: '10px 0px 0px 10px', overflowY: 'auto', flex: '1 1 auto', maxWidth: '100%', width: '100%' }}
         gap={10}
       >
         <VirtualList
           items={items}
           estimateSize={120}
+          paddingEnd={100}
           style={{
-            paddingRight: 20,
+            paddingRight: 10,
             height: '100%',
             width: '100%'
           }}
@@ -80,24 +81,16 @@ const FeedList = () => {
   }
   if (itemMode === 'title') {
     return (
-      <Content fullHeight style={{ flex: '1 1 auto', maxWidth: '100%', padding: '10px 0px 12px 12px' }} flex column gap={10}>
+      <Content fullHeight style={{ flex: '1 1 auto', maxWidth: '100%', padding: '8px 0px 0px 8px' }} flex column gap={10}>
         <VirtualList
           items={items}
           estimateSize={30}
-          itemContainerClassname={css({
-            '>': {
-              ':not(:last-child)': {
-                ':not(:empty)': {
-                  borderBottom: '1px solid var(--border-background)'
-                }
-              }
-            }
-          })}
           getKey={i => i}
           style={{
             paddingRight: '8px',
             height: '100%'
           }}
+          paddingEnd={100}
           overscan={5}
           renderItem={i => (
             <TitleFeedItem
@@ -119,7 +112,8 @@ const FeedList = () => {
         role={'card-container'}
         style={{
           overflowY: 'auto',
-          padding: '24px 0px 24px 24px',
+          padding: '18px 12px',
+          justifyContent: 'space-evenly',
           flexWrap: 'wrap',
           overflowX: 'hidden',
           flex: '1 1 820px',
@@ -129,7 +123,7 @@ const FeedList = () => {
           maxHeight: '100%',
           '--items-per-row': cardItemsPerRow
         }}
-        gap={24}
+        gap={18}
       >
         {items.slice(cardPag.currentPage * DEFAULT_CARD_PAG, (cardPag.currentPage + 1) * DEFAULT_CARD_PAG).map(i => (
           <CardFeedItem

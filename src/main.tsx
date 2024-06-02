@@ -4,7 +4,6 @@ import initI18n from './config/i18n'
 import { Provider } from 'jotai'
 import { Utils, Hooks } from 'rendevoz'
 import App from './App'
-import getClientInfo from '@/api/sync/utils/getClientInfo'
 enableMapSet()
 enablePatches()
 const lang = Utils.Navigator.getDefaultLanguage()

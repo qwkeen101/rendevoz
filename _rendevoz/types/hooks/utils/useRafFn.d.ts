@@ -1,4 +1,4 @@
-declare const useRafFn: (fn: (...args: any[]) => void) => {
+declare const useRafFn: (fn: (...args) => void) => {
     (...args: any[]): void;
     cancel(): void;
 };

@@ -38,28 +38,30 @@ const GraphSettingPanel = () => {
       padding={10}
       positions={['bottom']}
       align="start"
-      closeOnClickOutside={false}
-      content={<WithBorder padding={8}>{renderPopover()}</WithBorder>}
+      onVisiblityChange={v => setPanelState(s => ({ ...s, visible: v }))}
+      onClickOutside={() => setPanelState(s => ({ ...s, visible: false }))}
+      withClickCover={true}
+      content={<WithBorder>{renderPopover()}</WithBorder>}
     >
-      <WithBorder
+      <div
         style={{
           fontSize: 16,
-          padding: '3px 14px',
+          padding: '6px 12px',
           borderRadius: 999,
           overflow: 'hidden',
           display: 'flex',
-          gap: 10,
-          background: Colors.Background.Secondary,
-          boxShadow: 'none'
+          gap: 6,
+          background: Colors.Background.Global
         }}
+        className={'border-box-shadow'}
       >
-        <Tooltip content="Graph Filter">
-          <Icon name="park-filter" className={ClassName.circleButton(6, 4)} onClick={() => togglePanel('filter')} />
+        <Tooltip content="Filter">
+          <Icon name="park-filter" className={'button p-6 br-6'} onClick={() => togglePanel('filter')} />
         </Tooltip>
-        <Tooltip content="Graph Path Finder">
-          <Icon name="park-connection-point-two" className={ClassName.circleButton(6, 4)} onClick={() => togglePanel('path filter')} />
+        <Tooltip content="Path Finder">
+          <Icon name="park-connection-point-two" className={'button p-6 br-6'} onClick={() => togglePanel('path filter')} />
         </Tooltip>
-      </WithBorder>
+      </div>
     </AnimatePopover>
   )
 }

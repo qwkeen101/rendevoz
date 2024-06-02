@@ -50,22 +50,22 @@ export default function createReviewStore() {
       if (v.last_rate) {
         switch (v.last_rate) {
           case 'hard':
-            await MetaStore.updateProperty(v.metaId, REVIEW_STATE_PROP_ID, {
+            await MetaStore.property.updateProperty(v.metaId, REVIEW_STATE_PROP_ID, {
               value: HARD_OPTION_ID
             })
             return
           case 'easy':
-            await MetaStore.updateProperty(v.metaId, REVIEW_STATE_PROP_ID, {
+            await MetaStore.property.updateProperty(v.metaId, REVIEW_STATE_PROP_ID, {
               value: EASY_OPTION_ID
             })
             return
           case 'good':
-            await MetaStore.updateProperty(v.metaId, REVIEW_STATE_PROP_ID, {
+            await MetaStore.property.updateProperty(v.metaId, REVIEW_STATE_PROP_ID, {
               value: GOOD_OPTION_ID
             })
             return
           case 'again':
-            await MetaStore.updateProperty(v.metaId, REVIEW_STATE_PROP_ID, {
+            await MetaStore.property.updateProperty(v.metaId, REVIEW_STATE_PROP_ID, {
               value: AGAIN_OPTION_ID
             })
             return

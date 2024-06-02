@@ -149,12 +149,12 @@ export const GlobalDragOverlay = memo(() => {
   return createPortal(
     <>
       <div
-        className={css({
+        style={{
           position: 'fixed',
           inset: 0,
           zIndex: 99999,
           pointerEvents: 'none'
-        })}
+        }}
         role="global-drag-overlay"
       >
         <div style={{ opacity: 0.65, pointerEvents: 'none' }} ref={dragContainerRef}>

@@ -6,9 +6,15 @@ export default async (checkModify = false) => {
   const error = 'Failed to load remote data!'
   if (client) {
     if (checkModify) {
+      const remoteState = await client.statFile('all-data.zip')
+      const lastUploaded = (await syncDB.table('state').get('lastDatabaseUploaded')) as number | undefined
       const localLastModified = (await syncDB.table('state').get('lastDatabaseModified')) as number | undefined
+      if (lastUploaded) {
+        if (!remoteState || !remoteState.lastModified || remoteState.lastModified < lastUploaded) {
+          return
+        }
+      }
       if (localLastModified) {
-        const remoteState = await client.statFile('all-data.zip')
         if (!remoteState || !remoteState.lastModified || remoteState.lastModified < localLastModified) {
           return
         }
@@ -23,6 +29,7 @@ export default async (checkModify = false) => {
           if (u8) {
             const str = strFromU8(u8)
             importRendevozDb(new Blob([str], { type: 'application/json' }))
+            syncDB.table('state').put(Date.now(), 'lastDatabaseModified')
             res(null)
           }
           rej(error)

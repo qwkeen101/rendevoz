@@ -28,7 +28,7 @@ export default async (transactions: IFileTransaction[]) => {
           }
         })
       )
-      await client.downloadFile(Array.from(needDownloadArr.values()))
+      await client.queueFiles(Array.from(needDownloadArr.values()), 'download')
     }
   }
 }

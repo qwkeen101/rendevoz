@@ -8,6 +8,20 @@ import { LocalFileSizeMap } from '@/api/sync/file/listNeedUpload'
 export default function getCloudClient() {
   const setting = getSetting()
   if (setting.sync.enableSync) {
+    const queueFiles: ICloudSyncClient['queueFiles'] = async (files, type) => {
+      if (type === 'download') {
+        files.forEach(f => {
+          SyncAPI.file.changeState('downloading', f, {})
+        })
+        await SyncAPI.cloudClient()?.downloadFile(files)
+      }
+      if (type === 'upload') {
+        files.forEach(f => {
+          SyncAPI.file.changeState('uploading', f, {})
+        })
+        await SyncAPI.cloudClient()?.uploadFile(files)
+      }
+    }
     const mode = setting.sync.syncMode ?? 's3'
     if (mode === 's3') {
       const config = setting.sync.S3Config
@@ -22,6 +36,7 @@ export default function getCloudClient() {
         })
         return {
           ...S3Sync,
+          queueFiles,
           downloadFile: async (filePath, opts) => {
             return await S3Sync.downloadFile(filePath, {
               ...opts,
@@ -35,8 +50,8 @@ export default function getCloudClient() {
                 }
                 if (t === 'start') {
                   SyncAPI.file.changeState('downloading', p, {
-                    progress: 0,
-                    size
+                    size,
+                    progress: 0
                   })
                 } else {
                   if (size !== undefined) {
@@ -60,8 +75,8 @@ export default function getCloudClient() {
               onProgress: (t, p, size) => {
                 if (t === 'start') {
                   SyncAPI.file.changeState('uploading', p, {
-                    progress: 0,
-                    size
+                    size,
+                    progress: 0
                   })
                 } else if (t === 'finish') {
                   SyncAPI.file.changeState('uploading', p, {
@@ -70,7 +85,6 @@ export default function getCloudClient() {
                   })
                 } else if (t === 'skipped') {
                   SyncAPI.file.changeState('uploading', p, {
-                    progress: 0,
                     size,
                     skiped: true
                   })
@@ -97,6 +111,7 @@ export default function getCloudClient() {
         })
         return {
           ...WebdavSync,
+          queueFiles,
           downloadFile: async (filePath, opts) => {
             return await WebdavSync.downloadFile(filePath, {
               ...opts,
@@ -109,8 +124,8 @@ export default function getCloudClient() {
                 }
                 if (t === 'start') {
                   SyncAPI.file.changeState('downloading', p, {
-                    progress: 0,
-                    size
+                    size,
+                    progress: 0
                   })
                 } else {
                   if (size !== undefined) {
@@ -134,8 +149,8 @@ export default function getCloudClient() {
               onProgress: (t, p, size) => {
                 if (t === 'start') {
                   SyncAPI.file.changeState('uploading', p, {
-                    progress: 0,
-                    size
+                    size,
+                    progress: 0
                   })
                 } else if (t === 'finish') {
                   SyncAPI.file.changeState('uploading', p, {
@@ -144,7 +159,6 @@ export default function getCloudClient() {
                   })
                 } else if (t === 'skipped') {
                   SyncAPI.file.changeState('uploading', p, {
-                    progress: 0,
                     skiped: true,
                     size
                   })

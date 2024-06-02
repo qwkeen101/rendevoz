@@ -7,6 +7,12 @@
 .select-color-font {
   color: var(--select-color);
 }
+.select-color-bg {
+  background: var(--select-color) !important;
+}
+.white-font {
+  color: white;
+}
 .hover-primary-box-shadow{
   &:hover{
     box-shadow: 0 0 0 1px var(--font-primary);
@@ -32,11 +38,17 @@
   }
 }
 
+.none-select{
+  user-select: none;
+}
 .hover-active-button{
   color: var(--font-s-transparent) !important;
   &:hover{
     color: var(--font-primary) !important;
   }
+}
+.bg-global{
+  background: var(--global-background);
 }
 .bg-secondary{
   background: var(--background-secondary);

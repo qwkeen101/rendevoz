@@ -4,7 +4,6 @@ import { toast } from 'react-hot-toast'
 import { IMetaProp, IStore, MetaLink, MetaObject, ReviewStateType } from '~/typings'
 import BaseStore, { initializeLocalStore } from '../base.store'
 import { findChangedProperties, globalStore, MetaStore, ObjectStore } from '../index'
-import { IStoreDeprecated } from '../types'
 import getSetting from '@/core/setting/getSetting'
 import produce from 'immer'
 import { debounce } from 'lodash'
@@ -22,6 +21,7 @@ import { Rendevoz } from '@/core/rendevoz'
 import metaObjectChangeHandler from '@/api/stores/meta/metaObjectChangeHandler'
 import { initializeReviewCard, reviewCard } from '@/core/review/fsrs'
 import { AGAIN_OPTION_ID, EASY_OPTION_ID, GOOD_OPTION_ID, HARD_OPTION_ID } from '@/api/stores/object/custom/ReviewCardStore'
+import MetaPropertyStore from '@/api/stores/meta/metaProperty.store'
 
 export const AI_SUMMARY_PROP_ID = 1001
 export const AI_QUESTION_PROP_ID = 1002
@@ -58,7 +58,7 @@ export const handleMetaObjectDelete = (id: number) => {
 }
 
 export const handleMetaOptionChange = () => {
-  MetaStore.calculatePropertyOptionCache()
+  MetaStore.property.calculatePropertyOptionCache()
 }
 
 export const indexedMetaObjectsAtom = atom<
@@ -409,7 +409,7 @@ const createMetaStore = () => {
       questions?: number[]
     }
   ) => {
-    const sumProp = MetaStore.getPropDetails(AI_SUMMARY_PROP_ID)
+    const sumProp = MetaStore.property.getPropDetails(AI_SUMMARY_PROP_ID)
     if (!sumProp) {
       await ObjectStore('metaProp').addOne({
         id: AI_SUMMARY_PROP_ID,
@@ -418,7 +418,7 @@ const createMetaStore = () => {
         name: t('general.AI summary')
       })
     }
-    const quesProp = MetaStore.getPropDetails(AI_QUESTION_PROP_ID)
+    const quesProp = MetaStore.property.getPropDetails(AI_QUESTION_PROP_ID)
     if (!quesProp) {
       await ObjectStore('metaProp').addOne({
         id: AI_QUESTION_PROP_ID,
@@ -481,117 +481,6 @@ const createMetaStore = () => {
       })
     }
     return all
-  }
-  const updateProperty = async (
-    id: number | number[],
-    propId: number | string,
-    newValue: any | null,
-    keepOriginalIfUndefined?: boolean
-  ) => {
-    const idArr = Array.isArray(id) ? id : [id]
-    const map = MetaStore.getMetaObjectsMap()
-    await Promise.all(
-      idArr.map(async id => {
-        const meta = map.get(id)
-        if (meta) {
-          if (newValue === null) {
-            await MetaStore.updateMetaObject({
-              id,
-              properties: produce(meta.properties || {}, draft => {
-                delete draft[propId]
-              })
-            })
-            return
-          }
-          const newProp = produce(meta.properties || {}, draft => {
-            if (keepOriginalIfUndefined && newValue.value === undefined && draft[propId]?.value !== undefined) {
-            } else {
-              draft[propId] = {
-                ...draft[propId],
-                ...newValue
-              }
-            }
-          })
-          if (propId === REVIEW_STATE_PROP_ID) {
-            let type: ReviewStateType | undefined = undefined
-            if (newValue.value) {
-              switch (newValue.value) {
-                case GOOD_OPTION_ID:
-                  type = 'good'
-                  break
-                case EASY_OPTION_ID:
-                  type = 'easy'
-                  break
-                case HARD_OPTION_ID:
-                  type = 'hard'
-                  break
-                case AGAIN_OPTION_ID:
-                  type = 'again'
-                  break
-              }
-            }
-            if (type) {
-              let card = meta.review && (await ObjectStore('reviewCard').getOneById(meta.review))
-              if (!card || card.last_rate !== type) {
-                card = (card && reviewCard(card, type)) || initializeReviewCard(type)
-                const added = await ObjectStore('reviewCard').addOne({ ...card, metaId: meta.id })
-                await MetaStore.updateMetaObject({ id, properties: newProp, review: added.id })
-                return
-              }
-            }
-          }
-          await MetaStore.updateMetaObject({ id, properties: newProp }, { silent: true })
-        }
-      })
-    )
-  }
-  const deleteProperty = async (propId: number) => {
-    await ObjectStore('metaProp').deleteOneById(propId)
-    const options = globalStore.get(propNameToOptionsAtom)[propId]
-    if (options) {
-      options.forEach(id => {
-        ObjectStore('metaPropSelectOption').deleteOneById(id)
-      })
-    }
-  }
-  const changePropertyName = async (propId: number, newName: string) => {
-    await ObjectStore('metaProp').updateOne({ id: propId, name: newName })
-  }
-  // property name to option id set cache
-  const calculatePropertyOptionCache = (): Record<string, Set<number>> => {
-    const optionCacheObj: Record<string, Set<number>> = {}
-    const allOptions = Array.from(globalStore.get(ObjectStore('metaPropSelectOption').objectMapAtom).values())
-    allOptions.forEach(option => {
-      const cache = optionCacheObj[option.parentPropName] || new Set<number>()
-      cache.add(option.id)
-      optionCacheObj[option.parentPropName] = cache
-    })
-    globalStore.set(propNameToOptionsAtom, optionCacheObj)
-    return optionCacheObj
-  }
-  const getPropDetails = (id: number | string) => {
-    return globalStore.get(ObjectStore('metaProp').objectMapAtom).get(Number(id))
-  }
-  const usePropOptions = (propId: number | string): number[] => {
-    const optionMap = globalStore.get(ObjectStore('metaPropSelectOption').objectMapAtom)
-    const obj = useSelectGlobalAtomValue(propNameToOptionsAtom, s => s[propId])
-    const arr = useMemo(() => {
-      const arr = Array.from(obj || [])
-      arr.sort((b, a) => (optionMap.get(b)?.order ?? 0) - (optionMap.get(a)?.order ?? 0))
-      return arr
-    }, [obj])
-    return arr
-  }
-  const getPropOptions = (): Record<string, Set<number>> => {
-    const obj = globalStore.get(propNameToOptionsAtom)
-    return obj
-  }
-  const getNewPropName = (currName?: string) => {
-    return currName || 'Unnamed property'
-  }
-
-  const addNewProp = async (prop: Partial<IMetaProp>) => {
-    return await ObjectStore('metaProp').addOne(prop)
   }
 
   const useDeletedObjectsSet = () => {
@@ -669,33 +558,25 @@ const createMetaStore = () => {
     globalStore.set(metaLinksAtom, new Map())
   }
   return {
+    property: MetaPropertyStore,
     refreshFromDB,
-    addNewProp,
     clearAtomData,
     useDeletedObjectsSet,
     addMetaAsAttachment,
     getMetaObjectById,
-    calculatePropertyOptionCache,
-    getPropDetails,
     getCachedMetaObject: (id: number) => globalStore.get(metaObjectsAtom).get(id) as MetaObject | undefined,
-    getNewPropName,
     getVisibleMetaTypes,
     getMetaObjectByObjectId,
     triggerObjectIndex,
-    deleteProperty,
     useMultipleObjects,
     useValue,
-    updateProperty,
     addAIForMeta,
-    changePropertyName,
     useObjectToMetaValue,
-    getPropOptions,
     isVisibleMetaObject,
     removeFromCache,
     addObjectAsMeta,
     getMetaObjectsMap,
     getMetaLinksMap,
-    usePropOptions,
     useMetaObjectsMap,
     useMetaLinksMap,
     getIndexedMetaObjects,

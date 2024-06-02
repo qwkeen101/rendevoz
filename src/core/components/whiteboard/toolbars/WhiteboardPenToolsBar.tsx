@@ -110,19 +110,17 @@ const WhiteboardPenToolsBar = () => {
   }, [penType])
   if (whiteboardState.currentTool === 'freehand' && penStyles[penType]) {
     return (
-      <WithBorder
-        borderBoxShadow
-        padding={6}
+      <Content
+        className={'p-5 border-box-shadow bg-global br-6'}
         style={{
           position: 'absolute',
           bottom: 20,
           left: '50%',
           transform: 'translateX(-50%)',
-          background: Colors.Background.Popover,
           zIndex: 10
         }}
       >
-        <Toolbar itemSpace={6} disableDefaultStyle={true}>
+        <Toolbar itemSpace={6} itemClassName={'p-5'} itemRadius={6} disableDefaultStyle={true}>
           <Toolbar.Item iconName={'custom-ballpen'} onClick={() => changePenType('ballpen')} isActive={penType === 'ballpen'} />
           <Toolbar.Item iconName={'custom-markerpen'} onClick={() => changePenType('marker')} isActive={penType === 'marker'} />
           <Toolbar.Item iconName={'custom-pen'} onClick={() => changePenType('pen')} isActive={penType === 'pen'} />
@@ -164,7 +162,7 @@ const WhiteboardPenToolsBar = () => {
             }}
           />
         </Toolbar>
-      </WithBorder>
+      </Content>
     )
   }
   return null

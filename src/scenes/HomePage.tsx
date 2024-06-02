@@ -21,14 +21,24 @@ import { MetaStore } from '@/api/stores'
 import Workspace from '@/api/common/workspace'
 import ContextMenu from '@/components/contextMenu'
 import classnames from 'classnames'
+import { Resizable } from 're-resizable'
 
 const HomeSearchAtom = atom<string | undefined>(undefined)
+const RowClass = css([
+  {
+    userSelect: 'none',
+    clipPath: 'xywh(0 0 100% 100% round 6px)',
+    td: {
+      padding: '6px 8px'
+    }
+  },
+  ClassName.flatButton()
+])
 export const HomePage: FC = () => {
   const { t } = useTranslation()
   const currentWorkspace = KeyvalueStore.useValue('currentWorkspace')
   const homeMode = KeyvalueStore.useValue('homeDisplayMode') || 'gallery'
   const allWorkspaces = KeyvalueStore.useValue('allWorkspaces') || []
-  console.log(currentWorkspace)
   return (
     <Content fullHeight fullWidth style={{ overflowY: 'auto' }}>
       <Content
@@ -39,15 +49,13 @@ export const HomePage: FC = () => {
           margin: '0 auto',
           width: '100%',
           maxWidth: 1400,
-          padding: '18px 24px'
+          padding: '18px 36px'
         }}
       >
         <TabTitle title={t('general.home')} icon="park-home" />
         <Content flex alignItems="center" gap={10} justifyContent="space-between" style={{ margin: '16px 0px' }}>
           <div>
-            <div className={'transparent-font font-size-13 normal-font'} style={{ paddingLeft: 8 }}>
-              {t('settings.workspace')}
-            </div>
+            <div className={'transparent-font font-size-13 normal-font pl-8'}>{t('settings.workspace')}</div>
             <AnimatePopover
               align={'start'}
               content={setV => (
@@ -79,11 +87,9 @@ export const HomePage: FC = () => {
             >
               <div
                 style={{
-                  fontSize: 22,
-                  fontWeight: 600,
-                  padding: '0px 8px'
+                  fontSize: 22
                 }}
-                className={css([ClassName.flatButton(), ClassName.ellipsisFont(1)])}
+                className={'button ellipsis-font-1 py-0 px-8 bold-font'}
               >
                 {currentWorkspace?.name === 'default' ? 'Default workspace' : currentWorkspace?.name || 'Unnamed workspace'}
               </div>
@@ -92,48 +98,49 @@ export const HomePage: FC = () => {
           <Content flex gap={8} alignItems={'center'} className={'transparent-font'}>
             <Icon
               name={'park-all-application'}
-              size={18}
-              className={classnames(ClassName.flatButton(4, 4), homeMode === 'gallery' && 'active-button')}
+              className={classnames('button p-5 icon-18', homeMode === 'gallery' && 'active-button')}
               onClick={() => {
                 KeyvalueStore.updateOne('homeDisplayMode', 'gallery')
               }}
             />
             <Icon
               name={'custom-list'}
-              size={18}
               onClick={() => {
                 KeyvalueStore.updateOne('homeDisplayMode', 'table')
               }}
-              className={classnames(ClassName.flatButton(4, 4), homeMode === 'table' && 'active-button')}
+              className={classnames('button p-5 icon-18', homeMode === 'table' && 'active-button')}
             />
             {homeMode === 'gallery' && (
               <AnimatePopover
                 align={'end'}
                 content={
-                  <WithBorder padding={4} width={200}>
+                  <WithBorder className={'p-4'} width={200}>
                     <GalleryConfig />
                   </WithBorder>
                 }
                 positions={['bottom']}
               >
-                <Icon name={'park-more'} size={18} className={ClassName.flatButton(4, 4)} />
+                <Icon name={'park-more'} size={18} className={'button p-5'} />
               </AnimatePopover>
             )}
-            <div
+            <Button.IconButton
+              text={t('general.New')}
+              icon={'park-plus'}
+              gap={0}
               onClick={() =>
                 GlobalInstance.metaOps?.createObject().then(res => {
                   if (res) {
                     setTimeout(() => {
-                      Rendevoz.Actions.Open.Meta.openMetaObject(res.id)
+                      GlobalInstance.layoutOps?.openObject(res.id)
                     }, 300)
                   }
                 })
               }
-              className={ClassName.selectButton(4, '1px 8px')}
-              style={{ fontSize: 14, fontWeight: 500, color: 'white', marginLeft: 6 }}
-            >
-              {t('general.New')}
-            </div>
+              style={{
+                padding: '3px 12px 3px 8px'
+              }}
+              className={'select-button ml-6'}
+            ></Button.IconButton>
           </Content>
         </Content>
         {homeMode === 'gallery' && <HomeGallery />}
@@ -158,12 +165,12 @@ const VisibleTypes: MetaObject['type'][] = [
   'question'
 ]
 
-const ColWidthState = {
-  nameWidth: '100%',
-  viewWidth: '200px',
-  createWidth: '200px'
-}
 const Recent = () => {
+  const [colWidth, setColWidth] = useState({
+    nameWidth: '100%',
+    viewWidth: '140px',
+    createWidth: '140px'
+  })
   const all = useGlobalAtomValue(undeletedMetaObjectsAtom) as MetaObject[]
   const { t } = useTranslation()
   const [type, setType] = useState<MetaObject['type'] | 'all'>('all')
@@ -223,19 +230,18 @@ const Recent = () => {
         onPointerLeave={() => toggleShowResizer(false)}
         style={{
           zIndex: 10,
-          padding: '4px 0px'
+          padding: '2px 0px'
         }}
-        className={'transparent-font font-size-14'}
+        className={'transparent-font font-size-13 normal-font'}
       >
-        <div id="name-header" style={{ width: '100%' }}>
+        <div style={{ width: '100%' }}>
           <Select
             align={'start'}
             value={type}
             onSelect={v => setType(v[0])}
             closeOnSelect
             style={{
-              width: 160,
-              fontWeight: 500
+              width: 160
             }}
             options={[
               {
@@ -256,94 +262,64 @@ const Recent = () => {
             ]}
           ></Select>
         </div>
-        <div id="view-header" style={{ minWidth: ColWidthState.viewWidth }}>
-          <Content flex style={{ paddingRight: 8 }}>
-            <motion.div
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragMomentum={false}
-              dragElastic={0}
-              onDrag={(e, info) => {
-                const dx = info.delta.x
-                const nameHeader = document.getElementById('name-header')!
-                const viewHeader = document.getElementById('view-header')!
-                const nameColWidth = nameHeader.getBoundingClientRect().width
-                const viewColWidth = viewHeader.getBoundingClientRect().width
-                const nextNameColWidth = nameColWidth + dx
-                const nextViewColWidth = viewColWidth - dx
-                nameHeader.style.width = `${nextNameColWidth}px`
-                viewHeader.style.width = `${nextViewColWidth}px`
-                document.getElementById('view-col')?.setAttribute('width', `${nextViewColWidth}px`)
-                document.getElementById('name-col')?.setAttribute('width', `${nextNameColWidth}px`)
-              }}
-              style={{
-                width: '0px',
-                borderLeft: '2px solid var(--border-background)',
-                cursor: 'col-resize',
-                height: '100%',
-                top: 0,
-                opacity: showResizer ? 1 : 0,
-                position: 'absolute',
-                left: -6,
-                transition: 'opacity 0.2s ease'
-              }}
-            ></motion.div>
-            <Button.IconButton
-              spaceBetween
-              reverse
-              style={{ flex: 1, whiteSpace: 'nowrap', fontWeight: 500 }}
-              text={t('general.view at')}
-              onClick={() => {
-                setSortMode(sortMode === 'viewDesc' ? 'viewAsc' : 'viewDesc')
-              }}
-              icon={sortMode === 'viewDesc' ? 'park-down' : sortMode === 'viewAsc' ? 'park-up' : undefined}
-            ></Button.IconButton>
-          </Content>
-        </div>
-        <div id="create-header" style={{ minWidth: ColWidthState.createWidth }}>
-          <Content flex>
-            <motion.div
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragMomentum={false}
-              dragElastic={0}
-              onDrag={(e, info) => {
-                const dx = info.delta.x
-                const createHeader = document.getElementById('create-header')!
-                const viewHeader = document.getElementById('view-header')!
-                const createColWidth = createHeader.getBoundingClientRect().width
-                const viewColWidth = viewHeader.getBoundingClientRect().width
-                const nextCreateColWidth = createColWidth - dx
-                const nextViewColWidth = viewColWidth + dx
-                createHeader.style.width = `${nextCreateColWidth}px`
-                viewHeader.style.width = `${nextViewColWidth}px`
-                document.getElementById('view-col')?.setAttribute('width', `${nextViewColWidth}px`)
-                document.getElementById('create-col')?.setAttribute('width', `${nextCreateColWidth}px`)
-              }}
-              style={{
-                width: '0px',
-                borderLeft: '2px solid var(--border-background)',
-                cursor: 'col-resize',
-                height: '100%',
-                top: 0,
-                opacity: showResizer ? 1 : 0,
-                position: 'absolute',
-                left: -6,
-                transition: 'opacity 0.2s ease'
-              }}
-            ></motion.div>
-            <Button.IconButton
-              spaceBetween
-              style={{ flex: 1, whiteSpace: 'nowrap', fontWeight: 500 }}
-              reverse
-              text={t('general.create at')}
-              onClick={() => {
-                setSortMode(sortMode === 'createDesc' ? 'createAsc' : 'createDesc')
-              }}
-              icon={sortMode === 'createDesc' ? 'park-down' : sortMode === 'createAsc' ? 'park-up' : undefined}
-            ></Button.IconButton>
-          </Content>
-        </div>
+        <Resizable
+          defaultSize={{
+            width: colWidth.viewWidth,
+            height: '100%'
+          }}
+          maxWidth={300}
+          minWidth={100}
+          enable={{ left: true }}
+          onResize={(event, direction, elementRef) => {
+            setColWidth(s => ({ ...s, viewWidth: `${elementRef.clientWidth}px` }))
+          }}
+          handleStyles={{
+            left: {
+              opacity: showResizer ? 1 : 0,
+              transition: 'opacity 0.2s ease'
+            }
+          }}
+        >
+          <Button.IconButton
+            spaceBetween
+            reverse
+            style={{ flex: 1, whiteSpace: 'nowrap' }}
+            text={t('general.view at')}
+            onClick={() => {
+              setSortMode(sortMode === 'viewDesc' ? 'viewAsc' : 'viewDesc')
+            }}
+            icon={sortMode === 'viewDesc' ? 'park-down' : sortMode === 'viewAsc' ? 'park-up' : undefined}
+          ></Button.IconButton>
+        </Resizable>
+        <Resizable
+          defaultSize={{
+            width: colWidth.createWidth,
+            height: '100%'
+          }}
+          maxWidth={300}
+          onResize={(event, direction, elementRef) => {
+            setColWidth(s => ({ ...s, createWidth: `${elementRef.clientWidth}px` }))
+          }}
+          minWidth={100}
+          enable={{ left: true }}
+          handleStyles={{
+            left: {
+              opacity: showResizer ? 1 : 0,
+              transition: 'opacity 0.2s ease'
+            }
+          }}
+        >
+          <Button.IconButton
+            spaceBetween
+            style={{ flex: 1, whiteSpace: 'nowrap' }}
+            reverse
+            text={t('general.create at')}
+            onClick={() => {
+              setSortMode(sortMode === 'createDesc' ? 'createAsc' : 'createDesc')
+            }}
+            icon={sortMode === 'createDesc' ? 'park-down' : sortMode === 'createAsc' ? 'park-up' : undefined}
+          ></Button.IconButton>
+        </Resizable>
       </Content>
       {!items?.length ? (
         <div
@@ -368,21 +344,16 @@ const Recent = () => {
             display: 'block',
             height: 0,
             flex: 1,
-            margin: '0px -24px',
-            padding: '0px 24px 50px'
+            paddingBottom: 50
           }}
         >
           <colgroup>
-            <col width={ColWidthState.nameWidth} id="name-col" />
-            <col style={{ minWidth: ColWidthState.viewWidth }} width={ColWidthState.viewWidth} id="view-col" />
-            <col style={{ minWidth: ColWidthState.createWidth }} width={ColWidthState.createWidth} id="create-col" />
+            <col width={colWidth.nameWidth} />
+            <col style={{ minWidth: colWidth.viewWidth }} width={colWidth.viewWidth} />
+            <col style={{ minWidth: colWidth.createWidth }} width={colWidth.createWidth} />
           </colgroup>
 
-          <tbody
-            style={{
-              borderTop: '1px solid var(--border-background)'
-            }}
-          >
+          <tbody>
             {items?.slice(0, 100)?.map(i => (
               <ContextMenu
                 key={i.id}
@@ -398,19 +369,9 @@ const Recent = () => {
                       Rendevoz.Actions.Open.Meta.openMetaObject(i.id)
                     }
                   }}
-                  className={css([
-                    {
-                      userSelect: 'none',
-                      td: {
-                        padding: '6px 8px',
-                        fontWeight: 500,
-                        fontSize: 14
-                      }
-                    },
-                    ClassName.flatButton()
-                  ])}
+                  className={RowClass}
                 >
-                  <td>
+                  <td className={'font-size-13 normal-font'}>
                     <Content style={{ minHeight: 30 }} flex gap={12} alignItems={'center'}>
                       {i.coverImgSrc ? (
                         <img src={i.coverImgSrc} width={36} height={36} style={{ objectFit: 'cover', borderRadius: 4 }} />
@@ -420,8 +381,8 @@ const Recent = () => {
                       <div className={ClassName.ellipsisFont(1)}>{i.name || i.placeholderName}</div>
                     </Content>
                   </td>
-                  <td>{i.viewAt && DateFormat.formatDistanceToNowStrict(i.viewAt)}</td>
-                  <td>{DateFormat.formatDistanceToNowStrict(i.createdAt)}</td>
+                  <td className={'transparent-font font-size-12'}>{i.viewAt && DateFormat.formatDistanceToNowStrict(i.viewAt)}</td>
+                  <td className={'transparent-font font-size-12'}>{DateFormat.formatDistanceToNowStrict(i.createdAt)}</td>
                 </tr>
               </ContextMenu>
             ))}

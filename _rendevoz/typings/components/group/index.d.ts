@@ -57,6 +57,7 @@ type GroupPathOps = {
 }
 
 type GroupMetaOps = {
+  deleteMetaInGroup: (id: number | number[]) => void
   deleteMeta: (id: number | number[]) => void
   createMeta: (grouperId?: number) => void
   updateMeta: (nextMeta: Partial<MetaObject>) => Promise<void>

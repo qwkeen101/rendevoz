@@ -3,7 +3,7 @@ import { css } from '@emotion/css'
 
 export const circleButton = (padding = 4, borderRadius = 999) => {
   return css({
-    transition: 'all 0.1s ease-out 0s',
+    transition: 'all 0.02s ease-out 0s',
     padding,
     cursor: 'pointer',
     borderRadius,
@@ -22,7 +22,7 @@ export const circleButton = (padding = 4, borderRadius = 999) => {
 
 export const selectButton = (borderRadius = 4, padding = '3px 8px') => {
   return css({
-    transition: 'all 0.1s ease-out 0s',
+    transition: 'all 0.02s ease-out 0s',
     borderRadius,
     padding,
     height: 'fit-content',
@@ -46,7 +46,7 @@ export const selectButton = (borderRadius = 4, padding = '3px 8px') => {
 }
 export const flatButton = (borderRadius = 4, padding = '3px 8px', background = Colors.Background.ButtonHover, border = false) => {
   return css({
-    transition: 'all 0.1s ease-out 0s',
+    transition: 'all 0.02s ease-out',
     borderRadius,
     padding,
     cursor: 'pointer',

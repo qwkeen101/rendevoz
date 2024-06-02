@@ -45,12 +45,12 @@ export default ({
               onAddProp={async p => {
                 if (p.id) {
                   if (!properties?.[p.id]) {
-                    MetaStore.updateProperty(metaId, p.id, { value: undefined })
+                    MetaStore.property.updateProperty(metaId, p.id, { value: undefined })
                   }
                 } else {
-                  const prop = await MetaStore.addNewProp(p)
+                  const prop = await MetaStore.property.addNewProp(p)
                   if (prop) {
-                    MetaStore.updateProperty(metaId, prop.id, { value: undefined })
+                    MetaStore.property.updateProperty(metaId, prop.id, { value: undefined })
                   }
                 }
               }}
@@ -77,7 +77,7 @@ const PropPairDisplayer = ({ k, v, metaId }: { k: number; v: IMetaProperty; meta
 
   if (!prop) return null
   const handleChange = newV => {
-    MetaStore.updateProperty(metaId, k, {
+    MetaStore.property.updateProperty(metaId, k, {
       value: newV
     })
   }
@@ -152,16 +152,19 @@ const PropPairDisplayer = ({ k, v, metaId }: { k: number; v: IMetaProperty; meta
       <AnimatePopover
         reposition
         positions={['bottom', 'top']}
-        content={
+        content={setV => (
           <ColumnMenu
             property={prop}
             editable={true}
+            onClose={() => setV(false)}
             show={{
+              view: true,
               hide: false,
+              deleteForMeta: metaId,
               delete: true
             }}
           />
-        }
+        )}
       >
         <Button.IconButton
           size={14}

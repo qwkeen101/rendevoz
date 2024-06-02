@@ -23,7 +23,7 @@ export default ({
   onChange?: (id: number | undefined) => void
   metaId: number
 }) => {
-  const allOptionIds = MetaStore.usePropOptions(fieldName)
+  const allOptionIds = MetaStore.property.usePropOptions(fieldName)
   const options = ObjectStore('metaPropSelectOption').useMultiple(allOptionIds)
   const selected = value
   const selectedOption = ObjectStore('metaPropSelectOption').useValue(selected)
@@ -76,7 +76,7 @@ export default ({
                 ObjectStore('metaPropSelectOption')
                   .addOne({ name, color, parentPropName: fieldName })
                   .then(i => {
-                    MetaStore.updateProperty(metaId, fieldName, {
+                    MetaStore.property.updateProperty(metaId, fieldName, {
                       value: i.id
                     })
                   })

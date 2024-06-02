@@ -6,7 +6,7 @@ import { getSetting } from '@/core'
 import { getDirPath, pathJoin, pathNormalize, pathRemoveLeading } from '@/api/sync/utils/path'
 import { Queue } from 'async-await-queue'
 import Id from '@/utils/id'
-const q = new Queue(2, 0)
+const q = new Queue(3, 0)
 const getClient = () => {
   if (!WebdavSync.client) throw 'Client is not registered!'
   return WebdavSync.client
@@ -43,7 +43,7 @@ const checkDirCreated = async (filePath: string, isDir = false) => {
 }
 const CancelFuncsMap = new Map<number, VoidFunction>()
 const CancelControllersMap = new Map<number, AbortController>()
-const WebdavSync: ICloudSyncClient & {
+const WebdavSync: Omit<ICloudSyncClient, 'queueFiles'> & {
   client?: WebDAVClient
   defaultFolder?: string
   registerClient: (opts: { url: string; username: string; password: string; defaultFolder?: string }) => void

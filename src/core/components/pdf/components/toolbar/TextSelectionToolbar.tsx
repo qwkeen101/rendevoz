@@ -46,7 +46,7 @@ const TextSelectionToolbar: FC<TextSelectionToolbarProps> = ({ textSelect, onClo
         height: '100%'
       }}
       itemClickPreventDefault
-      itemSize={18}
+      itemSize={16}
     >
       <Toolbar.Item
         onClick={e => {

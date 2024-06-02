@@ -10,7 +10,7 @@ export interface IconProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivEleme
   name?: string
   theme?: 'outline' | 'filled' | 'two-tone' | 'multi-color'
   strokeWidth?: number
-  size?: number
+  size?: number | string
   spin?: boolean
   cursor?: Property.Cursor
   className?: string
@@ -37,7 +37,7 @@ const disableSvg = css({
 })
 const Icon = forwardRef<HTMLDivElement, IconProps>(
   (
-    { name, tooltip, size, strokeWidth, fill, spin, theme, className, iconStyle, cursor, color, onClick, containerStyle, style, ...rest },
+    { name, tooltip, size, strokeWidth = 3, fill, spin, theme, className, iconStyle, cursor, color, onClick, containerStyle, style, ...rest },
     ref
   ) => {
     const s: React.CSSProperties = {

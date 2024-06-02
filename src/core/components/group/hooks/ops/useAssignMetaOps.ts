@@ -70,10 +70,10 @@ const useAssignMetaOps = (instance: InnerGroupInstance) => {
                 .map(i => i.id)
             ]).values()
           ) as number[]
-          MetaStore.updateProperty(allSelectedMetaIds, field, nextValue)
+          MetaStore.property.updateProperty(allSelectedMetaIds, field, nextValue)
         } else {
           if (id) {
-            MetaStore.updateProperty(id, field, nextValue)
+            MetaStore.property.updateProperty(id, field, nextValue)
           }
         }
         instance.triggerChange?.()
@@ -107,9 +107,26 @@ const useAssignMetaOps = (instance: InnerGroupInstance) => {
         }
         instance.triggerChange?.()
       },
+      deleteMetaInGroup: id => {
+        const idArr = Array.isArray(id) ? id : [id]
+        const values = instance.getGroupData?.()
+        const metaToRowIds = new Map<number, number[]>()
+        if (values) {
+          values.values.forEach(v => {
+            const arr = metaToRowIds.get(v.id) || []
+            arr.push(v.rowId)
+            metaToRowIds.set(v.id, arr)
+          })
+          const needDeleteRowIds = new Set<number>()
+          idArr.forEach(metaId => {
+            metaToRowIds.get(metaId)?.forEach(i => needDeleteRowIds.add(i))
+          })
+          if (!needDeleteRowIds.size) return
+          instance.valueOps?.deleteItems(Array.from(needDeleteRowIds.values()))
+        }
+      },
       deleteMeta: (ids: number | number[]) => {
         const idArr = Array.isArray(ids) ? ids : [ids]
-        const deleteMetaWhenDeleteItem = instance.getGroupState?.().state?.deleteMetaWhenDeleteItem
         idArr.forEach(id => {
           MetaStore.deleteMetaObject(id)
         })

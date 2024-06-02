@@ -143,13 +143,12 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
       <div
         ref={contentRef}
         style={{
-          background: 'rgba(0,0,0,0.8)',
+          background: 'rgba(0,0,0,1)',
           color: 'white',
           borderRadius: 4,
           lineHeight: 1.2,
-          fontWeight: 500,
-          padding: '3px 5px',
-          fontSize: 13,
+          padding: '3px 6px',
+          fontSize: 12,
           ...style
         }}
       >

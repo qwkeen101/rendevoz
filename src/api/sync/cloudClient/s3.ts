@@ -5,11 +5,9 @@ import { ICloudSyncClient } from '@/api/sync/cloudClient/types'
 import { pathJoin, pathNormalize, pathRemoveLeading, pathRemoveLeadingSlash } from '@/api/sync/utils/path'
 import { Queue } from 'async-await-queue'
 import { Simulate } from 'react-dom/test-utils'
-import cancel = Simulate.cancel
 import Id from '@/utils/id'
-import GlobalStates from '@/api/global/states'
-import SyncAPI from '@/api/sync'
-const q = new Queue(2, 0)
+
+const q = new Queue(3, 0)
 const getClient = () => {
   const client = S3Sync.client
   const bucket = S3Sync.bucket
@@ -35,7 +33,7 @@ const removeLeading = (str: string) => {
   const folder = S3Sync.defaultFolder ?? ''
   return pathRemoveLeading(str, folder, true)
 }
-const S3Sync: ICloudSyncClient & {
+const S3Sync: Omit<ICloudSyncClient, 'queueFiles'> & {
   registerClient: (opt: { ak: string; sk: string; bucket: string; endpoint: string; region: string; defaultFolder?: string }) => void
   client?: S3
   defaultFolder?: string

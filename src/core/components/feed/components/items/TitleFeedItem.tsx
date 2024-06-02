@@ -6,47 +6,32 @@ import { ObjectStore } from '@/api/stores'
 import ItemsToolbar from '@/core/components/feed/components/items/ItemsToolbar'
 import useFeedIsRead from '@/core/components/feed/hooks/useFeedIsRead'
 import { Colors } from '@/consts'
+import useFeedIsFocused from '@/core/components/feed/hooks/useFeedIsFocused'
+import classnames from 'classnames'
 
 export default memo(
-  ({
-    id,
-    styles,
-    onClick
-  }: {
-    id: number
-    styles?: {
-      titleWeight?: number
-      titleSize?: number
-    }
-    onClick?: React.MouseEventHandler
-  }) => {
-    const { titleWeight = 500 } = styles || {}
+  ({ id, onClick }: { id: number; onClick?: React.MouseEventHandler }) => {
     const item = ObjectStore('feed').useValue(id)
     const isRead = useFeedIsRead(id)
+    const isFocused = useFeedIsFocused(id)
     if (!item) return null
     return (
       <Content
         flex
         alignItems={'center'}
         onClick={onClick}
-        style={{
-          padding: '4px 6px',
-          cursor: 'pointer',
-          color: isRead ? Colors.Font.Transparent : undefined
-        }}
-        className={ClassName.flatButton(0)}
+        className={classnames('button p-6 font-size-13', isFocused && 'active-button', isRead && !isFocused && 'transparent-font')}
         gap={10}
       >
         <div
           style={{
-            fontWeight: titleWeight,
             flex: 1
           }}
-          className={ClassName.ellipsisFont(1)}
+          className={'ellipsis-font-1 normal-font'}
         >
           {item.title}
         </div>
-        <ItemsToolbar itemId={id} />
+        <ItemsToolbar isFocused={isFocused} itemId={id} />
       </Content>
     )
   },

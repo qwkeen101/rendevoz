@@ -243,9 +243,7 @@ const ObjectForm: FC<
         ObjectStore(object.type).updateOne({ id: originObject.id, ...originObject })
       }
     },
-    formTitle: initialObject?.id
-      ? t('form.update item details', { item: t('general.object') })
-      : t('form.create new item', { item: t('general.object') }),
+    formTitle: t('general.Edit details'),
     submitText: initialObject?.id ? 'update' : 'create'
   })
   return renderForm()

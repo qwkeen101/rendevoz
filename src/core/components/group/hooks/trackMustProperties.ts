@@ -12,7 +12,7 @@ export default (groupValue?: MetaGroup) => {
     if (mustProperties?.length && groupValue?.views.length) {
       const groupState = instance.getGroupState?.()
       if (groupState) {
-        const allProps = mustProperties.map(id => MetaStore.getPropDetails(id))
+        const allProps = mustProperties.map(id => MetaStore.property.getPropDetails(id))
         const notExistProps = allProps.filter(i => i && !groupState.data?.properties?.some(o => o.id === i.id))
         console.log(notExistProps)
         notExistProps.forEach(prop => {

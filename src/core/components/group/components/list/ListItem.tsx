@@ -95,7 +95,7 @@ export default memo(
       if (prop.type === 'custom') {
         const v = meta.properties?.[prop.id]?.value
         const n = `${prop.id}`
-        const realProp = MetaStore.getPropDetails(prop.id)
+        const realProp = MetaStore.property.getPropDetails(prop.id)
         if (v === undefined && !isEditing && (!realProp || !['checkbox'].includes(realProp.propType))) return null
         const handleChange = nv => {
           instance.metaOps?.updateMetaProperty(
@@ -197,7 +197,7 @@ export default memo(
       }
     }
     const propRender = (prop: MetaGroupProperty) => {
-      const realProp = MetaStore.getPropDetails(prop.id)
+      const realProp = MetaStore.property.getPropDetails(prop.id)
       const rendered = render(prop)
 
       const tooltipContent = prop.type === 'basic' ? t(prop.display) : realProp?.name

@@ -111,7 +111,7 @@ export default () => {
             {t('group.Available new properties')}
           </div>
           {availableProps.map(i => {
-            const details = MetaStore.getPropDetails(i.id)
+            const details = MetaStore.property.getPropDetails(i.id)
             if (details) {
               return (
                 <Button.IconButton
@@ -197,7 +197,7 @@ function Item({ value, onStop, onVisibleChange, isDragging, bound, onDragStart }
             {t(`general.${value}`)}
           </div>
         ) : value.type === 'custom' ? (
-          MetaStore.getPropDetails(value.id)?.name
+          MetaStore.property.getPropDetails(value.id)?.name
         ) : (
           t(value.display)
         )}

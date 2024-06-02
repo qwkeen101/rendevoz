@@ -222,7 +222,7 @@ const GroupDragHandle = ({ bodyRef, groupId }: { bodyRef: RefObject<HTMLElement>
           left: dragHandle.position?.x ?? 0,
           pointerEvents: 'auto',
           top: dragHandle.position?.y ?? 0,
-          transition: 'all 0.16s ease',
+          transition: 'none',
           zIndex: 99,
           color: Colors.Font.SuperTransparent
         }}

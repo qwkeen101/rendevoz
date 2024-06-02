@@ -58,7 +58,7 @@ export default memo(({ event }: EventProps) => {
     if (prop.type === 'custom') {
       const v = meta.properties?.[prop.id]?.value
       const n = `${prop.id}`
-      const realProp = MetaStore.getPropDetails(prop.id)
+      const realProp = MetaStore.property.getPropDetails(prop.id)
       if (v === undefined && (!realProp || !['checkbox'].includes(realProp.propType))) return null
       const handleChange = nv => {
         instance.metaOps?.updateMetaProperty(
@@ -188,7 +188,7 @@ export default memo(({ event }: EventProps) => {
     }
   }
   const propRender = (prop: MetaGroupProperty) => {
-    const realProp = MetaStore.getPropDetails(prop.id)
+    const realProp = MetaStore.property.getPropDetails(prop.id)
     const rendered = render(prop)
 
     const tooltipContent = prop.type === 'basic' ? t(prop.display) : realProp?.name
@@ -229,15 +229,12 @@ export default memo(({ event }: EventProps) => {
         }
       }}
       flex
-      gap={4}
-      className={'light-hover bg-popover font-size-14'}
+      className={'light-hover br-6 bg-popover font-size-14 border-box-shadow'}
       style={{
         overflow: 'hidden',
-        boxShadow: Colors.Background.BorderBoxShadow,
         color: Colors.Font.Primary,
-        borderRadius: 4,
         padding: '2px 6px',
-        transition: 'all 0.16s ease-out'
+        transition: 'all 0.02s ease-out'
       }}
       onContextMenu={e => {
         e.preventDefault()
@@ -268,7 +265,7 @@ export default memo(({ event }: EventProps) => {
         }}
       ></div>
       <Content flex alignItems={'center'} gap={8} justifyContent={'space-between'}>
-        <div className={'normal-font ellipsis-font-1'}>{meta?.name || meta?.placeholderName}</div>
+        <div className={'normal-font font-size-13 ellipsis-font-1'}>{meta?.name || meta?.placeholderName}</div>
         {meta?.createdAt && <div className={'font-size-12 transparent-font'}>{format(meta.createdAt, 'HH:mm')}</div>}
       </Content>
       <div

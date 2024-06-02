@@ -31,6 +31,10 @@ export default ({ onClose, onAddProp }: { onClose?: VoidFunction; onAddProp?: (p
             icon: 'park-all-application',
             text: 'Existing properties',
             key: 'existing-props',
+            subMenuStyle: {
+              maxHeight: 300,
+              overflowY: 'auto'
+            },
             subMenu: allProps.map(i => ({
               type: 'item',
               key: i.id,

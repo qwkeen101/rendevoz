@@ -33,7 +33,6 @@ const MetaRow = ({
   const toggled = !untoggledIdSet?.has(rowDetails.rowId)
   const metaObject = MetaStore.useValue(metaId)
   const hasChildren = !!rowDetails.children?.length
-  // useChildrenSyncAsAttachment(metaObject, rowDetails.children)
   const instance = useGroupInstance()
   const rowId = rowDetails.tempRowId || rowDetails.rowId
   if (!metaObject) return null
@@ -116,12 +115,6 @@ const MetaRow = ({
             let field = i.name
 
             if (i.type === 'custom') {
-              const prop = metaObject.properties?.[i.id]
-              if (!prop) {
-                MetaStore.updateProperty(metaId, i.id, {
-                  value: undefined
-                })
-              }
               field = i.id
               fieldValue = metaObject.properties?.[i.id]?.value
             }

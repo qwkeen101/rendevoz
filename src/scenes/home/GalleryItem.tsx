@@ -35,7 +35,7 @@ const GalleryItem = memo(({ metaId }: { metaId: number }) => {
         onClick={() => Rendevoz.Actions.Open.Meta.openMetaObject(metaId)}
       >
         <div
-          className={'cover'}
+          className={'cover border bg-secondary'}
           style={{
             height: 200,
             width: '100%',
@@ -45,9 +45,7 @@ const GalleryItem = memo(({ metaId }: { metaId: number }) => {
             borderRadius: 10,
             justifyContent: 'center',
             transition: 'all 0.2s ease',
-            position: 'relative',
-            border: '1px solid var(--border-background)',
-            background: Colors.Background.Secondary
+            position: 'relative'
           }}
         >
           <InnerContentDisplayer
@@ -56,12 +54,9 @@ const GalleryItem = memo(({ metaId }: { metaId: number }) => {
           />
         </div>
         <Content flex column gap={5} auto style={{ paddingTop: 12 }}>
-          <div style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.4 }} className={ClassName.ellipsisFont(3)}>
-            {meta.name || meta.placeholderName}
-          </div>
-
+          <div className={'ellipsis-font-2 font-size-13 normal-font'}>{meta.name || meta.placeholderName}</div>
           <Content flex justifyContent={'space-between'} className={'transparent-font font-size-12'} gap={10}>
-            <span style={{ flex: 1 }} className={ClassName.ellipsisFont(1)}>
+            <span style={{ flex: 1 }} className={'ellipsis-font-1'}>
               {Rendevoz.Utils.Meta.getTypeName(meta.type)}
             </span>
             <span>{DateFormat.formatDistanceToNowStrict(meta.createdAt)}</span>

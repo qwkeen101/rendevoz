@@ -3,7 +3,7 @@ import { assignProperties } from '@/utils'
 import { toast } from 'react-hot-toast'
 import { t } from 'i18next'
 import { getSetting, traverseGetRelatedNodeIds } from '@/core'
-import { globalStore, MetaStore } from '@/api/stores'
+import { globalStore, MetaStore, ObjectStore } from '@/api/stores'
 import { Rendevoz } from '@/core/rendevoz'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { ObjectCreateHandler } from '@/core/global/components/ObjectCreator'
@@ -83,11 +83,11 @@ assignProperties(GlobalInstance, {
     },
     getLink: async id => {
       const object = MetaStore.getMetaObjectsMap().get(id)
-      if (!object) throw 'No object!'
+      if (!object) return
       const fromMeta = object.fromObject ? MetaStore.getMetaObjectsMap().get(object.fromObject.metaId) : undefined
       const link = `rendevoz://object/${id}`
-      const transparentFont = 'rgba(31, 34, 37, 0.65)'
       const blackFont = '#131722'
+      let selectedText = (await ObjectStore(object.type).getOneById(object.objectId))?.selectedText
       return {
         link: link,
         htmlLink: `<p><a href="${link}">${object.name || object.placeholderName || ''}</a></p>`,
@@ -95,17 +95,11 @@ assignProperties(GlobalInstance, {
         name: object.name || object.placeholderName,
         html: renderToStaticMarkup(
           <div style={{ color: blackFont }}>
-            <div>
-              {t('general.type')}: {Rendevoz.Utils.Meta.getTypeName(object.type)}
-            </div>
-            <div>
+            {selectedText && <blockquote>{selectedText}</blockquote>}
+            <p>
               <a href={link}>{object.name || object.placeholderName || ''}</a>
-            </div>
-            {fromMeta && (
-              <div style={{ fontSize: 13, color: transparentFont }}>
-                <a href={`rendevoz://object/${fromMeta.id}`}>{t('general.from') + ': ' + `${fromMeta.name}`}</a>
-              </div>
-            )}
+            </p>
+            {fromMeta && <cite>{fromMeta.name || fromMeta.placeholderName}</cite>}
           </div>
         )
       }

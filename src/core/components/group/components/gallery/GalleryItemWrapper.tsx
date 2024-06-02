@@ -124,7 +124,7 @@ export default memo(
         if (prop.type === 'custom') {
           const v = meta.properties?.[prop.id]?.value
           const n = `${prop.id}`
-          const realProp = MetaStore.getPropDetails(prop.id)
+          const realProp = MetaStore.property.getPropDetails(prop.id)
           if (v === undefined && !isEditing && (!realProp || !['checkbox'].includes(realProp.propType))) return null
           const handleChange = nv => {
             instance.metaOps?.updateMetaProperty(
@@ -256,7 +256,7 @@ export default memo(
         }
       }
       const propRender = (prop: MetaGroupProperty) => {
-        const realProp = MetaStore.getPropDetails(prop.id)
+        const realProp = MetaStore.property.getPropDetails(prop.id)
         const rendered = render(prop)
 
         const tooltipContent = prop.type === 'basic' ? t(prop.display) : realProp?.name
@@ -373,7 +373,7 @@ export default memo(
             }}
             flex
             column
-            className={'light-hover bg-popover'}
+            className={'light-hover bg-popover border-box-shadow'}
             role={'group-item-content'}
             style={{
               width: '100%',
@@ -381,8 +381,7 @@ export default memo(
               borderRadius: 3,
               transition: 'background 0.25s ease',
               cursor: 'pointer',
-              background: gDrag || isEditing ? Colors.Background.Popover : isSelected ? Colors.Common.SelectColorTransparent : undefined,
-              boxShadow: Colors.Background.BorderBoxShadow
+              background: gDrag || isEditing ? Colors.Background.Popover : isSelected ? Colors.Common.SelectColorTransparent : undefined
             }}
           >
             <Content

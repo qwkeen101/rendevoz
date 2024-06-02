@@ -129,7 +129,7 @@ const SorterItem = ({
   ]
 
   return (
-    <Content flex gap={8}>
+    <Content flex gap={8} alignItems={'center'}>
       <FilterSelect value={sorter.field} options={availableSorters} onSelect={v => onChange({ ...sorter, field: v })} />
       <FilterSelect
         value={sorter.type}

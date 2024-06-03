@@ -45,16 +45,16 @@ export default ({
               }
             }
           }}
-          size={14}
+          size={12}
           spin={pendingState}
           name={item.skiped ? 'park-pause' : item.error ? 'park-close' : item.progress === 1 ? 'park-check-small' : 'park-loading-four'}
         />
-        <div title={item.name} className={'ellipsis-font-1 font-size-13'}>
+        <div title={item.name} className={'ellipsis-font-1 font-size-12'}>
           {item.name.split('/')[1]}
         </div>
       </Content>
 
-      <div style={{ flexShrink: 0 }} className={'transparent-font font-size-12'}>
+      <div style={{ flexShrink: 0 }} className={'super-transparent-font font-size-12'}>
         {formatBytes(item.size, 1)}
       </div>
     </Content>

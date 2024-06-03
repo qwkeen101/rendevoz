@@ -59,6 +59,9 @@ const SyncTitlebar = memo(
                     onClearInfo()
                     setIsPushing(true)
                     SyncAPI.resolveConflict('push')
+                      .then(() => {
+                        toast.success(t('sync.Data has been pushed successfully'))
+                      })
                       .catch(e => {
                         toast.error('Failed to push data!')
                       })
@@ -94,6 +97,7 @@ const SyncTitlebar = memo(
                   className={ClassName.flatButton(4, '4px')}
                   onClick={() => {
                     onClearInfo()
+                    toast.success(t('sync.File syncing has started'))
                     SyncAPI.file.syncLocalFiles()
                   }}
                 />

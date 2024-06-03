@@ -65,14 +65,14 @@ export default () => {
           }}
         />
       </Content>
-      <Content flex column gap={4} auto style={{ overflowY: 'auto' }}>
+      <Content flex column gap={4} auto style={{ overflowY: 'auto', paddingBottom: 100 }}>
         {searchResult.map(i => (
           <Content
             key={i.feedUrl}
             onClick={() => {
               fetchFeedAndAddCollection(i.feedUrl, 'podcast')
             }}
-            style={{ cursor: 'pointer' }}
+            className={'button'}
           >
             <div style={{ fontWeight: 600, fontSize: 16 }}>{i.collectionName}</div>
             <div style={{ fontSize: 13, color: Colors.Font.Transparent }}>{i.artistName}</div>

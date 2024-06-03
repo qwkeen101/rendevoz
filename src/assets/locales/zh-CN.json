@@ -1141,6 +1141,9 @@
     "Transcribe tips": "提示：对于非英文音频，选择small和medium模型表现更好。如果在转录中卡住，请重启应用。"
   },
   "sync": {
+    "File syncing has started": "已开始同步文件",
+    "Data has been pushed successfully": "成功推送数据",
+    "Data has been pulled successfully": "成功拉取数据",
     "Files to download": "需下载{{count}}个文件",
     "Files to upload": "需上传{{count}}个文件",
     "Checking sync status": "检查同步状态中...",

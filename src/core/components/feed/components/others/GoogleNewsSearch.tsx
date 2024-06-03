@@ -114,9 +114,9 @@ const GoogleNewsSearch = () => {
           ]}
         />
       </Content>
-      <Content flex column gap={10} style={{ overflowY: 'auto' }} auto>
+      <Content flex column gap={4} style={{ overflowY: 'auto', paddingBottom: 100 }} auto>
         {searchResults?.items?.map(i => (
-          <div key={i.link} style={{ cursor: 'pointer' }} onClick={() => window.open(i.link)}>
+          <div key={i.link} className={'button'} onClick={() => window.open(i.link)}>
             <div className={ClassName.title()}>{i.title}</div>
             <div className={ClassName.description('13px')} style={{ textTransform: 'uppercase' }}>
               {i.link.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0]}

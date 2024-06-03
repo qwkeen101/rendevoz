@@ -61,9 +61,16 @@
   flex-shrink: 0
 }
 .print-editor{
+  @media print{
+    body {
+      print-color-adjust: exact !important;
+      -webkit-print-color-adjust: exact !important;
+    }
+  }
   body{
     print-color-adjust: exact;
     overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
     background-color: var(--global-background);
   }
   *{

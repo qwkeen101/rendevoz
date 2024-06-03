@@ -31,7 +31,7 @@ export default ({
         display: 'flex',
         flexDirection: 'column'
       }}
-      padding={'0 0 0.25rem'}
+      padding={'0 0 0.4rem'}
     >
       <Content
         flex
@@ -62,9 +62,6 @@ export default ({
         />
       </Content>
       <Menu.NavigationMenu
-        style={{
-          padding: '0px 2px'
-        }}
         defaultSelectFirst={false}
         layout={[
           show?.view && {

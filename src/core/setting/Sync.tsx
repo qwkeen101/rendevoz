@@ -9,6 +9,7 @@ import { DateFormat } from '@/utils'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import getClientInfo from '@/api/sync/utils/getClientInfo'
+import useSyncInfo from '@/api/sync/components/useSyncInfo'
 
 export default memo(() => {
   const [setting, setSetting] = GlobalSetting.useSetting()
@@ -23,12 +24,13 @@ export default memo(() => {
     time: number
     os: string
   }>()
+  const { fetchInfo, renderInfo } = useSyncInfo()
   const renderRemote = () => {
     if (remoteData) {
       const renderRegion = remoteData.region && remoteData.region !== remoteData.country
       const renderCity = remoteData.city && remoteData.city !== remoteData.region && remoteData.city !== remoteData.country
       return (
-        <Content flex className={'font-size-13 transparent-font'}>
+        <Content flex className={'font-size-12 transparent-font'}>
           {t('settings.Remote data updated at')}
           {`: ${DateFormat.format(remoteData.time, DateFormat.Formats.withMinute)}`}
           <span style={{ marginLeft: 12, marginRight: 4 }}>{t('settings.Position')}:</span>
@@ -57,6 +59,7 @@ export default memo(() => {
   useEffect(() => {
     setRemoteData(undefined)
     if (syncState.connection === 'connected') {
+      fetchInfo()
       SyncAPI.cloudClient()
         ?.getFile('client-info.json')
         .then(res => {
@@ -199,6 +202,7 @@ export default memo(() => {
                 description: setting.sync.conflictResolved ? undefined : t('settings.Resolve conflict desc'),
                 children: (
                   <Content flex column gap={6}>
+                    {renderInfo()}
                     {renderRemote()}
                     <Content flex gap={8}>
                       <Button.IconButton
@@ -210,7 +214,7 @@ export default memo(() => {
                           setIsPushing(true)
                           SyncAPI.resolveConflict('push')
                             .then(() => {
-                              toast.success(t('settings.Data pushed successfully'))
+                              toast.success(t('sync.Data has been pushed successfully'))
                               setSetting(s => ({
                                 ...s,
                                 sync: {
@@ -266,6 +270,7 @@ export default memo(() => {
                         className={'border'}
                         onClick={() => {
                           SyncAPI.file.syncLocalFiles()
+                          toast.success(t('sync.File syncing has started'))
                         }}
                       ></Button.IconButton>
                     </Content>

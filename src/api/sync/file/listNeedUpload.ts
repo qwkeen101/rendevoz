@@ -15,7 +15,7 @@ export default async (dirName: string, lastUploaded?: number) => {
     : allFiles.files
   const finalFiles = leftFiles.filter(i => {
     const prev = LocalFileSizeMap.get(`${dirName}/${i.name}`)
-    if (!prev || prev !== i.size) {
+    if (prev === undefined || prev !== i.size) {
       return true
     }
     return false

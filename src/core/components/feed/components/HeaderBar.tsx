@@ -85,18 +85,14 @@ const FeedHeaderBar = () => {
       <Content flex gap={12} alignItems={'center'}>
         <Icon
           name={'custom-left-bar'}
-          size={18}
-          className={ClassName.flatButton(4, '4px 6px')}
+          size={16}
+          className={'button'}
           onClick={() => {
             setFeedState(s => ({ ...s, sidebarCollapsed: !s.sidebarCollapsed }))
           }}
         />
-        {currentCollection?.icon && (
-          <img src={currentCollection.icon} height={24} style={{ borderRadius: 4, marginLeft: 6, objectFit: 'cover' }} />
-        )}
-        <div className={ClassName.ellipsisFont(1)} style={{ fontSize: 16, fontWeight: 600, flexShrink: 1 }}>
-          {currentCollection?.name || feedState.headerName}
-        </div>
+        {currentCollection?.icon && <img src={currentCollection.icon} className={'br-4'} height={20} style={{ objectFit: 'cover' }} />}
+        <div className={'ellipsis-font-1 bold-font'}>{currentCollection?.name || feedState.headerName}</div>
       </Content>
       <Content flex gap={6} style={{ flexShrink: 0 }}>
         {!alreadyReadAll && (
@@ -106,8 +102,8 @@ const FeedHeaderBar = () => {
             }}
             icon={'park-check'}
             text={t('general.Mark all as read')}
-            className={ClassName.selectButton()}
-            style={{ fontSize: 14, fontWeight: 600, marginRight: 12 }}
+            className={'select-button py-3'}
+            style={{ marginRight: 12 }}
           />
         )}
         <IconWithPopover

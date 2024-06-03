@@ -85,7 +85,7 @@ export default ({ onClear }: { onClear: VoidFunction }) => {
             {t('sync.Clear')}
           </div>
         </Content>
-        <Content flex column gap={4}>
+        <Content flex column gap={5}>
           {visible.map(i => (
             <FileItem item={i} key={i.name} type={'download'} />
           ))}

@@ -50,7 +50,7 @@ export default memo(() => {
             width: 280,
             display: 'flex',
             flexDirection: 'column',
-            maxHeight: 600,
+            maxHeight: 480,
             overflowY: 'auto',
             gap: 4
           }}

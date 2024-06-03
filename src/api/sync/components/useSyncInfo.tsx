@@ -39,7 +39,7 @@ export default () => {
   }, [syncInfo])
 
   const renderInfo = () => {
-    const showInfo = !!(isCheckingSyncInfo || (syncSetting.enableAutoSync === false && syncSetting.conflictResolved && syncInfo))
+    const showInfo = !!(syncSetting.conflictResolved && (isCheckingSyncInfo || syncInfo))
     if (!showInfo) {
       return null
     }
@@ -56,7 +56,8 @@ export default () => {
   return {
     renderInfo,
     fetchInfo: () => {
-      if (syncSetting.enableAutoSync === false && syncSetting.conflictResolved === true) {
+      if (syncSetting.conflictResolved === true) {
+        setSyncInfo(undefined)
         setIsCheckingInfo(true)
         checkSyncInfo()
           .then(res => {

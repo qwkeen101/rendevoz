@@ -1145,6 +1145,9 @@
     "Transcribe tips": "Tips: For non-english languages, small and medium models perform better. If you stuck at transcribing, please restart."
   },
   "sync": {
+    "File syncing has started": "File syncing has started",
+    "Data has been pushed successfully": "Data has been pushed successfully",
+    "Data has been pulled successfully": "Data has been pulled successfully",
     "Files to download_one": "1 file to download",
     "Files to download_other": "{{count}} files to download",
     "Files to upload_one": "1 file to upload",

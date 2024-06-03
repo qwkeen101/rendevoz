@@ -33,6 +33,6 @@ export default async (url: string, feedType: FeedItem['feedType']) => {
       items: initialItems
     }
   } catch (e) {
-    toast.error('Failed to parse content of ' + truncate(url, { length: 20 }))
+    console.error(e)
   }
 }

@@ -99,8 +99,7 @@ const IconButton = forwardRef(
             <Icon
               style={{
                 color: iconColor,
-                fontSize: '1.1em',
-                marginRight: text ? 4 : 0
+                fontSize: 16
               }}
               theme={theme}
               spin={spin}
@@ -110,9 +109,9 @@ const IconButton = forwardRef(
           )}
           {text && <div className={ClassName.ellipsisFont(1)}>{text}</div>}
           {(enabled || suffixIcon || suffixStr) && (
-            <Content flex gap={4} style={{ marginLeft: 'auto', paddingLeft: 18 }}>
+            <Content className={'font-size-12 super-transparent-font'} flex gap={4} style={{ marginLeft: 'auto', paddingLeft: 18 }}>
               {enabled && <Icon name="park-check-small" />}
-              {suffixStr && <span style={{ fontSize: '12px', color: Colors.Font.Transparent }}>{suffixStr}</span>}
+              {suffixStr && <span>{suffixStr}</span>}
               {suffixIcon && (
                 <Icon
                   className={suffixIconClassName}

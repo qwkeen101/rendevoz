@@ -715,7 +715,7 @@
     "Auto sync desc": "If enabled, data and files will auto-sync with the cloud",
     "Sync files": "Sync files",
     "Folder path": "Folder path",
-    "Position": "Position",
+    "Location": "Location",
     "Device": "Device",
     "Folder path desc": "(Optional) Example: /cloud",
     "Show highlight details": "Show highlight details",

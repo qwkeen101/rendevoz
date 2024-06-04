@@ -20,16 +20,16 @@ export default () => {
     handleKeyboardPaste(e, instance)
     if (!instance.isFocused?.()) return
     if (instance.getOutestContainerNode?.() !== document.activeElement && document.activeElement !== document.body) return
-    if (e.defaultPrevented) return
-    handleKeyboardNavigation(e, instance)
-    if (isHotkey('mod+p', e)) {
-      instance.searchOps?.toggleSearchPanel()
-    }
     if (isHotkey(KEY.Escape, e)) {
       if (whiteboardState.highlightedIds) {
         setWhiteboardState(s => ({ ...s, highlightedIds: undefined }))
       }
       instance.edgeOps?.endAction()
+    }
+    if (e.defaultPrevented) return
+    handleKeyboardNavigation(e, instance)
+    if (isHotkey('mod+p', e)) {
+      instance.searchOps?.toggleSearchPanel()
     }
     // undo fit transform
     if (isHotkey('shift+e', e)) {

@@ -33,7 +33,7 @@ export default memo(() => {
         <Content flex className={'font-size-12 transparent-font'}>
           {t('settings.Remote data updated at')}
           {`: ${DateFormat.format(remoteData.time, DateFormat.Formats.withMinute)}`}
-          <span style={{ marginLeft: 12, marginRight: 4 }}>{t('settings.Position')}:</span>
+          <span style={{ marginLeft: 12, marginRight: 4 }}>{t('settings.Location')}:</span>
           <Content flex gap={3}>
             <span>{remoteData.country}</span>
             {renderRegion && (

@@ -147,7 +147,7 @@ const GroupOutline = ({
           {outline.children?.length ? (
             <Icon
               theme={'filled'}
-              name={'park-right-one'}
+              name={'park-right'}
               style={{
                 transform: !toggled ? 'rotate(90deg)' : undefined,
                 transition: 'transform 0.2s ease'

@@ -236,7 +236,7 @@ export default memo(() => {
             name={'park-sort-two'}
             placement={['bottom']}
             content={setV => (
-              <WithBorder padding={'0.4rem 0'}>
+              <WithBorder padding={'0.2rem 0 0.4rem'}>
                 <Menu.NavigationMenu
                   defaultSelected={[filterSort.sort || 'create']}
                   layout={[

@@ -45,7 +45,8 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children
   const pdfScale = useSelectAtomValue(PdfStateAtom, s => s.document?.scale)
   useIsomorphicLayoutEffect(() => {
     initializedRef.current = false
-    getPage(doc, 0).then(page => {
+    const pages = doc.numPages
+    getPage(doc, pages > 1 ? 1 : 0).then(page => {
       const viewport = page.getViewport({ scale: 1 })
       const vw = viewport.width,
         vh = viewport.height

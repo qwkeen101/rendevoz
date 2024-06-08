@@ -2,7 +2,7 @@ import { CurrentKeyValues } from '@/api/stores/keyvalue.store'
 import { DefaultEditorSettings } from '@/api/lifycycle/initializeApp/initializeSettings'
 import { useDb } from '@/hooks'
 
-const defaultSidebarItems = ['home', 'database', 'search', 'recycleBin', 'graph', 'settings']
+const defaultSidebarItems = ['home', 'database', 'feeds', 'search', 'graph', 'recycleBin', 'settings']
 export default async () => {
   const defaultKeyvalues: Partial<CurrentKeyValues> = {
     searchHistory: [],

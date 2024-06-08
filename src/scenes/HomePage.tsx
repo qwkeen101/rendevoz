@@ -21,6 +21,7 @@ import classnames from 'classnames'
 import { Resizable } from 're-resizable'
 import useHomeConfig from '@/scenes/home/useHomeConfig'
 import { Colors } from '@/consts'
+import { sortStrings } from '@/utils/str'
 
 const RowClass = classnames([
   css({
@@ -111,7 +112,7 @@ export const HomePage: FC = () => {
             />
             {homeMode === 'gallery' && (
               <AnimatePopover
-                align={'end'}
+                padding={6}
                 content={
                   <WithBorder className={'p-4'} width={200}>
                     <GalleryConfig />
@@ -236,7 +237,7 @@ const ListView = () => {
                 children: t('general.pinned'),
                 icon: 'park-star'
               },
-              ...allVisibleTypes.map(type => ({
+              ...sortStrings(allVisibleTypes, o => Rendevoz.Utils.Meta.getTypeName(o)).map(type => ({
                 value: type,
                 children: Rendevoz.Utils.Meta.getTypeName(type),
                 icon: getIcon(type)

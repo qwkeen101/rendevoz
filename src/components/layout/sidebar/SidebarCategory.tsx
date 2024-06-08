@@ -60,7 +60,7 @@ export default memo(() => {
       }}
     >
       <div
-        className={'font-size-13 transparent-font'}
+        className={'menu-sub-title'}
         style={{
           padding: '12px 12px 6px'
         }}
@@ -76,7 +76,6 @@ export default memo(() => {
           <Button.IconButton
             icon={Rendevoz.Utils.Object.getMetaObjectIcon(i.type)}
             onClick={() => {
-              console.log(i)
               Rendevoz.Actions.Open.Group.openTypeGroup(i.type)
             }}
             className={'font-size-14'}
@@ -87,7 +86,7 @@ export default memo(() => {
         ))}
       </div>
       <div
-        className={'font-size-13 transparent-font'}
+        className={'menu-sub-title'}
         style={{
           padding: '12px 12px 6px'
         }}
@@ -119,7 +118,7 @@ export default memo(() => {
       {props.length !== 0 && (
         <>
           <div
-            className={'font-size-13 transparent-font'}
+            className={'menu-sub-title'}
             style={{
               padding: '12px 12px 6px'
             }}

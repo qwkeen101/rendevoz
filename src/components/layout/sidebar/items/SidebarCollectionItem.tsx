@@ -202,13 +202,7 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(
           </DraggableElement>
         </AnimatePopover>
         {!hideChildren && (
-          <div
-            className={css({
-              paddingLeft: 15,
-              display: 'flex',
-              flexDirection: 'column'
-            })}
-          >
+          <Content flex column style={{ paddingLeft: 15 }}>
             {childrenCollections?.map(i => (
               <SidebarCollectionItem
                 displayPinned={displayPinned}
@@ -222,7 +216,7 @@ const SidebarCollectionItem: FC<ISidebarItem> = memo(
               />
             ))}
             {!onlyCollection && childrenMetas.map(i => <SidebarObjectItem key={i.id} id={i.id} parentId={id} parentType="collection" />)}
-          </div>
+          </Content>
         )}
       </Content>
     )

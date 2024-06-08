@@ -89,9 +89,20 @@ const FeedSidebar = () => {
       }}
     >
       <Content flex column gap={4} style={{ padding: '6px 6px' }}>
-        <Button.IconButton onClick={() => handleSetReadLater()} icon={'park-star'} text={t('general.Read later')}></Button.IconButton>
-        <Button.IconButton onClick={() => handleSetHistory()} icon={'park-history'} text={t('general.History')}></Button.IconButton>
         <Button.IconButton
+          className={'button'}
+          onClick={() => handleSetReadLater()}
+          icon={'park-star'}
+          text={t('general.Read later')}
+        ></Button.IconButton>
+        <Button.IconButton
+          className={'button'}
+          onClick={() => handleSetHistory()}
+          icon={'park-history'}
+          text={t('general.History')}
+        ></Button.IconButton>
+        <Button.IconButton
+          className={'button'}
           onClick={() =>
             setFeedState(s => ({
               ...s,

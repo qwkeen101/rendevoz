@@ -76,7 +76,7 @@ export default function GroupGrouperMenu({
   const sortableGroups = ['string', 'date', 'number', 'singleSelect', 'multiSelect']
   if (!currentGroupRule || currentSub === 'Group by') {
     return (
-      <Content style={{ padding: '0px 4px 4px', maxHeight: 450, overflowY: 'auto' }}>
+      <Content style={{ padding: '0px 0.25rem 0.4rem', maxHeight: 450, overflowY: 'auto' }}>
         {groupableProperties.map(
           i =>
             i && (
@@ -156,7 +156,7 @@ export default function GroupGrouperMenu({
       <div
         style={{
           width: '100%',
-          padding: '0px 4px'
+          padding: '0px 0.25rem'
         }}
       >
         <Button.IconButton

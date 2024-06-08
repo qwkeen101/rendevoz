@@ -26,7 +26,7 @@ const LabelToolbarRenderer = () => {
   let layout: string[] = []
 
   if (currentLabel && pdfState.currentFocusedLabel?.position) {
-    layout = layout.concat('edit', 'rightBar', 'separator', 'colorPicker')
+    layout = layout.concat('edit', 'info', 'rightBar', 'separator', 'colorPicker')
     if (currentLabel.type === 'highlight') {
       layout.push('copy')
       layout = layout.concat('searcher', 'translator')
@@ -120,6 +120,14 @@ const LabelToolbarRenderer = () => {
                     selectedText: currentLabel?.selectedText
                   }
                 })
+              }
+            }}
+            onInfo={() => {
+              if (currentLabel) {
+                const labelMeta = MetaStore.getMetaObjectByObjectId(currentLabel?.id)
+                if (labelMeta) {
+                  GlobalInstance.metaOps?.openDetails(labelMeta.id)
+                }
               }
             }}
             onOpenInSidebar={() => {

@@ -4,15 +4,17 @@ import { DefaultEditorSettings } from '@/api/lifycycle/initializeApp/initializeS
 import { useTranslation } from 'react-i18next'
 import { ClassName } from 'rendevoz'
 import { ButtonChooser, Icon, Switch } from '@/components'
-import { allBuiltInTypefaces } from '@/core/components/editor/components/setting/TypefaceSetting'
 import { useEffect, useRef } from 'react'
 import { useUpdate } from 'react-use'
 import { ISettingItem } from '@/core/setting/SettingItem'
 import SettingGroup from '@/core/setting/SettingGroup'
-import { editorPageWidth, fontSizes, lineSpacings } from '@/core/components/editor/components/setting/PageSetting'
 import { GlobalSetting } from '@/core'
 import produce from 'immer'
-
+import _ from 'lodash'
+const allBuiltInTypefaces = ['Merriweather', 'Inter', 'Roboto', 'Source Serif', 'Open Sans', 'Muli', 'Lato']
+const fontSizes = _.range(12, 31, 1).map(i => `${i.toString()}px`)
+const lineSpacings = _.range(1.2, 2.5, 0.1).map(i => i.toFixed(1))
+const editorPageWidth = ['X-Small', 'Small', 'Medium', 'Large', 'X-Large']
 const EditorSetting = () => {
   const { t } = useTranslation()
   const editorSetting = KeyvalueStore.useValue('editorSettings') || DefaultEditorSettings

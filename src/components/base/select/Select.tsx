@@ -39,7 +39,7 @@ const Select: ISelect = ({
   disabled,
   closeOnSelect = true,
   onSelect,
-  padding = 10,
+  padding = 6,
   placeholder,
   style,
   menuStyle,
@@ -133,7 +133,7 @@ const Select: ISelect = ({
         boundaryElement={parentElement || document.body}
         boundaryInset={20}
         content={
-          <WithBorder padding={'0.25rem 0'} style={{ fontSize: 13 }}>
+          <WithBorder padding={'0.4rem 0'} className={'font-size-13'}>
             <SelectMenu
               style={menuStyle}
               menuItems={menuItems}

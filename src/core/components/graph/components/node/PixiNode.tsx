@@ -12,10 +12,9 @@ import { GlobalInstance, useMemoizedFn, usePrevious } from '@/hooks'
 import PixiIconNode, { fontStyle } from '@/core/components/graph/components/node/PixiIconNode'
 import { animate } from 'framer-motion'
 import { Rendevoz } from '@/core/rendevoz'
-import _ from 'lodash'
+import { truncate } from 'lodash'
 
 const getRadius = t => Rendevoz.Utils.Meta.getTypeRadius(t)
-const sliceLabel = (l: string) => l.slice(0, 40)
 const PixiNode: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextMenu, onClick }) => {
   const nodeRef = useRef<PContainer<DisplayObject>>(null)
   const graph = useGraph()
@@ -40,7 +39,9 @@ const PixiNode: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onCont
   const realNode = useMemo(() => {
     return {
       ...node,
-      label: sliceLabel(meta?.name || meta?.placeholderName || ''),
+      label: truncate(meta?.name || meta?.placeholderName || '', {
+        length: 32
+      }),
       coverImgSrc: meta?.coverImgSrc,
       icon: meta?.icon
     } as Partial<GraphNode>

@@ -31,6 +31,7 @@ const EditorElementsMenu = (props: { onAddElement: (blockName: string) => void }
     }
     return invisibleItems
   }, [levels])
+  const { t } = useTranslation()
   const menuItems = useMemo(() => {
     const basic: RegisteredEditorElement[] = [],
       inline: RegisteredEditorElement[] = [],
@@ -88,7 +89,7 @@ const EditorElementsMenu = (props: { onAddElement: (blockName: string) => void }
       menuItems = [
         {
           type: 'title',
-          name: 'Basic'
+          name: t('editor.Basic')
         },
         ...basicItems
       ]
@@ -98,7 +99,7 @@ const EditorElementsMenu = (props: { onAddElement: (blockName: string) => void }
         ...menuItems,
         {
           type: 'title',
-          name: 'Block'
+          name: t('editor.Block')
         },
         ...blockItems
       ]
@@ -108,7 +109,7 @@ const EditorElementsMenu = (props: { onAddElement: (blockName: string) => void }
         ...menuItems,
         {
           type: 'title',
-          name: 'Inline'
+          name: t('editor.Inline')
         },
         ...inlineItems
       ]
@@ -118,7 +119,7 @@ const EditorElementsMenu = (props: { onAddElement: (blockName: string) => void }
         ...menuItems,
         {
           type: 'title',
-          name: 'Media'
+          name: t('editor.Media')
         },
         ...mediaItems
       ]
@@ -157,13 +158,12 @@ const EditorElementsMenu = (props: { onAddElement: (blockName: string) => void }
         />
       ) : (
         <div
+          className={'super-transparent-font'}
           style={{
-            padding: '4px 8px',
-            fontWeight: 600,
-            color: 'var(--font-transparent)'
+            padding: '3px 8px'
           }}
         >
-          No results
+          {t('editor.No result')}
         </div>
       )}
     </Content>

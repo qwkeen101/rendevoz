@@ -98,13 +98,12 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
           padding: `${paddingTop}px var(--page-padding-right) 8px var(--page-padding-left)`,
           position: 'sticky',
           left: 0,
-          fontWeight: 600,
           fontSize: 13
         }}
       >
         {renderPanel()}
         {showViews !== false && (
-          <Content flex>
+          <Content flex className={'normal-font'}>
             <Reorder.Group
               ref={reorderRef}
               values={innerViews}
@@ -258,7 +257,9 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
             content={
               <WithBorder>
                 <BetterFilter
-                  visibleFields={visibleProps.map(i => (i.type === 'custom' ? MetaStore.property.getPropDetails(i.id)?.name ?? '' : i.name))}
+                  visibleFields={visibleProps.map(i =>
+                    i.type === 'custom' ? MetaStore.property.getPropDetails(i.id)?.name ?? '' : i.name
+                  )}
                   extraFields={
                     allHeaders
                       ?.filter(i => i.type === 'custom')
@@ -337,7 +338,7 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
                 e.currentTarget.value = ''
               }
             }}
-            placeholder={'Search in group...'}
+            placeholder={t('group.Search in group')}
             onCompositionStart={() => (isCompo.current = true)}
             onCompositionEnd={e => {
               isCompo.current = false
@@ -353,7 +354,7 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
             className={ClassName.circleButton(5, 4)}
             placement={['bottom']}
             content={setV => (
-              <WithBorder width={240}>
+              <WithBorder width={260}>
                 <GroupSettingMenu onClose={() => setV(false)} />
               </WithBorder>
             )}
@@ -364,11 +365,7 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
               onClick={() => {
                 instance.reviewOps?.open()
               }}
-              className={ClassName.selectButton()}
-              style={{
-                marginLeft: 8,
-                padding: '2px 8px'
-              }}
+              className={'select-button py-2 px-10 height-26 ml-8'}
             />
           )}
           {showImport !== false && (
@@ -377,11 +374,7 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
               onClick={() => {
                 open()
               }}
-              className={ClassName.selectButton()}
-              style={{
-                marginLeft: 8,
-                padding: '2px 8px'
-              }}
+              className={'select-button py-2 px-10 height-26 ml-8'}
             ></Button.IconButton>
           )}
           {showCreate && (
@@ -390,11 +383,7 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
               onClick={() => {
                 GlobalInstance.metaOps?.createObject()
               }}
-              className={ClassName.selectButton()}
-              style={{
-                marginLeft: 8,
-                padding: '2px 8px'
-              }}
+              className={'select-button py-2 px-10 height-26 ml-8'}
             ></Button.IconButton>
           )}
         </Content>

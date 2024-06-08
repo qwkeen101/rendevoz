@@ -111,7 +111,7 @@ const WhiteboardPenToolsBar = () => {
   if (whiteboardState.currentTool === 'freehand' && penStyles[penType]) {
     return (
       <Content
-        className={'p-5 border-box-shadow bg-global br-6'}
+        className={'p-5 border-box-shadow bg-popover br-6'}
         style={{
           position: 'absolute',
           bottom: 20,

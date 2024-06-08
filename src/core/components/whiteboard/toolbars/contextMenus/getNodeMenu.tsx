@@ -15,9 +15,18 @@ import { getSetting } from '@/core'
 export default (
   instance: IWhiteboardInstance,
   t: TFunction<'translation', undefined, 'translation'>,
-  toolbarType?: 'contextMenu' | 'click'
-): IMenuLayoutItem[] => {
-  const selected = instance.selectOps?.getSelectedNodes()
+  toolbarType?: 'contextMenu' | 'click',
+  ids?: number | number[]
+): IMenuLayoutItem[] | null => {
+  const selected = ((ids ? (Array.isArray(ids) ? ids : [ids]) : undefined) || instance.selectOps?.getSelectedNodes().map(i => i.id))
+    ?.map(id => {
+      try {
+        return instance.getNode?.(id)
+      } catch (e) {
+        console.error(e)
+      }
+    })
+    .filter(i => i) as IWhiteboardNode[] | undefined
   // some nodes can't be folded or expanded
   const canExpandOrFold = selected?.length && selected.some(i => instance.nodeOps?.canExpand(i))
   const showExpandIcon = selected?.length && selected.some(i => instance.nodeOps?.canExpand(i) && !i.expanded)
@@ -28,7 +37,6 @@ export default (
   const ifContextMenuOnSingleGroup = selected.length === 1 && selected[0].type === 'group'
   const metaMap = MetaStore.getMetaObjectsMap()
   const menuItems = getVisibleNodeMenuItems(selected)
-  const setting = getSetting()
   const hasWebpageMetas = selected.some(i => i.type === 'metaObject' && i.expanded && metaMap.get(i.metaObjectId)?.type === 'webpage')
   const commonTools: (IMenuLayoutItem | undefined)[] = [
     ...(ifContextMenuOnSingleGroup
@@ -102,6 +110,7 @@ export default (
           text: t('whiteboard.Draw connection'),
           suffix: WhiteboardDefaultKeyboardShortcut.DrawLine.text,
           onSelect: () => {
+            instance.setFocused?.(true)
             instance.edgeOps?.startDrawEdge(selected[0].id)
             instance.toolbarOps?.closeToolbar()
           }
@@ -393,7 +402,7 @@ export default (
                     {
                       type: 'item',
                       key: 'open-in-side-peek',
-                      text: t('general.Open in side peek'),
+                      text: t('whiteboard.Open in side peek'),
                       suffix: WhiteboardDefaultKeyboardShortcut.OpenInSidebar.text,
                       onSelect: () => {
                         instance.nodeOps?.open(selected[0].id, 'sidePeek')
@@ -403,7 +412,7 @@ export default (
                     {
                       type: 'item',
                       key: 'open-in-center',
-                      text: t('general.Open in center'),
+                      text: t('whiteboard.Open in center'),
                       suffix: WhiteboardDefaultKeyboardShortcut.OpenInCenter.text,
                       onSelect: () => {
                         instance.nodeOps?.open(selected[0].id, 'center')
@@ -413,7 +422,7 @@ export default (
                     {
                       type: 'item',
                       key: 'open-in-float',
-                      text: t('general.Open in float'),
+                      text: t('whiteboard.Open in floating panel'),
                       suffix: WhiteboardDefaultKeyboardShortcut.OpenInFloat.text,
                       onSelect: () => {
                         instance.nodeOps?.open(selected[0].id, 'float')
@@ -425,7 +434,7 @@ export default (
               {
                 type: 'item',
                 key: 'open-in-new-tab',
-                text: t('general.Open in new tab'),
+                text: t('whiteboard.Open in new tab'),
                 suffix: WhiteboardDefaultKeyboardShortcut.OpenInNewTabs.text,
                 onSelect: () => {
                   instance.nodeOps?.open(selected[0].id, 'newTab')

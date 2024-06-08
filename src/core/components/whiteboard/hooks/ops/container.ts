@@ -88,7 +88,7 @@ const assignContainerOps = (instance: IWhiteboardInstance) => {
 
           if (currentTransform) {
             if (ratio && currentTransform) {
-              const s = opts?.changeScale === false ? currentTransform.scale : Math.min(ratio, opts?.maxScale || 1.2)
+              const s = opts?.changeScale === false ? currentTransform.scale : Math.min(ratio, opts?.maxScale || 0.8)
               const pos = {
                 x: -boxCenterHori * s + (bounding.width / s / 2) * s,
                 y: -boxTop * s + (bounding.height / s / 2) * s

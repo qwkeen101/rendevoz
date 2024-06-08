@@ -19,7 +19,7 @@ const IconButton = forwardRef(
     {
       icon,
       text,
-      gap = 6,
+      gap = 10,
       onClick,
       dangerous,
       className,

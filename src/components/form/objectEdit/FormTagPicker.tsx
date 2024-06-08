@@ -16,7 +16,7 @@ const FormTagPicker = ({
   tags?: number[]
 }) => {
   return (
-    <div style={{ width: 460, minHeight: 400, ...style }}>
+    <div style={{ width: 460, ...style }}>
       <Content
         flex
         justifyContent={'space-between'}

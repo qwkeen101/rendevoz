@@ -11,10 +11,8 @@ import _ from 'lodash'
 import resizeMultipleNodes from '@/core/components/whiteboard/utils/resizeMultipleNodes'
 import useUpdateWhiteboard from '@/core/components/whiteboard/hooks/useUpdateWhiteboard'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
-import { css } from '@emotion/css'
 import { AnimatePopover, Icon, WithBorder } from '@/components'
 import { ClassName } from 'rendevoz'
-import { Rendevoz } from '@/core/rendevoz'
 
 const WhiteboardSelect = memo(({ containerRef }: { containerRef: MutableRefObject<HTMLElement | null> }) => {
   const [multiSelectedBox, setMultiSelectedBox] = useState<Box>()

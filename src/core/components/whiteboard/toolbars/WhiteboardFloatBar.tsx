@@ -31,6 +31,7 @@ export default memo(() => {
         setToolbarState(s => ({ ...s, visible: true, edgeId, originX: pos.x, originY: pos.y, type: 'edge' }))
       },
       closeToolbar: () => {
+        instance.emit?.({ type: 'closeToolbar' })
         setToolbarState(s => ({ ...s, visible: false }))
       },
       openContextMenuToolbar: pos => {

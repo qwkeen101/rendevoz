@@ -24,9 +24,9 @@ const SidebarPinned = memo(() => {
         alignItems="center"
         justifyContent="space-between"
         className={'font-size-13 transparent-font'}
-        style={{ padding: '12px 12px 6px 12px' }}
+        style={{ padding: '12px 12px 2px 12px' }}
       >
-        <div style={{ cursor: 'pointer', userSelect: 'none' }} onClick={toggleCollapsed}>
+        <div style={{ cursor: 'pointer' }} className={'menu-sub-title'} onClick={toggleCollapsed}>
           {t('sidebar.pinned')}
         </div>
         {totalPinned > 0 ? totalPinned : undefined}

@@ -7,7 +7,6 @@ import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { RegisteredSidebarItem } from '~/typings/registered'
 import { Rendevoz } from '@/core/rendevoz'
 import { t } from 'i18next'
-import { GlobalScreenshotInstance } from '@/core/global/screenshot'
 import SidebarSetting from '@/components/layout/sidebar/SidebarSetting'
 import { GlobalInstance } from '@/hooks'
 import useSidebarState from '@/components/layout/sidebar/useSidebarState'
@@ -57,7 +56,7 @@ export const BuiltInSidebarItems: Record<string, RegisteredSidebarItem> = {
     key: 'screenshot',
     icon: 'park-screenshot-one',
     onClick: () => {
-      GlobalScreenshotInstance.open?.()
+      GlobalInstance.commonOps?.screenshot?.()
     },
     text: () => t('general.screenshot')
   },

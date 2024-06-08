@@ -6,7 +6,6 @@ const defaultSidebarItems = ['home', 'database', 'search', 'recycleBin', 'graph'
 export default async () => {
   const defaultKeyvalues: Partial<CurrentKeyValues> = {
     searchHistory: [],
-    homeDisplayMode: 'table',
     editorSettings: DefaultEditorSettings,
     webpageShowOriginal: false,
     rightBarItems: [],
@@ -17,7 +16,6 @@ export default async () => {
     feedReadIds: [],
     feedReadLaterIds: [],
     feedRecentlyReadIds: [],
-    homeGalleryRows: 1,
     baiduAccessToken: localStorage.getItem('bda') ?? undefined
   }
   const kvDb = useDb('keypairs')

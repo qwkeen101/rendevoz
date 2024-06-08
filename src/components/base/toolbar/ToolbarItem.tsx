@@ -39,7 +39,7 @@ const ToolbarItem: FC<ToolbarItemProps> = forwardRef(
       isActive = false,
       tooltip,
       disabled,
-      strokeWidth = 4,
+      strokeWidth,
       radius
     },
     ref

@@ -172,7 +172,7 @@ const WorkspaceSetting = () => {
                 />
               </Content>
             ) : (
-              <div>{i.name}</div>
+              <div className={!i.name ? 'super-transparent-font' : undefined}>{i.name || t('general.Unnamed')}</div>
             )}
             <IconWithPopover
               placement={['bottom', 'top']}

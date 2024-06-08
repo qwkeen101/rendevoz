@@ -95,7 +95,7 @@ const LabelActionMenu = ({ on, objectId, type, onClose }: Props) => {
     }
   }, [])
   return (
-    <WithBorder padding={'0.4rem 0'} width={180}>
+    <WithBorder padding={'0.4rem 0'} width={210}>
       <Menu.NavigationMenu
         layout={[
           meta

@@ -3,6 +3,7 @@ import ClassName from '@/styles/classNames'
 import { CSSProperties, MouseEventHandler, useEffect } from 'react'
 import { Content, Icon } from '@/components'
 import Colors from '@/consts/colors'
+import { Rendevoz } from '@/core/rendevoz'
 
 const Tag = ({
   tag,
@@ -12,7 +13,8 @@ const Tag = ({
   onClick,
   cursor,
   style,
-  square
+  square,
+  clickOpenGroup = false
 }: {
   tag: number
   hideDelete?: boolean
@@ -20,6 +22,7 @@ const Tag = ({
   small?: boolean
   square?: boolean
   cursor?: string
+  clickOpenGroup?: boolean
   onClick?: MouseEventHandler
   parentElement?: HTMLElement
   style?: CSSProperties
@@ -36,7 +39,12 @@ const Tag = ({
       flex
       alignItems="center"
       gap={6}
-      onClick={onClick}
+      onClick={e => {
+        onClick?.(e)
+        if (clickOpenGroup) {
+          Rendevoz.Actions.Open.Group.openTagGroup(tag)
+        }
+      }}
       style={{
         background: Colors.getAdaptColor(tagObject.color) || Colors.Background.ButtonHover,
         borderRadius: square ? 3 : 999,
@@ -47,7 +55,7 @@ const Tag = ({
         color: Colors.getAdaptFontColor(tagObject.color),
         justifyContent: 'space-between',
         fontSize: 14,
-        cursor,
+        cursor: clickOpenGroup ? 'pointer' : cursor,
         whiteSpace: 'nowrap',
         ...style
       }}

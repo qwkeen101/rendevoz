@@ -43,12 +43,12 @@ const FormImagePicker = ({ imageUrl, onChange, name }: { imageUrl?: string; onCh
         <Content gap={10} flex style={{ textTransform: 'capitalize' }}>
           {imageUrl ? (
             <>
-              <Icon name="park-delete-one" />
+              <Icon size={16} name="park-delete-one" />
               <span>{`${t('general.delete')} ${t('general.image')}`}</span>
             </>
           ) : (
             <>
-              <Icon name="park-add-pic" />
+              <Icon size={16} name="park-add-pic" />
               <div>{t('general.upload image')}</div>
             </>
           )}

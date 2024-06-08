@@ -31,6 +31,58 @@ const TextNode = ({ node, onClick }: InnerNodeProps & { onClick: VoidFunction })
     instance.deleteNode?.(node.id!)
     return null
   }
+  if (node.resized) {
+    // extra div wrapper, prevent lose padding
+    return (
+      <div
+        style={{
+          height: '100%',
+          background: 'transparent',
+          width: node.type === 'mindmap' || node.rootId ? undefined : '200px',
+          minWidth: '100%',
+          maxWidth: '100%',
+          minHeight: '100%',
+          maxHeight: '100%',
+          padding: '3px 8px',
+          pointerEvents: 'auto'
+        }}
+      >
+        <SimpleEditor
+          disableScrollIntoView
+          textareaMode={true}
+          placeholder={node.type === 'mindmap' || node.rootId ? '' : undefined}
+          virtualizer={node.resized}
+          onInstanceInitialized={ins => {
+            i.current = ins
+            const funcs = instance.nodeOps?.getNodeFuncs?.(node.id!)
+            if (funcs) {
+              funcs.focusText = () => {
+                const e = ins.getSlateEditor?.()
+                console.log('focusing')
+                e && ReactEditor.focus(e)
+              }
+            }
+          }}
+          value={textNode.content}
+          onClick={onClick}
+          containerStyle={{
+            height: '100%',
+            position: 'relative',
+            background: 'transparent',
+            minWidth: '100%',
+            maxWidth: '100%',
+            minHeight: '100%',
+            maxHeight: '100%',
+            pointerEvents: 'auto'
+          }}
+          fontSize={node.type === 'mindmap' ? 30 : textNode.fontSize ? fontSizeToNumber[textNode.fontSize] : undefined}
+          onChange={v => {
+            handleChangeValue(v)
+          }}
+        />
+      </div>
+    )
+  }
   return (
     <SimpleEditor
       disableScrollIntoView

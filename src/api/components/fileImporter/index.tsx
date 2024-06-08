@@ -304,7 +304,7 @@ const FileImporter = ({
             />
           )}
         </div>
-        <Content flex alignItems={'center'} justifyContent={'space-between'} style={{ fontSize: 15, fontWeight: 500, flex: 1 }}>
+        <Content flex alignItems={'center'} justifyContent={'space-between'} style={{ fontWeight: 500, flex: 1 }}>
           <div>{details.name}</div>
           {typeToKey[details.type] ? (
             <div
@@ -321,8 +321,8 @@ const FileImporter = ({
     )
   }
   return (
-    <Content flex column style={{ maxWidth: '90vw', maxHeight: 'min(800px, 80vh)', padding: 24, overflowY: 'auto' }}>
-      <div style={{ paddingLeft: 8, marginBottom: 18 }} className={ClassName.title('20px')}>
+    <Content flex column className={'none-select'} style={{ maxWidth: '90vw', maxHeight: 'min(800px, 80vh)', padding: 24, overflowY: 'auto' }}>
+      <div style={{ paddingLeft: 8, marginBottom: 18 }} className={'bold-font font-size-16'}>
         {t('general.Create new object')}
       </div>
       <Menu.NavigationMenu

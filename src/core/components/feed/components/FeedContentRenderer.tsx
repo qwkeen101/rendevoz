@@ -191,7 +191,7 @@ const FeedContentRenderer = () => {
           background: Colors.Background.Global
         }}
       >
-        <div className={ClassName.title()}>No article selected</div>
+        <div className={'normal-font super-transparent-font'}>No article selected</div>
       </Content>
     )
   }

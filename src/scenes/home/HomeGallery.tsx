@@ -1,4 +1,3 @@
-import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { MetaStore } from '@/api/stores'
 import { useEffect, useState } from 'react'
 import { Content, Icon } from '@/components'
@@ -8,31 +7,17 @@ import { Colors } from '@/consts'
 import { ClassName } from 'rendevoz'
 import { useTranslation } from 'react-i18next'
 import { isEqual } from 'lodash'
+import useHomeConfig from '@/scenes/home/useHomeConfig'
 
 const HomeGallery = () => {
   const objectIndex = MetaStore.useIndexedMetaObjects()
-  const gallerySettings = KeyvalueStore.useValue('homeGallery') || {
-    visibleLists: [
-      {
-        name: 'pinned',
-        visible: true
-      },
-      {
-        name: 'recentlyViewed',
-        visible: true
-      },
-      {
-        name: 'recentlyCreated',
-        visible: true
-      }
-    ]
-  }
+  const config = useHomeConfig().gallery
   useEffect(() => {
     if (objectIndex) {
-      const visibleTypes = new Set(MetaStore.getVisibleMetaTypes(false))
+      const visibleTypes = new Set(MetaStore.getVisibleMetaTypes(false, false))
       if (visibleTypes) {
         const allTypes = visibleTypes
-        let newVisibleList = gallerySettings.visibleLists.filter(i => {
+        let newVisibleList = config.items.filter(i => {
           if (['recentlyViewed', 'recentlyCreated', 'pinned'].includes(i.name)) return true
           if (!allTypes.has(i.name)) {
             return false
@@ -43,12 +28,8 @@ const HomeGallery = () => {
           }
         })
         newVisibleList = newVisibleList.concat(Array.from(allTypes.values()).map(i => ({ visible: true, name: i })))
-        const currList = KeyvalueStore.getOne('homeGallery')
-        if (!isEqual(currList?.visibleLists, newVisibleList)) {
-          KeyvalueStore.updateOne('homeGallery', {
-            ...gallerySettings,
-            visibleLists: newVisibleList
-          })
+        if (!isEqual(config.items, newVisibleList)) {
+          useHomeConfig.update(c => ({ ...c, gallery: { ...c.gallery, items: newVisibleList } }))
         }
       }
     }
@@ -59,7 +40,7 @@ const HomeGallery = () => {
   const count = Math.floor((width - 16) / 240)
   return (
     <Content ref={ref} fullWidth column flex gap={30} style={{ paddingBottom: 100 }}>
-      {gallerySettings.visibleLists.map(i => i.visible && <GalleryPanel key={i.name} count={count} panelName={i.name} />)}
+      {config.items.map(i => i.visible && <GalleryPanel key={i.name} count={count} panelName={i.name} />)}
     </Content>
   )
 }
@@ -69,7 +50,7 @@ const GalleryPanel = ({ panelName, count }: { panelName: string; count: number }
   const allObjects = MetaStore.useMetaObjectsMap()
   const index = MetaStore.useIndexedMetaObjects()
   const { t } = useTranslation()
-  const rows = KeyvalueStore.useValue('homeGalleryRows') || 1
+  const rows = useHomeConfig().gallery.rowsPerItem
   const [pag, setPag] = useState<{
     start: number
   }>({
@@ -108,7 +89,9 @@ const GalleryPanel = ({ panelName, count }: { panelName: string; count: number }
   return (
     <Content style={{ width: '100%', padding: '0 8px' }}>
       <Content className={'transparent-font'} flex justifyContent={'space-between'}>
-        <div style={{ fontSize: 13, margin: '10px 0px', fontWeight: 500 }}>{t(`general.${panelName}`)}</div>
+        <div className={'menu-sub-title'} style={{ margin: '10px 0px' }}>
+          {t(`general.${panelName}`)}
+        </div>
         {pagable && (
           <Content flex gap={10}>
             <Icon

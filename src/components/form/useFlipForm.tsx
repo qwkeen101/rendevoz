@@ -448,19 +448,6 @@ const useFlipForm = (options: useFlipFormOptions) => {
               position: 'relative'
             }}
           >
-            <div
-              className={'FormDrag'}
-              style={{
-                position: 'absolute',
-                top: 16,
-                left: 16,
-                right: 20,
-                zIndex: 20,
-                height: 24,
-                width: 'calc(100% - 60px)',
-                cursor: 'grab'
-              }}
-            ></div>
             {mainVisible && renderMain()}
             {iconPickerVisible && renderIconPicker()}
             {tagPickerVisible && renderTagPicker()}

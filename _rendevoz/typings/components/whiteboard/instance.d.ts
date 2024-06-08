@@ -132,6 +132,9 @@ export type IWhiteboardEvents =
       resized: IWhiteboardNode[]
     }
   | {
+      type: 'closeToolbar'
+    }
+  | {
       type: 'nodeDragStart'
       draggingNode: IWhiteboardNode
     }
@@ -212,6 +215,7 @@ export type IWhiteboardInstance = Partial<{
     y: number
     scale: number
   }
+  setFocused: (f: boolean) => void
   isFocused: () => boolean
   edgeOps: {
     endAction: VoidFunction

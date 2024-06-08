@@ -1,10 +1,8 @@
 import { Icon, TabPane, Tabs } from '@/components'
-import ClassName from '@/styles/classNames'
 import { memo } from 'react'
 import { Resizable } from 're-resizable'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
 import { assignProperties } from '@/utils'
-import { Rendevoz } from '@/core/rendevoz'
 import { DockTabPaneContext } from '@/components/base/dock/DockTabPane'
 import { atom, useAtom } from 'jotai'
 import { IWhiteboardRightbarState } from '~/typings'
@@ -77,7 +75,7 @@ const WhiteboardRightbar = () => {
         left: visible
       }}
       defaultSize={{
-        width: '600px',
+        width: '520px',
         height: '100%'
       }}
       onResizeStop={(event, direction, elementRef, delta) => {
@@ -85,11 +83,10 @@ const WhiteboardRightbar = () => {
         setRightBarState(s => ({ ...s, width: `${width}px` }))
       }}
       maxWidth={'80%'}
-      minWidth={480}
+      minWidth={300}
       style={{
         boxShadow: 'var(--box-shadow)',
         position: 'absolute',
-        transition: 'opacity 0.26s ease',
         opacity: visible ? 1 : 0,
         right: 0,
         top: 0,

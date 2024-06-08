@@ -62,6 +62,12 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly, sta
     getEdge: edgeId => getLatestWhiteboard()?.edges?.get(edgeId),
     getAllEdge: () => Array.from(getLatestWhiteboard()?.edges?.values() || []),
     isFocused: () => flow.focused,
+    setFocused: f => {
+      flow.focused = f
+      if(f){
+        instance.getOutestContainerNode?.()?.focus()
+      }
+    },
     buildNodeToEdgeIndex: () => {
       const nodeToEdgesMap = instance.values.NODE_TO_EDGE_MAP
       nodeToEdgesMap.clear()
@@ -93,6 +99,9 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly, sta
       () => !!instance.nodeOps,
       () => {
         onInstanceInitialized?.(instance)
+      },
+      {
+        timeout: 9999999
       }
     )
   }, [])
@@ -263,7 +272,7 @@ export const Whiteboard = memo(
           ObjectStore('whiteboard').updateOne({
             id: whiteboardId,
             lineType: setting.whiteboard.defaultLineType || 'curve',
-            backgroundType: setting.whiteboard.defaultBackgroundType || 'dot'
+            backgroundType: setting.whiteboard.defaultBackgroundType || 'none'
           })
         }, 10)
       }

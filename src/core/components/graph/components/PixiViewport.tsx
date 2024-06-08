@@ -36,7 +36,6 @@ const ViewportComponent = PixiComponent('Viewport', {
     props.graph.pixiViewport = viewport
     let labelHidden = false
     let previousZoom = viewport.scale.x
-
     viewport.on('frame-end', () => {
       if (viewport.dirty) {
         const currentZoom = viewport.scale.x

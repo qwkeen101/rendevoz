@@ -40,11 +40,7 @@ const GroupTitleRenderer = memo(
         >
           <Content flex column style={{ padding: '24px', minWidth: 420 }}>
             <div style={{ fontWeight: 600, fontSize: 16 }}>{t('general.Group automation')}</div>
-            <div style={{ fontSize: 13, color: Colors.Font.Transparent }}>
-              {t('general.Set rules to automatically add objects into this group')}.
-              <div>Tip: Too many automations or rules may slow down application.</div>
-            </div>
-            <div style={{ fontSize: 13, color: Colors.Font.Transparent }}>Rules</div>
+            <div className={'transparent-font font-size-13'}>{t('general.Set rules to automatically add objects into this group')}</div>
             <InnerFilterer filterGroup={groupValue?.rootFilterGroup} />
           </Content>
         </Modal>
@@ -52,13 +48,10 @@ const GroupTitleRenderer = memo(
           <Content
             flex
             gap={12}
+            className={'transparent-font font-size-13'}
             style={{
-              color: Colors.Font.Transparent,
-              lineHeight: 1.2,
               opacity: isIn ? 1 : 0,
               transition: 'opacity 0.2s ease',
-              fontSize: 14,
-              fontWeight: 500,
               marginBottom: 6
             }}
           >

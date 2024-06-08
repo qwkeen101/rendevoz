@@ -342,7 +342,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
             }}
           >
             {mediaState.floated ? renderFloated() : renderCore()}
-            {showDetails && <div style={{ fontWeight: 500, fontSize: 16, width: '100%', lineHeight: 1.4 }}>{mediaState.name}</div>}
+            {showDetails && <div style={{ fontWeight: 500, fontSize: 16, width: '100%', marginTop: 2 }}>{mediaState.name}</div>}
             {!audioMode && <MediaToolbar showDetails={showDetails} />}
             {subtitleUnderMain && (
               <Resizable

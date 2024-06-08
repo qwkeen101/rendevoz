@@ -52,18 +52,18 @@ const GoogleNewsSearch = () => {
   const { t } = useTranslation()
   return (
     <Content flex column style={{ padding: '0px 12px' }} fullHeight>
-      <Content flex justifyContent={'space-between'} style={{ margin: '16px 0px 12px' }}>
-        <div className={ClassName.title()}>{t('feed.Search news')}</div>
+      <Content flex justifyContent={'space-between'} alignItems={'center'} style={{ margin: '16px 0px 12px' }}>
+        <div className={'normal-font font-size-16'}>{t('feed.Search news')}</div>
         {searchInput && searchResults.items?.length ? (
           <div
             onClick={() => {
               addItems(searchResults.items, {
-                name: `${searchInput} - Google News`,
+                name: `${searchInput}`,
                 feedUrl: searchResults.url,
-                icon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Google_News_icon.svg/2503px-Google_News_icon.svg.png'
+                icon: '/google-news.png'
               })
             }}
-            className={ClassName.selectButton()}
+            className={'select-button'}
           >
             {t('feed.Follow this search')}
           </div>
@@ -116,7 +116,7 @@ const GoogleNewsSearch = () => {
       </Content>
       <Content flex column gap={4} style={{ overflowY: 'auto', paddingBottom: 100 }} auto>
         {searchResults?.items?.map(i => (
-          <div key={i.link} className={'button'} onClick={() => window.open(i.link)}>
+          <div key={i.link} className={'button br-6'} onClick={() => window.open(i.link)}>
             <div className={ClassName.title()}>{i.title}</div>
             <div className={ClassName.description('13px')} style={{ textTransform: 'uppercase' }}>
               {i.link.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0]}

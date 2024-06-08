@@ -122,59 +122,26 @@ const GraphInner: FC<GraphContainerProps> = ({ edges, nodes, type, store }) => {
       </div>
 
       <div style={{ width: '100%', height: '100%', position: 'relative' }} ref={outerContainerRef}>
-        {type === 'svg' ? (
-          <div
-            className={css({
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%'
-            })}
-            id="viewport"
-            ref={containerRef}
-          >
-            {type === 'svg' && (
-              <svg
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  pointerEvents: 'none',
-                  width: '100%',
-                  height: '100%',
-                  overflow: 'visible'
-                }}
-              >
-                <path id="addLinkLine"></path>
-              </svg>
-            )}
-
-            <EdgeContainer type={type} />
-            <NodeContainer type={type} />
-          </div>
-        ) : (
-          <Stage
-            onClick={() => console.log(graph)}
-            ref={stageRef}
-            width={1000}
-            height={800}
-            options={{
-              backgroundAlpha: 0,
-              antialias: true,
-              resolution: window.devicePixelRatio,
-              autoStart: false
-            }}
-          >
-            <Provider store={store}>
-              <PixiViewport width={1000} height={1000}>
-                <EdgeContainer type={type} />
-                <NodeContainer type={type} />
-                <PixiRenderer />
-              </PixiViewport>
-            </Provider>
-          </Stage>
-        )}
-
+        <Stage
+          onClick={() => console.log(graph)}
+          ref={stageRef}
+          width={1000}
+          height={800}
+          options={{
+            backgroundAlpha: 0,
+            antialias: true,
+            resolution: window.devicePixelRatio,
+            autoStart: false
+          }}
+        >
+          <Provider store={store}>
+            <PixiViewport width={1000} height={1000}>
+              <EdgeContainer type={type} />
+              <NodeContainer type={type} />
+              <PixiRenderer />
+            </PixiViewport>
+          </Provider>
+        </Stage>
         {renderPortal()}
       </div>
     </>

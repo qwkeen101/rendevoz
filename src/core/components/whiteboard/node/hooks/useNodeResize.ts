@@ -1,5 +1,5 @@
 import { Box, IWhiteboardInstance, IWhiteboardNode, XYPosition } from '~/typings'
-import { ResizableDelta, Rnd, RndResizeCallback } from 'react-rnd'
+import { ResizableDelta, Rnd } from 'react-rnd'
 import { ResizeDirection } from 're-resizable'
 import { useRef } from 'react'
 import { calculateSelectionBox } from '@/utils'

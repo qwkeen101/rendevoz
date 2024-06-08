@@ -24,14 +24,11 @@ const MenuItem: FC<MenuItemWithProps> = ({ type, ...rest }) => {
     case 'title':
       return (
         <div
+          className={'menu-sub-title'}
           style={{
-            fontSize: 12,
-            fontWeight: 500,
             paddingLeft: '0.75rem',
             lineHeight: 1.2,
-            userSelect: 'none',
             margin: '5px 0px 4px',
-            color: Colors.Font.Transparent,
             ...rest.style
           }}
         >

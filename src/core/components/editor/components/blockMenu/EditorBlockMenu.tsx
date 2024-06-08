@@ -87,7 +87,7 @@ const EditorBlockMenu = ({ editor, manager }: { editor: CustomEditor; manager: E
     handleMutateProps({ type: t })
   })
   return (
-    <WithBorder ref={containerRef} style={{ padding: '0.25rem 0', minWidth: 180, userSelect: 'none' }}>
+    <WithBorder ref={containerRef} style={{ padding: '0.4rem 0', minWidth: 200, userSelect: 'none' }}>
       <Menu.NavigationMenu
         layout={
           [

@@ -15,6 +15,7 @@ export default async (url: string, feedType: FeedItem['feedType']) => {
         return true
       }
     })
+    console.log(initialRes)
     if (url.includes('youtube.com')) {
       feedType = 'youtube'
     }

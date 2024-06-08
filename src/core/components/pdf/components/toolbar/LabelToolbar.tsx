@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { Colors } from '@/consts'
 
-type Layout = 'move-to' | 'colorPicker' | 'separator' | 'translator' | 'searcher' | 'delete' | 'copy' | 'rightBar' | 'edit'
+type Layout = 'move-to' | 'info' | 'colorPicker' | 'separator' | 'translator' | 'searcher' | 'delete' | 'copy' | 'rightBar' | 'edit'
 type LabelToolbarProps = {
   color?: string
   selectedText?: string
@@ -21,6 +21,7 @@ type LabelToolbarProps = {
   layout?: Layout[]
   onMove?: VoidFunction
   onEdit?: VoidFunction
+  onInfo?: VoidFunction
   onClose?: VoidFunction
 }
 const LabelToolbar: FC<LabelToolbarProps> = ({
@@ -32,6 +33,7 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
   onOpenInSidebar,
   selectedText,
   onSearch,
+  onInfo,
   color,
   onClose,
   layout = ['colorPicker', 'iconPicker', 'contentInput', 'separator', 'addToEditorButton', 'movableToggle', 'direction', 'delete']
@@ -113,6 +115,15 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
       />
     </Toolbar.Item>
   )
+  const InfoItem = (
+    <Toolbar.Item
+      iconName="park-info"
+      onClick={() => {
+        onInfo?.()
+        onClose?.()
+      }}
+    ></Toolbar.Item>
+  )
   const EditItem = (
     <Toolbar.Item
       onClick={onEdit}
@@ -149,6 +160,8 @@ const LabelToolbar: FC<LabelToolbarProps> = ({
           return SearcherItem
         case 'delete':
           return DeleteItem
+        case 'info':
+          return InfoItem
         case 'copy':
           return CopyItem
         case 'rightBar':

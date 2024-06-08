@@ -9,7 +9,7 @@ interface ContextMenuProps {
   position?: Placement[]
   content: React.ReactNode | ((setV: (v: boolean) => void) => React.ReactNode)
   children: React.ReactNode
-  onContextMenu?: (elementX: number, elementY: number, relativeX: number, relativeY: number) => void
+  onContextMenu?: (e: MouseEvent) => void
   onClose?: Noop
   boundaryInset?: number
   enableContextMenu?: boolean
@@ -18,7 +18,7 @@ export interface ContextMenuRef {
   closeContextMenu: () => void
 }
 const ContextMenu = forwardRef<HTMLElement, ContextMenuProps>(
-  ({ position = ['right', 'left'], children, content, enableContextMenu = true, boundaryInset }, ref) => {
+  ({ position = ['right', 'left'], children, content, enableContextMenu = true, boundaryInset, onContextMenu }, ref) => {
     const memoizedPosition = useRef<number[]>([0, 0])
     const childRef = useRef<HTMLElement | undefined>()
     const [contextMenuOpen, setContextMenuOpen] = useState(false)
@@ -37,6 +37,7 @@ const ContextMenu = forwardRef<HTMLElement, ContextMenuProps>(
       if (!enableContextMenu) {
         return
       }
+      onContextMenu?.(e)
       e.preventDefault()
       e.stopPropagation()
       memoizedPosition.current = mousePos.current

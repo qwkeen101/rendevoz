@@ -39,17 +39,12 @@ export default (instance: IWhiteboardInstance, t: TFunction<'translation', undef
         id
       })
       opts?.fit !== false &&
-        instance.containerOps?.fitTo(
-          {
-            left: toolbarState.originX,
-            top: toolbarState.originY,
-            width: 520,
-            height: 300
-          },
-          {
-            maxScale: 1
-          }
-        )
+        instance.containerOps?.fitTo({
+          left: toolbarState.originX,
+          top: toolbarState.originY,
+          width: 520,
+          height: 300
+        })
       opts?.select !== false &&
         setTimeout(() => {
           const nodeFuncs = instance.nodeOps?.getNodeFuncs(id)

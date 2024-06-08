@@ -170,6 +170,7 @@ export interface IWhiteboard extends IBase {
 export type IWhiteboardOutline = {
   nodeId: number
   name: string
+  icon?: string
   children?: IWhiteboardOutline[]
 }
 

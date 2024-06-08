@@ -1,6 +1,5 @@
 import { useWhiteboardNodes } from '@/core/components/whiteboard/StateHooks'
 import { useEffect, useState } from 'react'
-import { Colors } from '@/consts'
 import { useTranslation } from 'react-i18next'
 
 const WhiteboardEmptyIndicator = () => {
@@ -25,15 +24,13 @@ const WhiteboardEmptyIndicator = () => {
         transform: 'translateX(-50%) translateY(-50%)',
         pointerEvents: 'none',
         opacity: showIndicator ? 1 : 0,
-        color: Colors.Font.Transparent,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         transition: 'opacity 0.3s ease',
-        fontWeight: 500,
-        fontSize: 18,
         gap: 10
       }}
+      className={'transparent-font normal-font'}
     >
       <div>{t('general.whiteboard indicator 1')}</div>
     </div>

@@ -44,13 +44,7 @@ export default memo(
       >
         <AutosizeTextarea
           ref={inputRef}
-          placeholder={
-            isInline
-              ? 'x^n + y^n = z^n'
-              : '\\begin{align*}\n' +
-                '  f(x) &= x^2\\\\\n' +
-                '\\end{align*}'
-          }
+          placeholder={isInline ? 'x^n + y^n = z^n' : '\\begin{align*}\n' + '  f(x) &= x^2\\\\\n' + '\\end{align*}'}
           onKeyDown={e => {
             if (isHotkey(KEY.Enter, e)) {
               e.preventDefault()
@@ -81,8 +75,8 @@ export default memo(
               onComplete(v)
             }
           }}
-          className={ClassName.selectButton()}
-          style={{ fontSize: 14, height: 28, fontWeight: 500, alignSelf: 'flex-start', flexShrink: 0 }}
+          className={'select-button'}
+          style={{ fontSize: 14, height: 28, alignSelf: 'flex-start', flexShrink: 0 }}
           flex
           gap={8}
           alignItems={'center'}

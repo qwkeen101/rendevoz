@@ -76,7 +76,7 @@ export default memo(({ onInstanceInitialized }: { onInstanceInitialized?: (i: IG
             showDeletedMetas: true,
             showDescription: false,
             showTitleActions: false,
-            showIcon: false,
+            showIcon: true,
             showAddNew: false,
             showImport: false,
             contextMenu: () => ['deleteCompleted', 'recover', 'separator']

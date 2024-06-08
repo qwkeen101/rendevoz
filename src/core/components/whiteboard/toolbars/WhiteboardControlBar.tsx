@@ -49,14 +49,14 @@ const WhiteboardControlBar = memo(() => {
         zIndex: 10,
         position: 'absolute',
         alignItems: 'center',
-        right: 24,
+        right: 20,
         bottom: 20
       }}
     >
       {!whiteboardState.readOnly && (
         <>
           {(showUndo || transformHistory.redos.length > 0) && (
-            <Content flex alignItems={'center'} gap={7} className={'br-6 p-5 border-box-shadow bg-global'}>
+            <Content flex alignItems={'center'} gap={7} className={'br-6 p-5 border-box-shadow bg-popover'}>
               {showUndo && (
                 <Tooltip content={<TooltipWithCmd cmd={'Shift+E'} name={t('whiteboard.Undo view change')} />}>
                   <Icon
@@ -81,7 +81,7 @@ const WhiteboardControlBar = memo(() => {
               )}
             </Content>
           )}
-          <Content flex alignItems={'center'} gap={7} className={'br-6 p-5 border-box-shadow bg-global'}>
+          <Content flex alignItems={'center'} gap={7} className={'br-6 p-5 border-box-shadow bg-popover'}>
             <Tooltip content={<TooltipWithCmd cmd={'Cmd+Z'} name={t('general.Undo')} />}>
               <Icon
                 className={'button p-6 br-6'}
@@ -107,7 +107,7 @@ const WhiteboardControlBar = memo(() => {
           </Content>
         </>
       )}
-      <Content flex alignItems={'center'} gap={7} className={'br-6 p-5 border-box-shadow bg-global'}>
+      <Content flex alignItems={'center'} gap={7} className={'br-6 p-5 border-box-shadow bg-popover'}>
         <Icon
           onClick={() => {
             setWhiteboardState(s => ({

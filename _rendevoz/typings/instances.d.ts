@@ -53,6 +53,7 @@ export type IGlobalInstance = Partial<{
     addExtraSvgArrows?: (color: string) => void
     previewMedia?: (path: string) => void
     previewImage?: (url: string) => void
+    screenshot?: VoidFunction
     importFiles?: (
       files: File[] | File,
       opts?: {

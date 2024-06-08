@@ -6,7 +6,6 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDebounceEffect } from '@/hooks'
 import Parser from 'rss-parser'
-import toast from 'react-hot-toast'
 const parser = new Parser()
 export default () => {
   const [newFeedUrl, setNewFeedUrl] = useState('')
@@ -78,7 +77,6 @@ export default () => {
         onChange={e => setNewFeedUrl(e.target.value)}
         value={newFeedUrl}
         placeholder={t('feed.Type RSS feed URL')}
-        className={ClassName.noStyleInput}
         style={{
           width: '100%',
           borderBottom: `1px solid ${Colors.Background.Border}`,
@@ -118,10 +116,9 @@ export default () => {
             }
           }}
           style={{
-            width: 'fit-content',
-            padding: '4px 12px'
+            width: 'fit-content'
           }}
-          className={ClassName.selectButton()}
+          className={'select-button px-12'}
         >
           {isImporting ? t('general.Loading') + '...' : t('feed.Follow')}
         </div>

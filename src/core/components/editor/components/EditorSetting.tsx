@@ -1,29 +1,19 @@
-import { AnimatePopover, Button, Content, Icon, Slider, Switch, WithBorder } from '@/components'
+import { Button, Content } from '@/components'
 import { slateToMarkdown } from '@/core/components/editor/plugins/slateToMarkdown'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import { useTranslation } from 'react-i18next'
 import { CustomEditor } from '~/typings'
 import useEditorState from '@/core/components/editor/hooks/useEditorState'
-import TypefaceSetting from '@/core/components/editor/components/setting/TypefaceSetting'
-import { useEffect, useRef } from 'react'
-import { useUpdate } from 'react-use'
-import PageSetting from '@/core/components/editor/components/setting/PageSetting'
 import translateWholePage from '@/core/components/editor/utils/translateWholePage'
-import ClassName from '@/styles/classNames'
 import { DateFormat } from '@/utils'
 
 const EditorSetting = ({ editor }: { editor: CustomEditor }) => {
   const { t } = useTranslation()
   const instance = useEditorInstance()
-  const [editorState, setEditorState] = useEditorState()
-  const parentRef = useRef(null)
-  const update = useUpdate()
+  const editorState = useEditorState()[0]
   const { lastSavedAt } = editorState.state || {}
-  useEffect(() => {
-    update()
-  }, [])
   return (
-    <Content ref={parentRef}>
+    <>
       <Content style={{ padding: 4 }} className={lastSavedAt ? 'border-bottom' : undefined}>
         {editorState?.header?.display?.translate !== false && (
           <Button.IconButton
@@ -59,17 +49,12 @@ const EditorSetting = ({ editor }: { editor: CustomEditor }) => {
         />
       </Content>
       {lastSavedAt ? (
-        <Content
-          className={'font-size-12 transparent-font'}
-          style={{
-            padding: '4px 10px'
-          }}
-        >
+        <Content className={'font-size-12 super-transparent-font py-4 px-10'}>
           <div>{t('general.Last saved at')}</div>
           <div>{DateFormat.format(lastSavedAt, DateFormat.Formats.withSecond)}</div>
         </Content>
       ) : null}
-    </Content>
+    </>
   )
 }
 

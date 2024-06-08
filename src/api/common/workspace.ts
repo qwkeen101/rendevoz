@@ -35,13 +35,13 @@ export default {
     }
   },
   switchWorkspace: async (targetWorkspaceId: number) => {
-    const targetWorkspace = (await KeyvalueStore.getOne('allWorkspaces'))?.find(i => i.id === targetWorkspaceId)
+    const targetWorkspace = KeyvalueStore.getOne('allWorkspaces')?.find(i => i.id === targetWorkspaceId)
     if (targetWorkspace) {
       Rendevoz.Actions.Layout.closeAllTabs(true)
-      await KeyvalueStore.updateOne('currentWorkspace', targetWorkspace)
+      KeyvalueStore.updateOne('currentWorkspace', targetWorkspace)
       await MetaStore.switchWorkspace()
       await ObjectStore('tag').getAll()
-      await CollectionStore.switchWorkspace()
+      CollectionStore.switchWorkspace()
     }
   }
 }

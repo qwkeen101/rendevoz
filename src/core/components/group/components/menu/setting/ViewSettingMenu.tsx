@@ -20,7 +20,7 @@ export default () => {
         style={{
           display: 'grid',
           gridTemplateColumns: '75px 75px 75px',
-          padding: '8px 10px'
+          padding: '0px 10px 8px'
         }}
       >
         {[
@@ -61,15 +61,12 @@ export default () => {
             }}
             column
             flex
-            className={'transparent-font'}
+            className={'transparent-font br-6 p-6'}
             key={i.icon}
             style={{
               width: 75,
-              borderRadius: 6,
               justifyContent: 'center',
               cursor: 'pointer',
-              padding: 6,
-              fontSize: 14,
               textAlign: 'center',
               gap: 3,
               color: i.selected ? Colors.Common.SelectColor : undefined,
@@ -77,11 +74,11 @@ export default () => {
             }}
           >
             <Icon size={20} name={i.icon} />
-            <div>{i.name}</div>
+            <div className={'font-size-12'}>{i.name}</div>
           </Content>
         ))}
       </Content>
-      <div style={{ padding: '4px' }}>
+      <div style={{ padding: '0.25rem 0.25rem 0.4rem' }}>
         {showCardSetting && (
           <>
             <ButtonSwitch

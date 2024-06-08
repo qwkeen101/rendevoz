@@ -204,7 +204,7 @@ export default memo(() => {
                   <Content flex column gap={6}>
                     {renderInfo()}
                     {renderRemote()}
-                    <Content flex gap={8}>
+                    <Content flex gap={12}>
                       <Button.IconButton
                         gap={2}
                         icon={'park-arrow-up'}

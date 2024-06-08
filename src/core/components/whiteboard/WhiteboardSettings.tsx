@@ -48,34 +48,15 @@ const WhiteboardSettings = memo(() => {
         />
       </Modal>
       <AnimatePopover
-        padding={10}
+        padding={6}
         closeOnClickOutside={true}
         align="start"
         content={
-          <WithBorder
-            padding={6}
-            style={{
-              fontSize: '0.95rem'
-            }}
-          >
-            <Button.IconButton
-              icon="park-zoom-internal"
-              text={t('settings.keep ratio when resizing image')}
-              className={buttonClazz}
-              onClick={() => {
-                setSetting(s =>
-                  produce(s, draft => {
-                    draft.whiteboard.imageResizeKeepRatio = !draft.whiteboard.imageResizeKeepRatio
-                  })
-                )
-              }}
-              enabled={setting.whiteboard.imageResizeKeepRatio}
-            />
+          <WithBorder className={'font-size-13'} padding={6} width={220}>
             <Button.IconButton
               icon="park-horizontally-centered"
               text={t('settings.snap to objects')}
-              className={buttonClazz}
-              enabled={setting.whiteboard.snapToObject}
+              className={setting.whiteboard.snapToObject ? 'bg-hover' : ''}
               onClick={() => {
                 setSetting(s =>
                   produce(s, draft => {
@@ -84,50 +65,44 @@ const WhiteboardSettings = memo(() => {
                 )
               }}
             />
-            <div className={ClassName.description()} style={{ marginTop: 10 }}>
-              {t('general.Default line type')}
+            <div className={'menu-sub-title'} style={{ margin: '4px 6px' }}>
+              {t('whiteboard.Line type')}
             </div>
             <Button.IconButton
-              enabled={whiteboardLineType === 'straight'}
-              className={buttonClazz}
+              className={whiteboardLineType === 'straight' ? 'bg-hover' : ''}
               icon="custom-straight"
               onClick={() => setLineType('straight')}
-              text={t('general.Straight line')}
+              text={t('whiteboard.Straight line')}
             />
             <Button.IconButton
-              enabled={whiteboardLineType === 'curve'}
-              className={buttonClazz}
+              className={whiteboardLineType === 'curve' ? 'bg-hover' : ''}
               icon="custom-curve"
               onClick={() => setLineType('curve')}
-              text={t('general.Curve line')}
+              text={t('whiteboard.Curve line')}
             />
             <Button.IconButton
-              enabled={whiteboardLineType === 'polyline'}
-              className={buttonClazz}
+              className={whiteboardLineType === 'polyline' ? 'bg-hover' : ''}
               icon="park-connection"
               onClick={() => setLineType('polyline')}
-              text={t('general.Step line')}
+              text={t('whiteboard.Step line')}
             />
-            <div className={ClassName.description()} style={{ marginTop: 10 }}>
+            <div className={'menu-sub-title'} style={{ margin: '4px 6px' }}>
               {t('general.Background type')}
             </div>
             <Button.IconButton
-              enabled={whiteboardBackgroundType === 'none'}
-              className={buttonClazz}
+              className={whiteboardBackgroundType === 'none' ? 'bg-hover' : ''}
               icon="park-close"
               onClick={() => setBackgroundType('none')}
               text={t('general.None')}
             />
             <Button.IconButton
-              enabled={whiteboardBackgroundType === 'dot'}
-              className={buttonClazz}
+              className={whiteboardBackgroundType === 'dot' ? 'bg-hover' : ''}
               icon="custom-dots"
               onClick={() => setBackgroundType('dot')}
               text={t('general.Dots')}
             />
             <Button.IconButton
-              enabled={whiteboardBackgroundType === 'line'}
-              className={buttonClazz}
+              className={whiteboardBackgroundType === 'line' ? 'bg-hover' : ''}
               icon="park-grid-two"
               onClick={() => setBackgroundType('line')}
               text={t('general.Line')}
@@ -136,16 +111,14 @@ const WhiteboardSettings = memo(() => {
         }
         positions={['left']}
       >
-        <Tooltip content={'Settings'} align={'end'}>
-          <Icon
-            className={ClassName.flatButton(4, '4px')}
-            size={18}
-            name="park-more"
-            containerStyle={{
-              pointerEvents: 'auto'
-            }}
-          />
-        </Tooltip>
+        <Icon
+          className={'button p-4'}
+          size={18}
+          name="park-more"
+          containerStyle={{
+            pointerEvents: 'auto'
+          }}
+        />
       </AnimatePopover>
     </>
   )

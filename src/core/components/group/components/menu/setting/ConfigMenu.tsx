@@ -40,7 +40,7 @@ export default memo(() => {
     'tweet'
   ]
   return (
-    <Content style={{ padding: 6 }}>
+    <Content style={{ padding: '0 0.25rem 0.4rem' }}>
       {!groupStateState?.onlyCreateType && groupLayout?.showAddNew !== false && (
         <ButtonSelect
           name={t('general.Default new object type')}
@@ -109,16 +109,6 @@ export default memo(() => {
             value={!!groupState.data?.hideGroupsInside}
           ></ButtonSwitch>
         )}
-      <ButtonSwitch
-        onChange={v => {
-          instance.updateGroupData?.(s => ({
-            ...s,
-            enableReview: v
-          }))
-        }}
-        name={t('general.Enable flashcards')}
-        value={!!groupState.data?.enableReview}
-      ></ButtonSwitch>
     </Content>
   )
 })

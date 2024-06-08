@@ -139,10 +139,11 @@ const SidebarCollection = ({
           alignItems="center"
           justifyContent="space-between"
           className={dropVisible ? ClassName.Drag.droppableItemHovered(true) : undefined}
-          style={{ transition: 'all 0.3s ease', color: Colors.Font.Transparent, fontSize: 13, padding: '2px 6px 6px 12px' }}
+          style={{ transition: 'all 0.3s ease', color: Colors.Font.Transparent, fontSize: 13, padding: '2px 6px 2px 12px' }}
         >
           <div
-            style={{ cursor: 'pointer', userSelect: 'none' }}
+            className={'menu-sub-title'}
+            style={{ cursor: 'pointer' }}
             onClick={() => {
               if (showHeader !== false) {
                 toggleCollapsed()
@@ -158,7 +159,7 @@ const SidebarCollection = ({
               onClick={() => {
                 setNewCollectionVisible(true)
               }}
-              className={ClassName.flatButton(4, '3px')}
+              className={'button p-3'}
             />
           </Tooltip>
         </Content>
@@ -189,9 +190,7 @@ const SidebarCollection = ({
     </>
   )
 }
-const linearToSvg = (linear: string) => {
-  return linear.match(/rgba\([^()]*\)|#\w+/g)
-}
+
 export const IconNameItem = memo(
   forwardRef(
     (
@@ -214,8 +213,6 @@ export const IconNameItem = memo(
     ) => {
       const isPark = icon?.startsWith('park') || icon?.startsWith('custom')
       const emoji = useMemo(() => !isPark && icon && getEmoji(icon), [icon])
-      const linearFontColor = color?.startsWith('linear')
-      const linearColors = color && linearFontColor && linearToSvg(color)
 
       return (
         <Content flex alignItems="center" gap="0.5em" style={{ ...style }} className={className} onClick={onClick} ref={ref}>
@@ -238,7 +235,7 @@ export const IconNameItem = memo(
             <>
               {icon &&
                 (isPark ? (
-                  <Icon fill={linearColors ? linearColors[(linearColors.length / 2) | 0] : color} name={icon} />
+                  <Icon fill={color} name={icon} />
                 ) : (
                   <img
                     style={{
@@ -258,16 +255,9 @@ export const IconNameItem = memo(
           )}
           <div
             style={{
-              color: color,
-              backgroundImage: linearFontColor ? color : undefined
+              color
             }}
-            className={css([
-              ClassName.ellipsisFont(1),
-              linearFontColor && {
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent'
-              }
-            ])}
+            className={'ellipsis-font-1'}
           >
             {name}
           </div>

@@ -18,6 +18,20 @@ export type SidebarDatabaseCache = {
   searchVisible?: boolean
   selectedMeta?: number[]
 }
+export type IHomeConfig = {
+  mode: 'list' | 'gallery'
+  list: {
+    sortMode: 'viewDesc' | 'viewAsc' | 'createDesc' | 'createAsc'
+    visibleType: 'all' | 'pinned' | string
+  }
+  gallery: {
+    items: {
+      name: 'recentlyViewed' | 'recentlyCreated' | 'pinned' | string
+      visible: boolean
+    }[]
+    rowsPerItem: number
+  }
+}
 export type CurrentKeyValues = {
   currentWorkspace: {
     id: number
@@ -87,15 +101,6 @@ export type CurrentKeyValues = {
       }[]
     }
   >
-  homeDisplayMode: 'gallery' | 'table'
-  homeGallery: {
-    visibleLists: {
-      name: string
-      visible: boolean
-      type?: 'collection' | 'objects' | 'sorter'
-      collectionId?: number
-    }[]
-  }
   userSetting: Setting
   recentlyUsedIcons: string[]
   webpageShowOriginal: boolean
@@ -112,7 +117,6 @@ export type CurrentKeyValues = {
   mediaRightbarWidth: number
   feedReadIds: number[]
   googleNewsSearchLang: string
-  homeGalleryRows?: number
   editorSettings: {
     editMode: {
       typeface: string
@@ -133,7 +137,8 @@ export type CurrentKeyValues = {
   Record<`collection_${number}_group`, MetaGroup> &
   Record<`prop_${number}_group`, MetaGroup> &
   Record<`all_${number}_group`, MetaGroup> &
-  Record<`sidebarDatabaseCache_${number}`, SidebarDatabaseCache>
+  Record<`sidebarDatabaseCache_${number}`, SidebarDatabaseCache> &
+  Record<`home_config_${number}`, IHomeConfig | undefined>
 
 const keyvalueAtom = atom<Map<string, any>>(new Map())
 // todo: use atom family?

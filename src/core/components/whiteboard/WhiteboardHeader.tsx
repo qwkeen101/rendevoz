@@ -38,13 +38,13 @@ export default memo(() => {
     <Content
       flex
       alignItems={'center'}
-      className={'border-box-shadow br-6 p-5 bg-global'}
+      className={'border-box-shadow br-6 p-5 bg-popover'}
       gap={4}
       style={{
         zIndex: 10,
         position: 'absolute',
         top: 20,
-        right: 24,
+        right: 20,
         width: 'fit-content'
       }}
     >
@@ -77,8 +77,8 @@ export default memo(() => {
           <div
             style={{
               width: 1,
-              margin: '0px 4px',
-              height: '24px',
+              margin: '0px 2px',
+              height: '20px',
               background: Colors.Background.Border
             }}
           />
@@ -93,10 +93,22 @@ export default memo(() => {
           instance.searchOps?.toggleSearchPanel(true)
         }}
       />
+      {layout?.showContents !== false && (
+        <Tooltip content={'Contents'}>
+          <Icon
+            name={'park-view-list'}
+            className={'br-6 button p-5'}
+            onClick={() => {
+              setRightBarState(s => ({ ...s, visible: s.active === 'outline' ? !s.visible : true, active: 'outline' }))
+            }}
+            size={16}
+          />
+        </Tooltip>
+      )}
       {rightBarState.currentTab && (
         <Tooltip content={'Side peek'}>
           <Icon
-            name={'park-share-one'}
+            name={'custom-right-bar'}
             className={'br-6 button p-5'}
             onClick={() => {
               setRightBarState(s => ({ ...s, visible: s.active === 'content' ? !s.visible : true, active: 'content' }))
@@ -174,7 +186,7 @@ export default memo(() => {
                 }
               }}
               style={{ justifyContent: 'center', margin: '4px 6px 4px' }}
-              className={ClassName.selectButton()}
+              className={'select-button normal-font'}
             />
           </WithBorder>
         }
@@ -183,18 +195,6 @@ export default memo(() => {
         name={'park-download-four'}
         className={'br-6 button p-5'}
       />
-      {layout?.showContents !== false && (
-        <Tooltip content={'Contents'}>
-          <Icon
-            name={'park-view-list'}
-            className={'br-6 button p-5'}
-            onClick={() => {
-              setRightBarState(s => ({ ...s, visible: s.active === 'outline' ? !s.visible : true, active: 'outline' }))
-            }}
-            size={16}
-          />
-        </Tooltip>
-      )}
       {layout?.showSetting !== false && <WhiteboardSettings />}
     </Content>
   )

@@ -9,36 +9,34 @@ import { MetaObject } from '~/typings'
 import Select from '@/components/base/select'
 import DateFormat from '@/utils/dateFormat'
 import { css } from '@emotion/css'
-import { motion } from 'framer-motion'
 import { ObjectActionMenu } from '@/core'
-import { atom, useAtomValue } from 'jotai'
-import fuzzysort from 'fuzzysort'
 import { Rendevoz } from '@/core/rendevoz'
 import HomeGallery from '@/scenes/home/HomeGallery'
-import KeyvalueStore from '@/api/stores/keyvalue.store'
+import KeyvalueStore, { IHomeConfig } from '@/api/stores/keyvalue.store'
 import GalleryConfig from '@/scenes/home/GalleryConfig'
 import { MetaStore } from '@/api/stores'
 import Workspace from '@/api/common/workspace'
 import ContextMenu from '@/components/contextMenu'
 import classnames from 'classnames'
 import { Resizable } from 're-resizable'
+import useHomeConfig from '@/scenes/home/useHomeConfig'
+import { Colors } from '@/consts'
 
-const HomeSearchAtom = atom<string | undefined>(undefined)
-const RowClass = css([
-  {
-    userSelect: 'none',
+const RowClass = classnames([
+  css({
     clipPath: 'xywh(0 0 100% 100% round 6px)',
     td: {
       padding: '6px 8px'
     }
-  },
-  ClassName.flatButton()
+  }),
+  'button none-select'
 ])
 export const HomePage: FC = () => {
   const { t } = useTranslation()
   const currentWorkspace = KeyvalueStore.useValue('currentWorkspace')
-  const homeMode = KeyvalueStore.useValue('homeDisplayMode') || 'gallery'
+  const homeMode = useHomeConfig().mode
   const allWorkspaces = KeyvalueStore.useValue('allWorkspaces') || []
+  const switchMode = (m: IHomeConfig['mode']) => useHomeConfig.update(c => ({ ...c, mode: m }))
   return (
     <Content fullHeight fullWidth style={{ overflowY: 'auto' }}>
       <Content
@@ -55,7 +53,7 @@ export const HomePage: FC = () => {
         <TabTitle title={t('general.home')} icon="park-home" />
         <Content flex alignItems="center" gap={10} justifyContent="space-between" style={{ margin: '16px 0px' }}>
           <div>
-            <div className={'transparent-font font-size-13 normal-font pl-8'}>{t('settings.workspace')}</div>
+            <div className={'menu-sub-title pl-8'}>{t('settings.workspace')}</div>
             <AnimatePopover
               align={'start'}
               content={setV => (
@@ -64,19 +62,19 @@ export const HomePage: FC = () => {
                     layout={[
                       {
                         type: 'title',
-                        name: 'All workspaces'
+                        name: t('general.All workspaces')
                       },
                       // @ts-ignore
                       ...allWorkspaces.map(i => ({
                         type: 'item',
                         key: String(i.id),
-                        text: i.name || 'Unnamed workspace',
+                        style: {
+                          color: !i.name ? Colors.Font.SuperTransparent : undefined
+                        },
+                        text: i.name || t('general.Unnamed'),
                         onSelect: async () => {
                           setV(false)
-                          await KeyvalueStore.updateOne('currentWorkspace', i)
-                          setTimeout(() => {
-                            Workspace.switchWorkspace(i.id)
-                          })
+                          Workspace.switchWorkspace(i.id)
                         }
                       }))
                     ]}
@@ -87,11 +85,12 @@ export const HomePage: FC = () => {
             >
               <div
                 style={{
-                  fontSize: 22
+                  fontSize: 22,
+                  color: !currentWorkspace?.name ? Colors.Font.SuperTransparent : undefined
                 }}
                 className={'button ellipsis-font-1 py-0 px-8 bold-font'}
               >
-                {currentWorkspace?.name === 'default' ? 'Default workspace' : currentWorkspace?.name || 'Unnamed workspace'}
+                {currentWorkspace?.name === 'default' ? t('general.Default workspace') : currentWorkspace?.name || t('general.Unnamed')}
               </div>
             </AnimatePopover>
           </div>
@@ -100,15 +99,15 @@ export const HomePage: FC = () => {
               name={'park-all-application'}
               className={classnames('button p-5 icon-18', homeMode === 'gallery' && 'active-button')}
               onClick={() => {
-                KeyvalueStore.updateOne('homeDisplayMode', 'gallery')
+                switchMode('gallery')
               }}
             />
             <Icon
               name={'custom-list'}
               onClick={() => {
-                KeyvalueStore.updateOne('homeDisplayMode', 'table')
+                switchMode('list')
               }}
-              className={classnames('button p-5 icon-18', homeMode === 'table' && 'active-button')}
+              className={classnames('button p-5 icon-18', homeMode === 'list' && 'active-button')}
             />
             {homeMode === 'gallery' && (
               <AnimatePopover
@@ -126,7 +125,7 @@ export const HomePage: FC = () => {
             <Button.IconButton
               text={t('general.New')}
               icon={'park-plus'}
-              gap={0}
+              gap={4}
               onClick={() =>
                 GlobalInstance.metaOps?.createObject().then(res => {
                   if (res) {
@@ -144,28 +143,13 @@ export const HomePage: FC = () => {
           </Content>
         </Content>
         {homeMode === 'gallery' && <HomeGallery />}
-        {homeMode === 'table' && <Recent />}
+        {homeMode === 'list' && <ListView />}
       </Content>
     </Content>
   )
 }
 
-const VisibleTypes: MetaObject['type'][] = [
-  'note',
-  'video',
-  'pdf',
-  'whiteboard',
-  'webpage',
-  'localFile',
-  'image',
-  'audio',
-  'group',
-  'code',
-  'tweet',
-  'question'
-]
-
-const Recent = () => {
+const ListView = () => {
   const [colWidth, setColWidth] = useState({
     nameWidth: '100%',
     viewWidth: '140px',
@@ -173,14 +157,16 @@ const Recent = () => {
   })
   const all = useGlobalAtomValue(undeletedMetaObjectsAtom) as MetaObject[]
   const { t } = useTranslation()
-  const [type, setType] = useState<MetaObject['type'] | 'all'>('all')
+  const type = useHomeConfig().list.visibleType
   const [showResizer, toggleShowResizer] = useToggle(false)
-  const search = useAtomValue(HomeSearchAtom)
   const getIcon = Rendevoz.Utils.Object.getMetaObjectIcon
   const allVisibleTypes = useMemo(() => {
-    return MetaStore.getVisibleMetaTypes().filter(i => VisibleTypes.includes(i))
+    return MetaStore.getVisibleMetaTypes(false, false)
   }, [all.length])
-  const [sortMode, setSortMode] = useState<'viewDesc' | 'viewAsc' | 'createDesc' | 'createAsc'>('viewDesc')
+  const sortMode = useHomeConfig().list.sortMode
+  const setSortMode = (m: IHomeConfig['list']['sortMode']) => {
+    useHomeConfig.update(c => ({ ...c, list: { ...c.list, sortMode: m } }))
+  }
   const filteredItems = () => {
     switch (type) {
       case 'all':
@@ -215,12 +201,8 @@ const Recent = () => {
         )
         break
     }
-    if (search?.length && allItems) {
-      const result = fuzzysort.go(search, allItems, { key: 'name' })
-      return result.map(i => i.obj)
-    }
     return allItems
-  }, [type, all, sortMode, search])
+  }, [type, all, sortMode])
 
   return (
     <>
@@ -238,7 +220,7 @@ const Recent = () => {
           <Select
             align={'start'}
             value={type}
-            onSelect={v => setType(v[0])}
+            onSelect={v => useHomeConfig.update(curr => ({ ...curr, list: { ...curr.list, visibleType: v[0] } }))}
             closeOnSelect
             style={{
               width: 160
@@ -323,6 +305,7 @@ const Recent = () => {
       </Content>
       {!items?.length ? (
         <div
+          className={'super-transparent-font'}
           style={{
             gap: 12,
             fontSize: 14,
@@ -336,7 +319,7 @@ const Recent = () => {
           }}
         >
           <Icon size={80} style={{ opacity: 0.3 }} name={'custom-empty'} />
-          <div className={'transparent-font'}>{t('general.Current list is empty')}</div>
+          <div>{t('general.Current list is empty')}</div>
         </div>
       ) : (
         <table
@@ -371,7 +354,7 @@ const Recent = () => {
                   }}
                   className={RowClass}
                 >
-                  <td className={'font-size-13 normal-font'}>
+                  <td className={'normal-font'}>
                     <Content style={{ minHeight: 30 }} flex gap={12} alignItems={'center'}>
                       {i.coverImgSrc ? (
                         <img src={i.coverImgSrc} width={36} height={36} style={{ objectFit: 'cover', borderRadius: 4 }} />

@@ -27,7 +27,7 @@ export const AI_SUMMARY_PROP_ID = 1001
 export const AI_QUESTION_PROP_ID = 1002
 export const REVIEW_STATE_PROP_ID = 1003
 
-export const deletedMetaObjectsAtom = atom<Set<number>>(new Set())
+export const deletedMetaObjectsAtom = atom<Set<number>>(new Set<number>())
 
 export const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
 
@@ -400,7 +400,9 @@ const createMetaStore = () => {
 
   const switchWorkspace = async () => {
     globalStore.set(metaObjectsAtom, new Map())
+    globalStore.set(indexedMetaObjectsAtom, undefined)
     await realStore.getAllMetaObjects()
+    triggerObjectIndex()
   }
   const addAIForMeta = async (
     metaId: number,
@@ -487,7 +489,7 @@ const createMetaStore = () => {
     return useGlobalAtomValue(deletedMetaObjectsAtom)
   }
 
-  const getVisibleMetaTypes = (showTemp = true): MetaObject['type'][] => {
+  const getVisibleMetaTypes = (showTemp = true, showLabel = true): MetaObject['type'][] => {
     const allMetas = Array.from(MetaStore.getMetaObjectsMap().values())
     const typeSet = new Set<MetaObject['type']>()
     allMetas.forEach(i => {
@@ -495,7 +497,8 @@ const createMetaStore = () => {
         MetaStore.isVisibleMetaObject(i, {
           showTemp,
           showHidden: false,
-          showDeleted: false
+          showDeleted: false,
+          hideLabel: !showLabel
         })
       ) {
         typeSet.add(i.type)

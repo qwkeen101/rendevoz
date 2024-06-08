@@ -54,7 +54,7 @@ export default () => {
           setInnerAll(v)
         }}
         style={{
-          padding: '0px 4px'
+          padding: '0px 0.25rem'
         }}
         ref={reorderRef}
         values={values}
@@ -99,12 +99,11 @@ export default () => {
         ))}
       </Reorder.Group>
       {availableProps?.length ? (
-        <div style={{ padding: '0px 4px' }}>
+        <div style={{ padding: '0px 0.25rem' }}>
           <div
+            className={'transparent-font font-size-12 normal-font'}
             style={{
-              fontSize: 13,
-              margin: '6px 6px 6px 0px',
-              color: Colors.Font.Transparent,
+              margin: '6px 6px 4px 0px',
               paddingLeft: 6
             }}
           >
@@ -115,6 +114,8 @@ export default () => {
             if (details) {
               return (
                 <Button.IconButton
+                  size={15}
+                  className={'font-size-13'}
                   icon={details.icon}
                   text={details.name}
                   key={i.id}
@@ -175,7 +176,7 @@ function Item({ value, onStop, onVisibleChange, isDragging, bound, onDragStart }
           typeof value === 'object' && controls.start(e)
         }}
         flex
-        gap={4}
+        gap={8}
         fullWidth
         style={{
           background: isDragging ? (isDragging === value.id ? Colors.Background.ButtonHover : 'transparent') : undefined
@@ -185,43 +186,48 @@ function Item({ value, onStop, onVisibleChange, isDragging, bound, onDragStart }
         {typeof value === 'object' && <Icon className={'super-transparent-font'} size={15} name={'park-drag'} />}
         {typeof value === 'string' ? (
           <div
+            className={'normal-font transparent-font font-size-12'}
             style={{
-              fontSize: 12,
-              margin: '6px 6px 6px 0px',
+              margin: '6px 6px 4px 0px',
               textTransform: 'capitalize',
-              color: Colors.Font.Transparent,
-              paddingLeft: 6,
-              fontWeight: 500
+              paddingLeft: 6
             }}
           >
             {t(`general.${value}`)}
           </div>
-        ) : value.type === 'custom' ? (
-          MetaStore.property.getPropDetails(value.id)?.name
         ) : (
-          t(value.display)
+          <div className={'font-size-13'}>
+            {value.type === 'custom' ? MetaStore.property.getPropDetails(value.id)?.name : t(value.display)}
+          </div>
         )}
-        {typeof value === 'object' && (
-          <Icon
-            className={ClassName.flatButton(4, '4px')}
-            name={!value.visible ? 'park-preview-close' : 'park-preview-open'}
-            containerStyle={{ marginLeft: 'auto' }}
-            onClick={e => {
-              e.stopPropagation()
-              onVisibleChange()
-            }}
-          />
-        )}
-        {typeof value === 'object' && value.type === 'custom' && (
-          <Icon
-            className={ClassName.flatButton(4, '4px')}
-            name={'park-delete-one'}
-            onClick={e => {
-              e.stopPropagation()
-              instance.viewOps?.deleteCustomProperty(value.id)
-            }}
-          />
-        )}
+        <Content
+          flex
+          gap={4}
+          style={{
+            marginLeft: 'auto'
+          }}
+        >
+          {typeof value === 'object' && (
+            <Icon
+              className={'p-4 hover-active-button'}
+              name={!value.visible ? 'park-preview-close' : 'park-preview-open'}
+              onClick={e => {
+                e.stopPropagation()
+                onVisibleChange()
+              }}
+            />
+          )}
+          {typeof value === 'object' && value.type === 'custom' && (
+            <Icon
+              className={'hover-active-button p-4'}
+              name={'park-delete-one'}
+              onClick={e => {
+                e.stopPropagation()
+                instance.viewOps?.deleteCustomProperty(value.id)
+              }}
+            />
+          )}
+        </Content>
       </Content>
     </Reorder.Item>
   )

@@ -79,11 +79,11 @@ const SidebarObjectItem: FC<ISidebarItem> = ({ parentId, parentType, id, draggab
         onClick={() => {
           Rendevoz.Actions.Open.Meta.openMetaObject(id)
         }}
-        className={ClassName.flatButton(4, '3px 8px')}
+        className={'button py-3 px-8'}
       >
         {contextMenuPortal}
         <IconNameItem
-          className={'font-size-12'}
+          className={'font-size-13'}
           icon={metaObject?.icon || icon}
           name={metaObject?.name || metaObject?.placeholderName}
           color={metaObject?.color}

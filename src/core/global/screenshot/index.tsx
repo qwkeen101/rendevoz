@@ -22,6 +22,8 @@ import Colors from '@/consts/colors'
 import { delay } from '@/utils/functions'
 import { GlobalInstances } from '~/typings'
 import { assignProperties } from '@/utils'
+import { Resizable } from 're-resizable'
+import { Rnd } from 'react-rnd'
 
 export const GlobalScreenShotOcrResult = atom<string | undefined | 'loading'>(undefined)
 export const GlobalScreenShotSelectionBoxState = atom<
@@ -36,28 +38,15 @@ export const GlobalScreenShotSelectionBoxState = atom<
     }>
   | undefined
 >(undefined)
-export const GlobalScreenshotInstance: GlobalInstances.ScreenshotInstance = {}
 
 const GlobalScreenShot = () => {
   const [ocrResult, setOcrResult] = useGlobalAtom(GlobalScreenShotOcrResult)
   const [screenShotLayerVisible, setScreenShotLayerVisible] = useState(false)
   const [selectionBoxState, setSelectionBoxState] = useGlobalAtom(GlobalScreenShotSelectionBoxState)
-  const [previewState, setPreviewState] = useState<
-    Partial<{
-      visible: boolean
-      src: string
-      rect: { left: number; top: number; width: number; height: number }
-    }>
-  >()
-  const [drawing, toggleDrawing] = useToggle(false)
-  const [erase, toggleErase] = useToggle(false)
-  const [freeCut, setFreeCut] = useState(true)
   const selectionBoxRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const panzoomRef = useRef<PanZoom>()
-  const isPressed = useRef(false)
-  const framerId = useRef(0)
   const pointerHandler = useMemoizedFn((e: PointerEvent) => {
     if (toolbarRef.current?.contains(e.target)) {
       selectionBoxState?.visible && setSelectionBoxState({ visible: false })
@@ -124,24 +113,6 @@ const GlobalScreenShot = () => {
       }
       e.preventDefault()
       e.stopPropagation()
-      if (!freeCut && !selectionBoxState?.startPosition) {
-        let target = e.target as HTMLElement
-        let rect = target.getBoundingClientRect()
-        while (rect.height < 200 && rect.width < 200 && target.parentElement) {
-          target = target.parentElement
-          rect = target.getBoundingClientRect()
-        }
-        setSelectionBoxState({
-          visible: true,
-          rect: {
-            left: rect.left,
-            top: rect.top,
-            width: rect.width + rect.left > window.innerWidth ? window.innerWidth - rect.left : rect.width,
-            height: rect.height + rect.top > window.innerHeight ? window.innerHeight - rect.top : rect.height
-          }
-        })
-        return
-      }
       if (startPos) {
         setSelectionBoxState(state => {
           const endPos = {
@@ -163,353 +134,16 @@ const GlobalScreenShot = () => {
     }
   })
 
-  assignProperties(GlobalScreenshotInstance, {
-    open: () => {
-      setScreenShotLayerVisible(true)
-    }
-  })
-  const selectionBoxLines: {
-    pos: string
-    style: CSSProperties
-    drag: 'x' | 'y'
-    onDrag: (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => void
-    onDragEnd?: VoidFunction
-  }[] = [
-    {
-      pos: 'right',
-      drag: 'x',
-      style: {
-        position: 'absolute',
-        cursor: 'ew-resize',
-        right: -3,
-        top: 0,
-        width: 5,
-        height: '100%'
-      },
-      onDrag: (e, info) => {
-        const dx = info.delta.x
-        if (selectionBoxState) {
-          setSelectionBoxState(
-            produce(selectionBoxState, draft => {
-              if (draft.rect) {
-                draft.rect.width += dx
-              }
-            })
-          )
-        }
+  assignProperties(GlobalInstance, {
+    commonOps: {
+      ...GlobalInstance.commonOps,
+      screenshot: () => {
+        setScreenShotLayerVisible(true)
       }
-    },
-    {
-      pos: 'left',
-      drag: 'x',
-      style: {
-        position: 'absolute',
-        cursor: 'ew-resize',
-        left: -3,
-        top: 0,
-        width: 5,
-        height: '100%'
-      },
-      onDrag: (e, info) => {
-        const dx = info.delta.x
-        if (selectionBoxRef.current && selectionBoxState) {
-          setSelectionBoxState(
-            produce(selectionBoxState, draft => {
-              if (draft.rect) {
-                draft.rect.width -= dx
-                draft.rect.left += dx
-              }
-            })
-          )
-        }
-      }
-    },
-    {
-      pos: 'top',
-      drag: 'y',
-      style: {
-        position: 'absolute',
-        cursor: 'ns-resize',
-        top: -3,
-        left: 0,
-        height: 5,
-        width: '100%'
-      },
-      onDrag: (e, info) => {
-        const dy = info.delta.y
-        if (selectionBoxState) {
-          setSelectionBoxState(
-            produce(selectionBoxState, draft => {
-              if (draft.rect) {
-                draft.rect.top += dy
-                draft.rect.height -= dy
-              }
-            })
-          )
-        }
-      }
-    },
-    {
-      pos: 'bottom',
-      drag: 'y',
-      style: {
-        position: 'absolute',
-        cursor: 'ns-resize',
-        bottom: -3,
-        left: 0,
-        height: 5,
-        width: '100%'
-      },
-      onDrag: (e, info) => {
-        const dy = info.delta.y
-        if (selectionBoxState && selectionBoxRef.current) {
-          setSelectionBoxState(
-            produce(selectionBoxState, draft => {
-              if (draft.rect) {
-                draft.rect.height += dy
-              }
-            })
-          )
-        }
-      }
-    }
-  ]
-
-  selectionBoxLines.forEach(i => {
-    i.style = {
-      ...i.style,
-      backgroundColor: '#39f',
-      opacity: 0.15
-    }
-    i.onDragEnd = () => {
-      setSelectionBoxState(
-        produce(selectionBoxState, draft => {
-          if (draft?.rect) {
-            if (draft.rect.width < 0) {
-              draft.rect.left += draft.rect.width
-              draft.rect.width = Math.abs(draft.rect.width)
-            }
-            if (draft.rect.height < 0) {
-              draft.rect.top += draft.rect.height
-              draft.rect.height = Math.abs(draft.rect.height)
-            }
-          }
-        })
-      )
-    }
-  })
-  const selectionBoxPoints: {
-    pos: 'tl' | 'tc' | 'tr' | 'l' | 'r' | 'bl' | 'bc' | 'br'
-    drag: 'x' | 'y' | 'all'
-    style?: CSSProperties
-    onDrag?: (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => void
-    onDragEnd?: VoidFunction
-  }[] = [
-    {
-      pos: 'tl',
-      style: {
-        cursor: 'nwse-resize',
-        left: -3,
-        top: -3
-      },
-      drag: 'all',
-      onDrag: (e, info) => {
-        const { x: dx, y: dy } = info.delta
-        if (selectionBoxState) {
-          setSelectionBoxState(
-            produce(selectionBoxState, draft => {
-              if (draft.rect) {
-                draft.rect.left += dx
-                draft.rect.top += dy
-                draft.rect.width -= dx
-                draft.rect.height -= dy
-              }
-            })
-          )
-        }
-      }
-    },
-    {
-      pos: 'tc',
-      style: {
-        cursor: 'ns-resize',
-        top: -3,
-        left: '50%',
-        marginLeft: -3
-      },
-      onDrag: selectionBoxLines[2].onDrag,
-      drag: 'y'
-    },
-    {
-      pos: 'tr',
-      style: {
-        cursor: 'nesw-resize',
-        right: -3,
-        top: -3
-      },
-      drag: 'all',
-      onDrag: (e, info) => {
-        const { x: dx, y: dy } = info.delta
-        if (selectionBoxState) {
-          setSelectionBoxState(
-            produce(selectionBoxState, draft => {
-              if (draft.rect) {
-                draft.rect.top += dy
-                draft.rect.width += dx
-                draft.rect.height -= dy
-              }
-            })
-          )
-        }
-      }
-    },
-    {
-      pos: 'l',
-      onDrag: selectionBoxLines[1].onDrag,
-      drag: 'x',
-      style: {
-        cursor: 'ew-resize',
-        left: -3,
-        top: '50%',
-        marginTop: -3
-      }
-    },
-    {
-      pos: 'r',
-      onDrag: selectionBoxLines[0].onDrag,
-      drag: 'x',
-      style: {
-        cursor: 'ew-resize',
-        marginTop: -3,
-        right: -3,
-        top: '50%'
-      }
-    },
-    {
-      pos: 'bl',
-      drag: 'all',
-      style: {
-        bottom: -3,
-        cursor: 'nesw-resize',
-        left: -3
-      },
-      onDrag: (e, info) => {
-        const { x: dx, y: dy } = info.delta
-        if (selectionBoxState) {
-          setSelectionBoxState(
-            produce(selectionBoxState, draft => {
-              if (draft.rect) {
-                draft.rect.left += dx
-                draft.rect.width -= dx
-                draft.rect.height += dy
-              }
-            })
-          )
-        }
-      }
-    },
-    {
-      pos: 'br',
-      drag: 'all',
-      style: {
-        cursor: 'nwse-resize',
-        bottom: -3,
-        right: -3
-      },
-      onDrag: (e, info) => {
-        const { x: dx, y: dy } = info.delta
-        if (selectionBoxState) {
-          setSelectionBoxState(
-            produce(selectionBoxState, draft => {
-              if (draft.rect) {
-                draft.rect.width += dx
-                draft.rect.height += dy
-              }
-            })
-          )
-        }
-      }
-    },
-    {
-      pos: 'bc',
-      onDrag: selectionBoxLines[3].onDrag,
-      drag: 'y',
-      style: {
-        cursor: 's-resize',
-        bottom: -3,
-        left: '50%',
-        marginLeft: -3
-      }
-    }
-  ]
-  selectionBoxPoints.forEach(i => {
-    if (i.style) {
-      i.style = {
-        ...i.style,
-        position: 'absolute',
-        background: '#39f',
-        width: 5,
-        height: 5,
-        opacity: 0.75
-      }
-    }
-    i.onDragEnd = () => {
-      setSelectionBoxState(
-        produce(selectionBoxState, draft => {
-          if (draft?.rect) {
-            if (draft.rect.width < 0) {
-              draft.rect.left += draft.rect.width
-              draft.rect.width = Math.abs(draft.rect.width)
-            }
-            if (draft.rect.height < 0) {
-              draft.rect.top += draft.rect.height
-              draft.rect.height = Math.abs(draft.rect.height)
-            }
-          }
-        })
-      )
     }
   })
   useEffect(() => {
-    if (selectionBoxState?.stable) {
-      const _pointerHandler = (e: PointerEvent) => {
-        if (e.type === 'pointerdown') {
-          if (e.target === e.currentTarget) {
-            isPressed.current = true
-          }
-        }
-        if (e.type === 'pointermove') {
-          if (isPressed.current) {
-            cancelAnimationFrame(framerId.current)
-            framerId.current = requestAnimationFrame(() => {
-              setSelectionBoxState(state =>
-                produce(state, draft => {
-                  if (draft?.rect) {
-                    const newLeft = draft.rect.left + e.movementX
-                    const newTop = draft.rect.top + e.movementY
-                    const newBottom = newTop + draft.rect.height
-                    const newRight = newLeft + draft.rect.width
-                    newLeft >= 0 && newRight <= window.innerWidth && (draft.rect.left += e.movementX)
-                    newTop >= 0 && newBottom <= window.innerHeight && (draft.rect.top += e.movementY)
-                  }
-                })
-              )
-            })
-          }
-        }
-        if (e.type === 'pointerup') {
-          isPressed.current = false
-        }
-      }
-      selectionBoxRef.current?.addEventListener('pointerdown', _pointerHandler)
-      document?.addEventListener('pointermove', _pointerHandler)
-      document?.addEventListener('pointerup', _pointerHandler)
-      return () => {
-        selectionBoxRef.current?.removeEventListener('pointerdown', _pointerHandler)
-        document?.removeEventListener('pointermove', _pointerHandler)
-        document?.removeEventListener('pointerup', _pointerHandler)
-      }
-    } else {
+    if (!selectionBoxState?.stable) {
       setOcrResult(undefined)
     }
   }, [selectionBoxState?.stable])
@@ -595,39 +229,6 @@ const GlobalScreenShot = () => {
   const startPos = selectionBoxState?.startPosition
   const endPos = selectionBoxState?.endPosition
   const rect = selectionBoxState?.rect
-  const renderTopRightToolbar = () => {
-    return (
-      <Content
-        flex
-        position="absolute"
-        ref={toolbarRef}
-        gap={10}
-        className={css({
-          width: 'fit-content',
-          position: 'absolute',
-          right: 16,
-          top: 16,
-          zIndex: 1000001,
-          pointerEvents: 'auto',
-          '> div': {
-            background: 'rgba(255,255,255,0.5)',
-            borderRadius: 9999,
-            cursor: 'pointer !important'
-          }
-        })}
-      >
-        <Tooltip style={{ zIndex: 1000001 }} content="Auto fit">
-          <Icon onClick={() => setFreeCut(false)} className={ClassName.circleButton()} name="park-auto-width" />
-        </Tooltip>
-        <Tooltip style={{ zIndex: 1000001 }} content="Free clip">
-          <Icon onClick={() => setFreeCut(true)} className={ClassName.circleButton()} name="park-screenshot" />
-        </Tooltip>
-        <Tooltip style={{ zIndex: 1000001 }} content="Exit">
-          <Icon onClick={() => setScreenShotLayerVisible(false)} className={ClassName.circleButton()} name="park-close" />
-        </Tooltip>
-      </Content>
-    )
-  }
   const handleAddMeta = async (showModal?: boolean) => {
     if (selectionBoxState?.rect) {
       const blob = await getImageBlob()
@@ -676,38 +277,33 @@ const GlobalScreenShot = () => {
         height: '100%',
         zIndex: 10000,
         cursor: 'crosshair',
-        pointerEvents: selectionBoxState?.stable || freeCut ? 'auto' : 'none',
+        pointerEvents: selectionBoxState?.stable ? 'auto' : 'none',
         background: selectionBoxState?.visible && rect ? 'none' : 'rgba(0,0,0,0.7)'
       }}
     >
-      {rect && (
-        <ScreenShotCanvas
-          erase={erase}
-          innerRef={canvasRef}
-          style={{
-            pointerEvents: drawing ? 'auto' : 'none',
-            position: 'absolute',
-            width: Math.abs(rect.width),
-            height: Math.abs(rect.height),
-            transform: `translateX(${rect.width > 0 ? rect.left : rect.left + rect.width}px) translateY(${
-              rect.height > 0 ? rect.top : rect.top + rect.height
-            }px)`,
-            overflow: 'hidden'
-          }}
-        />
-      )}
-      {!selectionBoxState?.stable && renderTopRightToolbar()}
       {selectionBoxState?.visible && rect && (
-        <div
-          ref={selectionBoxRef}
+        <Rnd
+          position={{
+            x: rect.left,
+            y: rect.top
+          }}
+          size={{
+            width: rect.width,
+            height: rect.height
+          }}
+          onDragStop={(e, data) => {
+            const bounding = data.node.getBoundingClientRect()
+            setSelectionBoxState(s => ({ ...s, rect: bounding }))
+          }}
+          onResizeStop={(e, dir, elementRef) => {
+            const bounding = elementRef.getBoundingClientRect()
+            setSelectionBoxState(s => ({ ...s, rect: bounding }))
+          }}
+          ref={ref => {
+            selectionBoxRef.current = ref?.getSelfElement()
+          }}
           style={{
-            position: 'absolute',
-            width: Math.abs(rect.width),
-            height: Math.abs(rect.height),
-            transform: `translateX(${rect.width > 0 ? rect.left : rect.left + rect.width}px) translateY(${
-              rect.height > 0 ? rect.top : rect.top + rect.height
-            }px)`,
-            outline: '1px solid #39f',
+            outline: '2px solid var(--select-color)',
             pointerEvents: selectionBoxState.startPosition || selectionBoxState.stable ? 'auto' : 'none',
             cursor: selectionBoxState.stable ? 'grab' : 'default',
             boxShadow: '0 0 0 9999em rgb(0,0,0,0.7)'
@@ -716,7 +312,7 @@ const GlobalScreenShot = () => {
           <ScreenShotStatus />
           <Content
             flex
-            gap={3}
+            gap={4}
             style={{
               position: 'absolute',
               bottom: -8,
@@ -725,14 +321,13 @@ const GlobalScreenShot = () => {
                   ? 'translateY(-50%) translateX(-50%)'
                   : 'translateY(100%) translateX(-50%)',
               userSelect: 'none',
-              background: 'rgba(237, 238, 239, 0.85)',
-              backdropFilter: 'blur(32px)',
               padding: '2px 6px',
               borderRadius: '6px',
-              boxShadow: 'var(--box-shadow)',
               left: '50%',
               zIndex: 10,
-              color: Colors.Font.Black
+              background: 'white',
+              color: Colors.Font.Black,
+              boxShadow: Colors.Background.PopoverBoxShadow
             }}
           >
             <ScreenShotToolbar
@@ -784,31 +379,7 @@ const GlobalScreenShot = () => {
               }}
             />
           </Content>
-          {selectionBoxLines.map(i => (
-            <motion.div
-              drag={i.drag}
-              dragElastic={0}
-              onDrag={i.onDrag}
-              onDragEnd={i.onDragEnd}
-              dragConstraints={{ left: 0, top: 0, right: 0, bottom: 0 }}
-              dragMomentum={false}
-              key={i.pos}
-              style={i?.style}
-            ></motion.div>
-          ))}
-          {selectionBoxPoints.map(i => (
-            <motion.div
-              drag={i.drag === 'all' ? true : i.drag}
-              dragElastic={0}
-              onDrag={i.onDrag}
-              onDragEnd={i.onDragEnd}
-              dragConstraints={{ left: 0, top: 0, right: 0, bottom: 0 }}
-              dragMomentum={false}
-              key={i.pos}
-              style={i?.style}
-            ></motion.div>
-          ))}
-        </div>
+        </Rnd>
       )}
     </div>
   )

@@ -1,6 +1,6 @@
 import { useDb } from '@/hooks'
 import { ICollection, MetaObject } from '~/typings'
-import KeyvalueStore from '@/api/stores/keyvalue.store'
+import { t } from 'i18next'
 import Id from '@/utils/id'
 
 const initializeWorkspace = async () => {
@@ -9,7 +9,7 @@ const initializeWorkspace = async () => {
   const defaultWorkspaceId = Id.getId()
   let currentWorkspace = await keyvalueDb.get('currentWorkspace')
   const defaultWorkspace = {
-    name: 'default',
+    name: t('general.Default workspace'),
     createdAt: Date.now(),
     id: defaultWorkspaceId
   }

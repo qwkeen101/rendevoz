@@ -83,10 +83,8 @@ const EmojiPicker: FC<{
           renderItem={o => (
             <div>
               <div
+                className={'font-size-12 transparent-font normal-font'}
                 style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: Colors.Font.Transparent,
                   marginLeft: 8
                 }}
               >

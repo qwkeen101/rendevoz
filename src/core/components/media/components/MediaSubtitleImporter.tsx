@@ -4,7 +4,6 @@ import useMediaState from '@/core/components/media/hooks/useMediaState'
 import Select from '@/components/base/select'
 import { useTranslation } from 'react-i18next'
 import { Rendevoz } from '@/core/rendevoz'
-import requestVideoSubtitle from '@/api/components/fileImporter/baidudisk/requestVideoSubtitle'
 import toWebVTT from 'srt-webvtt'
 import Id from '@/utils/id'
 import { toast } from 'react-hot-toast'
@@ -59,13 +58,10 @@ export const parseSubtitleInfo = async (info: string) => {
   }
 }
 
-
 const MediaSubtitleImporter = ({ visible, onChange }: Props) => {
   const [mediaState] = useMediaState()
   const { t } = useTranslation()
-  const isBaidu = mediaState.url?.startsWith('baidudisk')
   const [subtitleInfo, setSubtitleInfo] = useState(defaultSubtitleInfo)
-  const [isImportingBaidu, setIsImportingBaidu] = useState(false)
   const instance = useMediaInstance()
   const handleImportSubtitle = async () => {
     const file = (await Rendevoz.Actions.Utils.uploadFile()) as File
@@ -111,8 +107,8 @@ const MediaSubtitleImporter = ({ visible, onChange }: Props) => {
   return (
     <Modal visible={visible} onClose={onChange}>
       <div style={{ width: 400, display: 'flex', flexDirection: 'column', gap: 10, padding: 16 }}>
-        <div className={'font-size-17 bold-font'}>{t('general.import subtitles')}</div>
-        <Content flex justifyContent="space-between">
+        <div className={'font-size-16 bold-font'}>{t('general.import subtitles')}</div>
+        <Content flex justifyContent="space-between" alignItems={'center'}>
           <div>{t('general.Choose language')}</div>
           <Select
             closeOnSelect={true}
@@ -124,43 +120,11 @@ const MediaSubtitleImporter = ({ visible, onChange }: Props) => {
           />
         </Content>
         <Button.IconButton
-          style={{
-            border: `1px solid ${Colors.Background.Border}`
-          }}
+          className={'border'}
           text={t('general.import local subtitle file')}
           icon={'park-upload'}
           onClick={handleImportSubtitle}
         />
-        {isBaidu && (
-          <Button.IconButton
-            spin={isImportingBaidu}
-            style={{
-              border: `1px solid ${Colors.Background.Border}`
-            }}
-            icon={isImportingBaidu ? 'park-loading-four' : 'park-upload'}
-            text={'导入网盘字幕(需要会员)'}
-            onClick={async () => {
-              setIsImportingBaidu(true)
-              try {
-                const path = mediaState.url?.replace('baidudisk', '')
-                const result = await requestVideoSubtitle(path)
-                const parsed = await parseSubtitleInfo(result)
-                if (parsed?.length) {
-                  instance.on?.({
-                    type: 'subtitleUpdated',
-                    subtitleList: [...(mediaState.subtitleList || []), ...parsed]
-                  })
-                  toast.success('导入成功！')
-                  onChange()
-                } else {
-                  toast.error('不存在字幕文件！')
-                }
-              } finally {
-                setIsImportingBaidu(false)
-              }
-            }}
-          ></Button.IconButton>
-        )}
       </div>
     </Modal>
   )

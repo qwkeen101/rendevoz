@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePopover, Button, Content, Icon, WithBorder } from '@/components'
-import ButtonSelect from '@/components/base/ButtonSelect'
 import useGroupState from '@/core/components/group/hooks/useGroupState'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import PropertiesMenu from '@/core/components/group/components/menu/setting/PropertiesMenu'
 import { ClassName } from 'rendevoz'
-import ButtonSwitch from '@/components/base/ButtonSwitch'
 import EmojiWithPicker from '@/components/EmojiWithPicker'
 import EmojiPicker from '@/components/picker/emojiPicker'
 import { css } from '@emotion/css'
@@ -13,9 +11,9 @@ import { Colors } from '@/consts'
 import { useTranslation } from 'react-i18next'
 import ViewSettingMenu from '@/core/components/group/components/menu/setting/ViewSettingMenu'
 import GroupGrouperMenu from '@/core/components/group/components/grouper/menus'
-import { usePrevious } from '@/hooks'
 import classnames from 'classnames'
 import ConfigMenu from '@/core/components/group/components/menu/setting/ConfigMenu'
+import FlashcardMenu from '@/core/components/group/components/menu/setting/FlashcardMenu'
 
 export default ({ onClose }: { onClose: VoidFunction }) => {
   const [currentView, setCurrentView] = useState<
@@ -24,6 +22,7 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
     | 'view'
     | 'grouper'
     | 'settings'
+    | 'flashcard'
     | {
         type: 'subMenu'
         name: string
@@ -137,6 +136,14 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
                 />
               )}
               <Button.IconButton
+                icon={'park-card-two'}
+                text={t('general.Flashcards')}
+                suffixIcon={'park-right'}
+                onClick={() => {
+                  setCurrentView('flashcard')
+                }}
+              />
+              <Button.IconButton
                 icon={'park-setting'}
                 text={t('general.Settings')}
                 suffixIcon={'park-right'}
@@ -176,6 +183,8 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
         return <ViewSettingMenu />
       case 'settings':
         return <ConfigMenu />
+      case 'flashcard':
+        return <FlashcardMenu />
     }
     if (currentView === 'grouper' || currentView.previousView === 'grouper') {
       return (
@@ -193,7 +202,7 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
       {currentView !== 'main' && (
         <Content flex gap={10} style={{ marginBottom: 10, padding: '6px 6px 0px 8px' }}>
           <Icon
-            className={ClassName.flatButton(3, '4px')}
+            className={'button p-4'}
             name={'park-arrow-left'}
             onClick={() => {
               if (typeof currentView === 'object') {
@@ -203,11 +212,12 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
               }
             }}
           ></Icon>
-          <div style={{ fontWeight: 600, textTransform: 'capitalize' }}>
+          <div className={'normal-font'} style={{ textTransform: 'capitalize' }}>
             {currentView === 'properties' ? t('general.Properties') : undefined}
             {currentView === 'view' ? t('general.View') : undefined}
             {currentView === 'grouper' ? t('general.Grouper') : undefined}
             {currentView === 'settings' ? t('general.Settings') : undefined}
+            {currentView === 'flashcard' ? t('general.Flashcards') : undefined}
             {typeof currentView === 'object' && t(`general.${currentView.name}`)}
           </div>
         </Content>

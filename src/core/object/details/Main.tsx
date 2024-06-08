@@ -23,8 +23,8 @@ const flatButton = classnames([
     padding: '4px 12px 4px 10px !important',
     borderRadius: '6px !important'
   }),
-  'border-box-shadow',
-  'hover-s-transparent-box-shadow'
+  'border',
+  'light-hover'
 ])
 
 const SectionMargin = '20px 0px 8px'
@@ -106,18 +106,20 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
             Rendevoz.Actions.Open.Meta.openEditMetaDialog(metaId)
             GlobalInstance.metaOps?.closeDetails()
           }}
-          style={{
-            background: 'transparent'
-          }}
           text={t('general.edit')}
           icon={'park-edit'}
           className={flatButton}
         ></Button.IconButton>
+        <Button.IconButton
+          onClick={() => {
+            GlobalInstance.metaOps?.quickAdd(metaId)
+          }}
+          text={t('general.Move to')}
+          icon={'park-corner-up-right'}
+          className={flatButton}
+        ></Button.IconButton>
         {showContains && (
           <Button.IconButton
-            style={{
-              background: 'transparent'
-            }}
             icon={'park-hamburger-button'}
             text={t('general.View included objects')}
             onClick={() => {
@@ -131,9 +133,6 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
             GlobalInstance.metaOps?.closeDetails()
             GlobalInstance.metaOps?.openGraph(metaId)
           }}
-          style={{
-            background: 'transparent'
-          }}
           text={t('general.graph')}
           icon={'park-share-one'}
           className={flatButton}
@@ -142,9 +141,6 @@ const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolea
           text={t('general.Copy link')}
           onClick={() => {
             GlobalInstance.metaOps?.copyLink(metaId)
-          }}
-          style={{
-            background: 'transparent'
           }}
           icon={'park-link'}
           className={flatButton}

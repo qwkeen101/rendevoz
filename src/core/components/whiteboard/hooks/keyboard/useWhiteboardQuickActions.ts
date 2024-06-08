@@ -18,14 +18,14 @@ export default () => {
   const [whiteboardState, setWhiteboardState] = useWhiteboardState()
   const keydownHandler = useMemoizedFn((e: KeyboardEvent) => {
     handleKeyboardPaste(e, instance)
-    if (!instance.isFocused?.()) return
-    if (instance.getOutestContainerNode?.() !== document.activeElement && document.activeElement !== document.body) return
     if (isHotkey(KEY.Escape, e)) {
+      instance.edgeOps?.endAction()
       if (whiteboardState.highlightedIds) {
         setWhiteboardState(s => ({ ...s, highlightedIds: undefined }))
       }
-      instance.edgeOps?.endAction()
     }
+    if (!instance.isFocused?.()) return
+    if (instance.getOutestContainerNode?.() !== document.activeElement && document.activeElement !== document.body) return
     if (e.defaultPrevented) return
     handleKeyboardNavigation(e, instance)
     if (isHotkey('mod+p', e)) {

@@ -183,8 +183,9 @@ const ResultItem = ({
     <Content
       flex
       gap={12}
-      style={{ width: '100', padding: '8px 0px', borderTop: `1px solid ${Colors.Background.Border}` }}
+      style={{ width: '100', padding: '8px 0px' }}
       alignItems={'center'}
+      className={'border-top font-size-13'}
     >
       <CheckBox checked={selected} onChange={v => onSelect(v)} />
       {metaObject.coverImgSrc && (

@@ -8,20 +8,21 @@ type Props = {
   options: string[]
   name?: string
   icon?: string
+  showValue?: boolean
   onChange?: (v: string) => void
   style?: CSSProperties
   buttonSize?: number
   gap?: number
   fontSize?: number
 }
-function ButtonChooser({ value, options, name, icon, onChange, style, buttonSize = 16, fontSize = 13, gap = 6 }: Props) {
+function ButtonChooser({ value, options, name, icon, onChange, showValue = true, style, buttonSize = 16, fontSize = 13, gap = 6 }: Props) {
   const realValue = value || options[0]
   return (
     <Content flex alignItems={'center'} gap={8} style={style}>
       {icon && <Icon size={16} containerStyle={{ color: Colors.Font.Transparent }} name={icon} />}
       {name && <div>{name}</div>}
       <Content flex gap={gap} alignItems={'center'} style={{ marginLeft: 'auto' }}>
-        <div style={{ color: Colors.Font.Transparent, fontSize: fontSize }}>{realValue}</div>
+        {showValue && <div style={{ color: Colors.Font.Transparent, fontSize: fontSize }}>{realValue}</div>}
         <Content flex gap={3}>
           <Icon
             size={buttonSize}

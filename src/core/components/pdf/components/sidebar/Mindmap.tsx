@@ -110,6 +110,7 @@ const PDFMindmap = memo(({ id, labelIds }: { id: number; labelIds?: number[] }) 
           <LabelDetailsContext.Provider value={{ showSource: false, showAddNote: false }}>
             <Whiteboard
               onInstanceInitialized={i => {
+                console.log(i)
                 setTimeout(() => {
                   const doms = i.nodeOps?.getDOMBoxOfNodes((i.getAllNode?.() || []).map(i => i.id))
                   if (doms) {

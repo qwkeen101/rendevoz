@@ -136,7 +136,7 @@ const defaultSetting: Setting = {
     expandToFixedSize: false,
     dropFileAutoObject: true,
     defaultLineType: 'curve',
-    defaultBackgroundType: 'dot',
+    defaultBackgroundType: 'none',
     onlyEraseFreeDraw: true
   },
   sidebar: {

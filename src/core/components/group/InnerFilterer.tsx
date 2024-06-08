@@ -7,16 +7,7 @@ import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance
 const InnerFilterer = ({ filterGroup }: { filterGroup?: MetaFilterGroup }) => {
   const instance = useGroupInstance()
   return (
-    <Content
-      flex
-      column
-      style={{
-        border: `1px solid ${Colors.Background.Border}`,
-        padding: '16px 12px',
-        borderRadius: 8,
-        margin: '6px 0px'
-      }}
-    >
+    <Content flex column style={{ marginTop: 12 }} className={'border br-6'}>
       {filterGroup && (
         <BetterFilter
           root={filterGroup}

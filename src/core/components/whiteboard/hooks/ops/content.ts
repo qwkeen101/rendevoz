@@ -1,7 +1,89 @@
-import { IWhiteboardInstance, IWhiteboardNode, IWhiteboardOutline } from '~/typings'
+import { IWhiteboardInstance, IWhiteboardMindmap, IWhiteboardNode, IWhiteboardOutline } from '~/typings'
 import { assignProperties } from '@/utils'
 import { MetaStore } from '@/api/stores'
 import { Node } from 'slate'
+import { Rendevoz } from '@/core/rendevoz'
+
+const transformCommonNodeToOutline = (
+  instance: IWhiteboardInstance,
+  nodeId: number,
+  mindmapChildValid = false
+): IWhiteboardOutline | undefined => {
+  const node = instance.getNode?.(nodeId)
+  if (!node) return
+  if (node.rootId && !mindmapChildValid) return
+  const metaMap = MetaStore.getMetaObjectsMap()
+  switch (node.type) {
+    case 'metaObject': {
+      if (node.metaObjectId) {
+        const object = metaMap.get(node.metaObjectId)
+        if (object) {
+          return {
+            name: object.name || object.placeholderName || 'Unnamed object',
+            icon: Rendevoz.Utils.Object.getMetaObjectIcon(object.type),
+            nodeId: node.id
+          }
+        }
+      }
+      break
+    }
+    case 'mindmap': {
+      return transformMindmapToOutline(instance, node)
+    }
+    case 'text': {
+      const name = Node.string({ children: node.content })
+      if (name) {
+        return {
+          name,
+          nodeId: node.id,
+          icon: 'park-text'
+        }
+      }
+      break
+    }
+  }
+}
+const transformMindmapToOutline = (instance: IWhiteboardInstance, node: IWhiteboardNode & { type: 'mindmap' }): IWhiteboardOutline => {
+  let name = ''
+  const icon = 'park-mindmap-map'
+  const metaMap = MetaStore.getMetaObjectsMap()
+  let children: Required<IWhiteboardOutline>['children'] = []
+  if (node.nodeType === 'text') {
+    name = Node.string({ children: node.content }) || 'Unnamed mindmap'
+  }
+  if (node.nodeType === 'metaObject') {
+    const object = metaMap.get(node.metaObjectId)
+    if (object) {
+      name = object.name || object.placeholderName || 'Unnamed object'
+    }
+  }
+  const parseChildren = (children: IWhiteboardMindmap[]): IWhiteboardOutline[] => {
+    return children
+      .map(c => {
+        const childNodeId = c.root
+        const parsed = transformCommonNodeToOutline(instance, childNodeId, true)
+        if (parsed) {
+          return {
+            ...parsed,
+            children: parseChildren(c.children)
+          }
+        }
+      })
+      .filter(i => i) as IWhiteboardOutline[]
+  }
+  if (node.rightChildren?.length) {
+    children = [...children, ...parseChildren(node.rightChildren)]
+  }
+  if (node.leftChildren?.length) {
+    children = [...children, ...parseChildren(node.leftChildren)]
+  }
+  return {
+    name,
+    icon,
+    children,
+    nodeId: node.id
+  }
+}
 
 export default function assignContentOps(instance: IWhiteboardInstance) {
   assignProperties(instance, {
@@ -23,36 +105,12 @@ export default function assignContentOps(instance: IWhiteboardInstance) {
         const notInGroupNodes: IWhiteboardNode[] = allNodes.filter(
           i => !inGroupNodeIds.has(i.id) && i.type !== 'group'
         ) as IWhiteboardNode[]
-        const metaMap = MetaStore.getMetaObjectsMap()
-        const transformCommonNodeToOutlineName = (nodeId: number): string => {
-          const node = instance.getNode?.(nodeId)
-          if (!node) throw 'Failed to get node!'
-          switch (node.type) {
-            case 'metaObject': {
-              if (node.metaObjectId) {
-                const object = metaMap.get(node.metaObjectId)
-                if (object) {
-                  return object?.name || object?.placeholderName || 'Unnamed object'
-                }
-              }
-              return 'Unnamed object'
-            }
-            case 'text': {
-              return typeof node.content === 'string'
-                ? node.content
-                : node.content
-                ? Node.string({ children: node.content }) || 'Unnamed text'
-                : 'Unnamed text'
-            }
-            default:
-              return 'Unnamed ' + node.type
-          }
-        }
-        const transformGroupToOutline = (groupId: number): IWhiteboardOutline => {
+
+        const transformGroupToOutline = (groupId: number): IWhiteboardOutline | undefined => {
           const inGroupNodes = groupToNodesMap.get(groupId)
           groupToNodesMap.delete(groupId)
           const group = instance.getNode?.(groupId)
-          if (!group) throw 'Failed to get group node!'
+          if (!group) return
           if (inGroupNodes?.length) {
             const children = inGroupNodes
               .map(i => {
@@ -62,12 +120,7 @@ export default function assignContentOps(instance: IWhiteboardInstance) {
                   groupToNodesMap.delete(i.id)
                   return result
                 }
-                if (i.type === 'metaObject') {
-                  return {
-                    nodeId: i.id,
-                    name: transformCommonNodeToOutlineName(i.id)
-                  }
-                }
+                return transformCommonNodeToOutline(instance, i.id)
               })
               .filter(i => i) as IWhiteboardOutline[]
             children.sort(a => (a.children ? -1 : 1))
@@ -76,23 +129,20 @@ export default function assignContentOps(instance: IWhiteboardInstance) {
               name: group.name || 'Unnamed group',
               children
             }
-          } else {
-            return {
-              nodeId: groupId,
-              name: group.name || 'Unnamed group'
-            }
           }
         }
         // first transform groups here
         groupToNodesMap.forEach((nodes, groupNode) => {
-          outlineArray.push(transformGroupToOutline(groupNode))
+          const res = transformGroupToOutline(groupNode)
+          if (res) {
+            outlineArray.push(res)
+          }
         })
         notInGroupNodes.forEach(n => {
-          n.type === 'metaObject' &&
-            outlineArray.push({
-              nodeId: n.id,
-              name: transformCommonNodeToOutlineName(n.id)
-            })
+          const res = transformCommonNodeToOutline(instance, n.id)
+          if (res) {
+            outlineArray.push(res)
+          }
         })
         return outlineArray
       }

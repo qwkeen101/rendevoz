@@ -59,7 +59,7 @@ assignProperties(GlobalInstance, {
           s.leftOpen = true
           s.leftVisible = 'database'
         })
-        KeyvalueStore.updateOne(`sidebarDatabaseCache_${workspace.id}`, { ...curr, selectedMeta: [...(curr.selectedMeta || []), metaId] })
+        KeyvalueStore.updateOne(`sidebarDatabaseCache_${workspace.id}`, { ...curr, selectedMeta: [metaId] })
       }
     },
     canViewContains: metaId => {

@@ -82,7 +82,7 @@ const FeedHeaderBar = () => {
           onBack={() => setMoveGroupVisible(false)}
         />
       </Modal>
-      <Content flex gap={12} alignItems={'center'}>
+      <Content flex gap={8} alignItems={'center'}>
         <Icon
           name={'custom-left-bar'}
           size={16}

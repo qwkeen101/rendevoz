@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react'
-import { useDebounceFn, useGlobalAtomValue, useSelectGlobalAtomValue } from '@/hooks'
+import { useDebounceFn, useGlobalAtomValue } from '@/hooks'
 import { undeletedMetaObjectsAtom } from '@/api/stores/meta/meta.store'
 import { useTranslation } from 'react-i18next'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
@@ -11,7 +11,7 @@ import { calculateSortObjects } from '@/core/object/filter/BetterSorter'
 import { GlobalSetting, SimpleObject, useDropObjectArea } from '@/core'
 import { Rendevoz } from '@/core/rendevoz'
 import Colors from '../../../consts/colors'
-import { AnimatePopover, Button, Content, Icon, IconWithPopover, Menu, Tooltip, VirtualList, WithBorder } from '@/components'
+import { AnimatePopover, Content, Icon, IconWithPopover, Menu, Tooltip, VirtualList, WithBorder } from '@/components'
 import ClassName from '@/styles/classNames'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
@@ -238,6 +238,7 @@ export default memo(() => {
             content={setV => (
               <WithBorder padding={'0.4rem 0'}>
                 <Menu.NavigationMenu
+                  defaultSelected={[filterSort.sort || 'create']}
                   layout={[
                     {
                       type: 'title',
@@ -257,7 +258,7 @@ export default memo(() => {
                     },
                     {
                       type: 'item',
-                      key: 'recent',
+                      key: 'view',
                       text: t('general.recentlyViewed'),
                       onSelect: () => {
                         setV(false)
@@ -331,8 +332,17 @@ export default memo(() => {
         </Content>
         {renderContainIndicator()}
       </Content>
-      {filterSort.viewMode === 'title' && <TitleList items={shouldDisplayObjects} />}
-      {filterSort.viewMode === 'thumbnail' && <ThumbnailList items={shouldDisplayObjects} />}
+      {shouldDisplayObjects.length === 0 && (
+        <Content flex centered fullHeight fullWidth className={'super-transparent-font font-size-13'}>
+          {t('general.Current list is empty')}
+        </Content>
+      )}
+      {shouldDisplayObjects.length > 0 && (
+        <>
+          {filterSort.viewMode === 'title' && <TitleList items={shouldDisplayObjects} />}
+          {filterSort.viewMode === 'thumbnail' && <ThumbnailList items={shouldDisplayObjects} />}
+        </>
+      )}
     </>
   )
 })

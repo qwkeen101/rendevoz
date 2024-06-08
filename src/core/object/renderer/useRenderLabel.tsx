@@ -70,9 +70,11 @@ const useRenderLabel = (opts: {
           className={'font-size-13'}
           style={{
             cursor: 'pointer',
-            width: 'fit-content',
             whiteSpace: 'pre-wrap',
             ...options?.style
+          }}
+          onClick={() => {
+            setLabelState(s => ({ ...s, editingName: true }))
           }}
         >
           {realRelated.size > 0 && (
@@ -84,10 +86,8 @@ const useRenderLabel = (opts: {
               disableNudge
               positions={['top', 'bottom']}
               content={
-                <WithBorder style={{ maxWidth: 400 }} width={180} padding={6}>
-                  <div className={'font-size-12 transparent-font bold-font'} style={{ marginBottom: 2 }}>
-                    {t('general.related objects')}
-                  </div>
+                <WithBorder onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }} width={180} padding={6}>
+                  <div className={'menu-sub-title'}>{t('general.related objects')}</div>
                   {Array.from(realRelated.values()).map(i => (
                     <LabelRelatedItem metaId={i} key={i} />
                   ))}
@@ -111,9 +111,6 @@ const useRenderLabel = (opts: {
             </AnimatePopover>
           )}
           <span
-            onClick={() => {
-              setLabelState(s => ({ ...s, editingName: true }))
-            }}
             style={{
               color: currentLabelHasName ? undefined : Colors.Font.Transparent,
               fontWeight: 400,
@@ -271,6 +268,7 @@ const useRenderLabel = (opts: {
       <Content flex gap={4} style={{ flexWrap: 'wrap', ...style }}>
         {tags.map(i => (
           <ObjectTag
+            clickOpenGroup
             style={
               small
                 ? {

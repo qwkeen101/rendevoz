@@ -73,7 +73,7 @@ export default ({ onClose, onImportSubtitle }: { onClose: VoidFunction; onImport
           {
             type: 'item',
             key: 'stretch',
-            text: floated ? t('general.normal video') : t('general.windowed video'),
+            text: t('general.Picture-in-Picture'),
             onSelect: () => {
               onClose?.()
               setMediaState(s => ({ ...s, floated: !s.floated }))
@@ -96,7 +96,7 @@ export default ({ onClose, onImportSubtitle }: { onClose: VoidFunction; onImport
             ? {
                 type: 'item',
                 key: 'import-subtitle',
-                icon: 'park-align-text-bottom-one',
+                icon: 'custom-CC',
                 text: t('general.import subtitles'),
                 onSelect: () => {
                   onClose?.()

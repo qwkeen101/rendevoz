@@ -25,6 +25,7 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
   const needUpdateEdges = useRef<Set<number>>(new Set())
   assignProperties(instance, {
     nodeOps: {
+      ...instance.nodeOps,
       getMaxZindex: () => {
         const allNodes = instance.getAllNode?.()
         if (!allNodes) throw 'Failed to get nodes'

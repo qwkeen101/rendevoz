@@ -102,13 +102,9 @@ export default memo(({ children, element }: RenderElementProps) => {
   }
   return (
     <div
-      className={'transparent-font selectable'}
+      className={'transparent-font selectable bg-secondary br-4 pointer'}
       style={{
-        width: '100%',
-        cursor: 'pointer',
-        borderRadius: 4,
-        fontSize: 14,
-        background: Colors.Background.Secondary
+        width: '100%'
       }}
       contentEditable={'false'}
     >
@@ -140,7 +136,7 @@ export default memo(({ children, element }: RenderElementProps) => {
       >
         <div
           onClick={() => setFormVisible(true)}
-          className={ClassName.flatButton()}
+          className={'button font-size-14'}
           style={{
             padding: '12px 36px 12px 12px',
             width: '100%',

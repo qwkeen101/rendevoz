@@ -199,10 +199,10 @@ const EdgeOverlay = memo(() => {
           currentEdge?.lineStyle === 'animatedDash' || currentEdge?.lineStyle === 'dash'
             ? 4
             : currentEdge?.lineStyle === 'regular'
-            ? 4
-            : currentEdge?.lineStyle === 'thick'
-            ? 6
-            : 2
+              ? 4
+              : currentEdge?.lineStyle === 'thick'
+                ? 6
+                : 2
         }
       ></path>
     </g>

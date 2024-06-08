@@ -1,9 +1,8 @@
 import { AnimatePopover, Content, Icon, IconWithPopover, Menu, WithBorder } from '@/components'
 import UseEditorBarState from '@/core/components/editor/hooks/useEditorBarState'
 import useEditorState from '@/core/components/editor/hooks/useEditorState'
-import ClassName from '@/styles/classNames'
 import { CustomEditor } from '~/typings'
-import EditorSetting from '@/core/components/editor/components/setting/EditorSetting'
+import EditorSetting from '@/core/components/editor/components/EditorSetting'
 import { useTranslation } from 'react-i18next'
 
 const EditorHeader = ({ title, editor }: { editor: CustomEditor; title: string }) => {
@@ -79,7 +78,7 @@ const EditorHeader = ({ title, editor }: { editor: CustomEditor; title: string }
             </WithBorder>
           )}
         >
-          <Content flex alignItems={'center'} gap={4} className={ClassName.flatButton(4, '5px')}>
+          <Content flex alignItems={'center'} gap={4} className={'button p-5'}>
             <Icon size={16} name={'custom-left-bar'} />
             <Icon size={14} name={'park-down'} />
           </Content>
@@ -95,14 +94,13 @@ const EditorHeader = ({ title, editor }: { editor: CustomEditor; title: string }
         {header?.display?.modeSwitcher !== false && (
           <Icon
             size={16}
-            strokeWidth={3}
-            className={ClassName.flatButton(4, '5px')}
+            className={'button p-5'}
             name={readOnly ? 'park-edit' : 'park-book-open'}
             onClick={() => setEditorState(s => ({ ...s, readOnly: !s.readOnly }))}
           />
         )}
         <IconWithPopover
-          padding={10}
+          padding={6}
           renderOnParent={false}
           align={'end'}
           placement={['bottom']}
@@ -113,7 +111,7 @@ const EditorHeader = ({ title, editor }: { editor: CustomEditor; title: string }
             </WithBorder>
           }
           name={'park-more'}
-          className={ClassName.flatButton(4, '5px')}
+          className={'button p-5'}
         />
       </Content>
     </Content>

@@ -1,7 +1,7 @@
 import { IconWrapper, ISvgIconProps } from '@icon-park/react/es/runtime'
 
 export default IconWrapper('dots', true, (props: ISvgIconProps) => (
-  <svg width={props.size} height={props.size} fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="150 150 800 800">
+  <svg width={props.size} height={props.size} fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="50 50 900 900">
     <path d="M221.87008 221.87008m-119.47008 0a119.47008 119.47008 0 1 0 238.94016 0 119.47008 119.47008 0 1 0-238.94016 0Z"> </path>
     <path d="M802.12992 221.87008m-119.47008 0a119.47008 119.47008 0 1 0 238.94016 0 119.47008 119.47008 0 1 0-238.94016 0Z"></path>
     <path d="M512 221.87008m-119.47008 0a119.47008 119.47008 0 1 0 238.94016 0 119.47008 119.47008 0 1 0-238.94016 0Z"> </path>

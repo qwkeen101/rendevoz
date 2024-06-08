@@ -80,7 +80,7 @@ export default memo(() => {
           width: '100%',
           height: '100%',
           pointerEvents: 'none',
-          zIndex: 49
+          zIndex: 51
         }}
       >
         {currentFloatNodes.map(i => (

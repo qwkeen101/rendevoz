@@ -144,7 +144,7 @@ const SidebarIcons = ({
               paddingBottom: '20px',
               paddingTop: 8,
               flexDirection: 'column',
-              gap: 8
+              gap: 6
             })
           )}
           axis={'y'}

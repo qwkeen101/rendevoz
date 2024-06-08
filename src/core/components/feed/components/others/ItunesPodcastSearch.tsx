@@ -4,7 +4,6 @@ import { ClassName } from 'rendevoz'
 import { useDebounceEffect } from '@/hooks'
 import fetchFeedAndAddCollection from '@/core/components/feed/utils/fetchFeedAndAddCollection'
 import { Colors } from '@/consts'
-import { css } from '@emotion/css'
 import { useTranslation } from 'react-i18next'
 
 export type ITunesSearchResult = {

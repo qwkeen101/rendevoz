@@ -13,11 +13,7 @@ const GraphicsBg = PixiComponent('gbg', {
   create: props => {
     const b = getComputedStyle(document.body).getPropertyValue('--global-background')
     const g = new _Graphics()
-    // g.lineStyle(1, 'white')
     g.beginFill(b)
-    // g.blendMode = BLEND_MODES.DST_OUT
-    // g.x = 0
-    // g.y = 0
     g.drawRoundedRect(0, 0, props.d, props.d, 4)
     g.endFill()
     return g
@@ -28,9 +24,8 @@ export const fontStyle = new TextStyle({
   fontSize: 8,
   align: 'center',
   fill: 'white',
-  wordWrapWidth: 240,
+  wordWrapWidth: 220,
   breakWords: true,
-  fontFamily: ['Inter'],
   wordWrap: true,
   whiteSpace: 'normal'
 })

@@ -183,7 +183,7 @@ const BetterFilter = ({
                 onChange={handleChange}
               />
             ))}
-            <div style={{ width: 360, maxWidth: '100%', minWidth: '100%', flexWrap: 'wrap', display: 'flex', columnGap: 10, rowGap: 8 }}>
+            <div style={{ width: 280, maxWidth: '100%', minWidth: '100%', flexWrap: 'wrap', display: 'flex', columnGap: 10, rowGap: 8 }}>
               <Button.IconButton
                 size={11}
                 gap={6}

@@ -13,6 +13,7 @@ import { Viewport } from 'pixi-viewport'
 import { Container, DisplayObject } from 'pixi.js'
 import { XYPosition } from 'rendevoz'
 import { Rendevoz } from '@/core/rendevoz'
+import { getBoxOfBoxes } from '@/core/components/whiteboard/utils'
 const getRadius = t => Rendevoz.Utils.Meta.getTypeRadius(t)
 class D3GraphManager {
   public isChoosingNode: false | 'start' | 'end' = false
@@ -263,6 +264,15 @@ class D3GraphManager {
         .tick(300)
         .on('tick', this.ticked)
         .on('end', () => {
+          const nodeBoxes = getBoxOfBoxes(
+            this.originNodes?.map(i => ({
+              left: i.x,
+              top: i.y,
+              width: 30,
+              height: 30
+            })) || []
+          )
+
           setTimeout(() => {
             // this.ID_TO_EDGE_FUNCTION_MAP.forEach(i => i.drawEdge())
             this.ID_TO_EDGE_LABEL_ELEMENT_MAP.forEach(i => i.removeAttribute('opacity'))
@@ -293,6 +303,11 @@ class D3GraphManager {
               })
             })
           )
+          setTimeout(() => {
+            if (nodeBoxes) {
+              this.pixiViewport?.moveCenter(nodeBoxes.left + nodeBoxes.width / 2, nodeBoxes.top + nodeBoxes.height / 2)
+            }
+          })
         })
     }
   }
@@ -329,62 +344,19 @@ class D3GraphManager {
   public ticked = () => {
     this.d3Simulation?.tick(2)
     if (this.originEdges && this.originNodes) {
-      if (this.type === 'canvas') {
-        // canvas mode
-        this.originNodes.forEach(node => {
-          const n = this.ID_TO_PIXI_NODE_MAP.get(node.id)
-          const bound = n?.children[0].getLocalBounds()
-          if (n && bound) {
-            n.x = node.x + bound.width / 2
-            n.y = node.y + bound.height / 2
-          }
-        })
-        this.originEdges.forEach(e => {
-          const edgeFunc = this.ID_TO_EDGE_FUNCTION_MAP.get(e.id)
-          edgeFunc?.drawEdge()
-        })
-      } else {
-        // svg mode
-        this.originEdges.forEach(edge => {
-          const path = this.drawEdge(edge, edge.source.x, edge.source.y, edge.target.x, edge.target.y)
-          this.ID_TO_EDGE_ELEMENT_MAP.get(edge.id)?.setAttribute('d', path)
-          this.ID_TO_EDGE_LABEL_ELEMENT_MAP.get(edge.id)?.setAttribute('opacity', '0')
-        })
-        this.originNodes.forEach(node => {
-          this.ID_TO_NODE_ELEMENT_MAP.get(node.id)?.setAttribute('transform', `translate(${node.x},${node.y})`)
-        })
-      }
-    }
-  }
-  private zoomed = event => {
-    this.transform = event.transform
-    this.zoomHandlerSet.forEach(handler => handler?.(event.transform))
-  }
-  private globalMousemoveHandler = (e: MouseEvent) => {
-    if (this.isAddingEdge) {
-      const curve = d3.line().curve(curveBasis)
-      const [startX, startY] = [this.linkStartPoint.x, this.linkStartPoint.y]
-      const [endX, endY] = d3.pointer(e, document.getElementById('viewport'))
-      const [realEndX, realEndY] = [endX / (this.transform?.k || 1), endY / (this.transform?.k || 1)]
-      const points = [
-        [startX, startY],
-        [(startX + realEndX) / 2, (startY + realEndY) / 2 + 20],
-        [realEndX, realEndY]
-      ]
-      const path = curve(points)
-      d3.select('#addLinkLine')
-        .attr('d', path)
-        .attr('stroke', MarkerColor.EMPHASIS)
-        .attr('fill', 'none')
-        .attr('stroke-width', 2)
-        .attr('marker-end', `url(#${getMarkerId('end', MarkerColor.EMPHASIS)})`)
-    }
-  }
-  private globalClickHandler = (e: MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      if (this.isAddingEdge) {
-        this.endAddEdge()
-      }
+      // canvas mode
+      this.originNodes.forEach(node => {
+        const n = this.ID_TO_PIXI_NODE_MAP.get(node.id)
+        const bound = n?.children[0].getLocalBounds()
+        if (n && bound) {
+          n.x = node.x + bound.width / 2
+          n.y = node.y + bound.height / 2
+        }
+      })
+      this.originEdges.forEach(e => {
+        const edgeFunc = this.ID_TO_EDGE_FUNCTION_MAP.get(e.id)
+        edgeFunc?.drawEdge()
+      })
     }
   }
   public getRelatedNodesAndEdges = (sourceNode: GraphNode) => {

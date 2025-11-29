@@ -1,0 +1,4 @@
+export { Editor } from './Editor'
+export { default as EditorTitle } from './components/EditorTitle'
+export { default as TextEditor } from './TextEditor'
+export * from './slate-react'

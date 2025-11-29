@@ -1,8 +1,12 @@
 {
-  "name": "rendevoz-app",
+  "name": "rendevoz-monorepo",
   "productName": "Rendevoz",
   "private": true,
   "version": "1.4.0",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "author": {
     "name": "Rendevoz Team",
     "email": "rendevoz@rendevoz.com"

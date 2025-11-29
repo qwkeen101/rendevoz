@@ -17,6 +17,7 @@ windowConfig.json
 # Editor directories and files
 .idea
 .DS_Store
+build
 *.suo
 *.ntvs*
 models

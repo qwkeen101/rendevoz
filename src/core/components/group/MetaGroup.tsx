@@ -2,11 +2,11 @@ import { Content } from '@/components'
 import { GroupRenderer } from '@/core/components/group/GroupRenderer'
 import GroupTitleRenderer from '@/core/components/group/GroupTitleRenderer'
 import GroupActions from '@/core/components/group/GroupActions'
-import { CSSProperties, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { CSSProperties, useEffect, useMemo, useRef } from 'react'
 import { Provider, createStore, useSetAtom, useStore } from 'jotai'
 import { Group, PATH_TO_ELEMENT_MAP } from '@/core/components/group/hooks/weakmaps'
 import { GroupInstanceAtom, useAssignGroupInstance, useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
-import { IGroupInstance, IMetaProperty, MetaGroup as IMetaGroup, MetaGroupProperty, MetaObject } from '~/typings'
+import { IGroupInstance, MetaGroup as IMetaGroup, MetaGroupProperty, MetaObject } from '~/typings'
 import GroupSidebarPeek from '@/core/components/group/components/basic/GroupSidebarPeek'
 import GroupDragHandle from '@/core/components/group/GroupDragHandle'
 import GroupSelectBox from '@/core/components/group/hooks/select/GroupSelectBox'
@@ -17,10 +17,8 @@ import { useDebounceFn } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import GroupOverlay from '@/core/components/group/components/overlay/GroupOverlay'
 import { IGroupEvent } from '~/typings/components/group/events'
-import ReviewPanel from '@/core/components/group/components/review/ReviewPanel'
-import { useMeasure } from 'react-use'
-import { entries } from 'lodash'
-
+import GroupReview from '@/core/components/review/GroupReview'
+import { useUpdate } from 'react-use'
 export type IMetaGroupAvailableContextMenuItems =
   | 'deleteInGroup'
   | 'deleteCompleted'
@@ -51,6 +49,7 @@ export type IMetaGroupProps = {
   layout?: {
     showContains?: boolean
     showTitle?: boolean
+    showCollection?: boolean
     showActions?: boolean
     showSidebar?: boolean
     showDeletedMetas?: boolean
@@ -58,6 +57,7 @@ export type IMetaGroupProps = {
     showDescription?: boolean
     showMultipleViews?: boolean
     showImport?: boolean
+    showClearAll?: boolean
     showAddNew?: boolean
     showCreate?: boolean
     showIcon?: boolean
@@ -71,7 +71,10 @@ export type IMetaGroupProps = {
     pagePaddingLeft?: number
     actionPaddingTop?: number
     containerStyle?: CSSProperties
+    titleClassName?: string
+    descriptionClassName?: string
     containerClassName?: string
+    titleContainerStyle?: CSSProperties
   }
   onInstanceInitialized?: (i: IGroupInstance) => void
   state?: {
@@ -79,6 +82,8 @@ export type IMetaGroupProps = {
     canHideGroupsInside?: boolean
     deleteMetaWhenDeleteItem?: boolean
     canDrag?: boolean
+    // prevent hidden in group but unhidden in tag group, prop group
+    canTurnHiddenIntoUnhidden?: boolean
     // id arr
     invisibleProperties?: number[]
     onlyCreateType?: MetaObject['type']
@@ -170,8 +175,16 @@ const MetaGroupInner = ({ value, groupId, layout, title, on, state, styles, onIn
       <GroupDataProcessor groupValue={v} />
       <Content
         tabIndex={0}
-        onClick={() => {
+        onClickCapture={e => {
           instance.values.isFocused = true
+          if (e.target instanceof HTMLElement) {
+            if (!e.target.closest('[data-cell]')) {
+              const selected = instance.viewOps?.tableOps?.getCurrentSelectedCell()
+              if (selected) {
+                instance.viewOps?.tableOps?.deselectCell()
+              }
+            }
+          }
         }}
         onScroll={() => {
           setGroupState(s => (s.isScrollingBody ? s : { ...s, isScrollingBody: true }))
@@ -209,7 +222,7 @@ const MetaGroupInner = ({ value, groupId, layout, title, on, state, styles, onIn
       <GroupCenterRenderer />
       <GroupDragHandle bodyRef={containerRef} groupId={groupId} />
       <GroupOverlay />
-      <ReviewPanel />
+      <GroupReview groupId={groupId} />
       <GroupSelectBox scrollContainerRef={containerRef} selectContainerRef={containerRef} />
     </>
   )

@@ -5,7 +5,9 @@
     "module": "ESNext",
     "moduleResolution": "Node",
     "resolveJsonModule": true,
+    "lib": ["ESNext", "ESNext.Intl"],
+    "target": "ESNext",
     "allowSyntheticDefaultImports": true
   },
-  "include": ["package.json", "electron"]
+  "include": ["package.json", "electron", "src/api/services/translate"]
 }

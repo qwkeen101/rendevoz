@@ -1,74 +1,82 @@
-import { ObjectStore } from '@/api/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { MediaStateAtom } from './hooks/useMediaState'
 import { useSelectAtomValue } from '@/hooks'
-import { Icon } from '@/components'
+import { Icon, Tooltip, WithBorder } from '@/components'
 import { MediaToolbarStateAtom } from './hooks/useMediaToolbarState'
 import { useSetAtom } from 'jotai'
 import { useMediaInstance } from './hooks/useMediaInstance'
 import { memo } from 'react'
 import { Colors } from '@/consts'
 import { DraggableElement } from '@/core'
+import { IMediaLabel } from '~/typings'
+import { isEqual } from 'lodash'
+import { normalizeSecondsToTime } from '@/core/components/media/utils'
+import classnames from 'classnames'
 
 const MediaProgressLabelPin = memo(({ labelId }: { labelId: number }) => {
-  const labelType = useSelectAtomValue(MediaStateAtom, s => s.labelType)
-  const mediaLabel = ObjectStore(labelType).useValue(labelId)
+  const { totalTime, labelType, mode } = useSelectAtomValue(
+    MediaStateAtom,
+    s => ({
+      totalTime: s.totalTime,
+      labelType: s.labelType,
+      mode: s.mode
+    }),
+    {
+      compare: isEqual
+    }
+  )
+  const border = mode === 'audio' ? '2px solid var(--font-primary)' : `2px solid ${Colors.Font.White}`
+  const mediaLabel = ObjectStore(labelType).useValue(labelId) as IMediaLabel | undefined
+  const labelMeta = MetaStore.useObjectToMetaValue(labelId)
   const instance = useMediaInstance()
-  const totalTime = useSelectAtomValue(MediaStateAtom, s => s.totalTime)
-  const sortedChapters = useSelectAtomValue(MediaStateAtom, s => s.sortedChapters)
-  const currentHoverLabelId = useSelectAtomValue(MediaToolbarStateAtom, s => s.currentHoverLabelId)
-  const setToolbarState = useSetAtom(MediaToolbarStateAtom)
   if (!mediaLabel || !totalTime) return null
+  if (labelMeta?.deleted) return null
 
-  const { time } = mediaLabel
-  const currentChapterIdx = sortedChapters?.findLastIndex(i => i.startTime <= time)
+  const { time, imageUrl, name, selectedText } = mediaLabel
   return (
-    <div
-      data-video-pin
-      data-pin-chapter-idx={currentChapterIdx}
-      onPointerMove={e => {
-        e.currentTarget.style.opacity = '0.2'
-        const markerBounding = instance.getMarkerContainer?.()?.getBoundingClientRect()
-        if (markerBounding) {
-          setToolbarState(s => ({
-            ...s,
-            thumbnailPosition: {
-              x: e.clientX,
-              y: markerBounding.top
-            },
-            currentHoverTime: ((e.clientX - markerBounding.left) / markerBounding.width) * totalTime,
-            thumbnailLabelName: mediaLabel.name,
-            thumbnailVisible: true
-          }))
-        }
-      }}
-      onPointerLeave={e => {
-        setToolbarState(s => ({
-          ...s,
-          thumbnailLabelName: undefined,
-          thumbnailVisible: false
-        }))
-        e.currentTarget.style.removeProperty('opacity')
-      }}
-      onClick={e => {
-        e.stopPropagation()
-        // setToolbarState(s => ({ ...s, currentFocusLabelId: labelId }))
-        instance.actionOps?.jumpTo(time)
-      }}
-      style={{
-        position: 'absolute',
-        bottom: 4,
-        left: `${(time / totalTime) * 100}%`,
-        zIndex: 50,
-        transition: 'all 0.3s ease',
-        transform: `translateX(-50%)`,
-        cursor: 'pointer',
-        opacity: currentHoverLabelId === labelId ? 0.2 : 1
-      }}
+    <Tooltip
+      style={{ whiteSpace: 'pre-wrap' }}
+      disableDefaultContent
+      content={
+        <WithBorder className={'flex flex-col max-w-72 overflow-hidden'} borderRadius={4}>
+          {imageUrl && <img src={imageUrl} className={'w-72'} />}
+          <div className={classnames('min-w-36', imageUrl ? 'p-2' : 'p-1.5')}>
+            <div className={'font-mono text-xs leading-none transparent-font'}>{normalizeSecondsToTime(time)}</div>
+            {selectedText && (
+              <div
+                className={'text-xs whitespace-pre-wrap transparent-font pl-1.5 py-0.5 mt-1 mb-0.5'}
+                style={{
+                  borderLeft: '2px solid var(--emphasis)'
+                }}
+              >
+                {selectedText}
+              </div>
+            )}
+            <div className={'primary-font text-sm max-w-64 break-words whitespace-pre-wrap'}>{name}</div>
+          </div>
+        </WithBorder>
+      }
     >
-      <DraggableElement draggingDetails={{ labelId: labelId, labelType, type: labelType }}>
-        <Icon name="park-pushpin" fill={Colors.Common.SelectColor} theme="filled" size={12} />
-      </DraggableElement>
-    </div>
+      <div
+        onClick={() => {
+          instance.actionOps?.jumpTo(time)
+        }}
+        className={'rounded-full'}
+        style={{
+          position: 'absolute',
+          top: '50%',
+          pointerEvents: 'auto',
+          left: `${(time / totalTime) * 100}%`,
+          zIndex: 50,
+          transform: `translateX(-50%) translateY(-50%)`,
+          cursor: 'pointer',
+          height: 10,
+          width: 10,
+          border: border,
+          background: mode === 'audio' ? 'var(--global-background)' : Colors.Background.Dark
+        }}
+      ></div>
+    </Tooltip>
   )
 })
 

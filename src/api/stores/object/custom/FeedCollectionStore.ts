@@ -4,10 +4,10 @@ import createObjectStore from '@/api/stores/object/object.store'
 export default () => {
   return createObjectStore('feedCollection', {
     beforeAddProcess: async o => {
-      if (!o.workspace) {
-        const currWorkspace = KeyvalueStore.getOne('currentWorkspace')
-        currWorkspace && (o.workspace = currWorkspace.id)
-      }
+      // if (!o.workspace) {
+      //   const currWorkspace = KeyvalueStore.getOne('currentWorkspace')
+      //   currWorkspace && (o.workspace = currWorkspace.id)
+      // }
     },
     afterGetAllProcess: all => {
       const currWorkspace = KeyvalueStore.getOne('currentWorkspace')

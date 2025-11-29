@@ -1,5 +1,4 @@
 import { Box, IWhiteboardInstance, IWhiteboardNode, XYPosition } from '~/typings'
-import { ResizableDelta, Rnd } from 'react-rnd'
 import { ResizeDirection } from 're-resizable'
 import { useRef } from 'react'
 import { calculateSelectionBox } from '@/utils'
@@ -8,10 +7,6 @@ import { DEFAULT_NODE_WIDTH } from '@/core/components/whiteboard/node/hooks/useN
 export default (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
   const startPoint = useRef<XYPosition>()
   const handleResizeStart = (e: MouseEvent) => {
-    if (e instanceof MouseEvent && e.buttons !== 1) {
-      e.preventDefault()
-      throw new Error()
-    }
     instance.emit?.({
       type: 'nodeResizeStart',
       resizingNode: node
@@ -21,9 +16,7 @@ export default (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
   const handleResize = (
     e: PointerEvent,
     dir: ResizeDirection,
-    elementRef: HTMLElement,
-    delta: ResizableDelta,
-    rnd: Rnd
+    elementRef: HTMLElement
   ): {
     direction: 'x' | 'y' | 'both'
     box: Box
@@ -113,9 +106,10 @@ export default (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
         type: 'nodeResize',
         resizingNode: node,
         resizeDir: dir,
+        ignoreSnap: node.type === 'freehand',
         pointerBox: selectionBox,
         nodeElement: elementRef,
-        rnd
+        realtimeBox: nodeRealtimeBox
       })
     }
     return {

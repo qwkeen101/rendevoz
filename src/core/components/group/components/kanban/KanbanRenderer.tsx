@@ -1,13 +1,12 @@
-import { GlobalInstance, useSelectAtomValue } from '@/hooks'
+import { useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
-import { Content } from '@/components'
+import { Content, Virtualizer } from '@/components'
 import KanbanList from '@/core/components/group/components/kanban/KanbanList'
 import GrouperHeader from '@/core/components/group/components/grouper/headers'
 import { memo, useRef } from 'react'
 import { MetaGroup } from '~/typings'
 import { assignProperties } from '@/utils'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
-import { Virtualizer } from '@tanstack/react-virtual'
 import scrollIntoView from 'scroll-into-view-if-needed'
 import GalleryHideLabelSource from '@/core/components/group/components/grouper/multipleGroupRenderer/GalleryHideLabelSource'
 
@@ -65,7 +64,7 @@ export default memo(() => {
         if (i.hidden) return null
         let showAddMore = true
         if (groupFieldType === 'metaType') {
-          showAddMore = !!GlobalInstance.metaOps?.canCreateDirectly(i.name)
+          showAddMore = !!Global.metaOps?.canCreateDirectly(i.name)
         }
         if (groupFieldType === 'containedIn') {
           showAddMore = false
@@ -74,7 +73,7 @@ export default memo(() => {
           <Content data-idx={idx} key={i.id} style={{ flexShrink: 0, width: size }}>
             <GrouperHeader
               style={{
-                padding: '8px 10px 8px'
+                padding: '0px 10px 8px'
               }}
               group={i}
               showToggle={false}

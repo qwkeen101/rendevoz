@@ -1,6 +1,3 @@
-import { iso6393To1 } from '@/consts/iso-639-to-iso-631'
-import { franc } from 'franc'
-
 export const highlightElementText = (ele: HTMLElement) => {
   if (window.getSelection) {
     const range = document.createRange()
@@ -8,10 +5,6 @@ export const highlightElementText = (ele: HTMLElement) => {
     window.getSelection()?.removeAllRanges()
     window.getSelection()?.addRange(range)
   }
-}
-
-export const detectLanguage = (text: string): string | undefined => {
-  return iso6393To1[franc(text, { minLength: 1, only: ['eng', 'zho', 'cmn'] })]
 }
 
 function getIndicesOf(searchStr, str, caseSensitive) {
@@ -50,4 +43,36 @@ export const truncateString = (str: string) => {
     return str.slice(0, 30) + '...'
   }
   return str
+}
+
+export const getSelectionDirection = () => {
+  const selection = window.getSelection()
+  if (!selection) throw ''
+  if (!selection.isCollapsed) {
+    // 检查是否有文本被选中
+    const anchorNode = selection.anchorNode // 选择的起始节点
+    const focusNode = selection.focusNode // 选择的结束节点
+    const anchorOffset = selection.anchorOffset // 起始节点中的位置
+    const focusOffset = selection.focusOffset // 结束节点中的位置
+
+    if (anchorNode === focusNode) {
+      // 如果起始节点和结束节点是相同的
+      if (anchorOffset < focusOffset) {
+        return 'down'
+      } else {
+        return 'up'
+      }
+    } else {
+      // 如果起始节点和结束节点不同
+      const range = document.createRange()
+      range.setStart(anchorNode, anchorOffset)
+      range.setEnd(focusNode, focusOffset)
+
+      if (range.collapsed) {
+        return 'up'
+      } else {
+        return 'down'
+      }
+    }
+  }
 }

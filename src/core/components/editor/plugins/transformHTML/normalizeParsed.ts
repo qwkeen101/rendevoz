@@ -1,4 +1,4 @@
-import { Descendant, Element, Node } from 'slate'
+import { Descendant, Element, Node, Text } from 'slate'
 const normalizeEmptyChildren = (descendant: Descendant[]) => {
   if (!descendant.length) {
     return [{ text: '' }]
@@ -6,22 +6,29 @@ const normalizeEmptyChildren = (descendant: Descendant[]) => {
   return descendant
 }
 
-export const normalize = (descendants: Descendant[]) => {
-  descendants = normalizeEmptyChildren(descendants)
-  descendants = descendants.map((n, idx, array) => {
-    if (Element.isElement(n)) {
-      if (n.type === 'figcaption') {
-        const prev = array[idx - 1]
-        if (prev?.type !== 'image') {
-          return null
+export const normalize = (descendants: Descendant[]): Descendant[] => {
+  const normalized = normalizeEmptyChildren(descendants)
+    .map((n, idx, array) => {
+      if (Element.isElement(n)) {
+        if (n.type === 'figcaption') {
+          const prev = array[idx - 1]
+          if (prev?.type !== 'image') {
+            return null
+          }
+        }
+        return {
+          ...n,
+          children: normalize(n.children)
         }
       }
-      return {
-        ...n,
-        children: normalize(n.children)
+      if (Text.isText(n) && !n.text) {
+        return null
       }
-    }
-    return n
-  })
-  return descendants.filter(i => i) as Descendant[]
+      return n
+    })
+    .filter(i => i) as Descendant[]
+  if (!normalized.length) {
+    return [{ text: '' }]
+  }
+  return normalized
 }

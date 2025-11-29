@@ -145,14 +145,15 @@ const ToolTip: FC<PropsWithChildren<ToolTipProps>> = (
         style={{
           background: 'rgba(0,0,0,1)',
           color: 'white',
-          borderRadius: 4,
-          lineHeight: 1.2,
-          padding: '3px 6px',
-          fontSize: 12,
+          borderRadius: 6,
+          lineHeight: 1.4,
+          padding: '2px 6px',
+          fontSize: 13,
+          fontWeight: 500,
           ...style
         }}
       >
-        {typeof content === 'function' ? content(setV) : content}
+        {typeof content === 'function' ? content(setV) : <span className='select-none'>{content}</span>}
       </div>
     )
   }

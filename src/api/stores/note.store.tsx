@@ -1,18 +1,15 @@
 import getLocalTable from '@/api/stores/getLocalTable'
 import Id from '@/utils/id'
-import { Descendant, Node } from 'slate'
-import { IEditorInstance, ILayoutTab, INote } from '~/typings'
+import { Descendant } from 'slate'
+import { INote } from '~/typings'
 import SearchHelper from '@/api/textSearch/SearchHelper'
 import { MetaStore, ObjectStore } from '@/api/stores/index'
 import FileSystem from '@/api/fileSystem'
-import { Rendevoz } from '@/core/rendevoz'
-import normalizeChildrenToText from '@/core/components/editor/utils/normalize/normalizeChildrenToText'
-import { GlobalInstance } from '@/hooks'
+import { slateToMarkdown } from '@/core/components/editor/plugins/slateToMarkdown'
 
 const createNoteStore = () => {
   const blobDb = getLocalTable('blobs')
   const saveNoteAsBuffer = async (value: Descendant[], id?: number) => {
-    console.log('saved')
     const realId = id || Id.getId()
 
     await FileSystem.fs.writeFile(new Blob([JSON.stringify(value)]), `/files/note_${realId}.json`).then(res =>
@@ -54,13 +51,12 @@ const createNoteStore = () => {
       if (targetMeta) {
         SearchHelper.insertDocument({
           id: targetMeta.id,
-          docType: 'metaObject',
           metaId: targetMeta.id,
           metaType: targetMeta.type,
           name: targetMeta.name || targetMeta.placeholderName,
           placeholderName: targetMeta.placeholderName,
           description: targetMeta.description,
-          content: normalizeChildrenToText(value)
+          content: slateToMarkdown(value)
         })
       }
     }
@@ -68,6 +64,7 @@ const createNoteStore = () => {
   const initializeNoteWithValue = async (value: Descendant[], initialNote?: Partial<INote>): Promise<INote> => {
     const note = await ObjectStore('note').addOne({ ...initialNote })
     const contentId = note.contentId || Id.getId()
+    console.log(value)
     await saveNoteAsBuffer(value, contentId)
     await ObjectStore('note').updateOne({ id: note.id, contentId })
     return note
@@ -93,15 +90,11 @@ const createNoteStore = () => {
   const updateNoteValue = async (newValue: Descendant[] | ((currentValue: Descendant[]) => Descendant[]), noteId: number) => {
     const note = await ObjectStore('note').getOneById(noteId)
     if (note && note.contentId) {
-      const currValue = (await getNoteValue(note.contentId)) || []
-      const nextValue = typeof newValue === 'function' ? newValue(currValue) : newValue
+      const nextValue = typeof newValue === 'function' ? newValue((await getNoteValue(note.contentId)) || []) : newValue
       await saveNoteAsBuffer(nextValue, note.contentId)
       saveNoteAsSearch(nextValue, noteId)
-      Rendevoz.Events.Emit.emitEventGlobally('editor', {
-        type: 'refreshFromValue',
-        data: {
-          noteId: [noteId]
-        }
+      Global.emitEvent('editorRefreshFromValue', {
+        noteId: [noteId]
       })
     }
   }

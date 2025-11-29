@@ -1,9 +1,7 @@
 import { useMemoizedFn, useMousePositionRef, useRafFn } from '@/hooks'
 import { Position, Rect } from '@/types'
 import { useEffect, useRef } from 'react'
-import { useFlow } from '../StateHooks'
-import { useWhiteboardState } from '@/core/components/whiteboard/hooks/useWhiteboardState'
-import UseMemoizedFn from '@/hooks/utils/useMemoizedFn'
+import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
 
 type XYPosition = Required<Pick<Position, 'x' | 'y'>>
 
@@ -36,21 +34,19 @@ export const calcAutoPan = (pos: XYPosition, bounds: Rect): number[] => {
 }
 
 const useWhiteboardAutoPan = () => {
-  const flow = useFlow()
+  const instance = useWhiteboardInstance()
   const autoPanId = useRef<number>()
   const mousePosRef = useMousePositionRef()
-  const [whiteboardState] = useWhiteboardState()
-  const canDrag =
-    whiteboardState.isSelecting || whiteboardState.erasing || whiteboardState.freeDrawing || flow.isDraggingNode || flow.isAddingEdge
 
   const autoPan = useMemoizedFn(() => {
-    const container = flow.containerEle
-    if (!container || !canDrag) {
+    const state = instance.getState()
+    const container = instance.getOutestContainerNode()
+    const canPan = state.isSelecting || state.isErasing || state.freeDrawing || state.isDraggingNode
+    if (!container || !canPan) {
       autoPanId.current = undefined
       return
     }
-    const parent = container.parentElement
-    const parentBound = (parent as HTMLElement).getBoundingClientRect()
+    const parentBound = container.getBoundingClientRect()
     const [xMovement, yMovement] = calcAutoPan(
       {
         x: mousePosRef.current[0] - parentBound.x,
@@ -59,12 +55,13 @@ const useWhiteboardAutoPan = () => {
       parentBound
     )
     if (xMovement !== 0 || yMovement !== 0) {
-      flow.panzoom?.moveBy(xMovement, yMovement, false)
+      instance.panzoom?.moveBy(xMovement, yMovement, false)
     }
     autoPanId.current = requestAnimationFrame(autoPan)
   })
-  const pointerMoveHandler = (e: PointerEvent) => {
-    if (whiteboardState.isSelecting || whiteboardState.erasing || whiteboardState.freeDrawing || flow.isDraggingNode || flow.isAddingEdge) {
+  const pointerMoveHandler = () => {
+    const state = instance.getState()
+    if (state.isSelecting || state.isErasing || state.freeDrawing || state.isDraggingNode) {
       if (!autoPanId.current) {
         autoPan()
       }
@@ -72,9 +69,9 @@ const useWhiteboardAutoPan = () => {
   }
   const rafPointerMoveHandler = useRafFn(pointerMoveHandler)
   useEffect(() => {
-    flow.containerEle?.parentElement?.addEventListener('pointermove', rafPointerMoveHandler)
+    instance.addEventListener('pointermove', rafPointerMoveHandler)
     return () => {
-      flow.containerEle?.parentElement?.removeEventListener('pointermove', rafPointerMoveHandler)
+      instance.removeEventListener('pointermove', rafPointerMoveHandler)
     }
   })
 }

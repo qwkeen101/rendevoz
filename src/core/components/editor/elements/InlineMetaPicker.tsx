@@ -2,8 +2,8 @@ import { RenderElementProps } from 'slate-react'
 import { AnimatePopover, Icon, WithBorder } from '@/components'
 import { useEffect, useRef, useState } from 'react'
 import isHotkey from 'is-hotkey'
-import { Colors, KEY } from '@/consts'
-import MetaFilterer from '@/core/object/filter/MetaFilterer'
+import { Colors, Icons, KEY } from '@/consts'
+import MetaFilterer from '@/core/object/filter/MetaFilter'
 import { Editor, Path, Transforms } from 'slate'
 import { ReactEditor, useSlateStatic } from '@/core'
 import { useMemoizedFn } from '@/hooks'
@@ -11,11 +11,15 @@ import { ClassName } from 'rendevoz'
 import { HistoryEditor } from 'slate-history'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import Id from '@/utils/id'
+import AutoSizeTextArea from '@/components/base/AutoSizeTextArea'
+import { css } from '@emotion/css'
+import { MetaStore } from '@/api/stores'
 
 const InlineMetaPicker = ({ element, children, attributes }: RenderElementProps) => {
   const editor = useSlateStatic()
   const [value, setValue] = useState('')
   const [visible, setVisible] = useState(false)
+  console.log(visible)
   const handleTransformPicker = useMemoizedFn((id?: number) => {
     const path = ReactEditor.findPath(editor, element)
     if (id) {
@@ -29,9 +33,14 @@ const InlineMetaPicker = ({ element, children, attributes }: RenderElementProps)
           at: path
         }
       )
-      editor.on({
-        type: 'linkToMeta',
-        targetMetaId: id
+      instance.on({
+        type: 'getMeta',
+        onSuccess: sourceId => {
+          MetaStore.addMetaLink({
+            sourceId,
+            targetId: id
+          })
+        }
       })
       Transforms.setSelection(editor, Editor.range(editor, Path.next(path)))
       ReactEditor.focus(editor)
@@ -80,10 +89,10 @@ const InlineMetaPicker = ({ element, children, attributes }: RenderElementProps)
     }
   }, [visible])
   return (
-    <span {...attributes} style={{ background: Colors.Background.ButtonActive, padding: '2px 4px', borderRadius: 4, fontSize: '0.9em' }}>
+    <span {...attributes} className={'bg-third em:mx-2 em:pl-2 em:pr-2.5 em:py-1 em:rounded em:text-sm'}>
       <AnimatePopover
-        positions={['top', 'bottom']}
-        padding={4}
+        positions={['bottom', 'top']}
+        padding={8}
         reposition
         withClickCover
         content={
@@ -106,14 +115,21 @@ const InlineMetaPicker = ({ element, children, attributes }: RenderElementProps)
       >
         <span onClick={() => setVisible(true)}>
           <span contentEditable={false}>
-            <Icon name={'park-search'} containerStyle={{ display: 'inline', marginRight: 4, fontSize: '0.9em' }} />
+            <Icon name={Icons.Search} containerStyle={{ display: 'inline', marginRight: 4, fontSize: '0.9em' }} />
           </span>
-          <input
-            value={value}
-            size={16}
-            onChange={v => setValue(v.target.value)}
-            className={ClassName.noStyleInput}
-            placeholder={'Mention an object'}
+          <AutoSizeTextArea
+            style={{
+              display: 'inline-block',
+              whiteSpace: 'nowrap'
+            }}
+            className={css({
+              br: {
+                display: 'none'
+              }
+            })}
+            defaultValue={value}
+            onChange={v => setValue(v)}
+            placeholder={'Mention'}
             ref={ref}
           />
           {children}

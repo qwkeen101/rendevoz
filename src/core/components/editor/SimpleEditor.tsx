@@ -1,10 +1,7 @@
-import { Editor } from '@/core'
 import { CSSProperties, useMemo, useRef, useState } from 'react'
 import Id from '@/utils/id'
 import { IEditorInstance } from '~/typings'
-import { css } from '@emotion/css'
 import NoteEditor from '@/core/components/editor/noteEditor/NoteEditor'
-import { useUpdateEffect } from '@/hooks'
 
 type SimpleEditorProps = {
   value?: string | import('slate').Descendant[]
@@ -16,35 +13,26 @@ type SimpleEditorProps = {
   readOnly?: boolean
   textareaMode?: boolean
   changeOnBlur?: boolean
+  className?: string
   metaId?: number
-  replaceValueOnChange?: boolean
-  disableScrollIntoView?: boolean
   virtualizer?: boolean
   onClick?: React.MouseEventHandler
+  lineHeight?: number
 }
 
-const textAreaClassname = css({
-  p: {
-    padding: 0
-  },
-  '.ParagraphBlock': {
-    margin: '1px 0px',
-    borderRadius: 0
-  }
-})
 const SimpleEditor = ({
   value,
   onChange,
+  lineHeight,
   onInstanceInitialized,
   containerStyle,
   fontSize = 17,
-  replaceValueOnChange = false,
   readOnly = false,
   onClick,
   changeOnBlur = false,
-  disableScrollIntoView,
   textareaMode,
   placeholder,
+  className,
   virtualizer = false,
   metaId
 }: SimpleEditorProps) => {
@@ -83,16 +71,11 @@ const SimpleEditor = ({
   }, [])
   const [innerValue, setInnerValue] = useState(initialValue)
   const ins = useRef<IEditorInstance>()
-  useUpdateEffect(() => {
-    if (replaceValueOnChange) {
-      if (Array.isArray(value) || value === undefined) {
-        setInnerValue(value)
-        ins.current?.replaceChildren?.(value || [{ type: 'paragraph', children: [{ text: '' }], id: Id.getId() }])
-      }
-    }
-  }, [value])
   return (
     <NoteEditor
+      classNames={{
+        editorContainerClassName: className
+      }}
       metaId={metaId}
       placeholder={placeholder}
       textboxMode={textareaMode}
@@ -113,6 +96,16 @@ const SimpleEditor = ({
         }
       }}
       defaultValue={initialValue}
+      plugins={
+        textareaMode
+          ? {
+              dragBlock: false,
+              select: false,
+              addUnderLastLine: false,
+              blockHandle: false
+            }
+          : undefined
+      }
       styles={{
         pageMinPadding: 0,
         containerHeight: 'auto',
@@ -128,11 +121,7 @@ const SimpleEditor = ({
         fontSize,
         pageWidth: 'Max',
         showSyncBlockShadow: false,
-        typeface: 'Inter',
-        lineSpacing: 1.57
-      }}
-      classNames={{
-        editorContainerClassName: textareaMode ? textAreaClassname : undefined
+        lineSpacing: lineHeight ?? 1.57
       }}
       onInstanceInitialized={i => {
         onInstanceInitialized?.(i)
@@ -147,7 +136,6 @@ const SimpleEditor = ({
         virtualizer: virtualizer,
         showHeader: false,
         showBottomPadding: false,
-        canScrollIntoView: !disableScrollIntoView,
         alwaysShowPlaceholder: !!placeholder
       }}
     />

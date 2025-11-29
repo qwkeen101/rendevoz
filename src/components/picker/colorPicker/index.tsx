@@ -1,5 +1,5 @@
 import { FC, memo } from 'react'
-import * as material from 'material-colors'
+import material from 'material-colors'
 import { Content } from '../../base'
 import { css } from '@emotion/css'
 import { default as ConstColors } from '@/consts/colors'
@@ -112,14 +112,13 @@ const ColorPicker: FC<ColorPickerProps> = ({
             })
           )}
           style={{
-            background: isFont
-              ? 'white'
-              : color === defaultFontColor || color === defaultBgColor
+            background:
+              color === defaultFontColor || color === defaultBgColor
                 ? ConstColors.Background.Secondary
                 : showLess === false
                   ? color
                   : ConstColors.getAdaptColor(color),
-            color: isFont ? color : undefined,
+            color: isFont ? ConstColors.getAdaptFontColor(color) : undefined,
             boxShadow: 'rgb(15 15 15 / 10%) 0px 0px 0px 1px inset'
           }}
         >
@@ -165,7 +164,7 @@ const ColorPicker: FC<ColorPickerProps> = ({
           gap: 4
         })}
         style={{
-          height: !showLess ? 'auto' : 56
+          height: !showLess ? 'auto' : 58
         }}
       >
         {displayColors.map(i => renderItem(i))}

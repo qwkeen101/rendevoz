@@ -17,15 +17,15 @@ export type SearchOccurrence = {
 export const EditorSearchAtom = atom<{
   query?: string
   results?: Record<number, string>
+  // map to ensure order
   //blockid => block has search num
-  occurrences?: Record<number, number>
+  occurrences?: Map<number, number>
   //block search entry cache: block id =>
   entryCache?: Record<number, SearchOccurrence[]>
   currentOccurrence?: {
     blockId: number
     idx: number
   }
-  isSearching?: boolean
 }>({})
 
 const useEditorSearch = () => useAtom(EditorSearchAtom)

@@ -1,24 +1,20 @@
-import { GlobalEventEmitter } from '@/events'
 import getLocalTable from '@/api/stores/getLocalTable'
 import { Atom, atom, PrimitiveAtom } from 'jotai'
 import { atomFamily, selectAtom } from 'jotai/utils'
 import { useMemo } from 'react'
-import { IRegisterdObject, MetaObject } from '~/typings'
-import { globalStore, GroupStore, MetaStore, NoteStore, ObjectStore } from '../index'
+import { BuiltInObjectTypes, IRegisterdObject, MetaObject } from '~/typings'
+import { globalStore, MetaStore, ObjectStore } from '../index'
 import BaseStore, { initializeLocalStore } from '../base.store'
-import { objectIdToMetaObjectIdMapAtom, TypeToRegisteredMetaObject } from '../meta/meta.store'
+import { TypeToRegisteredMetaObject } from '../meta/meta.store'
 import { IStore } from '../types'
 import { useGlobalAtomValue } from '@/hooks'
-import { CustomTypes } from 'rendevoz'
-import { Rendevoz } from '@/core/rendevoz'
 import deleteCallback from '@/api/stores/object/deleteCallback'
 import addCallback from '@/api/stores/object/addCallback'
-import KeyvalueStore from '@/api/stores/keyvalue.store'
-import createReviewStore from '@/api/stores/object/custom/ReviewCardStore'
 import updateCallback from '@/api/stores/object/updateCallback'
-import { FeedCollectionStore, OptionStore, TagStore, WhiteboardStore, NoteStore as NoteObjectStore } from './custom'
-import { urlToIdMap } from '@/api/indexData/urlToId'
-export type ObjectFamily = CustomTypes['Object']
+import CustomStores from './custom'
+import { debounce } from 'lodash'
+import SearchHelper from '@/api/textSearch/SearchHelper'
+export type ObjectFamily = BuiltInObjectTypes
 
 const ObjectStoreKeys = new Set<string>()
 export const ObjectFamilyAtom = atomFamily(p => {
@@ -34,8 +30,11 @@ type ObjectStore<T extends keyof ObjectFamily, V extends ObjectFamily[T]> = {
   adaptStore: () => IStore<V>
   createAtom: (id?: number) => Atom<V | undefined>
   getCachedOneById: (id: number) => V | undefined
+  getCachedAll: () => V[]
   useValue: (id?: number) => Awaited<V> | undefined
   useMultiple: (ids?: Iterable<number>) => Awaited<V[]>
+  useAll: () => Awaited<V[]>
+  useAllKeys: () => number[]
 } & IStore<V>
 const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[T], S extends IStore<V>>(
   type: T,
@@ -57,12 +56,14 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
     afterUpdateProcess?: {
       onSuccess?: (obj: V, silent: boolean) => void
       onFail?: (silent: boolean) => void
+      triggerSearch?: boolean
     }
     afterDeleteProcess?: (obj: V) => void
     afterGetOneProcess?: {
       onSuccess?: (obj: V, silent: boolean) => void
       onFail?: (silent: boolean) => void
     }
+    onSearch?: (obj: V) => Promise<string>
   }
 ): ObjectStore<T> => {
   const objectsDb = getLocalTable('objects')
@@ -71,6 +72,31 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
   // To prevent race condition
   // For example: delete one by id, delete from atom, but useValue get it again because right now data in database still not deleted
   const forcedRemoveIds = new Set<number>()
+
+  const handleSearch = async (id: number | V) => {
+    const obj = typeof id === 'number' ? await localStore.getOneById(id) : id
+    if (obj) {
+      const targetMeta = MetaStore.getMetaObjectByObjectId(obj.id)
+      if (targetMeta) {
+        const str = await options?.onSearch?.(obj)
+        if (str) {
+          SearchHelper.insertDocument({
+            content: str,
+            id: targetMeta.id,
+            metaId: targetMeta.id,
+            metaType: targetMeta.type,
+            description: targetMeta.description,
+            placeholderName: targetMeta.placeholderName,
+            name: targetMeta.name || ''
+          })
+        }
+      }
+    }
+  }
+  const debouncedSearch = debounce((id: number | V) => {
+    handleSearch(id)
+  }, 1000)
+
   const localStore: IStore<V> = {
     getAll: async () => {
       let data = await objectsDb.where('specType').equals(type).toArray()
@@ -83,6 +109,13 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
       globalStore.set(objectMapAtom, BaseStore.bulkAdd(data, new Map()))
       return true
     },
+    fetchByConditions: async conditions => {
+      let data = await objectsDb.where({ specType: type, ...conditions }).toArray()
+      if (options?.transformData) {
+        data = data.map(d => options.transformData!(d))
+      }
+      return data
+    },
     fetchAll: async () => {
       let data = await objectsDb.where('specType').equals(type).toArray()
       if (options?.transformData) {
@@ -90,7 +123,7 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
       }
       return data
     },
-    getMultipleByIds: async (id, cache) => {
+    getMultipleByIds: async (id = [], cache) => {
       return (await initializedLocalStore.getMultipleByIds()(id, cache)).filter(i => i)
     },
     getOneById: async (id, opt) => {
@@ -148,17 +181,12 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
           placeholderName = 'Untitled'
         }
         if (opts?.showMetaModal) {
-          meta = (await GlobalEventEmitter().emitWithCallback('global', {
-            type: 'globalNeedAddMetaObject',
-            data: {
-              currentObject: {
-                type: obj.specType,
-                objectId: obj.id,
-                name: obj.name || registeredDefaultName,
-                placeholderName,
-                ...opts.currentMeta
-              }
-            }
+          meta = (await Global.metaOps?.openCreateForm({
+            type: obj.specType,
+            objectId: obj.id,
+            name: obj.name || registeredDefaultName,
+            placeholderName,
+            ...opts.currentMeta
           })) as MetaObject
         } else {
           meta = await MetaStore.addMetaObject(
@@ -181,6 +209,9 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
       options?.beforeUpdateProcess?.(n, opts)
       return initializedLocalStore.updateOne(
         (obj, silent) => {
+          if (options?.afterUpdateProcess?.triggerSearch) {
+            debouncedSearch(obj)
+          }
           updateCallback(n, obj)
           options?.afterUpdateProcess?.onSuccess?.(obj, silent)
         },
@@ -211,7 +242,7 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
           if (targetMeta) {
             MetaStore.deleteMetaObject(targetMeta.id, {
               silent: true,
-              force: true
+              force
             })
           }
         })(id, { ...opts, force })
@@ -231,6 +262,7 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
     getOneById: adaptStore().getOneById,
     getAll: adaptStore().getAll,
     fetchAll: adaptStore().fetchAll,
+    fetchByConditions: adaptStore().fetchByConditions,
     fetchOneById: adaptStore().fetchOneById,
     addOneWithMeta: adaptStore().addOneWithMeta,
     getMultipleByIds: adaptStore().getMultipleByIds
@@ -261,15 +293,25 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
     return memoedArr
   }
 
+  const useAllKeys = () => {
+    const all = useGlobalAtomValue(objectMapAtom)
+    const memoedArr = useMemo(() => {
+      return Array.from(all.keys())
+    }, [all])
+    return memoedArr
+  }
+
   const useMultiple = (ids?: Iterable<number>): T[] => {
     const a = useMemo(() => {
       if (!ids) return atom([])
       const idArr = Array.from(ids)
-      realStore.getMultipleByIds(idArr)
+      realStore.getMultipleByIds(idArr, true)
       const selected = selectAtom(
         objectMapAtom,
         map => idArr.map(id => map.get(id)).filter(i => i) as unknown as T[],
-        (prev, curr) => prev.every((i, idx) => curr[idx] === i)
+        (prev, curr) => {
+          return prev.length === curr.length && prev.every((i, idx) => curr[idx] === i)
+        }
       )
       return selected
     }, [ids])
@@ -281,6 +323,17 @@ const createObjectStore = <T extends keyof ObjectFamily, V extends ObjectFamily[
     adaptStore,
     createAtom,
     useValue,
+    useAllKeys,
+    triggerSearch: async (id: number, debounce = true) => {
+      if (debounce) {
+        debouncedSearch(id)
+      } else {
+        handleSearch(id)
+      }
+    },
+    getCachedAll: () => {
+      return Array.from(globalStore.get(objectMapAtom).values())
+    },
     getCachedOneById: id => {
       return globalStore.get(objectMapAtom).get(id)
     },
@@ -296,141 +349,13 @@ export const objectStore = <T extends keyof ObjectFamily>(type: T): ObjectStore<
   if (store) {
     return store
   } else {
-    const getStore = () => {
-      switch (type) {
-        case 'question':
-          return createQuestionStore()
-        case 'group':
-          return createGroupStore()
-        case 'webpage':
-          return createWebpageStore()
-        case 'note':
-          return NoteObjectStore()
-        case 'tag':
-          return TagStore()
-        case 'metaPropSelectOption':
-          return OptionStore()
-        case 'reviewCard':
-          return createReviewStore()
-        case 'whiteboard':
-          return WhiteboardStore()
-        case 'feedCollection':
-          return FeedCollectionStore()
-        case 'feedFolder':
-          return createFeedFolderStore()
-        default:
-          return createObjectStore(type)
-      }
-    }
-    const store = getStore()
+    const customStore = CustomStores[type]
+    const store = customStore?.() || createObjectStore(type)
     storeMap.set(type, store)
     return store
   }
 }
-const createQuestionStore = () => {
-  return createObjectStore('question', {
-    beforeAddProcess: async n => {
-      if (!n.questionType) {
-        n.questionType = 'text'
-      }
-    }
-  })
-}
-const createWebpageStore = () => {
-  return createObjectStore('webpage', {
-    beforeAddMetaProcss: async obj => {
-      if (obj.url) {
-        const already = globalStore.get(urlToIdMap).get(obj.url)
-        if (already) {
-          const meta = MetaStore.getMetaObjectByObjectId(already)
-          if (meta) {
-            return meta
-          }
-        }
-      }
-    },
-    beforeAddProcess: async o => {
-      if (!('url' in o)) {
-        o.url = ''
-      }
-    },
-    afterAddMetaProcess: {
-      onSuccess: async (obj, meta) => {
-        if (obj.url) {
-          const result = await Rendevoz.Utils.Web.parseWebpage(obj.url)
-          console.log(obj, meta)
-          if (!meta.name) {
-            await MetaStore.updateMetaObject(
-              { id: meta.id, coverImgSrc: result.image, name: result.title, description: result.description },
-              {
-                silent: true
-              }
-            )
-          }
-          if (!obj.noteId) {
-            const note = await NoteStore.initializeNoteWithValue(result.content)
-            if (note) {
-              await ObjectStore('webpage').updateOne({
-                id: obj.id,
-                noteId: note.id
-              })
-            }
-          }
-        }
-      }
-    },
-    beforeUpdateProcess: o => {
-      if (!o.url?.startsWith('http://') && !o.url?.startsWith('https://') && o.url?.length) {
-        o.url = 'https://' + o.url
-      }
-    }
-  })
-}
 
-const createFeedCollectionStore = () => {
-  return createObjectStore('feedCollection', {
-    beforeAddProcess: async o => {
-      if (!o.workspace) {
-        const currWorkspace = KeyvalueStore.getOne('currentWorkspace')
-        currWorkspace && (o.workspace = currWorkspace.id)
-      }
-    },
-    afterGetAllProcess: all => {
-      const currWorkspace = KeyvalueStore.getOne('currentWorkspace')
-      if (currWorkspace) {
-        return all.filter(i => !i.workspace || i.workspace === currWorkspace.id)
-      }
-      return all
-    }
-  })
-}
-const createFeedFolderStore = () => {
-  return createObjectStore('feedFolder', {
-    beforeAddProcess: async o => {
-      if (!o.workspace) {
-        const currWorkspace = KeyvalueStore.getOne('currentWorkspace')
-        currWorkspace && (o.workspace = currWorkspace.id)
-      }
-    },
-    afterGetAllProcess: all => {
-      const currWorkspace = KeyvalueStore.getOne('currentWorkspace')
-      if (currWorkspace) {
-        return all.filter(i => !i.workspace || i.workspace === currWorkspace.id)
-      }
-      return all
-    }
-  })
-}
-
-const createGroupStore = () => {
-  return createObjectStore('group', {
-    beforeAddProcess: async o => {
-      const initialized = GroupStore.initializeGroup()
-      Object.assign(o, initialized, o)
-      return true
-    }
-  })
-}
 export const getObjectById = <T extends keyof ObjectFamily>(id: number): Promise<ObjectFamily[T]> => {
   const objectsDb = getLocalTable('objects')
   return objectsDb.get(id)

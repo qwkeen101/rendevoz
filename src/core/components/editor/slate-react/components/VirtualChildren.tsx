@@ -1,22 +1,20 @@
-import { memo, RefObject, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Descendant, Editor, Element as SlateElement, Range, Selection } from 'slate'
+import { memo, RefObject, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { Descendant, Editor, Element as SlateElement, Path, Range, Selection } from 'slate'
 
 import ElementComponent from './element'
 
 import { ReactEditor } from '../plugin/react-editor'
 import { useSlateStatic } from '../hooks/use-slate-static'
 import { NODE_TO_INDEX, NODE_TO_PARENT } from '../utils/weak-maps'
-import { RenderElementProps, RenderLeafProps, RenderPlaceholderProps } from './editable'
-import { useVirtualizer, Range as VirtualRange, defaultRangeExtractor } from '@tanstack/react-virtual'
-import { EDITOR_TO_CHANGED, ID_TO_FIRST_LAYER_EXCEPET_HIDEN_MAP, ID_TO_FIRST_LAYER_MAP } from '../../weakMaps'
-import { useSelectAtomValue } from '@/hooks'
+import { RenderElementProps, RenderLeafProps } from './editable'
+import { useVirtualizer, Range as VirtualRange, defaultRangeExtractor } from '@/components'
 import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
-import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
-import { assignProperties } from '@/utils'
 import { useUpdate } from 'react-use'
 import { selectAtom } from 'jotai/utils'
 import { isEqual } from 'lodash'
 import { useAtomValue } from 'jotai'
+import { useDecorate } from '@/core/components/editor/slate-react/hooks/use-decorate'
+import { CustomEditor, CustomElement } from '~/typings'
 
 /**
  * Children.
@@ -34,54 +32,132 @@ const stateAtom = selectAtom(
   }),
   isEqual
 )
+
+type IFirstLayer = {
+  visible: CustomElement[]
+  firstLayerMap: Map<number, number>
+  firstLayerNotHiddenMap: Map<number, number>
+}
 const VirtualChildren = memo(
   (props: {
     decorations: Range[]
     children: Descendant[]
     renderElement?: (props: RenderElementProps) => JSX.Element
-    renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
     renderLeaf?: (props: RenderLeafProps) => JSX.Element
     selection: Range | null
-    scrollElement?: RefObject<HTMLElement | null>
+    scrollElement: RefObject<HTMLElement | null>
     readOnly?: boolean
     parentElement?: RefObject<HTMLElement | null>
   }) => {
-    const { decorations, renderElement, renderPlaceholder, renderLeaf, selection, children, scrollElement, readOnly, parentElement } = props
-
+    const { decorations, renderElement, renderLeaf, selection, children, scrollElement, readOnly, parentElement } = props
     const editor = useSlateStatic()
     const update = useUpdate()
     // sometimes children rerendered earlier than onChange, idk why but we need to trigger onChange to reindex here.
     // TODO: fix this earlier rerender triggered in editable
-    if (EDITOR_TO_CHANGED.get(editor) !== true) {
+    if (editor.changeHandled !== true) {
       editor.onChange?.()
       update()
     }
 
     const visibleChildren = useMemo(() => {
-      return children.filter(i => !i.hide)
-    }, [children])
+      const firstLayerMap = new Map<number, number>()
+      const firstLayerNotHiddenMap = new Map<number, number>()
+      const visible: Descendant[] = []
+      ;(children as CustomElement[]).forEach((c, idx) => {
+        if (!c.hide) {
+          visible.push(c)
+          firstLayerNotHiddenMap.set(c.id, visible.length)
+        }
+        firstLayerMap.set(c.id, idx)
+      })
+      return {
+        visible,
+        firstLayerMap,
+        firstLayerNotHiddenMap
+      }
+    }, [children]) as IFirstLayer
     const { disableOverscanInReadOnly = true, v, bottomPadding, textareaMode, overscan: o = 5, showPaddingBottom } = useAtomValue(stateAtom)
     const disableVirtualizer = v === false
-
     const overscan = disableVirtualizer || (readOnly && disableOverscanInReadOnly) ? editor.children.length : o
-    const instance = useEditorInstance()
+    useEffect(() => {
+      update()
+    }, [])
+    const paddingEnd = showPaddingBottom !== false ? bottomPadding || 200 : 0
+    return !disableVirtualizer ? (
+      <Virtual
+        container={scrollElement}
+        decorations={decorations}
+        selection={selection}
+        overscan={overscan}
+        paddingEnd={paddingEnd}
+        children={visibleChildren}
+        editor={editor}
+        renderElement={renderElement}
+        renderLeaf={renderLeaf}
+        parentElement={parentElement}
+      />
+    ) : (
+      <NotVirtual
+        decorations={decorations}
+        selection={selection}
+        textareaMode={textareaMode}
+        paddingEnd={paddingEnd}
+        children={visibleChildren}
+        editor={editor}
+        renderElement={renderElement}
+        renderLeaf={renderLeaf}
+        parentElement={parentElement}
+      />
+    )
+  },
+  (prev, curr) =>
+    prev.selection === curr.selection &&
+    prev.children === curr.children &&
+    prev.scrollElement === curr.scrollElement &&
+    prev.readOnly === curr.readOnly &&
+    prev.parentElement === curr.parentElement &&
+    prev.decorations === curr.decorations
+)
 
-    assignProperties(instance, {
-      getScrollPosition: () => {
-        return virtualizer.scrollOffset
-      },
-      scrollToPosition: offset => {
-        if (offset === 0) {
-          virtualizer.scrollToOffset(0, { align: 'auto', behavior: 'auto' })
-          return
+const Virtual = memo(
+  ({
+    children,
+    container,
+    overscan,
+    paddingEnd,
+    selection,
+    editor,
+    renderElement,
+    renderLeaf,
+    decorations,
+    parentElement
+  }: {
+    children: IFirstLayer
+    container: RefObject<HTMLElement | null>
+    overscan: number
+    paddingEnd: number
+    selection: Selection
+    editor: CustomEditor
+    renderElement?: (props: RenderElementProps) => JSX.Element
+    renderLeaf?: (props: RenderLeafProps) => JSX.Element
+    decorations: Range[]
+    parentElement?: RefObject<HTMLElement | null>
+  }) => {
+    const [titleHeight, setTitleHeight] = useState<number>(0)
+    useLayoutEffect(() => {
+      if (editor.titleEle) {
+        setTitleHeight(Math.round(editor.titleEle.offsetHeight))
+        const observer = new ResizeObserver(entry => {
+          setTitleHeight(Math.round(entry[0].borderBoxSize[0].blockSize))
+        })
+        observer.observe(editor.titleEle)
+        return () => {
+          observer.disconnect()
         }
-        virtualizer.scrollToOffset(offset)
       }
-    })
-
+    }, [editor.titleEle])
     let rangeExtractor: ((r: VirtualRange) => number[]) | undefined = undefined
-    const firstLayerMap = ID_TO_FIRST_LAYER_EXCEPET_HIDEN_MAP.get(editor)!
-
+    const firstLayerMap = children.firstLayerNotHiddenMap
     if (selection && !Range.isCollapsed(selection)) {
       const start = Range.start(selection)
       const end = Range.end(selection)
@@ -101,178 +177,175 @@ const VirtualChildren = memo(
         return arr
       }
     }
-
-    const titleHeight = editor.titleEle?.getBoundingClientRect().height || 0
-
     const virtualizer = useVirtualizer({
-      count: visibleChildren.length,
+      count: children.visible.length,
       estimateSize: () => 30,
-      getScrollElement: () => scrollElement?.current,
+      getScrollElement: () => container.current,
       overscan,
-      paddingEnd: showPaddingBottom !== false ? bottomPadding || 200 : 0,
-      // paddingStart: titleHeight,
+      paddingEnd,
       rangeExtractor: rangeExtractor || defaultRangeExtractor,
       scrollMargin: titleHeight,
       getItemKey: index => {
-        const item = visibleChildren[index]
+        const item = children.visible[index]
         return item.id
       },
-      measureElement: (ele, entry, instance) => {
-        const size = ele.clientHeight
-        const marginTop = parseInt(window.getComputedStyle(ele).marginTop)
-        const marginBottom = parseInt(window.getComputedStyle(ele).marginBottom)
+      measureElement: (ele, entry) => {
+        let size: number
+        if (entry) {
+          size = Math.round(entry.borderBoxSize[0].blockSize)
+        } else {
+          size = Math.round((ele as HTMLElement).offsetHeight)
+        }
+        const computed = window.getComputedStyle(ele)
+        const marginTop = parseInt(computed.marginTop)
+        const marginBottom = parseInt(computed.marginBottom)
         const totalSize = size + marginTop + marginBottom
         return Math.round(totalSize)
       }
     })
-
     editor.virtualizer = virtualizer
-
-    const totalSize = virtualizer.getTotalSize()
-
     const virtualItems = virtualizer.getVirtualItems()
-
     const first = virtualItems[0]
+    const totalSize = virtualizer.getTotalSize()
+    const parentEle = parentElement?.current
 
-    if (!disableVirtualizer) {
-      const size = totalSize
-      const parentEle = parentElement?.current
-      if (parentEle) {
-        parentEle.style.removeProperty('padding-bottom')
-        parentEle.parentElement!.style.height = `${size}px`
-        parentEle.parentElement!.style.minHeight = `${size}px`
-        parentEle.style.position = 'absolute'
-        parentEle.style.width = '100%'
-        parentEle.style.left = '0px'
-        parentEle.style.top = '0px'
-        if (first) {
-          parentEle.style.transform = `translateY(${first.start - titleHeight}px)`
-        }
+    if (parentEle) {
+      const currentStyle = parentEle.style
+      const renderContainer = parentEle.parentElement
+      if (currentStyle.paddingBottom) {
+        currentStyle.removeProperty('padding-bottom')
       }
-    } else {
+      if (renderContainer) {
+        renderContainer.style.height = `${totalSize}px`
+      }
+      if (first) {
+        currentStyle.transform = `translateY(${first.start - titleHeight}px)`
+      }
+    }
+    return virtualItems.map(row => {
+      if (!row) return null
+      const { index, key } = row
+      const element = children.visible[index]
+      return (
+        <VirtualItem
+          measureElement={virtualizer.measureElement}
+          index={index}
+          key={key}
+          renderElement={renderElement}
+          renderLeaf={renderLeaf}
+          decorations={decorations}
+          editor={editor}
+          element={element}
+          selection={selection}
+          firstLayerPathMap={children.firstLayerMap}
+        />
+      )
+    })
+  }
+)
+const NotVirtual = memo(
+  ({
+    children,
+    paddingEnd,
+    selection,
+    editor,
+    renderElement,
+    renderLeaf,
+    decorations,
+    parentElement,
+    textareaMode
+  }: {
+    children: IFirstLayer
+    paddingEnd: number
+    selection: Selection
+    editor: CustomEditor
+    renderElement?: (props: RenderElementProps) => JSX.Element
+    renderLeaf?: (props: RenderLeafProps) => JSX.Element
+    decorations: Range[]
+    parentElement?: RefObject<HTMLElement | null>
+    textareaMode?: boolean
+  }) => {
+    const parentEle = parentElement?.current
+    if (parentEle) {
+      const renderContainer = parentEle.parentElement
       if (!textareaMode) {
         const parentEle = parentElement?.current
         if (parentEle) {
-          parentEle.parentElement?.style.removeProperty('height')
-          parentEle.parentElement?.style.removeProperty('min-height')
-          parentEle.style.removeProperty('transform')
-          parentEle.style.removeProperty('position')
-          const paddingEnd = showPaddingBottom !== false ? bottomPadding || 200 : 0
-          if (paddingEnd) {
+          if (renderContainer && renderContainer.style['height']) {
+            renderContainer.style.removeProperty('height')
+          }
+          parentEle.style['transform'] && parentEle.style.removeProperty('transform')
+          if (paddingEnd !== undefined) {
             parentEle.style.paddingBottom = `${paddingEnd}px`
           }
         }
       }
     }
-
-    useEffect(() => {
-      update()
-    }, [])
-
-    return (
-      <>
-        {/*<div role="virtual-placeholder" contentEditable={false} style={{ height: first?.start - titleHeight, width: '100%' }}></div>*/}
-        {!disableVirtualizer
-          ? virtualItems.map(row => {
-              if (!row) return null
-              const { index } = row
-              const element = visibleChildren[index]
-              return (
-                <VirtualItem
-                  key={element.id}
-                  renderPlaceholder={renderPlaceholder}
-                  renderElement={renderElement}
-                  renderLeaf={renderLeaf}
-                  index={index}
-                  measureElement={virtualizer.measureElement}
-                  decorations={decorations}
-                  element={element}
-                  selection={selection}
-                />
-              )
-            })
-          : visibleChildren.map((i, idx) => (
-              <VirtualItem
-                key={i.id}
-                renderPlaceholder={renderPlaceholder}
-                renderElement={renderElement}
-                renderLeaf={renderLeaf}
-                index={idx}
-                measureElement={virtualizer.measureElement}
-                decorations={decorations}
-                element={i}
-                selection={selection}
-              />
-            ))}
-      </>
-    )
-  },
-  (prev, curr) =>
-    prev.selection === curr.selection &&
-    prev.children === curr.children &&
-    prev.scrollElement === curr.scrollElement &&
-    prev.readOnly === curr.readOnly &&
-    prev.parentElement === curr.parentElement
+    return children.visible.map(i => (
+      <VirtualItem
+        key={i.id}
+        renderElement={renderElement}
+        renderLeaf={renderLeaf}
+        decorations={decorations}
+        element={i}
+        firstLayerPathMap={children.firstLayerMap}
+        editor={editor}
+        selection={selection}
+      />
+    ))
+  }
 )
-
 const VirtualItem = memo(
   ({
     element,
     selection,
     decorations,
     renderElement,
-    renderPlaceholder,
     renderLeaf,
+    editor,
+    index,
     measureElement,
-    index
+    firstLayerPathMap
   }: {
-    element: Descendant
+    element: CustomElement
     selection: Selection
     decorations: Range[]
+    index?: number
+    measureElement?: (ref: HTMLElement | null) => void
     renderElement?: (props: RenderElementProps) => JSX.Element
-    renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
     renderLeaf?: (props: RenderLeafProps) => JSX.Element
-    measureElement: (ele: HTMLElement) => void
-    index: number
+    editor: CustomEditor
+    firstLayerPathMap: Map<number, number>
   }) => {
-    const editor = useSlateStatic()
-    // const decorate = useDecorate()
-    if (element.hide || !element.id) {
-      return null
-    }
-    // get real path from map, row index can't be path
-    // first layer path map should be sync with data model
-    const path = ID_TO_FIRST_LAYER_MAP.get(editor)?.get(element.id)
+    const decorate = useDecorate()
+    const path = [firstLayerPathMap.get(element.id)] as Path
 
-    if (!path?.length) return null
-
+    if (path[0] === undefined) return null
     try {
       const key = ReactEditor.findKey(editor, element)
       const range = Editor.range(editor, path)
       const sel = selection && Range.intersection(range, selection)
-      // const ds = decorate([element, path])
-      // for (const dec of decorations) {
-      //   const d = Range.intersection(dec, range)
-      //   if (d) {
-      //     ds.push(d)
-      //   }
-      // }
+      const ds = decorate([element, path])
+      for (const dec of decorations) {
+        const d = Range.intersection(dec, range)
+        if (d) {
+          ds.push(d)
+        }
+      }
       NODE_TO_INDEX.set(element, path[0])
       NODE_TO_PARENT.set(element, editor)
 
       if (SlateElement.isElement(element)) {
         return (
           <ElementComponent
-            // decorations={ds}
-            decorations={[]}
+            decorations={ds}
             element={element}
             key={key.id}
             renderElement={renderElement}
-            renderPlaceholder={renderPlaceholder}
             renderLeaf={renderLeaf}
             selection={sel}
-            innerRef={measureElement}
             index={index}
+            measureElement={measureElement}
           />
         )
       }
@@ -280,6 +353,13 @@ const VirtualItem = memo(
       console.log(e, path)
     }
     return null
-  }
+  },
+  (prev, curr) =>
+    prev.index === curr.index &&
+    prev.element === curr.element &&
+    prev.decorations === curr.decorations &&
+    prev.renderElement === curr.renderElement &&
+    prev.selection === curr.selection
 )
+
 export default memo(VirtualChildren)

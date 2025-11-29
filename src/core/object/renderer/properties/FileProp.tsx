@@ -67,7 +67,7 @@ export default ({
         )}
       </Content>
       {renderPopover(box => (
-        <PopupWrapper style={{ fontSize: 14 }} box={box}>
+        <PopupWrapper box={box}>
           {currFiles?.length ? (
             <div
               style={{

@@ -5,6 +5,7 @@ import useGroupTableControlCell from '@/core/components/group/hooks/keyboard/use
 import useGroupTableRowControl from '@/core/components/group/hooks/keyboard/useGroupTableRowControl'
 import useGroupEscKey from '@/core/components/group/hooks/keyboard/useGroupEscKey'
 import useGroupCommonActions from '@/core/components/group/hooks/keyboard/useGroupCommonActions'
+import useGroupPasteKey from '@/core/components/group/hooks/keyboard/useGroupPasteKey'
 
 const useGroupGlobalKey = () => {
   const instance = useGroupInstance()
@@ -13,13 +14,16 @@ const useGroupGlobalKey = () => {
   const handleTableRowControlKey = useGroupTableRowControl(instance)
   const handleEscKey = useGroupEscKey(instance)
   const handleCommonKey = useGroupCommonActions(instance)
+  const handlePasteKey = useGroupPasteKey(instance)
   useEffect(() => {
     const keyboardHandler = (e: KeyboardEvent) => {
+      console.log(e)
       if (e.defaultPrevented) {
         return
       }
-      if (!instance.values.isFocused) return
       if (e.target instanceof HTMLElement && e.target.closest('input, textarea, [contenteditable="true"]')) return
+      handlePasteKey(e)
+      if (!instance.values.isFocused) return
       // timeout here to ensure high priorty work first
       // table cell and table row keys can not be delay, otherwise will scroll the page
       handleTableCellControlKey(e)

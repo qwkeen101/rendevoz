@@ -1,13 +1,11 @@
-import React from 'react'
 import { IEditorInstance } from '~/typings'
 import { Transforms } from 'slate'
 
 const useEditorSlashMenu = (instance: IEditorInstance) => {
-  const handleSlashKeyDown: React.KeyboardEventHandler = e => {
+  return (e: KeyboardEvent) => {
     if (e.code === 'Slash' && !e.altKey && !e.ctrlKey && !e.shiftKey && !e.metaKey) {
       e.preventDefault()
-      const editor = instance.getSlateEditor?.()
-      if (!editor) return
+      const editor = instance.editor
       Transforms.insertText(editor, '/')
       setTimeout(() => {
         const currentBlockRect = instance.blockOps?.getCurrentCursorBounding()
@@ -21,10 +19,6 @@ const useEditorSlashMenu = (instance: IEditorInstance) => {
       })
     }
     return
-  }
-
-  return {
-    handleSlashKeyDown
   }
 }
 

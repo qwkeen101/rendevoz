@@ -2,7 +2,6 @@ import { CustomEditor, CustomElement, HeadingElement, IEditorInstance } from '~/
 import { assignProperties } from '@/utils'
 import { Editor, Element, Path, Transforms } from 'slate'
 import { HeadingToLevel } from '@/core/components/editor/elements/Heading'
-import { ID_TO_PATH_MAP } from '@/core'
 
 /**
  *  Toggle blocks like headings, ordered lists, bullet lists
@@ -221,8 +220,7 @@ const assignToggle = (instance: IEditorInstance, editor: CustomEditor) => {
       extendElements: elementz => {
         const elements = Array.isArray(elementz) ? elementz : [elementz]
         const normalized: NodeEntry[] = []
-        const pathMap = ID_TO_PATH_MAP.get(editor)
-        if (!pathMap) throw new Error("Can't get path map")
+        const pathMap = instance.values.ID_TO_PATH
         elements.forEach(element => {
           const path = pathMap.get(element.id)
           if (!path) throw new Error("Can't find element's path")

@@ -2,16 +2,17 @@ import { IGroupInstance, MetaGroupChild, MetaObject } from '~/typings'
 import { assignProperties } from '@/utils'
 import { Group } from '@/core/components/group/hooks/weakmaps'
 import Node from '@/core/components/group/utils/node'
-import { MetaStore, ObjectStore } from '@/api/stores'
+import { MetaStore } from '@/api/stores'
 import produce from 'immer'
 import { Path, PathRef } from 'slate'
 import Id from '@/utils/id'
 import { useEffect, useRef } from 'react'
-import { useSetAtom } from 'jotai/index'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
-import { GlobalInstance, useSelectAtomValue } from '@/hooks'
+import { useSelectAtomValue } from '@/hooks'
 import { InnerGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import { isEqual } from 'lodash'
+import useHideObjects from '@/core/components/group/hooks/useHideObjects'
+import queueTurnUnhidden from '@/api/stores/meta/queueTurnUnhidden'
 
 type GroupUpdateEvent =
   | {
@@ -36,7 +37,7 @@ const TypeToSlateType = {
 type RootNode = {
   children: MetaGroupChild[]
 }
-const useAssignValueOps = (instance: InnerGroupInstance) => {
+const useAssignValueOps = (instance: InnerGroupInstance, groupId?: number) => {
   const { data, groupedValue, filterValue, displayValue, currentView, unToggledSet, hideObjects } = useSelectAtomValue(
     GroupStateAtom,
     s => ({
@@ -110,9 +111,13 @@ const useAssignValueOps = (instance: InnerGroupInstance) => {
         flushed.current = false
         // 100ms timeout to prevent history
         setTimeout(() => {
-          flushUnhiddenMetas.current.forEach(id => {
-            MetaStore.updateMetaObject({ id: id, hidden: false })
-          })
+          flushUnhiddenMetas.current.forEach(id =>
+            queueTurnUnhidden({
+              groupId,
+              metaId: id,
+              type: MetaStore.getCachedMetaObject(id)?.type === 'group' ? 'group' : 'object'
+            })
+          )
           flushUnhiddenMetas.current = []
         }, 100)
 
@@ -223,7 +228,7 @@ const useAssignValueOps = (instance: InnerGroupInstance) => {
         const nextMeta = all?.findLast((i, idx) => {
           if (idx < currIndex) {
             const m = map.get(i[0].id)
-            return m && (opts.canPreview ? GlobalInstance.metaOps?.canPreview(m) : true)
+            return m && (opts.canPreview ? Global.metaOps?.canPreview(m) : true)
           }
           return false
         })
@@ -236,7 +241,7 @@ const useAssignValueOps = (instance: InnerGroupInstance) => {
           if (opts.loop) {
             const first = all?.findLast(i => {
               const m = map.get(i[0].id)
-              return m && (opts.canPreview ? GlobalInstance.metaOps?.canPreview(m) : true)
+              return m && (opts.canPreview ? Global.metaOps?.canPreview(m) : true)
             })
             if (first) {
               return {
@@ -261,7 +266,7 @@ const useAssignValueOps = (instance: InnerGroupInstance) => {
           const nextMeta = all?.find((i, idx) => {
             if (idx > currIndex) {
               const m = map.get(i[0].id)
-              return m && (opts.canPreview ? GlobalInstance.metaOps?.canPreview(m) : true)
+              return m && (opts.canPreview ? Global.metaOps?.canPreview(m) : true)
             }
             return false
           })
@@ -274,7 +279,7 @@ const useAssignValueOps = (instance: InnerGroupInstance) => {
             if (opts.loop) {
               const first = all?.find(i => {
                 const m = map.get(i[0].id)
-                return m && (opts.canPreview ? GlobalInstance.metaOps?.canPreview(m) : true)
+                return m && (opts.canPreview ? Global.metaOps?.canPreview(m) : true)
               })
               if (first) {
                 return {

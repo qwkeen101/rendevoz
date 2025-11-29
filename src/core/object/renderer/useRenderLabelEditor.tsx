@@ -1,12 +1,13 @@
 import { ReactNode, useEffect, useRef, useState } from 'react'
 import { Box, ILabel, XYPosition } from '~/typings'
-import { AnimatePopover, AutosizeTextarea, Content, Icon, WithBorder } from '@/components'
+import { AnimatePopover, AutosizeTextarea, Content, Icon, IconWithPopover, WithBorder } from '@/components'
 import isHotkey from 'is-hotkey'
-import { Colors, KEY } from '@/consts'
-import { GlobalInstance } from '@/hooks'
+import { Icons, KEY, Shortcuts, Zindexes } from '@/consts'
+import { useMemoizedFn } from '@/hooks'
 import ClassName from '@/styles/classNames'
-import { MetaStore } from '@/api/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { useTranslation } from 'react-i18next'
+import { useLatest } from 'react-use'
 
 const TEMP_META_ID = 10001
 const attchedTags: Record<number, number[]> = {}
@@ -29,29 +30,40 @@ const useRenderLabelEditor = function <T extends ILabel>(opts?: {
   })
   const { visible, position, labelDetails, direction = 'bottom' } = popoverState
   const labelMeta = MetaStore.useObjectToMetaValue(labelDetails?.id)
+  const [tagVisible, setTagVisible] = useState(false)
   const [value, setValue] = useState('')
+  const [tempTags, setTempTags] = useState<number[]>([])
   const { t } = useTranslation()
+  const latestTagVisible = useLatest(tagVisible)
   useEffect(() => {
     if (popoverState.visible) {
+      setTempTags([])
+      const keydownHandler = (e: KeyboardEvent) => {
+        if (isHotkey('mod+t', e)) {
+          setTagVisible(s => !s)
+        }
+      }
+      document.addEventListener('keydown', keydownHandler)
       const interval = setInterval(() => {
         if (inputRef.current && inputRef.current !== document.activeElement) {
-          if (!document.activeElement?.closest('[role="modal-container"]')) {
+          if (!latestTagVisible.current) {
             inputRef.current.focus()
           }
         }
       }, 200)
-      MetaStore.addMetaObject({ id: TEMP_META_ID, type: 'temp' })
+      MetaStore.addMetaObject({ id: TEMP_META_ID, type: 'temp', temp: true, hidden: true })
       return () => {
         clearInterval(interval)
+        document.removeEventListener('keydown', keydownHandler)
         MetaStore.deleteMetaObject(TEMP_META_ID, { force: true })
+        setTagVisible(false)
       }
     }
   }, [popoverState.visible])
-  const handleInsertNote = async (shouldClose = true) => {
-    const tags = MetaStore.getCachedMetaObject(TEMP_META_ID)?.tags
-    opts?.onInsert?.(value, tags)
+  const handleInsertNote = useMemoizedFn(async (shouldClose = true) => {
+    opts?.onInsert?.(value, tempTags)
     shouldClose && close()
-  }
+  })
   const renderPopover = (options?: { extra?: ReactNode }) => (
     <AnimatePopover
       keyboardClose={false}
@@ -70,17 +82,18 @@ const useRenderLabelEditor = function <T extends ILabel>(opts?: {
       parentElement={opts?.parentElement}
       withClickCover
       containerStyle={{
-        zIndex: '5000'
+        zIndex: String(Zindexes.LabelEditor)
       }}
       content={
         <WithBorder
-          padding={'9px 8px 8px 12px'}
+          className="p-3"
           style={{
             width: 470,
             maxWidth: '90vw',
             pointerEvents: popoverState.visible ? 'auto' : 'none'
           }}
         >
+          <div className="mb-3 font-bold">添加标注</div>
           {options?.extra}
           <Content
             style={{
@@ -95,6 +108,7 @@ const useRenderLabelEditor = function <T extends ILabel>(opts?: {
               ref={inputRef}
               style={{
                 flexGrow: 1,
+                paddingLeft: 3,
                 width: value.length && value.includes('\n') ? '100%' : undefined
               }}
               value={value}
@@ -114,53 +128,19 @@ const useRenderLabelEditor = function <T extends ILabel>(opts?: {
                   }
                 }
               }}
-              placeholder={t('general.Add note')}
+              placeholder={`${t('general.Add note')}...`}
             />
-            <Content flex gap={6} alignItems={'center'}>
-              {opts?.showMoveTo !== false && (
-                <Icon
-                  name={'park-corner-up-right'}
-                  style={{
-                    color: Colors.Font.Transparent
-                  }}
-                  onClick={() => {
-                    if (labelMeta?.id) {
-                      GlobalInstance.metaOps?.quickAdd(labelMeta?.id)
-                    } else {
-                      useRenderLabelEditor.labelNeedMoveTo = true
-                      handleInsertNote()
-                    }
-                  }}
-                  size={16}
-                  className={ClassName.flatButton(4, '4px')}
-                />
-              )}
-              {opts?.showTags !== false && (
-                <Icon
-                  name={'park-tag-one'}
-                  style={{
-                    color: Colors.Font.Transparent
-                  }}
-                  onClick={() => {
-                    GlobalInstance.metaOps?.quickAdd(labelMeta?.id ?? TEMP_META_ID, 'tags')
-                  }}
-                  size={16}
-                  className={ClassName.flatButton(4, '4px')}
-                />
-              )}
-              <Icon
-                name={'park-up-small'}
-                size={16}
-                strokeWidth={5}
-                onClick={handleInsertNote}
-                className={ClassName.selectButton()}
-                style={{
-                  color: 'white',
-                  padding: 3,
-                  borderRadius: 999
-                }}
-              />
-            </Content>
+            <Icon
+              name={'park-up-small'}
+              size={16}
+              strokeWidth={5}
+              onClick={handleInsertNote}
+              className="reverse-theme-button"
+              style={{
+                padding: 3,
+                borderRadius: 999
+              }}
+            />
           </Content>
         </WithBorder>
       }

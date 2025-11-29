@@ -4,20 +4,6 @@ import { useEffect } from 'react'
 import { EdgePosition, IWhiteboardInstance, XYBox, XYPosition } from '~/typings'
 import { useMemoizedFn, useRafFn } from '@/hooks'
 
-const checkPosition = (nodeBox: XYBox, currentPos: XYPosition): EdgePosition => {
-  if (currentPos.x <= nodeBox.x) {
-    return 'left'
-  }
-  if (currentPos.x >= nodeBox.x + nodeBox.width) {
-    return 'right'
-  }
-  if (currentPos.x > nodeBox.x && currentPos.x < nodeBox.x + nodeBox.width) {
-    if (currentPos.y <= nodeBox.y) {
-      return 'top'
-    }
-  }
-  return 'bottom'
-}
 
 const checkAttachPosition = (nodeBox: XYBox, currentPos: XYPosition): EdgePosition => {
   const thirdWidth = nodeBox.width / 3

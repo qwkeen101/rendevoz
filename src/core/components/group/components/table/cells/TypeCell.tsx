@@ -1,12 +1,11 @@
 import { ClassName } from 'rendevoz'
-import { Rendevoz } from '@/core/rendevoz'
 import { CSSProperties } from 'react'
 
 export default ({ value, style }: { value: string; style?: CSSProperties }) => {
   return (
     <div
       style={{
-        borderRadius: 2,
+        borderRadius: 3,
         fontSize: 14,
         width: 'fit-content',
         wordBreak: 'break-word',
@@ -15,7 +14,7 @@ export default ({ value, style }: { value: string; style?: CSSProperties }) => {
       }}
       className={ClassName.objectTag}
     >
-      {Rendevoz.Utils.Meta.getTypeName(value)}
+      {Global.utils.getTypeName(value)}
     </div>
   )
 }

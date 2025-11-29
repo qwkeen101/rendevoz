@@ -15,6 +15,7 @@ import NewPropertyMenu from '@/core/object/renderer/properties/NewPropertyMenu'
 import { useTranslation } from 'react-i18next'
 import AIQuestionsProp from '@/core/object/renderer/properties/AIQuestionsProp'
 import { CSSProperties } from 'react'
+import QuestionProp from '@/core/object/renderer/properties/QuestionProp'
 
 export default ({
   metaId,
@@ -30,9 +31,9 @@ export default ({
   const { t } = useTranslation()
   if (!Object.keys(properties || {}).length && showAddPropPlaceholder === false) return null
   return (
-    <Content flex column gap={4} style={{ fontSize: 14, ...style }}>
+    <div className={'flex flex-col gap-1'} style={style}>
       {properties && Object.entries(properties).map(i => <PropPairDisplayer key={i[0]} k={Number(i[0])} v={i[1]} metaId={metaId} />)}
-      {Object.keys(properties || {}).length > 0 || showAddPropPlaceholder ? (
+      {showAddPropPlaceholder ? (
         <AnimatePopover
           reposition
           positions={['bottom', 'top']}
@@ -62,13 +63,12 @@ export default ({
             icon={'park-plus'}
             style={{
               color: Colors.Font.Transparent,
-              padding: '5px 6px',
               width: 160
             }}
           ></Button.IconButton>
         </AnimatePopover>
       ) : null}
-    </Content>
+    </div>
   )
 }
 
@@ -86,11 +86,10 @@ const PropPairDisplayer = ({ k, v, metaId }: { k: number; v: IMetaProperty; meta
   const valueProp = () => {
     switch (propType) {
       case 'string':
-      case 'AI summary':
       case 'number':
         return (
           <TextProp
-            mode={propType === 'string' || propType === 'AI summary' ? 'text' : 'number'}
+            mode={propType === 'string' ? 'text' : 'number'}
             value={value}
             style={{
               wordBreak: 'break-word',
@@ -131,8 +130,9 @@ const PropPairDisplayer = ({ k, v, metaId }: { k: number; v: IMetaProperty; meta
       case 'file': {
         return <FileProp value={value} onChange={handleChange} />
       }
-      case 'singleSelect':
-      case 'reviewState': {
+      case 'question':
+        return <QuestionProp value={value} onChange={handleChange} />
+      case 'singleSelect': {
         return (
           <SelectProp
             style={{
@@ -148,7 +148,7 @@ const PropPairDisplayer = ({ k, v, metaId }: { k: number; v: IMetaProperty; meta
     }
   }
   return (
-    <Content flex gap={8} alignItems={'start'}>
+    <div className={'items-start flex gap-2'}>
       <AnimatePopover
         reposition
         positions={['bottom', 'top']}
@@ -170,16 +170,13 @@ const PropPairDisplayer = ({ k, v, metaId }: { k: number; v: IMetaProperty; meta
           size={14}
           text={name}
           icon={icon}
-          style={{ width: 160, padding: '5px 6px', color: Colors.Font.Transparent, flexShrink: 0 }}
+          style={{ width: 160, minHeight: '2.25em', color: Colors.Font.Transparent, flexShrink: 0 }}
         />
       </AnimatePopover>
       <div
-        className={ClassName.flatButton()}
+        className={'button flex-1 overflow-hidden'}
         style={{
-          flex: 1,
-          padding: '5px 8px',
-          minHeight: 32,
-          overflow: 'hidden'
+          minHeight: '2.25em'
         }}
         onClick={e => {
           if (e.currentTarget.contains(e.target)) {
@@ -189,6 +186,6 @@ const PropPairDisplayer = ({ k, v, metaId }: { k: number; v: IMetaProperty; meta
       >
         {valueProp()}
       </div>
-    </Content>
+    </div>
   )
 }

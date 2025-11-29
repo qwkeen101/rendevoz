@@ -1,5 +1,4 @@
 import { getSetting } from '@/core'
-import { getAppState, setAppState } from '@/core/rendevoz/appState'
 import { exportRendevozDb } from '@/utils'
 import DateFormat from '../../../utils/dateFormat'
 import FileSystem from '@/api/fileSystem'
@@ -7,7 +6,7 @@ import FileSystem from '@/api/fileSystem'
 const backup = async () => {
   const setting = getSetting()
   if (setting.general.autoBackup !== 'never') {
-    const lastBackUp = getAppState().lastBackupDate
+    const lastBackUp = Global.appState.getState().lastBackupDate
     const lastBackupDate = lastBackUp && new Date(lastBackUp)
     let shouldBackup = false
     const now = new Date(Date.now())
@@ -38,7 +37,7 @@ const backup = async () => {
     }
     if (shouldBackup) {
       const blob = await exportRendevozDb()
-      setAppState({
+      Global.appState.setState({
         lastBackupDate: Date.now()
       })
       await FileSystem.fs.writeFile(blob, `/backup/rendevoz_data_backup_${DateFormat.format(Date.now(), 'Y_M_d_H_mm')}.json`, 'utf8')

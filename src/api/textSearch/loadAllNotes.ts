@@ -24,7 +24,6 @@ const loadAllNotes = async () => {
         })
     )
   ).filter(i => i)
-  console.log(a)
   const objIdToMetaMap = new Map(a)
   const allNotes = await objectDb.filter(o => o.specType === 'note' && objIdToMetaMap.has(o.id)).toArray()
   const all = allNotes.map(async note => {

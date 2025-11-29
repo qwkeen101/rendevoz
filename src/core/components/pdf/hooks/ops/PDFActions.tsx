@@ -1,13 +1,14 @@
 import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 import { assignProperties } from '@/utils'
-import usePdfState from '@/core/components/pdf/hooks/usePdfState'
+import usePDFState from '@/core/components/pdf/hooks/usePDFState'
 import { decreaseLevel, increaseLevel } from '@/core/components/pdf/core/utils/zoom'
 
 export default () => {
   const instance = usePDFInstance()
-  const [pdfState, setPdfState] = usePdfState()
+  const [pdfState, setPdfState] = usePDFState()
   assignProperties(instance, {
     actionOps: {
+      ...instance.actionOps,
       doublePage: () => {
         const curr = pdfState.state?.doublePage
         instance.on?.({ type: 'doublePage', value: !curr })
@@ -23,9 +24,7 @@ export default () => {
         instance.on?.({ type: 'scaleChange', value: s })
       },
       fitWidth: () => {
-        console.log(pdfState)
         if (pdfState.viewportFitScale) {
-          console.log('yes')
           setPdfState(s => ({ ...s, scaleChanged: false }))
           instance.on?.({ type: 'scaleChange', value: pdfState.viewportFitScale })
         }

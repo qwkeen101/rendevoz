@@ -1,8 +1,6 @@
 import { memo } from 'react'
 import { MetaStore } from '@/api/stores'
 import { IconNameRenderer, ObjectActionMenu } from '@/core'
-import { Rendevoz } from '@/core/rendevoz'
-import { GlobalInstance } from '@/hooks'
 import ContextMenu from '@/components/contextMenu'
 import { WithBorder } from '@/components'
 
@@ -18,14 +16,14 @@ export default memo(({ id, canOpen = false }: { id: number; canOpen?: boolean })
     >
       <IconNameRenderer
         onClick={() => {
-          canOpen && GlobalInstance.layoutOps?.openObject(id)
+          canOpen && Global.layoutOps?.openObject(id)
         }}
         gap={10}
         style={{
           maxWidth: canOpen ? '85%' : undefined
         }}
         className={canOpen ? 'hover-link' : undefined}
-        icon={Rendevoz.Utils.Object.getMetaObjectIcon(meta?.type)}
+        icon={Global.utils.getIcon(meta?.type)}
         name={meta?.name || meta?.placeholderName || 'Unnamed'}
       />
     </ContextMenu>

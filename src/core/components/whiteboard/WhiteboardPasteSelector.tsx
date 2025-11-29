@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next'
 export default memo(() => {
   const [pasteState, setPasteState] = useState<{
     visible: boolean
-    display?: ('text' | 'image' | 'nodes')[]
+    display?: ('text' | 'image' | 'nodes' | 'objects')[]
     position?: XYPosition
   }>({
     visible: false

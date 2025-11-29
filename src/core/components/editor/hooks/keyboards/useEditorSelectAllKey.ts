@@ -1,12 +1,21 @@
 import { IEditorInstance } from '~/typings'
 import isHotkey from 'is-hotkey'
-import { ID_TO_ELEMENTS_MAP, ReactEditor } from '@/core'
+import { ReactEditor } from '@/core'
+import { Node } from 'slate'
+import { useSelectAtomValue } from '@/hooks'
+import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
 
 const useEditorSelectAllKey = (instance: IEditorInstance) => {
-  const handleSelectAllKey = (e: KeyboardEvent) => {
-    const editor = instance.getSlateEditor?.()
+  const textbox = useSelectAtomValue(EditorStateAtom, s => s.textboxMode)
+  return (e: KeyboardEvent) => {
+    const editor = instance.editor
     if (isHotkey('mod+a', e)) {
-      if (!editor) return
+      if (textbox) {
+        const node = ReactEditor.toDOMNode(editor, editor)
+        window.getSelection()?.selectAllChildren(node)
+        instance.values.selectingAll = true
+        return
+      }
       const selected = instance.values.selectedBlocks
       const currentSelection = window.getSelection()?.toString()
       if (!currentSelection && !selected.size) {
@@ -19,21 +28,13 @@ const useEditorSelectAllKey = (instance: IEditorInstance) => {
         }
       }
       instance.values.selectingAll = true
-
       e.preventDefault()
-      editor?.children.forEach(i => {
-        selected.set(i.id, {
-          element: i
-        })
-      })
       window.getSelection()?.empty()
-      ID_TO_ELEMENTS_MAP.get(editor)?.forEach(i => {
-        i.selectBlock()
+      Node.elements(editor).forEach(i => {
+        instance.selectOps?.selectBlock(i[0].id)
       })
     }
   }
-
-  return handleSelectAllKey
 }
 
 export default useEditorSelectAllKey

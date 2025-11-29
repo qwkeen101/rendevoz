@@ -8,13 +8,11 @@ import { useMemoizedFn } from '@/hooks'
 import produce from 'immer'
 import { MetaStore } from '@/api/stores'
 import Id from '@/utils/id'
-import { useDropObjectArea } from '@/core'
 import { SelectOptionProps } from '@/components/base/select/SelectOption'
 import { Colors } from '@/consts'
-import MetaFilterer from '@/core/object/filter/MetaFilterer'
+import MetaFilterer from '@/core/object/filter/MetaFilter'
 import { css } from '@emotion/css'
 import MetaTagPicker from '@/core/object/MetaTagPicker'
-import { Rendevoz } from '@/core/rendevoz'
 import { DateFormat } from '@/utils'
 import SingleOptionFilter from '@/core/object/filter/renderer/SingleOption'
 import MultiOptionFilter from '@/core/object/filter/renderer/MultiOption'
@@ -23,6 +21,7 @@ import CheckboxFilter from '@/core/object/filter/renderer/Checkbox'
 import useDisplayInside from '@/core/object/objectList/useDisplayInside'
 import Tag from '@/core/object/ObjectTag'
 import SaveFilter from '@/core/object/filter/SaveFilter'
+import { useLatest } from 'react-use'
 
 const commonStyle: CSSProperties = {
   cursor: 'pointer',
@@ -51,11 +50,12 @@ const FilterSelect = ({
   placeholder?: string
   options: SelectOptionProps[]
   onSelect: (v: string) => void
+  defaultValue?: string
+  value?: string
 }) => {
   return (
     <Select
       align={'center'}
-      reposition={false}
       closeOnSelect={true}
       menuStyle={{
         minWidth: 150,
@@ -88,7 +88,9 @@ const BetterFilter = ({
   showHiddenMetas,
   extraFields,
   visibleFields,
-  showSave = true
+  showSave = true,
+  currentMetas,
+  changeOnUnmount
 }: {
   disableAddGroup?: boolean
   root?: MetaFilterGroup
@@ -99,6 +101,8 @@ const BetterFilter = ({
   // custom property
   extraFields?: ExtraFields[]
   showSave?: boolean
+  currentMetas?: number[]
+  changeOnUnmount?: boolean
 }) => {
   const [showSavedFilters, setShowSavedFilters] = useState(false)
   const { renderSavedFilters, savedFilters, renderNameEditor, save, lastUsedFilter } = SaveFilter.useRenderSavedFilters(
@@ -116,9 +120,19 @@ const BetterFilter = ({
       rules: []
     }
   )
+  const lastestRoot = useLatest(filterRoot)
   useEffect(() => {
-    onChange?.(filterRoot)
+    if (!changeOnUnmount) {
+      onChange?.(filterRoot)
+    }
   }, [filterRoot])
+  useEffect(() => {
+    return () => {
+      if (changeOnUnmount) {
+        onChange?.(lastestRoot.current)
+      }
+    }
+  }, [])
   const handleChange = useMemoizedFn((rule: MetaFilterRule) => {
     setFilterRoot(s =>
       produce(s, draft => {
@@ -168,6 +182,7 @@ const BetterFilter = ({
           >
             {filterRoot.rules.map((i, idx) => (
               <FilterItem
+                currentMetas={currentMetas}
                 visibleTypes={visibleTypes}
                 onChangeGroupType={v => {
                   setFilterRoot({ ...filterRoot, groupType: v })
@@ -297,7 +312,8 @@ const FilterItem = ({
   visibleTypes,
   visibleFields,
   extraFields = [],
-  showHiddenMetas
+  showHiddenMetas,
+  currentMetas
 }: {
   rule: MetaFilterRule
   groupType: 'and' | 'or'
@@ -309,6 +325,7 @@ const FilterItem = ({
   visibleTypes?: string[]
   extraFields?: ExtraFields[]
   showHiddenMetas?: boolean
+  currentMetas?: number[]
 }) => {
   const filterType = rule.filterType
   const { t } = useTranslation()
@@ -318,12 +335,6 @@ const FilterItem = ({
       key: 'type',
       text: t('filter.Type'),
       icon: 'park-all-application'
-    },
-    {
-      type: 'item',
-      key: 'contains',
-      text: t('filter.Contained in'),
-      icon: 'park-hamburger-button'
     },
     {
       type: 'item',
@@ -363,20 +374,16 @@ const FilterItem = ({
     }
   ]
   if (visibleFields) {
-    const set = new Set(visibleFields)
+    const set = new Set([...visibleFields, 'name', 'createdAt'])
     availableFilters = availableFilters.filter(i => (i.key ? set.has(i.key) : true))
   }
-  const filterableCustomProps: IMetaProp['propType'][] = [
-    'string',
-    'date',
-    'number',
-    'singleSelect',
-    'multiSelect',
-    'URL',
-    'checkbox',
-    'AI summary',
-    'reviewState'
-  ]
+  availableFilters.unshift({
+    type: 'item',
+    key: 'contains',
+    text: t('filter.Contained in'),
+    icon: 'park-hamburger-button'
+  })
+  const filterableCustomProps: IMetaProp['propType'][] = ['string', 'date', 'number', 'singleSelect', 'multiSelect', 'URL', 'checkbox']
   const propSet = new Set(filterableCustomProps)
   if (extraFields.length) {
     availableFilters.push({
@@ -402,10 +409,8 @@ const FilterItem = ({
             return <NumberFilter rule={rule} onChange={onChange} />
           case 'URL':
           case 'string':
-          case 'AI summary':
             return <StringFilter rule={rule} onChange={onChange} />
           case 'singleSelect':
-          case 'reviewState':
             return <SingleOptionFilter rule={rule} onChange={onChange} />
           case 'multiSelect':
             return <MultiOptionFilter rule={rule} onChange={onChange} />
@@ -418,12 +423,20 @@ const FilterItem = ({
 
       switch (rule.field) {
         case 'contains':
-          return <ContainFilter rule={rule} onChange={onChange} />
+          return <ContainFilter currentMetas={currentMetas} rule={rule} onChange={onChange} />
         case 'name':
         case 'description':
           return <StringFilter rule={rule} onChange={onChange} />
         case 'type':
-          return <TypeFilter showHiddenMetas={showHiddenMetas} visibleTypes={visibleTypes} rule={rule} onChange={onChange} />
+          return (
+            <TypeFilter
+              currentMetas={currentMetas}
+              showHiddenMetas={showHiddenMetas}
+              visibleTypes={visibleTypes}
+              rule={rule}
+              onChange={onChange}
+            />
+          )
         case 'updatedAt':
         case 'viewAt':
         case 'createdAt':
@@ -500,13 +513,11 @@ const FilterItem = ({
                         type = 'contains'
                         break
                       case 'singleSelect':
-                      case 'reviewState':
                       case 'date':
                         type = 'is'
                         break
                       case 'URL':
                       case 'string':
-                      case 'AI summary':
                         type = 'contains'
                         break
                       case 'checkbox':
@@ -562,8 +573,17 @@ const FilterItem = ({
   )
 }
 
-const ContainFilter = ({ rule, onChange }: { rule: MetaFilterRule & { field: 'contains' }; onChange: (r: MetaFilterRule) => void }) => {
+const ContainFilter = ({
+  rule,
+  onChange,
+  currentMetas
+}: {
+  rule: MetaFilterRule & { field: 'contains' }
+  onChange: (r: MetaFilterRule) => void
+  currentMetas?: number[]
+}) => {
   const { renderMenu } = useDisplayInside({
+    currentMetas,
     defaultSelected: rule.value ? [rule.value] : undefined,
     onSelect: v => {
       onChange?.({ ...rule, value: v.filter(i => i !== rule.value)[0] })
@@ -746,17 +766,23 @@ const TypeFilter = ({
   rule,
   onChange,
   visibleTypes,
-  showHiddenMetas
+  showHiddenMetas,
+  currentMetas
 }: {
   rule: TypeFieldFilterRule
   onChange: (newRule: MetaFilterRule) => void
   visibleTypes?: string[]
   showHiddenMetas?: boolean
+  currentMetas?: number[]
 }) => {
   const { t } = useTranslation()
   const existedTypes =
     visibleTypes ||
-    (showHiddenMetas ? Array.from(MetaStore.getIndexedMetaObjects()?.typeToMetaObjectIdsMap.keys() || []) : MetaStore.getVisibleMetaTypes())
+    MetaStore.getVisibleMetaTypes({
+      showHidden: showHiddenMetas,
+      showLabel: true,
+      metas: currentMetas?.map(i => MetaStore.getCachedMetaObject(i)).filter(i => i)
+    })
   const options = [
     {
       value: 'is',
@@ -786,7 +812,7 @@ const TypeFilter = ({
         options={existedTypes
           .map(i => ({
             value: i,
-            children: Rendevoz.Utils.Meta.getTypeName(i)
+            children: Global.utils.getTypeName(i)
           }))
           .sort((a, b) => a.children.localeCompare(b.children))}
       />
@@ -795,26 +821,11 @@ const TypeFilter = ({
 }
 
 const RelationshipFilter = ({ rule, onChange }: { rule: any; onChange: (newRule: MetaFilterRule) => void }) => {
-  const ref = useRef<HTMLDivElement>(null)
-  const [metaName, setMetaname] = useState('')
-  useDropObjectArea(ref, {
-    onDrop: element => {
-      if (element.type === 'metaElement') {
-        const meta = MetaStore.getMetaObjectsMap().get(element.metaId)
-        onChange({ ...rule, linkType: 'spec', metaId: element.metaId })
-        setMetaname(meta?.name)
-      }
-    }
-  })
   const { t } = useTranslation()
   const single = rule.ruleType === 'is' || rule.ruleType === 'is not'
   useEffect(() => {
     onChange({ ...rule, metaType: single ? 'spec' : 'rule' })
   }, [rule.ruleType])
-  useEffect(() => {
-    const meta = MetaStore.getMetaObjectsMap().get(rule.metaId)
-    setMetaname(meta?.name)
-  }, [rule.metaId])
   return (
     <Content flex gap={horizontalGap}>
       <FilterSelect

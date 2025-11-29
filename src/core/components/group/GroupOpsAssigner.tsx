@@ -22,7 +22,7 @@ export default memo(({ groupId, bodyRef, groupValue }: { bodyRef: RefObject<HTML
   // need group id to track data change
   useGroupHistory(groupId)
   useBuildInGroupIndex()
-  useAssignValueOps(instance)
+  useAssignValueOps(instance, groupId)
   useAssignPathOps(instance)
   useAssignMetaOps(instance)
   useAssignSelectOps(instance)

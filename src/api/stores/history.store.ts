@@ -1,18 +1,14 @@
 import { applyPatches, Patch } from 'immer'
-import { Rendevoz } from '@/core/rendevoz'
 import { PrimitiveAtom } from 'jotai'
 import { globalStore } from '@/api/stores/index'
 import { immerWithDatabase } from '@/api/stores/immerWithDatabase'
 
 export const finishProcess = (patches: Patch[], inversePatches: Patch[], atom: PrimitiveAtom<any>, databaseName: string) => {
-  Rendevoz.Events.Emit.emitEventGlobally('global', {
-    type: 'globalValueChange',
-    data: {
-      patches,
-      inversePatches,
-      atom,
-      databaseName
-    }
+  Global.emitEvent('databaseChange', {
+    patches,
+    inversePatches,
+    atom,
+    databaseName
   })
 }
 

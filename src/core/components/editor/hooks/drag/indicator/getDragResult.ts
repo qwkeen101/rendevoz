@@ -2,12 +2,17 @@ import { CustomEditor, CustomElement } from '~/typings'
 import { ReactEditor } from '@/core'
 import { Editor, Path } from 'slate'
 
-export default (direction: 'top' | 'left' | 'right' | 'bottom', element: CustomElement, e: PointerEvent, editor: CustomEditor) => {
+export default (
+  direction: 'top' | 'left' | 'right' | 'bottom',
+  element: CustomElement,
+  e: PointerEvent | DragEvent,
+  editor: CustomEditor
+) => {
   const type = element.type
-  const draggingElement = editor.currentEnterElement
+  const towardsElement = editor.currentEnterElement
   let path = editor.instance.getElementPathById?.(element.id)
-  if (!path || !draggingElement) return
-  if (draggingElement.type === 'metaObject' && draggingElement.cardType === 'embeded') {
+  if (!path) return
+  if (towardsElement?.type === 'metaObject' && towardsElement.cardType === 'embeded') {
     if (direction === 'left' || direction === 'right') {
       return
     }

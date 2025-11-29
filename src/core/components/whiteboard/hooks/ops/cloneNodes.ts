@@ -8,7 +8,14 @@ export default (nodes: IWhiteboardNode[]) => {
   const finalMap = new Map<number, IWhiteboardNode>(nodes.map(i => [i.id, i]))
   const processedIds = new Set<number>()
   mindmapNodes.forEach(i => {
-    const cloned = cloneMindmap(i, { getNode: nodeId => nodeIdToNodeMap.get(nodeId) })
+    const cloned = cloneMindmap(i, {
+      getNode: nodeId => nodeIdToNodeMap.get(nodeId),
+      values: {
+        mindmapChildrenToFlattenChildren: new WeakMap(),
+        mindmapLeftTreeWeakMap: new WeakMap(),
+        mindmapRightTreeWeakMap: new WeakMap()
+      }
+    })
     if (cloned) {
       const newId = Id.getId()
       cloned.deletedNodeIds.forEach(id => {

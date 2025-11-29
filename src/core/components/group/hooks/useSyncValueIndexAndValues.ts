@@ -36,7 +36,8 @@ export default () => {
         const newValues = values.filter(i => !afterFilterIndexSet.has(i.rowId))
         const newIndex =
           groupState.data?.autoAddto === 'first'
-            ? [...newValues.map(i => i.rowId), ...Array.from(afterFilterIndexSet.values())]
+            ? // add to first need reverse
+              [...newValues.reverse().map(i => i.rowId), ...Array.from(afterFilterIndexSet.values())]
             : [...Array.from(afterFilterIndexSet.values()), ...newValues.map(i => i.rowId)]
         instance.updateCurrentView?.(s => ({ ...s, valueIndex: newIndex }))
       }

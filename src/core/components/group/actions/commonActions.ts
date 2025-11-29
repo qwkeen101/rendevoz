@@ -1,7 +1,5 @@
 // common actions like delete, create
 import { InnerGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
-import { Rendevoz } from '@/core/rendevoz'
-import { GlobalInstance } from '@/hooks'
 
 export type GroupCommonActions =
   | 'delete-obj'
@@ -27,7 +25,7 @@ export default (instance: InnerGroupInstance, type: GroupCommonActions) => {
       return
     }
     case 'open-in-new-tab': {
-      Rendevoz.Actions.Open.Meta.openMetaObject(details.id)
+      Global.layoutOps?.openObject(details.id)
       return
     }
     case 'delete-obj': {
@@ -43,7 +41,7 @@ export default (instance: InnerGroupInstance, type: GroupCommonActions) => {
       return
     }
     case 'view-details': {
-      GlobalInstance.metaOps?.openDetails(details.id)
+      Global.metaOps?.openDetails(details.id)
       return
     }
     case 'delete-in-group': {
@@ -56,20 +54,20 @@ export default (instance: InnerGroupInstance, type: GroupCommonActions) => {
       return
     }
     case 'copy-link-to-all': {
-      GlobalInstance.metaOps?.copyLink(selected?.map(i => i[0].id))
+      Global.metaOps?.copyLink(selected?.map(i => i[0].id))
       return
     }
     case 'copy-link': {
-      GlobalInstance.metaOps?.copyLink(details.id)
+      Global.metaOps?.copyLink(details.id)
       return
     }
     case 'edit': {
-      Rendevoz.Actions.Open.Meta.openEditMetaDialog(details.id)
+      Global.metaOps.edit(details.id)
       return
     }
     case 'move-to': {
       const allIds = new Set(selected?.map(i => i[0].id))
-      GlobalInstance.metaOps?.quickAdd(Array.from(allIds.values()))
+      Global.metaOps?.quickAdd(Array.from(allIds.values()))
       return
     }
   }

@@ -3,7 +3,6 @@ import { Content, Icon } from '@/components'
 import { CSSProperties, useMemo, useRef } from 'react'
 import usePopoverCell from '@/core/components/group/hooks/usePopoverCell'
 import { PopupWrapper } from '@/core/components/group/components'
-import { RelatedPanel } from '@/core/object/details/Related'
 import { ClassName } from 'rendevoz'
 import { Colors } from '@/consts'
 import { AttachmentWrapper } from '@/core'
@@ -57,6 +56,7 @@ const AttCell = ({ metaId, style }: { metaId: number; style?: CSSProperties }) =
               style={{
                 position: 'relative'
               }}
+              className={'p-3'}
             >
               <Icon
                 size={13}
@@ -72,7 +72,7 @@ const AttCell = ({ metaId, style }: { metaId: number; style?: CSSProperties }) =
                   right: -10
                 }}
               />
-              <AttachmentWrapper showField={false} style={{ boxShadow: 'none' }} metaId={metaId} visible={true} />
+              <AttachmentWrapper metaId={metaId} visible={true} />
             </div>
           </PopupWrapper>
         ),

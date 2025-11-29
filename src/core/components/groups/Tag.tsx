@@ -2,10 +2,8 @@ import { memo, useEffect, useMemo, useState } from 'react'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import GroupStore from '../../../api/stores/group.store'
-import { useTranslation } from 'react-i18next'
 import { Content, Icon } from '@/components'
 import MetaGroup from '@/core/components/group/MetaGroup'
-import { calculateSortObjects } from '@/core/object/filter/BetterSorter'
 import TabTitle from '@/components/layout/TabTitle'
 import { useDebounceFn } from '@/hooks'
 
@@ -13,7 +11,7 @@ function TagGroup({ id }: { id: number }) {
   const workspace = KeyvalueStore.useValue('currentWorkspace')
   const tagGroup = KeyvalueStore.useValue(`tag_${id}_${workspace?.id}_group`)
   const tagMetaIds = MetaStore.useIndexedMetaObjects()?.tagToMetaObjectIdsMap.get(id)
-  const tagMetas = MetaStore.useMultipleObjects(Array.from(tagMetaIds || []))
+  const tagMetas = MetaStore.useMultiple(tagMetaIds)
   const tag = ObjectStore('tag').useValue(id)
   const [data, setData] = useState(
     tagGroup ?? {
@@ -26,15 +24,7 @@ function TagGroup({ id }: { id: number }) {
   useEffect(() => {
     if (tagMetas) {
       const filtered = tagMetas.filter(i => !i.deleted && i.tags?.includes(id))
-      const sorted = calculateSortObjects(filtered, {
-        sorters: [
-          {
-            field: 'createdAt',
-            type: 'ascending',
-            id: 1
-          }
-        ]
-      })
+      const sorted = Global.metaOps.sort('createdAt', 'desc', filtered)
       setData(s => ({ ...s, values: sorted.map(i => ({ rowId: i.id, type: 'metaObject', id: i.id })) }))
     }
   }, [tagMetas])
@@ -68,7 +58,8 @@ function TagGroup({ id }: { id: number }) {
             canHideGroupsInside: true,
             canDrag: true,
             canHideObjectsInside: true,
-            canDragInside: true
+            canDragInside: true,
+            canTurnHiddenIntoUnhidden: false
           }),
           []
         )}
@@ -77,6 +68,14 @@ function TagGroup({ id }: { id: number }) {
             showDeletedMetas: false,
             showDescription: false,
             showTitleActions: false
+          }),
+          []
+        )}
+        styles={useMemo(
+          () => ({
+            titleContainerStyle: {
+              paddingTop: 42
+            }
           }),
           []
         )}

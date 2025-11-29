@@ -1,141 +1,41 @@
-import useFeedState from '@/core/components/feed/hooks/useFeedState'
-import { globalStore, GroupStore, MetaStore, ObjectStore } from '@/api/stores'
-import { useEffect } from 'react'
-import KeyvalueStore from '@/api/stores/keyvalue.store'
-import universalFeedFetcher from '@/core/components/feed/utils/universalFeedFetcher'
-import transformItemsIntoMetas from '@/core/components/feed/utils/service/transformItemsIntoMetas'
-
+import { ObjectStore } from '@/api/stores'
+import { useEffect, useRef } from 'react'
+import useFeedInstance from '@/core/components/feed/hooks/useFeedInstance'
+import { waitFor } from '@/utils'
 /**
- * Retrieve and update state
+ * Retresh all collection contents
  */
 
 export default () => {
-  const [feedState, setFeedState] = useFeedState()
-  const lastFetched = KeyvalueStore.useValue('feedLastSyncTime')
-  const readRule = KeyvalueStore.useValue('feedReadRule') || 'all'
-  const alreadyRead = KeyvalueStore.useValue('feedReadIds')
-  const readLater = KeyvalueStore.useValue('feedReadLaterIds')
+  const instance = useFeedInstance()
+  const intervalRef = useRef<NodeJS.Timeout>()
   useEffect(() => {
-    setFeedState(s => ({ ...s, alreadyReadIds: new Set(alreadyRead), readLaterIds: new Set(readLater) }))
-  }, [readLater, alreadyRead])
-  useEffect(() => {
-    if (!lastFetched) {
-      setFeedState(s => ({ ...s, isSyncing: true }))
-      updateAllFeeds()
-        .then(() => {
-          KeyvalueStore.updateOne('feedLastSyncTime', Date.now())
-        })
-        .finally(() => {
-          setFeedState(s => ({ ...s, isSyncing: false }))
-        })
-      return
-    }
-    if (Date.now() - lastFetched > 6 * 60 * 60 * 1000) {
-      setFeedState(s => ({ ...s, isSyncing: true }))
-      updateAllFeeds()
-        .then(() => {
-          KeyvalueStore.updateOne('feedLastSyncTime', Date.now())
-        })
-        .finally(() => {
-          setFeedState(s => ({ ...s, isSyncing: false }))
-        })
-    }
-  }, [lastFetched])
-  const feedCollection = ObjectStore('feedCollection').useValue(feedState.currentCollectionId)
-  const updateAllFeeds = async () => {
-    await ObjectStore('feedCollection').getAll()
-    const allFeedCollections = Array.from(globalStore.get(ObjectStore('feedCollection').objectMapAtom).values())
-    await Promise.all(
-      allFeedCollections.map(async i => {
-        await fetchMoreItemsForCollection(i.id)
-      })
+    waitFor(
+      () => !!instance.feedOps?.refreshCollectionContent,
+      () => {
+        updateAllFeeds()
+        // fetch every minute
+        const interval = setInterval(() => {
+          updateAllFeeds()
+        }, 60 * 1000)
+        intervalRef.current = interval
+      }
     )
-  }
-  const fetchMoreItemsForCollection = async (collectionId: number) => {
-    let collection = await ObjectStore('feedCollection').getOneById(collectionId)
-    if (collection && collection.feedUrl) {
-      const res = await universalFeedFetcher(collection.feedUrl, collection.collectionType)
-      if (!res) return
-      collection = await ObjectStore('feedCollection').getOneById(collectionId)
-      if (collection) {
-        const allItemUrls = await Promise.all(collection.items.map(async id => await ObjectStore('feed').getOneById(id)))
-        const alreadyUrls = new Set(allItemUrls.map(i => i?.link))
-        const filteredItems = res.items.filter(i => !alreadyUrls.has(i.link))
-        const newItemIds = await Promise.all(filteredItems.map(async item => ObjectStore('feed').addOne({ ...item })))
-        if (collection.relatedGroups?.length) {
-          const newMetas = await transformItemsIntoMetas(newItemIds.map(i => i.id))
-          collection.relatedGroups.forEach(i => {
-            const m = MetaStore.getCachedMetaObject(i)
-            if (m && !m.deleted) {
-              GroupStore.insertMetaIntoGroup(
-                newMetas.map(i => i.id),
-                m.objectId!
-              )
-            }
-          })
-        }
-        ObjectStore('feedCollection').updateOne({
-          id: collectionId,
-          items: [...newItemIds.map(i => i.id), ...collection.items],
-          lastFetchedAt: Date.now(),
-          unreadCount: (collection.unreadCount || 0) + newItemIds.length
-        })
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
       }
     }
-  }
-  useEffect(() => {
-    if (feedCollection?.items) {
-      const readIdSet = new Set(alreadyRead)
-      const unreadCount = feedCollection.items.filter(i => !readIdSet.has(i)).length
-      ObjectStore('feedCollection').updateOne({ id: feedCollection.id, unreadCount })
-      if (readRule === 'all') {
-        Promise.all(feedCollection.items.map(async i => await ObjectStore('feed').getOneById(i))).then(() => {
-          setFeedState(s => ({ ...s, allFeedItems: feedCollection.items, filteredFeedItems: undefined }))
-        })
-      } else {
-        Promise.all(feedCollection.items.map(async i => await ObjectStore('feed').getOneById(i))).then(() => {
-          setFeedState(s => ({
-            ...s,
-            allFeedItems: feedCollection.items,
-            filteredFeedItems: feedCollection.items.filter(i => !readIdSet.has(i))
-          }))
-        })
+  }, [])
+  const updateAllFeeds = async () => {
+    const allCollections = await ObjectStore('feedCollection').fetchAll()
+    allCollections.forEach(c => {
+      const lastFetched = c.lastFetchedAt
+      // sync every 6 hours
+      if (!lastFetched || Date.now() - lastFetched > 1000 * 60 * 60 * 6) {
+        instance.feedOps?.refreshCollectionContent(c.id)
+        ObjectStore('feedCollection').updateOne({ id: c.id, lastFetchedAt: Date.now() })
       }
-    } else {
-      setFeedState(s => ({ ...s, filteredFeedItems: undefined }))
-    }
-  }, [feedCollection?.id, readRule])
-}
-
-export const fetchMoreItemsForCollection = async (collectionId: number) => {
-  let collection = await ObjectStore('feedCollection').getOneById(collectionId)
-  if (collection && collection.feedUrl) {
-    const res = await universalFeedFetcher(collection.feedUrl, collection.collectionType)
-    if (!res) return
-    collection = await ObjectStore('feedCollection').getOneById(collectionId)
-    if (collection) {
-      const allItemUrls = await Promise.all(collection.items.map(async id => await ObjectStore('feed').getOneById(id)))
-      const alreadyUrls = new Set(allItemUrls.map(i => i?.link))
-      const filteredItems = res.items.filter(i => !alreadyUrls.has(i.link))
-      const newItemIds = await Promise.all(filteredItems.map(async item => ObjectStore('feed').addOne({ ...item })))
-      if (collection.relatedGroups?.length) {
-        const newMetas = await transformItemsIntoMetas(newItemIds.map(i => i.id))
-        collection.relatedGroups.forEach(i => {
-          const m = MetaStore.getCachedMetaObject(i)
-          if (m && !m.deleted) {
-            GroupStore.insertMetaIntoGroup(
-              newMetas.map(i => i.id),
-              m.objectId!
-            )
-          }
-        })
-      }
-      ObjectStore('feedCollection').updateOne({
-        id: collectionId,
-        items: [...newItemIds.map(i => i.id), ...collection.items],
-        lastFetchedAt: Date.now(),
-        unreadCount: (collection.unreadCount || 0) + newItemIds.length
-      })
-    }
+    })
   }
 }

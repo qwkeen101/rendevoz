@@ -1,73 +1,69 @@
-import { useMergedRef, useSelectAtomValue } from '@/hooks'
+import { useMergedRef, usePrevious } from '@/hooks'
 import classNames from 'classnames'
-import React, { cloneElement, FC, memo, MouseEvent, RefObject, useCallback, useLayoutEffect, useRef } from 'react'
+import React, { FC, memo, RefObject, useEffect, useLayoutEffect, useRef } from 'react'
 import { ReactEditor, RenderElementProps, useSlateStatic } from '../../slate-react'
 import { CustomElement } from '~/typings'
-import { AnimatePresence, motion } from 'framer-motion'
 import styles from './index.module.less'
 import './index.less'
-import { ID_TO_ELEMENTS_MAP } from '../../weakMaps'
-import { useGlobalIsDragging } from '@/core'
-import { Editor, Range, Transforms } from 'slate'
+import { Editor, Path, Range, Transforms } from 'slate'
 import useBlockContentSearch from '@/core/components/editor/elements/block/useBlockContentSearch'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import useBlockSelect from '@/core/components/editor/elements/block/useBlockSelect'
-import { useEditorComposing } from '@/core/components/editor/slate-react/components/editable'
-import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
 import { Colors } from '@/consts'
-import useBlockOverflow from '@/core/components/editor/elements/block/useBlockOverflow'
-import useBlockWidth from '@/core/components/editor/elements/block/useBlockWidth'
 import BlockSelectionRenderer from '@/core/components/editor/elements/block/BlockSelectionRenderer'
 import { useUnmount } from 'react-use'
-import useBlockSelectable from '@/core/components/editor/elements/block/useBlockSelectable'
-import useBlockPadding from '@/core/components/editor/elements/block/useBlockPadding'
 import EditorSettings from '@/core/components/editor/consts/settings'
-
-type BlockProps = {
-  blockId: number
+import useBlockDetails from '@/core/components/editor/elements/block/useBlockDetails'
+import ColumnBlock from '@/core/components/editor/elements/block/ColumnBlock'
+import useBlockPlaceholder from '@/core/components/editor/elements/block/useBlockPlaceholder'
+export type BlockProps = {
   type?: string
   ratio?: number
   element?: CustomElement
-  scrollElementRef: RefObject<HTMLElement>
+  alwaysShowPlaceholder?: boolean
+  isGlobalDragging?: boolean
+  isComposing?: boolean
+  isSelecting?: boolean
+  firstLinePlaceholder?: string
 }
 
 const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> & BlockProps & RenderElementProps> = memo(
-  ({ scrollElementRef, blockId, children, ratio, type, attributes, element, ...rest }) => {
+  props => {
+    if (props.element.type === 'column') return <ColumnBlock {...props} />
+    const {
+      children,
+      type,
+      attributes,
+      isComposing,
+      element,
+      isGlobalDragging,
+      alwaysShowPlaceholder,
+      firstLinePlaceholder,
+      isSelecting,
+      ...rest
+    } = props
+    const blockId = element.id
     const blockRef = useRef<HTMLDivElement>(null)
-    const columnRef = useRef<HTMLDivElement>(null)
     const editor = useSlateStatic()
     const mergedChildrenRef = useMergedRef(blockRef, attributes.ref)
-    const [isGlobalDragging] = useGlobalIsDragging()
     const instance = useEditorInstance()
     const path = ReactEditor.findPath(editor, element)
-    const alwaysShowPlaceholder = useSelectAtomValue(EditorStateAtom, s => s.layout?.alwaysShowPlaceholder)
     useBlockContentSearch(element, instance)
-    const blockWidth = useBlockWidth(element, editor)
-    const blockOverflow = useBlockOverflow(element)
-    const isComposing = useEditorComposing()
-    const { handleCollisionSelectBlock, selectBlock, isSelected } = useBlockSelect({
+    const scrollElementRef = instance.values.scrollElementRef
+    const {
+      width: blockWidth,
+      overflow: blockOverflow,
+      padding: scrollPadding,
+      selectable: isSelectable,
+      isVoid
+    } = useBlockDetails(element, editor)
+    const { handleCollisionSelectBlock, selectBlock, isSelected, deselectBlock } = useBlockSelect({
       element,
       instance,
       blockRef,
-      scrollElementRef
+      scrollElementRef,
+      isSelecting
     })
-
-    useLayoutEffect(() => {
-      return () => {
-        try {
-          const path = ReactEditor.findPath(editor, element)
-          if (editor.selection && Range.includes(editor.selection, path)) {
-            const currentPathEle = Editor.node(editor, path)
-            // maybe deleted
-            if (currentPathEle[0] === element) {
-              ReactEditor.deselect(editor)
-            }
-          }
-        } catch (e) {
-          console.error(e)
-        }
-      }
-    }, [])
 
     const getIndicatorPosition = (
       direction: 'top' | 'left' | 'bottom' | 'right'
@@ -118,23 +114,13 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
       }
     }
 
-    useLayoutEffect(() => {
-      if (element.type === 'column') {
-        const width = `calc(( 100% - ${
-          46 * ((columnRef.current?.parentElement?.querySelectorAll("[data-type='column']").length || 2) - 1)
-        }px ) * ${ratio?.toFixed(3)})`
-        if (columnRef.current) {
-          columnRef.current.style.width = width
-        }
-      }
-    }, [ratio])
-
-    useLayoutEffect(() => {
+    useEffect(() => {
       instance.blockOps?.setBlockFuncs(blockId, {
         selectBlock,
         collisionSelectBlock: handleCollisionSelectBlock,
         getElement: () => element,
         getIndicatorPosition,
+        deselectBlock,
         getClientBound: () => blockRef.current?.getBoundingClientRect(),
         removeSelf: () => {
           const path = ReactEditor.findPath(editor, element)
@@ -147,38 +133,46 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
     })
     useUnmount(() => {
       instance.blockOps?.removeBlockFuncs(blockId)
-    })
-    const { background, color, align, cardType } = element
-    const nestedBlocks = ['table']
-    let isBlockEmpty = instance.blockOps?.isBlockEmpty(element)
-
-    if (isComposing) {
-      if (blockRef.current?.hasAttribute('data-selected')) {
-        isBlockEmpty = false
+      try {
+        const path = ReactEditor.findPath(editor, element)
+        if (editor.selection && Range.includes(editor.selection, path)) {
+          const currentPathEle = Editor.node(editor, path)
+          // maybe deleted
+          if (currentPathEle[0] === element) {
+            ReactEditor.deselect(editor)
+          }
+        }
+      } catch (e) {
+        console.error(e)
       }
-    }
-    const isSelectable = useBlockSelectable(element)
-    const scrollPadding = useBlockPadding(element, editor)
-    const renderChildren = () => (
+    })
+    const { background, color, align } = element
+
+    const placeholder = useBlockPlaceholder({
+      element,
+      editor,
+      path,
+      isComposing,
+      alwaysShowPlaceholder,
+      firstLinePlaceholder,
+      blockRef,
+      instance
+    })
+    return (
       // @ts-ignore
       <div
-        key={blockId}
         {...attributes}
         ref={mergedChildrenRef}
-        data-empty={isBlockEmpty}
-        data-show-placeholder={
-          alwaysShowPlaceholder &&
-          path.length === 1 &&
-          path[0] === 0 &&
-          (editor.selection ? Range.isCollapsed(editor.selection) && Range.includes(editor.selection, path) : true)
-        }
-        suppressContentEditableWarning
         data-level={element?.level}
-        contentEditable={Editor.isVoid(editor, element) ? 'false' : undefined}
+        contentEditable={isVoid ? 'false' : undefined}
         style={{
           ...rest.style,
           textAlign: align,
-          '--block-bg': EditorSettings.NoBackgroundTypes.has(element.type) ? undefined : Colors.getAdaptColor(background),
+          '--block-bg': EditorSettings.NoBackgroundTypes.has(element.type)
+            ? undefined
+            : background
+              ? `rgb(from ${Colors.getAdaptColor(background)} r g b / var(--editor-bg-opacity))`
+              : undefined,
           '--block-font-color': color,
           width: blockWidth,
           maxWidth: blockWidth,
@@ -197,11 +191,13 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
         }}
         className={classNames(
           'BlockCommon',
+          type === 'image' && 'ImageBlock',
           type === 'columnList' && styles.ColumnListBlock,
-          type === 'column' && styles.ColumnBlock,
           type?.startsWith('heading') && 'HeadingBlock',
-          type !== 'column' && type !== 'columnList' && !type?.startsWith('heading') && 'ParagraphBlock',
-          isSelectable && 'selectable'
+          type !== 'columnList' && !type?.startsWith('heading') && 'ParagraphBlock',
+          isSelectable && 'selectable',
+          placeholder && 'ShowPlaceholder',
+          firstLinePlaceholder && Path.equals(path, [0]) && 'FirstLinePlaceholder'
         )}
         {...rest}
       >
@@ -209,24 +205,6 @@ const Block: FC<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HT
         <BlockSelectionRenderer element={element} blockRef={blockRef} selected={isSelected} />
       </div>
     )
-
-    return type === 'column'
-      ? cloneElement(
-          <div></div>,
-          {
-            ref: columnRef,
-            style: {
-              paddingTop: 12,
-              paddingBottom: 12,
-              flexGrow: 1,
-              flexShrink: 0,
-              overflow: 'visible'
-            },
-            role: 'column'
-          },
-          renderChildren()
-        )
-      : renderChildren()
   }
 )
 

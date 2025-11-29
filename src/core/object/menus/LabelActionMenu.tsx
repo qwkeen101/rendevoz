@@ -1,17 +1,18 @@
-import { Button, Menu, WithBorder } from '@/components'
+import { Menu, WithBorder } from '@/components'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { useTranslation } from 'react-i18next'
 import { ILabel, MetaObject } from '~/typings'
-import { Rendevoz } from '@/core/rendevoz'
-import { GlobalInstance, useMemoizedFn } from '@/hooks'
-import OcrService from '@/api/services/ocr.service'
+import { useMemoizedFn } from '@/hooks'
 import { useEffect, memo } from 'react'
 import isHotkey from 'is-hotkey'
-import { KEY } from '@/consts'
-import { getUser } from '@/api/services/login.service'
 import { DateFormat } from '@/utils'
+import { Icons } from '@/consts'
+import trans from '@/consts/trans'
 
 export type LabelActionEvent =
+  | {
+      type: 'addNote'
+    }
   | {
       type: 'delete'
     }
@@ -24,6 +25,9 @@ export type LabelActionEvent =
   | {
       type: 'textToImage'
     }
+  | {
+      type: 'move'
+    }
 type Props = {
   on: (action: LabelActionEvent) => void
   objectId: number
@@ -35,23 +39,22 @@ const LabelActionMenu = ({ on, objectId, type, onClose }: Props) => {
   const { t } = useTranslation()
   const meta = MetaStore.getMetaObjectByObjectId(objectId)
   const label = ObjectStore(type).useValue(objectId) as ILabel | undefined
-  const u = getUser()
-  const actions = useMemoizedFn(async (t: 'delete' | 'copy' | 'move-to' | 'view-details') => {
+  const actions = useMemoizedFn(async (t: 'delete' | 'copy' | 'move-to' | 'view-details' | 'add-tags') => {
     onClose()
     switch (t) {
       case 'view-details': {
         if (meta) {
-          GlobalInstance.metaOps?.openDetails(meta.id)
+          Global.metaOps.openDetails?.(meta.id)
         }
         return
       }
       case 'copy': {
         let m = meta
         if (!m) {
-          m = await GlobalInstance.metaOps?.addDraggableAsMeta({ type: t, labelId: objectId }, true)
+          m = (await Global.metaOps.addDraggableAsMeta({ type: 'label', labelId: objectId }))[0]
         }
         if (m) {
-          GlobalInstance.metaOps?.copyLink(m.id)
+          Global.metaOps.copyLink(m.id)
         }
         return
       }
@@ -59,16 +62,33 @@ const LabelActionMenu = ({ on, objectId, type, onClose }: Props) => {
         on({ type: 'delete' })
         return
       }
+      case 'add-tags': {
+        const m =
+          meta ||
+          (
+            await Global.metaOps.addDraggableAsMeta({
+              type: 'label',
+              labelId: objectId
+            })
+          )[0]
+        if (m) {
+          Global.metaOps.quickAdd?.(m.id, 'tags')
+        }
+        onClose?.()
+        break
+      }
       case 'move-to': {
         let m = meta
         if (!m) {
-          m = await GlobalInstance.metaOps?.addDraggableAsMeta({
-            type,
-            labelId: objectId
-          })
+          m = (
+            await Global.metaOps.addDraggableAsMeta({
+              type: 'label',
+              labelId: objectId
+            })
+          )[0]
         }
         if (m) {
-          GlobalInstance.metaOps?.quickAdd(m.id)
+          Global.metaOps.quickAdd?.(m.id)
         }
         return
       }
@@ -94,20 +114,31 @@ const LabelActionMenu = ({ on, objectId, type, onClose }: Props) => {
       document.removeEventListener('keydown', keydownHandler)
     }
   }, [])
+  const imageUrl = label && 'imageUrl' in label ? label.imageUrl : ''
   return (
-    <WithBorder padding={'0.4rem 0'} width={210}>
+    <WithBorder onClick={e => e.preventDefault()} padding={'0.4rem 0'} width={210}>
       <Menu.NavigationMenu
         layout={[
-          meta
+          {
+            type: 'item',
+            text: t('general.Add note'),
+            icon: Icons.Edit,
+            onSelect: () => {
+              on?.({ type: 'addNote' })
+              onClose()
+            },
+            key: 'add-note'
+          },
+          imageUrl
             ? {
                 type: 'item',
-                text: t('general.View details'),
-                icon: 'park-info',
-                suffix: 'V',
-                key: 'view-details',
+                text: t('general.View image'),
+                icon: 'park-pic-one',
                 onSelect: () => {
-                  actions('view-details')
-                }
+                  Global.commonOps?.previewImage?.(imageUrl)
+                  onClose()
+                },
+                key: 'view-image'
               }
             : undefined,
           label && 'selectedText' in label
@@ -122,49 +153,60 @@ const LabelActionMenu = ({ on, objectId, type, onClose }: Props) => {
                 }
               }
             : undefined,
-          label && label.imageUrl && u && (u.premiumEndDate ?? 0) > Date.now()
+          {
+            key: 'move-to',
+            type: 'item',
+            text: t(trans.Meta.MoveTo),
+            icon: Icons.MoveTo,
+            onSelect: async () => {
+              on({ type: 'move' })
+              onClose()
+            }
+          },
+          {
+            type: 'separator',
+            key: 's-1'
+          },
+          meta
             ? {
                 type: 'item',
-                icon: 'park-scanning-two',
-                key: 'ocr',
-                text: t('general.Image to text'),
-                onSelect: async () => {
-                  on({ type: 'textToImage' })
+                text: t(trans.Meta.ViewDetails),
+                icon: Icons.Info,
+                suffix: 'V',
+                key: 'view-details',
+                onSelect: () => {
+                  actions('view-details')
+                }
+              }
+            : undefined,
+          meta
+            ? {
+                type: 'item',
+                text: t(trans.AddTag),
+                icon: Icons.Tag,
+                key: 'add-tag',
+                onSelect: () => {
                   onClose()
-                  const blob = await fetch(label!.imageUrl!).then(res => res.blob())
-                  if (blob) {
-                    const res = await OcrService.ocrImage(blob)
-                    if (res) {
-                      ObjectStore(type).updateOne({ id: objectId, selectedText: res.result.map(i => i.words).join(' ') })
-                    }
-                  }
+                  Global.metaOps.quickAdd?.(meta.id, 'tags')
+                }
+              }
+            : undefined,
+          meta
+            ? {
+                key: 'copy',
+                text: t(trans.CopyLink),
+                icon: Icons.Link,
+                type: 'item',
+                suffix: 'Cmd+C',
+                onSelect: async () => {
+                  actions('copy')
                 }
               }
             : undefined,
           {
-            key: 'move-to',
             type: 'item',
-            text: t('general.Move to'),
-            icon: 'park-corner-up-right',
-            suffix: 'M',
-            onSelect: async () => {
-              actions('move-to')
-            }
-          },
-          {
-            key: 'copy',
-            text: t('general.Copy link'),
-            icon: 'park-link',
-            type: 'item',
-            suffix: 'Cmd+C',
-            onSelect: async () => {
-              actions('copy')
-            }
-          },
-          {
-            type: 'item',
-            text: t('general.delete'),
-            icon: 'park-delete-one',
+            text: t(trans.Delete),
+            icon: Icons.Delete,
             onSelect: () => {
               actions('delete')
             },
@@ -174,9 +216,9 @@ const LabelActionMenu = ({ on, objectId, type, onClose }: Props) => {
         ].filter(i => i)}
       />
       {label && label.updatedAt && (
-        <div className={'border-top font-size-12 super-transparent-font'} style={{ padding: '0.4rem 0.8rem 0', marginTop: '0.4rem' }}>
+        <div className={'border-top font-size-12 transparent-font'} style={{ padding: '0.4rem 0.8rem 0', marginTop: '0.4rem' }}>
           {t('general.Last updated at')}
-          <div>{DateFormat.format(label.updatedAt, DateFormat.Formats.withMinute)}</div>
+          <div>{DateFormat.format(label.updatedAt, `${DateFormat.Formats.yearMonthDays} ${DateFormat.Formats.minute}`)}</div>
         </div>
       )}
     </WithBorder>

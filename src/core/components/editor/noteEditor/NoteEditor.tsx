@@ -1,17 +1,14 @@
-import { AIStore, MetaStore, ObjectStore } from '@/api/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { Editor } from '@/core/components/editor/Editor'
 import { useMemo, useRef, useState } from 'react'
 import Id from '@/utils/id'
 import useSyncValue from '@/core/components/editor/noteEditor/useSyncValue'
-import { EditorProps, IEditorInstance } from '~/typings'
-import { Rendevoz } from '@/core/rendevoz'
+import { EditorProps, IEditorInstance, IGeneralSource } from '~/typings'
 import useStoreValue from '@/core/components/editor/noteEditor/useStoreValue'
 import useDrop from '@/core/components/editor/noteEditor/useDrop'
-import useAddNewElement from '@/core/components/editor/noteEditor/useAddNewElement'
 import useLabel from '@/core/components/editor/noteEditor/useLabel'
-import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
 import useCheckInsideMeta from '@/core/components/editor/noteEditor/useCheckInsideMeta'
-import { AI_QUESTION_PROP_ID, AI_SUMMARY_PROP_ID } from '@/api/stores/meta/meta.store'
+import { AI_SUMMARY_PROP_ID } from '@/api/stores/meta/meta.store'
 
 /**
  *  基于笔记的编辑器
@@ -31,23 +28,33 @@ const NoteEditor = ({
   const editorId = useMemo(() => Id.getStrId(), [])
   const instanceRef = useRef<IEditorInstance>()
   const handleDrop = useDrop(noteId, metaId)
-  const handleAddNewElementFromMenu = useAddNewElement(metaId)
+  const [loaded, setLoaded] = useState(rest.defaultValue ? true : false)
   useSyncValue(editorId, noteId, instanceRef)
-  const { saveValueToNote, fetchedValue } = useStoreValue({
+  const { fetchedValue } = useStoreValue({
     noteId,
     instanceRef,
     metaId,
+    id: editorId,
     onContentLoaded: () => {
+      setLoaded(true)
       if (instanceRef.current) {
         rest.onInstanceInitialized?.(instanceRef.current)
       }
     },
     defaultValue: rest.defaultValue
   })
-  const { handleDeleteLable, handleAddLabel } = useLabel(note)
-  const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
+  const { deleteLabel, addLabel } = useLabel(note)
   useCheckInsideMeta(instanceRef, metaId, noteId)
-
+  const attachMeta = () => {
+    const i = instanceRef.current
+    if (i) {
+      if (noteMeta) {
+        i.values.metaId = noteMeta.id
+      }
+    }
+  }
+  attachMeta()
+  if (noteId && !note) return null
   return (
     <Editor
       {...rest}
@@ -55,25 +62,33 @@ const NoteEditor = ({
       styles={{
         ...rest.styles,
         containerHeight:
-          initialHeight !== undefined ? (!fetchedValue ? initialHeight : rest.styles?.containerHeight) : rest.styles?.containerHeight
+          initialHeight !== undefined ? (!loaded ? initialHeight : rest.styles?.containerHeight) : rest.styles?.containerHeight
       }}
+      aiSummary={rest.aiSummary ?? note?.aiSummary}
       state={{
         lastSavedAt: note?.lastSavedAt,
         saveImgLocally: true,
         labelSortMode: note?.labelSortMode,
         labelPriority: note?.labelPriority,
         labelScrollOffset: note?.labelScrollOffset,
-        defaultActiveSidebar: note?.defaultActiveSidebar ?? (note ? 'hide' : undefined),
+        labelFilter: note?.labelFilter,
+        labelFolders: note?.labelFolders,
+        defaultActiveSidebar: note?.defaultActiveSidebar,
+        defaultSidebarVisible: note?.defaultSidebarVisible,
         defaultSidebarWidth: note?.defaultSidebarWidth,
+        aiChat: rest.state?.aiChat ?? note?.aiChat,
+        exam: rest.state?.exam ?? note?.exam,
+        loaded: rest.defaultValue ? true : loaded,
         ...rest.state
       }}
       defaultValue={fetchedValue || rest.defaultValue}
       labelIds={labelIds || note?.labels}
       labelType={rest.labelType ?? 'noteLabel'}
       id={rest.id || editorId}
-      stringTitle={noteMeta?.name || rest.stringTitle || 'Untitled'}
+      stringTitle={noteMeta?.name || rest.stringTitle}
       onInstanceInitialized={i => {
         instanceRef.current = i
+        attachMeta()
         if (fetchedValue) {
           i.replaceChildren?.(fetchedValue)
           rest.onInstanceInitialized?.(i)
@@ -82,12 +97,6 @@ const NoteEditor = ({
           rest.onInstanceInitialized?.(i)
         }
       }}
-      ai={
-        rest.ai || {
-          summary: noteMeta?.properties?.[AI_SUMMARY_PROP_ID]?.value,
-          questions: noteMeta?.properties?.[AI_QUESTION_PROP_ID]?.value
-        }
-      }
       on={async e => {
         if (on) {
           const res = await on?.(e)
@@ -96,92 +105,50 @@ const NoteEditor = ({
           }
         }
         switch (e.type) {
-          case 'blockDragged': {
-            return {
-              noteId,
-              fromMetaId: noteMeta?.id
+          case 'chatChange':
+            if (noteId) {
+              await ObjectStore('note').updateOne({ id: noteId, aiChat: e.chat })
             }
-          }
-          case 'save': {
-            saveValueToNote(e.value)
             return
-          }
-          case 'copyLink': {
+          case 'getMeta':
             if (noteMeta) {
-              const links = e.blocks.map(i => `rendevoz://object/${noteMeta.id}?blockId=${i.id}`).join('\n')
-              const html = e.blocks.map(i => `<p><a href="rendevoz://object/${noteMeta.id}?blockid=${i.id}">${i.text}</a></p>`).join('')
-              const content = [
-                new ClipboardItem({
-                  'text/html': new Blob([html], { type: 'text/html' }),
-                  'text/plain': new Blob([links], { type: 'text/plain' })
-                })
-              ]
-              navigator.clipboard.write(content)
+              e.onSuccess(noteMeta.id)
             }
             return
-          }
-          case 'linkToMeta': {
-            if (metaId) {
-              return await MetaStore.addMetaLink(
-                {
-                  sourceId: metaId,
-                  targetId: e.targetMetaId
-                },
-                true
-              )
-            }
-            break
-          }
           case 'deleteLabel': {
-            return await handleDeleteLable(e.labelId)
+            return await deleteLabel(e.labelId)
           }
           case 'addLabel': {
-            return await handleAddLabel(e.currentLabel)
+            return await addLabel(e.currentLabel)
           }
-          case 'addNewElementFromMenu':
-            return await handleAddNewElementFromMenu(e.newElementType)
           case 'drop': {
             return await handleDrop(e)
           }
           case 'AI summarize': {
             if (noteMeta) {
-              const objId = noteMeta.objectId
-              const questions = await Promise.all(
-                e.questions.map(async i => await ObjectStore('question').addOne({ ...i, parentObjectId: objId }))
-              )
-              AIStore.updateMetaAI(noteMeta.id, {
-                summary: e.summary,
-                questions: questions
+              MetaStore.addAIForMeta(noteMeta.id, {
+                summary: e.summary.summary.summary
               })
             }
-            return
+            if (noteId) {
+              await ObjectStore('note').updateOne({ id: noteId, aiSummary: e.summary })
+            }
+            return true
           }
-          case 'linkAddAsValue': {
-            ObjectStore('webpage').addOneWithMeta(
-              { url: e.url },
-              {
-                currentMeta: {
-                  fromObject: noteMeta
-                    ? {
-                        type: 'note',
-                        metaId: noteMeta.id
-                      }
-                    : undefined
-                },
-                showMetaModal: true
-              }
-            )
-            return
+          case 'removeSummary': {
+            if (noteMeta) {
+              MetaStore.property.updateProperty(noteMeta.id, AI_SUMMARY_PROP_ID, null)
+            }
+            if (noteId) {
+              await ObjectStore('note').updateOne({ id: noteId, aiSummary: undefined })
+            }
+            return true
           }
-          case 'search': {
-            GlobalSearchInstance.open?.({
-              query: e.searchedText,
-              from: {
-                type: 'note',
-                metaId: noteMeta?.id
-              }
-            })
-            return
+          case 'getSource': {
+            return {
+              type: 'note',
+              objectId: noteId
+            } as Partial<IGeneralSource>
           }
           case 'updateNote': {
             if (noteId) {
@@ -193,13 +160,6 @@ const NoteEditor = ({
                   }
                 })
             }
-            break
-          }
-          case 'labelDrag': {
-            Rendevoz.Actions.State.Drag.setDraggingDetails({
-              type: 'noteLabel',
-              labelId: e.labelId
-            })
             return
           }
           case 'titleChange': {
@@ -213,13 +173,10 @@ const NoteEditor = ({
       }}
       onOperationApplied={op => {
         if (noteId) {
-          emitter.emit('editor', {
-            type: 'operationApplied',
-            data: {
-              noteId,
-              id: editorId,
-              operation: op
-            }
+          Global.emitEvent('editorOperationApplied', {
+            noteId,
+            id: editorId,
+            operation: op
           })
         }
       }}

@@ -1,26 +1,23 @@
-import { useMemo, useRef } from 'react'
+import { memo, useMemo, useRef } from 'react'
 import { useAtomValue } from 'jotai'
 import { WhiteboardTransformAtom } from '@/core/components/whiteboard/hooks/useWhiteboardTransform'
 import { useSelectAtomValue } from '@/hooks'
 import { WhiteboardAtom } from '@/core/components/whiteboard/StateHooks'
 import { Colors } from '@/consts'
 import Id from '@/utils/id'
-import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
-
 const patternId = 'dots'
 const offset = 2
-const Background = () => {
+const Background = memo(() => {
   const backgroundType = useSelectAtomValue(WhiteboardAtom, s => s?.backgroundType)
-
   const ref = useRef<SVGSVGElement>(null)
   const transform = useAtomValue(WhiteboardTransformAtom)
   const id = useMemo(() => `${patternId}_${Id.getId()}`, [])
-  const scale = useSelectAtomValue(WhiteboardStateAtom, s => s.zoom)
+  const scale = transform[2]
   if (!backgroundType || backgroundType === 'none') return null
   const gapXY = backgroundType === 'line' ? [80, 80] : [60, 60]
   const patternSize = backgroundType === 'line' ? 3 : 6
-  const scaledGap = [gapXY[0] * transform[2] || 1, gapXY[1] * transform[2] || 1]
-  const scaledSize = patternSize * transform[2]
+  const scaledGap = [gapXY[0] * scale || 1, gapXY[1] * scale || 1]
+  const scaledSize = patternSize * scale
   const patternDimensions = scaledGap
   const patternOffset =
     backgroundType === 'dot' ? [scaledSize / offset, scaledSize / offset] : [patternDimensions[0] / offset, patternDimensions[1] / offset]
@@ -55,7 +52,7 @@ const Background = () => {
       <rect x="0" y="0" fill={`url(#${id})`} width="100%" height="100%" />
     </svg>
   )
-}
+})
 
 const DotPattern = ({ radius, color }: { radius: number; color: string }) => {
   return <circle cx={radius} cy={radius} r={radius} fill={color} />

@@ -3,12 +3,8 @@ import { MetaObject } from '~/typings'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { MetaStore } from '@/api/stores'
 import GroupStore from '../../../api/stores/group.store'
-import { Content, Icon } from '@/components'
-import { TabTitle } from '@/core/rendevoz/components'
+import { Content, Icon, TabTitle } from '@/components'
 import MetaGroup from '@/core/components/group/MetaGroup'
-import { calculateSortObjects } from '@/core/object/filter/BetterSorter'
-import { GlobalInstance } from '@/hooks'
-import { Rendevoz } from '@/core/rendevoz'
 
 function TypeGroup({ type }: { type: MetaObject['type'] }) {
   const workspace = KeyvalueStore.useValue('currentWorkspace')
@@ -28,26 +24,18 @@ function TypeGroup({ type }: { type: MetaObject['type'] }) {
       const allTypeMetas = Array.from(allMetas?.values() || [])
         .map(o => map.get(o))
         .filter(i => i && !i.deleted) as MetaObject[]
-      const sorted = calculateSortObjects(allTypeMetas, {
-        sorters: [
-          {
-            field: 'createdAt',
-            type: 'ascending',
-            id: 1
-          }
-        ]
-      })
+      const sorted = Global.metaOps.sort('createdAt', 'desc', allTypeMetas)
       setData(s => ({ ...s, values: sorted.map(i => ({ rowId: i.id, type: 'metaObject', id: i.id })) }))
     }
   }, [allMetas?.size])
   return (
     <Content fullHeight fullWidth>
-      <TabTitle title={Rendevoz.Utils.Meta.getTypeName(type)} icon={<Icon name={Rendevoz.Utils.Object.getMetaObjectIcon(type)} />} />
+      <TabTitle title={Global.utils.getTypeName(type)} icon={<Icon name={Global.utils.getIcon(type)} />} />
       <MetaGroup
         title={useMemo(
           () => ({
-            title: Rendevoz.Utils.Meta.getTypeName(type),
-            icon: Rendevoz.Utils.Object.getMetaObjectIcon(type),
+            title: Global.utils.getTypeName(type),
+            icon: Global.utils.getIcon(type),
             titleEditable: false
           }),
           []
@@ -58,6 +46,7 @@ function TypeGroup({ type }: { type: MetaObject['type'] }) {
             invisibleProperties: [1],
             canDrag: true,
             canHideObjectsInside: true,
+            canTurnHiddenIntoUnhidden: false,
             onlyCreateType: type,
             deleteMetaWhenDeleteItem: true,
             canDragInside: false,
@@ -68,12 +57,21 @@ function TypeGroup({ type }: { type: MetaObject['type'] }) {
         layout={useMemo(
           () => ({
             showImport: false,
-            showAddNew: !!GlobalInstance.metaOps?.canCreateDirectly(type),
+            showCreate: !!Global.metaOps?.canCreateDirectly(type),
             showDeletedMetas: false,
             showDescription: false,
+            showAddNew: false,
             showTitleActions: false,
             showIcon: false,
             hideContextMenuItems: ['deleteCompleted', 'deleteInGroup', 'addRowAbove', 'addRowBelow']
+          }),
+          []
+        )}
+        styles={useMemo(
+          () => ({
+            titleContainerStyle: {
+              paddingTop: 42
+            }
           }),
           []
         )}

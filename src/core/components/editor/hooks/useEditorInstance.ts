@@ -1,11 +1,9 @@
 import { assignProperties } from '@/utils'
 import { atom, createStore, useAtomValue } from 'jotai'
-import { createContext, RefObject, useContext } from 'react'
+import { createContext, RefObject, useContext, useRef } from 'react'
 import { CustomEditor, IEditorInstance } from '~/typings'
-import { goToBlock, goToTextHighlight, highlightBlock, selectBlock, waitForEditorContentInitialized } from '../utils'
-import { Editor, Node, Range } from 'slate'
-import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP } from '../weakMaps'
-import useEditorBarState from './useEditorBarState'
+import { goToBlock, goToTextHighlight, highlightBlock } from '../utils'
+import { Node } from 'slate'
 import assignBlockOps from '@/core/components/editor/hooks/instance/assignBlockOps'
 import assignTextOps from '@/core/components/editor/hooks/instance/assignTextOps'
 import assignToggle from '@/core/components/editor/hooks/instance/assignToggle'
@@ -13,16 +11,23 @@ import assignValueOps from '@/core/components/editor/hooks/instance/assignValueO
 import assignSearchOps from '@/core/components/editor/hooks/instance/assignSearchOps'
 import assignLabelOps from '@/core/components/editor/hooks/instance/assignLabelOps'
 import getInsideMetas from '@/core/components/editor/utils/getInsideMetas'
+import assignAIOps from '@/core/components/editor/components/AI/assignAIOps'
+import { ReactEditor } from '@/core'
+import { slateToMarkdown } from '@/core/components/editor/plugins/slateToMarkdown'
+import slateToHTML from '@/core/components/editor/plugins/slateToHTML'
 
 export const EditorInstanceAtom = atom<IEditorInstance>({})
 export const EditorStoreContext = createContext<ReturnType<typeof createStore> | null>(null)
+
 const useEditorInstance = () => {
   const store = useContext(EditorStoreContext)
   return useAtomValue(EditorInstanceAtom, { store: store })
 }
-
+const SelectionHighlight = 'selection-highlight'
 export const useAssignEditorInstance = (editor: CustomEditor, scrollElementRef: RefObject<HTMLElement>) => {
   const instance = useEditorInstance()
+  const eventsMapRef = useRef(new Map<string, Set<any>>())
+  const eventsMap = eventsMapRef.current
   const getHighlightLocation = (highlightId: number) => {
     const iter = Node.texts(editor)
     const values = []
@@ -33,7 +38,7 @@ export const useAssignEditorInstance = (editor: CustomEditor, scrollElementRef: 
     }
     return values
   }
-
+  assignAIOps(instance, editor)
   assignSearchOps(instance, editor)
   assignBlockOps(instance, editor)
   assignTextOps(instance, editor)
@@ -41,32 +46,66 @@ export const useAssignEditorInstance = (editor: CustomEditor, scrollElementRef: 
   assignValueOps(instance, editor)
   assignLabelOps(instance, editor)
   assignProperties(instance, {
+    serialize: (mode = 'markdown') => {
+      if (mode === 'markdown') {
+        return slateToMarkdown(editor.children)
+      }
+      if (mode === 'html') {
+        return slateToHTML(editor.children).html
+      }
+      return slateToMarkdown(editor.children)
+    },
+    addEventListener: (k, f) => {
+      const set = eventsMap.get(k) || new Set()
+      set.add(f)
+      eventsMap.set(k, set)
+    },
+    removeEventListener: (k, f) => {
+      eventsMap.get(k)?.delete(f)
+    },
+    emitEvent: (k, a) => {
+      eventsMap.get(k)?.forEach(f => f(a))
+    },
+    highlightBlock: id => {
+      const idArr = Array.isArray(id) ? id : [id]
+      idArr.forEach(id => {
+        highlightBlock(id, editor)
+      })
+    },
+    highlightCurrentSelection: () => {
+      const highlight = new Highlight()
+      const sel = window.getSelection()
+      if (sel && sel.rangeCount > 0) {
+        highlight.add(sel.getRangeAt(0))
+        CSS.highlights.set(SelectionHighlight, highlight)
+        return
+      }
+      if (editor.selection) {
+        const range = ReactEditor.toDOMRange(editor, editor.selection)
+        highlight.add(range)
+        CSS.highlights.set(SelectionHighlight, highlight)
+        return
+      }
+    },
+    dehighlightSelection: () => {
+      CSS.highlights.delete(SelectionHighlight)
+    },
     scrollToBlock: async opts => {
       if (opts.blockId !== undefined) {
-        console.log(opts)
         await goToBlock(opts.blockId, editor)
         if (opts.highlight) {
           highlightBlock(opts.blockId, editor)
         }
       }
     },
-    isSelectionCollapsed: () => {
-      const selection = editor.selection
-      if (!selection) return false
-      if (Range.isCollapsed(selection)) return true
-      return false
-    },
-    save: () => {
-      editor.on({ type: 'save', value: editor.children })
-    },
     getInsideMetas: () => {
       const eles = editor.children
       const metas = getInsideMetas(eles)
-      const ids = new Set<number>()
-      Object.values(metas).forEach(o => {
-        o.forEach(i => ids.add(i))
-      })
-      return Array.from(ids.values())
+      return Array.from(
+        Object.keys(metas)
+          .map(i => Number(i))
+          .filter(i => i)
+      )
     },
     getHighlightLocation,
     getScrollElement: () => scrollElementRef.current,
@@ -80,7 +119,7 @@ export const useAssignEditorInstance = (editor: CustomEditor, scrollElementRef: 
     },
     getSlateEditor: () => editor,
     getElementPathById: id => {
-      return ID_TO_PATH_MAP.get(editor)?.get(id)
+      return instance.values.ID_TO_PATH.get(id)
     },
     getOverlayManager: () => {
       return editor.overlayManager
@@ -90,9 +129,6 @@ export const useAssignEditorInstance = (editor: CustomEditor, scrollElementRef: 
         .map(i => i.element)
         .filter(i => i)
       return elements
-    },
-    getElementFunctionById: id => {
-      return ID_TO_ELEMENTS_MAP.get(editor)?.get(id)
     }
   })
 }

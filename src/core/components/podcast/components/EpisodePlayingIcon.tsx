@@ -6,6 +6,5 @@ export default ({ style, className }: { style?: CSSProperties; className?: strin
     <span></span>
     <span></span>
     <span></span>
-    <span></span>
   </div>
 )

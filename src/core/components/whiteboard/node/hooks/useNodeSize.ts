@@ -1,5 +1,4 @@
-import { useLayoutEffect } from 'react'
-import { useFlow } from '@/core/components/whiteboard/StateHooks'
+import { RefObject, useLayoutEffect } from 'react'
 import { IWhiteboardInstance, IWhiteboardNode } from '~/typings'
 import getNodeSize from '@/core/components/whiteboard/node/getNodeSize'
 
@@ -40,9 +39,9 @@ const handleQueues = (instance: IWhiteboardInstance) => {
     })
   })
 }
-const useNodeSize = (container: HTMLElement | undefined, node: IWhiteboardNode, instance: IWhiteboardInstance) => {
-  const flow = useFlow()
+const useNodeSize = (containerRef: RefObject<HTMLElement | null>, node: IWhiteboardNode, instance: IWhiteboardInstance) => {
   useLayoutEffect(() => {
+    const container = containerRef.current
     if (container) {
       if (!node.width) {
         const bounding = container.getBoundingClientRect()
@@ -54,7 +53,7 @@ const useNodeSize = (container: HTMLElement | undefined, node: IWhiteboardNode, 
           if (!defaultAutoWidth) {
             container.style.width = `${width}px`
           }
-          const id = flow.whiteboardId
+          const id = instance.values.id
           if (!id) return
           const arr = UpdateQueue[id] || []
           if (!arr.length) {
@@ -64,7 +63,7 @@ const useNodeSize = (container: HTMLElement | undefined, node: IWhiteboardNode, 
           }
           arr.push({
             observe: () => {
-              flow.resizeObserver.observe(container)
+              instance.nodeOps?.observe?.(container)
             },
             node: {
               id: node.id,
@@ -75,13 +74,13 @@ const useNodeSize = (container: HTMLElement | undefined, node: IWhiteboardNode, 
           UpdateQueue[id] = arr
         }
       } else {
-        flow.resizeObserver.observe(container)
+        instance.nodeOps?.observe?.(container)
       }
       return () => {
-        flow.resizeObserver.unobserve(container)
+        instance.nodeOps?.unobserve?.(container)
       }
     }
-  }, [container])
+  }, [containerRef.current])
 }
 
 export default useNodeSize

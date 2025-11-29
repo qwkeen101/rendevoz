@@ -5,8 +5,10 @@ export interface IStore<T> {
   fetchOneById: (id: number) => Promise<T | undefined>
   getAll: () => Promise<boolean>
   fetchAll: () => Promise<T[]>
+  fetchByConditions: <K = keyof T>(conditions: Partial<Record<K, T[K]>>) => Promise<T[]>
   getOneById: (id: number, opt?: { forceRefresh?: boolean }) => Promise<T | undefined>
   getMultipleByIds: (id: number[], cache?: boolean) => Promise<T[]>
+  triggerSearch?: (id: number, debounce?: boolean) => Promise<string>
   deleteOneById: (
     id: number,
     options?: {
@@ -27,8 +29,8 @@ export interface IStore<T> {
           preventAddMeta?: boolean
         }
       : T extends IWebpage
-      ? {}
-      : {})
+        ? {}
+        : {})
   ) => Promise<T>
   addOneWithMeta: (
     one?: Parameters<IStore<T>['addOne']>['0'],

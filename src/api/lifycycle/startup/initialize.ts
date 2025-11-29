@@ -8,10 +8,12 @@ import startupSync from '@/api/sync/lifecycle/startup'
 import autoSync from '@/api/sync/autoSync'
 import { subDataChange } from '@/api/stores'
 import initializeSettings from '@/api/lifycycle/initializeApp/initializeSettings'
+import initializeFolder from '@/api/lifycycle/initializeApp/initializeFolder'
 
 export default async () => {
   GlobalStates.setState('loading', s => ({ ...s, currentState: 'initializing' }))
   await initializeSettings()
+  await initializeFolder()
   await startupSync()
   await recoverFromBackup()
   await initializeApp()

@@ -1,12 +1,11 @@
-import { CustomEditor } from '~/typings'
+import { IEditorInstance } from '~/typings'
 import { Editor, Range, Transforms } from 'slate'
 import Id from '@/utils/id'
 import { HistoryEditor } from 'slate-history'
-import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import { waitFor } from '@/utils'
 
-const useEditorMention = (editor: CustomEditor) => {
-  const instance = useEditorInstance()
+const useEditorMention = (instance: IEditorInstance) => {
+  const editor = instance.editor
   const openForm = (id: number) => {
     waitFor(
       () => !!instance.blockOps?.getBlockFuncs(id)?.openPickMeta,
@@ -15,7 +14,8 @@ const useEditorMention = (editor: CustomEditor) => {
       }
     )
   }
-  const handleMentionKey = (e: KeyboardEvent) => {
+  return (e: KeyboardEvent) => {
+    if (e.key !== '@' && e.key !== '[') return
     const curr = Editor.above(editor)
     if (!curr) return
     if (curr[0].type === 'inline-metapicker') return
@@ -54,9 +54,6 @@ const useEditorMention = (editor: CustomEditor) => {
         }
       }
     }
-  }
-  return {
-    handleMentionKey
   }
 }
 

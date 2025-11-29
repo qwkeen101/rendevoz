@@ -1,7 +1,6 @@
 import { IGroupInstance, MetaGroup } from '~/typings'
 import { assignProperties } from '@/utils'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
-import { Rendevoz } from '@/core/rendevoz'
 import produce from 'immer'
 import { useSetAtom, useStore } from 'jotai'
 
@@ -13,13 +12,17 @@ export default (instance: IGroupInstance, groupValue?: MetaGroup) => {
       const groupState = store.get(GroupStateAtom)
       const openIn = groupState.state?.onlyOpenIn || groupState.data?.openIn || 'newTab'
       if (openIn === 'newTab') {
-        Rendevoz.Actions.Open.Meta.openMetaObject(id)
+        Global.layoutOps?.openObject(id)
       }
-      if (openIn === 'center') {
-        instance.centerOps?.open(id, rowId)
-      }
-      if (openIn === 'sidePeek') {
-        instance.sidebarOps?.open({ type: 'preview', metaId: id, rowId })
+      if (Global.metaOps.canPreview(id)) {
+        if (openIn === 'center') {
+          instance.centerOps?.open(id, rowId)
+        }
+        if (openIn === 'sidePeek') {
+          instance.sidebarOps?.open({ type: 'preview', metaId: id, rowId })
+        }
+      } else {
+        Global.layoutOps?.openObject(id)
       }
     },
     deleteView: viewId => {

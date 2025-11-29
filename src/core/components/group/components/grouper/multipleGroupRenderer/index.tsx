@@ -1,8 +1,7 @@
-import { GlobalInstance, useSelectAtomValue } from '@/hooks'
+import { useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
-import { useVirtualizer } from '@tanstack/react-virtual'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
-import { Content } from '@/components'
+import { Content, useVirtualizer } from '@/components'
 import TableRenderer from '@/core/components/group/components/table/TableRenderer'
 import GrouperHeader from '@/core/components/group/components/grouper/headers'
 import ListRenderer from '@/core/components/group/components/list/ListRenderer'
@@ -71,7 +70,7 @@ export default function GroupGrouperRenderer() {
                 showAddMore = false
               }
               if (groupFieldType === 'metaType') {
-                showAddMore = !!GlobalInstance.metaOps?.canCreateDirectly(group.name)
+                showAddMore = !!Global.metaOps?.canCreateDirectly(group.name)
               }
               return (
                 <TableRenderer
@@ -103,7 +102,7 @@ export default function GroupGrouperRenderer() {
                 showAddMore = false
               }
               if (groupFieldType === 'metaType') {
-                showAddMore = !!GlobalInstance.metaOps?.canCreateDirectly(group.name)
+                showAddMore = !!Global.metaOps?.canCreateDirectly(group.name)
               }
               return (
                 <div
@@ -151,7 +150,7 @@ export default function GroupGrouperRenderer() {
                 showAddMore = false
               }
               if (groupFieldType === 'metaType') {
-                showAddMore = !!GlobalInstance.metaOps?.canCreateDirectly(group.name)
+                showAddMore = !!Global.metaOps?.canCreateDirectly(group.name)
               }
               return (
                 <div ref={virtualizer.measureElement} data-index={i.index} key={group.id}>

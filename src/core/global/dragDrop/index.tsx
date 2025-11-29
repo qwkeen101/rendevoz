@@ -1,58 +1,42 @@
 import { useMemoizedFn } from '@/hooks'
-import { css } from '@emotion/css'
 import { atom } from 'jotai/vanilla'
 import { useAtom } from 'jotai/react'
 import React, { memo, ReactElement, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { GlobalInstances, IDraggableElement } from '~/typings'
-import useOverlayDrop from './useOverlayDrop'
 import { globalStore } from '@/api/stores'
 import ClassName from '@/styles/classNames'
-import { Rendevoz } from '@/core/rendevoz'
 import { assignProperties } from '@/utils'
-
-export type AvaliableGlobalDraggingElements = IDraggableElement
-
-export const GlobalDragOverlayInstance: Partial<GlobalInstances.DragDropInstance> = {}
 
 const globalIsDraggingAtom = atom(false)
 export const useGlobalIsDragging = () => useAtom(globalIsDraggingAtom, { store: globalStore })
+export const isGlobalDragging = () => globalStore.get(globalIsDraggingAtom)
 export const GlobalDragOverlay = memo(() => {
   const [dragElements, setDragElements] = useState<(HTMLElement | ReactElement)[]>([])
   const [isDragging, setIsDragging] = useGlobalIsDragging()
-  const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
-  const { portal } = useOverlayDrop()
   const dragContainerRef = useRef<HTMLDivElement>(null)
   const dragHandler = useMemoizedFn((e: PointerEvent) => {
+    const draggingDetails = Global.values.draggingDetails
     if (e.type === 'pointerup') {
-      setDragElements(eles => {
-        if (eles.length > 0) {
-          return []
-        }
-        return eles
-      })
-      isDragging &&
-        GlobalDragOverlayInstance.draggingDetails &&
-        emitter.emit('global', {
-          type: 'globalDragPointerUp',
-          data: {
-            event: e,
-            draggingElement: GlobalDragOverlayInstance.draggingDetails
+      if (isDragging) {
+        setDragElements(eles => {
+          if (eles.length > 0) {
+            return []
           }
+          return eles
         })
-      setTimeout(() => setIsDragging(false), 0)
-      setTimeout(() => (GlobalDragOverlayInstance.draggingDetails = undefined), 20)
+        draggingDetails &&
+          Global.emitEvent('dragEnd', {
+            event: e
+          })
+        setTimeout(() => setIsDragging(false), 0)
+        setTimeout(() => (Global.values.draggingDetails = undefined), 20)
+      }
       return
     }
-    if (e.type === 'pointermove') {
-      GlobalDragOverlayInstance.draggingDetails &&
-        emitter.emit('global', {
-          type: 'globalDragPointerMove',
-          data: {
-            event: e,
-            draggingElement: GlobalDragOverlayInstance.draggingDetails
-          }
-        })
+    if (e.type === 'pointermove' && draggingDetails) {
+      Global.emitEvent('dragMove', {
+        event: e
+      })
     }
     e.preventDefault()
     window.getSelection()?.empty()
@@ -63,19 +47,37 @@ export const GlobalDragOverlay = memo(() => {
     dragContainer.style.display = 'block'
   })
   const dropHandler = (e: DragEvent) => {
-    GlobalDragOverlayInstance.draggingDetails = undefined
+    Global.values.draggingDetails = undefined
     setIsDragging(false)
     e.preventDefault()
-    emitter.emit('global', {
-      type: 'globalDragPointerUp',
-      data: {
-        event: e
-      }
+    Global.emitEvent('dragEnd', {
+      event: e
     })
   }
-  const dragoverHandler = () => {
+  const dragoverHandler = (e: DragEvent) => {
+    e.preventDefault()
     setIsDragging(true)
   }
+  assignProperties(Global, {
+    commonOps: {
+      ...Global.commonOps,
+      startDrag: () => {
+        if (isDragging === false) {
+          setIsDragging(true)
+        }
+      },
+      setDraggingElements: nodes => {
+        let newNodes = nodes
+
+        if (!Array.isArray(newNodes)) {
+          newNodes = [nodes] as any[]
+        }
+        if (!isDragging) {
+          setDragElements([...dragElements, ...newNodes])
+        }
+      }
+    }
+  })
   useEffect(() => {
     const dragContainer = dragContainerRef.current
     if (!dragContainer) return
@@ -90,7 +92,6 @@ export const GlobalDragOverlay = memo(() => {
       document.body.style.cursor = 'auto'
       document.removeEventListener('pointermove', dragHandler, true)
       dragContainer.style.display = 'none'
-      // GlobalDragOverlayInstance.draggingDetails = undefined
     }
     return () => {
       document.removeEventListener('dragover', dragoverHandler, true)
@@ -100,7 +101,6 @@ export const GlobalDragOverlay = memo(() => {
     }
   }, [isDragging])
   useEffect(() => {
-    console.log(dragElements)
     if (dragElements.length === 0) {
       while (dragContainerRef.current?.firstChild) {
         dragContainerRef.current.removeChild(dragContainerRef.current.firstChild)
@@ -113,39 +113,7 @@ export const GlobalDragOverlay = memo(() => {
       })
     }
   }, [dragElements])
-  assignProperties(GlobalDragOverlayInstance, {
-    addDragElements: nodes => {
-      let newNodes = nodes
 
-      if (!Array.isArray(newNodes)) {
-        newNodes = [nodes] as any[]
-      }
-      if (!isDragging) {
-        setDragElements([...dragElements, ...newNodes])
-      }
-    },
-    removeAllDragElement: () => {
-      setDragElements([])
-    },
-    removeDragElements: nodes => {
-      if (!Array.isArray(nodes)) {
-        nodes = [nodes]
-      }
-      setDragElements(els => {
-        return els.filter(el => (nodes as HTMLElement[]).some(n => n !== el))
-      })
-    },
-    startDrag: () => {
-      if (isDragging === false) {
-        setIsDragging(true)
-      }
-    },
-    endDrag: () => {
-      setIsDragging(false)
-    },
-    setDraggingDetails: d => (GlobalDragOverlayInstance.draggingDetails = d),
-    getDraggingDetails: () => GlobalDragOverlayInstance.draggingDetails
-  })
   return createPortal(
     <>
       <div
@@ -165,10 +133,8 @@ export const GlobalDragOverlay = memo(() => {
           })}
         </div>
       </div>
-      {portal}
     </>,
-    document.body,
-    'globla-drag-overlay'
+    document.body
   )
 })
 

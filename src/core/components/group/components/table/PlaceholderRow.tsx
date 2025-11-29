@@ -19,8 +19,7 @@ const PlaceholderRow = ({ grouperId }: { grouperId?: number }) => {
         height: 32,
         paddingLeft: 12,
         color: Colors.Font.Transparent,
-        alignItems: 'center',
-        borderBottom: `1px solid ${Colors.Background.Border}`
+        alignItems: 'center'
       }}
     >
       <Icon name={'park-plus'} />

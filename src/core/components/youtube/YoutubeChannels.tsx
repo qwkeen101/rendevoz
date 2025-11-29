@@ -1,10 +1,11 @@
-import { IYoutubeChannelItem } from '@/core/components/feed/youtube/YoutubeServices'
+import { IYoutubeChannelItem } from '@/core/components/youtube/YoutubeServices'
 import { ReactElement, RefObject } from 'react'
-import useFeedInstance from '@/core/components/feed/hooks/useFeedInstance'
-import { useMeasure, useNorepeatNavigate } from '@/hooks'
-import VirtualLoader from '@/core/components/feed/youtube/components/VirtualLoader'
-import ImageTitleItem from '@/core/components/feed/youtube/components/ImageTitleItem'
+import { useMeasure } from '@/hooks'
+import VirtualLoader from '@/core/components/common/VirtualLoader'
 import classnames from 'classnames'
+import useYoutubeInstance from '@/core/components/youtube/hooks/useYoutubeInstance'
+import YoutubeItemCard from '@/core/components/youtube/components/YoutubeItemCard'
+
 export default ({
   items,
   onLoadMore,
@@ -12,8 +13,8 @@ export default ({
   scrollKey,
   contextMenu = (i, c) => c,
   hasMore,
-  gapClassName = 'gap-5 pb-5',
-  maxColumns = 3
+  gapClassName,
+  maxColumns = Number.MAX_SAFE_INTEGER
 }: {
   items: IYoutubeChannelItem[]
   onLoadMore: VoidFunction
@@ -24,10 +25,11 @@ export default ({
   gapClassName?: string
   contextMenu?: (index: number, children: ReactElement) => ReactElement
 }) => {
-  const instance = useFeedInstance()
+  const instance = useYoutubeInstance()
   const { width } = useMeasure(scrollElementRef)
-  const cols = Math.min(Math.floor(width / 400) + 1, maxColumns)
+  const cols = Math.min(Math.floor(width / 260) + 1, maxColumns)
   const rows = items.length % cols === 0 ? items.length / cols : Math.floor(items.length / cols) + 1
+  console.log(items)
   return (
     <VirtualLoader
       className={'pb-40'}
@@ -39,21 +41,20 @@ export default ({
             style={{
               gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`
             }}
-            className={classnames('grid', gapClassName)}
+            className={classnames('grid gap-7 pb-7', gapClassName)}
           >
             {sliced.map((i, index) =>
               contextMenu(
                 idx * cols + index,
-                <ImageTitleItem
+                <YoutubeItemCard
+                  type="channel"
+                  subscriber={i.statistics?.subscriberCount}
                   onClick={() => {
-                    instance.youtubeOps?.addChannel(i.snippet.channelId).then(res => {
-                      instance.youtubeOps?.goTo(res.id, 'channel')
-                    })
+                    instance.load?.(i.snippet.channelId, 'channel')
                   }}
-                  id={i.snippet.channelId}
+                  count={i.statistics?.videoCount ? Number(i.statistics.videoCount) : undefined}
                   image={i.snippet.thumbnails?.high?.url}
-                  title={i.snippet.title}
-                  description={i.snippet.description}
+                  name={i.snippet.title}
                   key={i.snippet.channelId}
                 />
               )

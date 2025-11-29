@@ -17,9 +17,10 @@ type BorderInputProps = Omit<HTMLProps<HTMLInputElement>, 'onChange'> & {
   id?: string
   spellCheck?: 'false' | 'true'
   textarea?: boolean
+  inputClassName?: string
 }
 
-const inputClassName = css({
+const inputClazz = css({
   padding: '12px 16px',
   width: '100%',
   position: 'relative'
@@ -33,6 +34,7 @@ const BorderInput = ({
   textarea,
   autoFocus,
   spellCheck = 'false',
+  inputClassName,
   disable,
   containerStyle,
   id,
@@ -52,13 +54,18 @@ const BorderInput = ({
   const translatedPlaceholder = showText && placeholder
   return (
     <fieldset
-      className={css({
-        border: '1px solid var(--border-background)',
-        transition: 'border-color 0.25s ease',
-        ':focus-within': {
-          border: '1px solid var(--select-color)'
-        }
-      })}
+      className={classnames(
+        css({
+          borderStyle: 'solid',
+          borderColor: 'var(--border-background)',
+          borderWidth: 1,
+          transition: 'border-color 0.25s ease',
+          ':focus-within': {
+            borderColor: 'var(--select-color)'
+          }
+        }),
+        rest.className
+      )}
       style={{ position: 'relative', borderRadius: 6, ...containerStyle }}
     >
       <AnimatePresence initial={false}>
@@ -89,7 +96,7 @@ const BorderInput = ({
           spellCheck={spellCheck}
           {...rest}
           style={style}
-          className={classnames(inputClassName, 'font-size-14')}
+          className={classnames(inputClassName, inputClazz)}
           defaultValue={defaultValue}
           value={value ?? innerValue}
           disabled={disable}
@@ -127,7 +134,7 @@ const BorderInput = ({
             rest.onKeyDown?.(e)
           }}
           disabled={disable}
-          className={inputClassName}
+          className={classnames(inputClassName, inputClazz)}
         ></input>
       )}
     </fieldset>

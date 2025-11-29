@@ -1,8 +1,6 @@
-import { Content, Icon } from '@/components'
+import { Content, Icon, TabTitle } from '@/components'
 import SyncedBlockEditor from '@/core/components/editor/SyncedBlockEditor'
 import { MetaStore } from '@/api/stores'
-import { TabTitle } from '@/core/rendevoz/components'
-import { Rendevoz } from '@/core/rendevoz'
 
 const SyncedBlockPage = ({ id }: { id: number }) => {
   const syncMeta = MetaStore.useObjectToMetaValue(id)
@@ -17,10 +15,7 @@ const SyncedBlockPage = ({ id }: { id: number }) => {
           padding: '60px 0px 20px'
         }}
       >
-        <TabTitle
-          title={syncMeta.name || syncMeta.placeholderName || 'Unnamed synced block'}
-          icon={<Icon name={Rendevoz.Utils.Object.getMetaObjectIcon('syncedBlock')} />}
-        />
+        <TabTitle title={syncMeta.name} icon={<Icon name={Global.utils.getIcon('syncedBlock')} />} />
         <SyncedBlockEditor
           style={{
             height: '100%'

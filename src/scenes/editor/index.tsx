@@ -2,47 +2,34 @@ import { Content } from '@/components'
 import { EditorProps } from '~/typings'
 import TabTitle from '@/components/layout/TabTitle'
 import { FC } from 'react'
-import { globalStore, MetaStore } from '@/api/stores'
-import { GlobalTranslateInstance } from '@/core/global/translate/GlobalTranslatePanel'
-import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
-import { objectIdToMetaObjectIdMapAtom } from '@/api/stores/meta/meta.store'
+import { MetaStore } from '@/api/stores'
 import NoteEditor from '@/core/components/editor/noteEditor/NoteEditor'
 
 const EditorPage: FC<
   {
     noteId: number
-    disableTabTitle?: boolean
     onInstanceInitialized?: EditorProps['onInstanceInitialized']
   } & EditorProps
-> = ({ noteId, onInstanceInitialized, disableTabTitle, ...rest }) => {
+> = ({ noteId, onInstanceInitialized, ...rest }) => {
   const note = MetaStore.useObjectToMetaValue(noteId)
-
   return (
-    <Content fullWidth fullHeight flex centered>
-      {!disableTabTitle && <TabTitle title={note?.name || 'Untitled'} icon="park-notes" />}
-      <div
-        style={{
-          width: 0,
-          flex: 1,
-          display: 'flex',
-          height: '100%'
+    <>
+      <TabTitle title={note?.name} icon={Global.utils.getIcon('note')} />
+      <NoteEditor
+        {...rest}
+        noteId={noteId}
+        metaId={note?.id}
+        layout={{
+          ...rest.layout,
+          showProps: true,
+          propsMetaId: note?.id,
+          virtualizer: false
         }}
-      >
-        <NoteEditor
-          {...rest}
-          noteId={noteId}
-          metaId={note?.id}
-          layout={{
-            ...rest.layout,
-            showProps: true,
-            propsMetaId: note?.id
-          }}
-          onInstanceInitialized={i => {
-            onInstanceInitialized?.(i)
-          }}
-        />
-      </div>
-    </Content>
+        onInstanceInitialized={i => {
+          onInstanceInitialized?.(i)
+        }}
+      />
+    </>
   )
 }
 

@@ -56,31 +56,6 @@ class BoxDataCache implements DividerData {
   }
 }
 
-// split size among children
-function spiltSize(newSize: number, oldSize: number, children: DividerChild[]): number[] {
-  let reservedSize = -1
-  const sizes: number[] = []
-  let requiredMinSize = 0
-  while (requiredMinSize !== reservedSize) {
-    reservedSize = requiredMinSize
-    requiredMinSize = 0
-    const ratio = (newSize - reservedSize) / (oldSize - reservedSize)
-    if (!(ratio >= 0)) {
-      // invalid input
-      break
-    }
-    for (let i = 0; i < children.length; ++i) {
-      let size = children[i].size * ratio
-      if (size < children[i].minSize) {
-        size = children[i].minSize
-        requiredMinSize += size
-      }
-      sizes[i] = size
-    }
-  }
-  return sizes
-}
-
 export default (props: DividerProps) => {
   const boxData = useRef<BoxDataCache>()
   const [isDrag, setIsDrag] = useState(false)
@@ -92,11 +67,7 @@ export default (props: DividerProps) => {
     document.body.classList.add(disableWebviewPointer)
   }
   const dragMove = (e: DragState) => {
-    if (e.event.shiftKey || e.event.ctrlKey || e.event.altKey) {
-      dragMoveAll(e, e.dx, e.dy)
-    } else {
-      dragMove2(e, e.dx, e.dy)
-    }
+    dragMove2(e, e.dx, e.dy)
   }
 
   function dragMove2(e: DragState, dx: number, dy: number) {
@@ -129,28 +100,7 @@ export default (props: DividerProps) => {
     changeSizes(sizes)
   }
 
-  function dragMoveAll(e: DragState, dx: number, dy: number) {
-    if (!boxData.current) return
-    const { isVertical, changeSizes } = props
-    const { beforeSize, beforeMinSize, afterSize, afterMinSize, beforeDivider, afterDivider } = boxData.current
-    const d = isVertical ? dy : dx
-    let newBeforeSize = beforeSize + d
-    let newAfterSize = afterSize - d
-    // check total min size
-    if (d > 0) {
-      if (newAfterSize < afterMinSize) {
-        newAfterSize = afterMinSize
-        newBeforeSize = beforeSize + afterSize - afterMinSize
-      }
-    } else if (newBeforeSize < beforeMinSize) {
-      newBeforeSize = beforeMinSize
-      newAfterSize = beforeSize + afterSize - beforeMinSize
-    }
-
-    changeSizes(spiltSize(newBeforeSize, beforeSize, beforeDivider).concat(spiltSize(newAfterSize, afterSize, afterDivider)))
-  }
-
-  const dragEnd = (e: DragState) => {
+  const dragEnd = () => {
     setIsDrag(false)
     const { onDragEnd } = props
     boxData.current = undefined

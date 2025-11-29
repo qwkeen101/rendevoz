@@ -38,6 +38,7 @@ export type CreateContainerProps = {
   containerStyle?: Partial<CSSStyleDeclaration>
   containerClassName?: string
   id?: string
+  isOpen?: boolean
 }
 
 export const createContainer = ({ containerStyle, containerClassName, id }: CreateContainerProps) => {

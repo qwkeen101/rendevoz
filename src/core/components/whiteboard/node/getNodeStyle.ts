@@ -2,19 +2,13 @@ import { CSSProperties } from 'react'
 import { IWhiteboardInstance, IWhiteboardNode } from '~/typings'
 import { NodeInnerState } from '@/core/components/whiteboard/node/WrapperNode'
 import Colors from '@/consts/colors'
-import tinycolor from 'tinycolor2'
 
-const colorToDarken: Record<string, string> = {}
 const transparentBackgroundNodes = ['text', 'freehand']
 const getNodeStyle = (
   node: IWhiteboardNode,
   nodeState: NodeInnerState,
   instance: IWhiteboardInstance,
   opts: {
-    displayCover?: boolean
-    groupEnablePointer: boolean
-    isErased?: boolean
-    isErasing?: boolean
     panPointerMode?: boolean
     enableClickWhenPanning?: boolean
     background: {
@@ -29,7 +23,7 @@ const getNodeStyle = (
     }
   }
   const getNodeBoxShadow = () => {
-    if (nodeState.selected || nodeState.popoverVisible || nodeState.focused || nodeState.locked) {
+    if (nodeState.selected || nodeState.focused) {
       return `0 0 0 calc(2px * var(--zoom-level)) var(--select-color)`
     }
     if ((node.rootId || node.type === 'mindmap') && node.borderType === 'underline') return undefined
@@ -37,14 +31,11 @@ const getNodeStyle = (
       return undefined
     }
     if (mindmapTransparent) return undefined
-    return '0 0 0 calc(1px * var(--zoom-level)) var(--border-background)'
+    return ''
   }
   let pointerEvents: CSSProperties['pointerEvents'] = 'auto'
   if (node.type === 'freehand') {
-    if (
-      !(nodeState.popoverVisible || nodeState.selected || nodeState.focused || nodeState.locked || opts.displayCover) &&
-      !node.background
-    ) {
+    if (!(nodeState.selected || nodeState.focused) && !node.background) {
       pointerEvents = 'none'
     }
   }
@@ -54,42 +45,29 @@ const getNodeStyle = (
 
   let cursor: CSSProperties['cursor'] = 'auto'
 
-  if (opts.displayCover) {
-    cursor = 'pointer'
-  }
   if (node.type === 'group') {
-    if (!nodeState.selected && !nodeState.focused) {
-      if (!node.name) {
-        cursor = 'pointer'
-      } else {
-        cursor = 'auto'
-      }
+    if (!nodeState.focused) {
+      cursor = 'auto'
     } else {
       cursor = 'grab'
     }
   } else {
-    if (nodeState.focused || nodeState.locked) {
+    if (nodeState.focused) {
       cursor = 'auto'
     } else {
       cursor = 'grab'
     }
   }
-  if (opts.isErasing) {
-    cursor = 'crosshair'
-  }
   if (opts.panPointerMode && opts.enableClickWhenPanning === true) {
     cursor = 'pointer'
   }
   let zIndex: number | undefined = node.z
-  if (nodeState.expanded) {
-    zIndex = 1000 + (node.z ?? 0)
-  }
   if (node.type === 'group') {
     zIndex = -10000
     const parentGroups = instance.groupOps?.getParentGroupsOfNode(node.id) ?? []
     zIndex += parentGroups?.length
   }
-  let borderRadius = 4
+  let borderRadius = undefined
   switch (node.borderType) {
     case 'rect':
       borderRadius = 0
@@ -107,20 +85,12 @@ const getNodeStyle = (
     showBorder = false
   }
   let opacity = 1
-  if (opts.isErased) {
-    opacity = 0.2
-  }
   if (node.rootId && node.x === 0 && node.y === 0 && !node.height) {
     opacity = 0
   }
   let borderColor = ''
   if (showBorder && node.border) {
-    let c = colorToDarken[node.border]
-    if (!c) {
-      c = tinycolor(node.border).darken(30).toHexString()
-      colorToDarken[node.border] = c
-    }
-    borderColor = c
+    borderColor = Colors.getAdaptColor(node.border)!
   }
   return {
     boxShadow: getNodeBoxShadow(),
@@ -129,14 +99,11 @@ const getNodeStyle = (
     zIndex,
     border: showBorder ? `3px solid ${borderColor}` : undefined,
     userSelect: nodeState.focused || nodeState.focused ? 'auto' : 'none',
-    background:
-      node.type === 'group'
-        ? opts.background.opacityBackground
-        : node.background
-        ? Colors.getAdaptColor(node.background)
-        : transparentBackgroundNodes.includes(node.type) || mindmapTransparent
+    background: !node.background
+      ? transparentBackgroundNodes.includes(node.type) || mindmapTransparent
         ? 'transparent'
-        : Colors.Background.Secondary,
+        : opts.background.opacityBackground
+      : opts.background.opacityBackground,
     cursor,
     pointerEvents
   }

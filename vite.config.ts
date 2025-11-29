@@ -2,19 +2,19 @@ import path, { resolve } from 'path'
 import { defineConfig } from 'vite'
 import electron from 'vite-plugin-electron/simple'
 import react from '@vitejs/plugin-react'
+import fs from 'fs'
+import wasm from 'vite-plugin-wasm'
+import topLevelAwait from 'vite-plugin-top-level-await'
 
 // https://vitejs.dev/config/
 // @ts-ignore
-export default defineConfig(() => ({
+export default defineConfig(({ command }) => ({
   css: {
     preprocessorOptions: {
       less: {
         javascriptEnabled: true
       }
     }
-  },
-  worker: {
-    format: 'es'
   },
   define: {
     APP_VERSION: JSON.stringify(process.env.npm_package_version),
@@ -29,18 +29,10 @@ export default defineConfig(() => ({
   },
   base: './',
   optimizeDeps: {
-    esbuildOptions: {
-      target: 'es2022'
-    },
-    include: ['retry', 'fix-webm-duration'],
-    exclude: ['canvas', 'whisper-turbo', '@ffmpeg', '@ffmpeg/ffmpeg', 'pdf.worker.mjs', 'pdf.mjs']
-  },
-  esbuild: {
-    target: 'es2022'
+    include: ['retry'],
+    exclude: ['canvas']
   },
   build: {
-    target: 'es2022',
-    sourcemap: false,
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
@@ -49,12 +41,38 @@ export default defineConfig(() => ({
     }
   },
   plugins: [
+    wasm(),
+    topLevelAwait(),
+    {
+      name: 'clean-dist-electron',
+      async buildStart() {
+        if (command === 'build') {
+          const distElectronPath = resolve(__dirname, 'dist-electron')
+          fs.rmSync(distElectronPath, { recursive: true, force: true })
+        }
+      }
+    },
     react(),
     electron({
       main: {
         entry: 'electron/main/index.ts',
         vite: {
+          optimizeDeps: {
+            exclude: ['sharp']
+          },
           build: {
+            rollupOptions: {
+              output: {
+                externalLiveBindings: false
+              },
+              external: s => {
+                if (s.includes('onnxruntime') || s.includes('sharp') || s.includes('usearch')) {
+                  console.log(s)
+                  return true
+                }
+                return false
+              }
+            },
             outDir: 'dist-electron/main'
           }
         }
@@ -71,7 +89,12 @@ export default defineConfig(() => ({
   ],
   server: {
     host: '127.0.0.1',
-    port: 7777
+    port: 7777,
+    hmr: true
+  },
+  worker: {
+    format: 'es',
+    plugins: [wasm(), topLevelAwait()]
   },
   clearScreen: false
 }))

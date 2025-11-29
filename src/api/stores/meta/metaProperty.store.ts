@@ -1,12 +1,12 @@
 import { globalStore, MetaStore, ObjectStore } from '@/api/stores'
 import { atom } from 'jotai/vanilla'
 import produce from 'immer'
-import { IMetaProp, ReviewStateType } from '~/typings'
+import { IMetaProp, IReviewStateType } from '~/typings'
 import { AGAIN_OPTION_ID, EASY_OPTION_ID, GOOD_OPTION_ID, HARD_OPTION_ID } from '@/api/stores/object/custom/ReviewCardStore'
-import { initializeReviewCard, reviewCard } from '@/core/review/fsrs'
-import { propNameToOptionsAtom, REVIEW_STATE_PROP_ID } from '@/api/stores/meta/meta.store'
+import { REVIEW_STATE_PROP_ID } from '@/api/stores/meta/meta.store'
 import { useSelectGlobalAtomValue } from '@/hooks'
 import { useMemo } from 'react'
+import ReviewStore from '@/api/stores/review.store'
 
 const MetaPropertyStore = {
   propNameToOptionsAtom: atom<Record<string, Set<number>>>({}),
@@ -40,7 +40,7 @@ const MetaPropertyStore = {
             }
           })
           if (propId === REVIEW_STATE_PROP_ID) {
-            let type: ReviewStateType | undefined = undefined
+            let type: IReviewStateType | undefined = undefined
             if (newValue.value) {
               switch (newValue.value) {
                 case GOOD_OPTION_ID:
@@ -60,9 +60,7 @@ const MetaPropertyStore = {
             if (type) {
               let card = meta.review && (await ObjectStore('reviewCard').getOneById(meta.review))
               if (!card || card.last_rate !== type) {
-                card = (card && reviewCard(card, type)) || initializeReviewCard(type)
-                const added = await ObjectStore('reviewCard').addOne({ ...card, metaId: meta.id })
-                await MetaStore.updateMetaObject({ id, properties: newProp, review: added.id })
+                ReviewStore.reviewCard(meta.id, type)
                 return
               }
             }
@@ -94,7 +92,7 @@ const MetaPropertyStore = {
     }
   },
   getPropDetails: (id: number | string) => {
-    return globalStore.get(ObjectStore('metaProp').objectMapAtom).get(Number(id))
+    return globalStore.get(ObjectStore('metaProp').objectMapAtom).get(Number(id)) as IMetaProp | undefined
   },
   addNewProp: async (prop: Partial<IMetaProp>) => {
     return await ObjectStore('metaProp').addOne(prop)

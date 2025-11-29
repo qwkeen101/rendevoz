@@ -44,7 +44,10 @@ const ErrorFallback = ({ error }) => {
         className={css({
           padding: '6px 12px'
         })}
-        onClick={() => ipcInstance.send('reload')}
+        onClick={() => {
+          localStorage.removeItem('layout')
+          ipcInstance.send('reload')
+        }}
       >
         Reload application
       </Button>

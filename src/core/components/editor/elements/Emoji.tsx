@@ -33,7 +33,8 @@ const Emoji: FC<RenderElementProps> = ({ element, children, attributes }) => {
             backgroundPositionY: `${(emoji.y * 100) / 60}%`,
             backgroundRepeat: 'no-repeat',
             backgroundSize: '6100% 6100%',
-            verticalAlign: '-0.1em'
+            verticalAlign: '-0.1em',
+            display: 'inline'
           }}
         />
       )}

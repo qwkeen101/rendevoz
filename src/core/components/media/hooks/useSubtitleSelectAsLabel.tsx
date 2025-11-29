@@ -1,17 +1,57 @@
 import { useEffect, useRef, useState } from 'react'
 import { XYPosition } from '~/typings'
-import { AnimatePopover, Button, WithBorder } from '@/components'
+import { AnimatePopover, ToolbarV2, WithBorder, defaultRangeExtractor, Range } from '@/components'
 import { useMediaInstance } from '@/core/components/media/hooks/useMediaInstance'
 import { IMediaState } from '@/core/components/media/hooks/useMediaState'
-import { defaultRangeExtractor, Range } from '@tanstack/react-virtual'
-import { useMemoizedFn } from '@/hooks'
 import { useTranslation } from 'react-i18next'
 import isHotkey from 'is-hotkey'
-import { KEY } from '@/consts'
-import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
+import { Icons, KEY } from '@/consts'
+import { getSelectionDirection } from '@/utils/text'
+import useExplainButton from '@/core/global/components/useExplainButton'
+import trans from '@/consts/trans'
 
 type Subtitle = Required<IMediaState>['subtitles'][0]
-const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subtitles']) => {
+
+function getSelectableText() {
+  const selection = window.getSelection()
+  if (!selection || selection.rangeCount === 0) return ''
+
+  let result = ''
+
+  for (let i = 0; i < selection.rangeCount; i++) {
+    const range = selection.getRangeAt(i)
+    const fragment = range.cloneContents()
+
+    result += extractTextFromNode(fragment)
+  }
+
+  return result.trim()
+}
+
+function extractTextFromNode(node: Node) {
+  console.log(node)
+  let text = ''
+  if (node.nodeType === Node.TEXT_NODE) {
+    text += node.nodeValue
+  } else {
+    if (isUserSelectable(node)) {
+      for (const child of node.childNodes) {
+        text += extractTextFromNode(child)
+      }
+    }
+  }
+
+  return text
+}
+
+function isUserSelectable(el: Node) {
+  if (el instanceof HTMLElement) {
+    return !el.hasAttribute('data-nonselect')
+  }
+  return true
+}
+
+const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subtitles'], showTrans?: boolean) => {
   const instance = useMediaInstance()
   const { t } = useTranslation()
   const [isSelecting, setIsSelecting] = useState(false)
@@ -30,84 +70,50 @@ const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subt
     visible: false
   })
   const containerRef = useRef<HTMLElement>(null)
-  const pointerMoveHandler = useMemoizedFn((e: PointerEvent) => {
-    const selection = window.getSelection()
-    const container = containerRef.current
-    if (selection && selection.toString() && container && currentSubtitles && !selection.isCollapsed) {
-      const r = selection.getRangeAt(0)
-      const anchor = r.startContainer.parentElement
-      const focus = r.endContainer.parentElement
-      if (anchor && focus && container.contains(anchor) && container.contains(focus)) {
-        const anchorIndex = (anchor as HTMLElement).closest('[data-subtitle-index]')?.getAttribute('data-subtitle-index')
-        const focusIndex = (focus as HTMLElement).closest('[data-subtitle-index]')?.getAttribute('data-subtitle-index')
-        if (anchorIndex && focusIndex) {
-          const subtitleContainer = (anchor as HTMLElement).closest('[role="subtitle-container"]')
-          if (!subtitleContainer) return
-          const aI = Number(anchorIndex)
-          const fI = Number(focusIndex)
+  useEffect(() => {
+    const pointerUpHandler = (e: PointerEvent) => {
+      setIsSelecting(false)
+      if (addLabelState?.visible || !isSelecting) return
+      const selection = window.getSelection()
+      const container = containerRef.current
+      const text = getSelectableText()
+      console.log(text)
+      if (selection && text && container && currentSubtitles && !selection.isCollapsed) {
+        const r = selection.getRangeAt(0)
+        const anchor = selection.anchorNode?.parentElement
+        const focus = selection.focusNode?.parentElement
+        if (anchor && focus && container.contains(anchor) && container.contains(focus)) {
+          const range = r
+          const direction = getSelectionDirection()
+          const bounding = range.getClientRects()[direction === 'down' ? range.getClientRects().length - 1 : 0]
+          if (!bounding) return
+          const anchorIndex = (anchor as HTMLElement).closest('[data-subtitle-index]')?.getAttribute('data-subtitle-index')
+          const focusIndex = (focus as HTMLElement).closest('[data-subtitle-index]')?.getAttribute('data-subtitle-index')
+          if (!anchorIndex || !focusIndex) return
+          let aI = Number(anchorIndex)
+          let fI = Number(focusIndex)
+          if (aI > fI) {
+            const temp = aI
+            aI = fI
+            fI = temp
+          }
           if (aI >= 0 && fI >= 0) {
-            if (aI !== addLabelState?.anchorIdx || fI !== addLabelState?.focusIdx) {
-              setAddLabelState(s => ({
-                ...s,
-                anchorIdx: aI,
-                focusIdx: fI
-              }))
-            }
+            setAddLabelState({
+              visible: true,
+              anchorIdx: aI,
+              focusIdx: fI,
+              position: {
+                x: direction === 'down' ? bounding.right : bounding.left,
+                y: bounding.top
+              },
+              anchorSubtitle: currentSubtitles[aI],
+              focusSubtitle: currentSubtitles[fI],
+              text
+            })
           }
           return
         }
       }
-    }
-  })
-  useEffect(() => {
-    const pointerUpHandler = (e: PointerEvent) => {
-      setIsSelecting(false)
-      if (addLabelState?.visible) return
-      setTimeout(() => {
-        const selection = window.getSelection()
-        const container = containerRef.current
-        if (selection && selection.toString() && container && currentSubtitles && !selection.isCollapsed) {
-          const r = selection.getRangeAt(0)
-          const anchor = r.startContainer.parentElement
-          const focus = r.endContainer.parentElement
-
-          if (anchor && focus && container.contains(anchor) && container.contains(focus)) {
-            const subtitleContainer = (anchor as HTMLElement).closest('[role="subtitle-container"]')
-            if (!subtitleContainer) return
-            const bounding = selection.getRangeAt(0).getClientRects().item(0)
-            if (!bounding) return
-            const anchorIndex = (anchor as HTMLElement).closest('[data-subtitle-index]')?.getAttribute('data-subtitle-index')
-            const focusIndex = (focus as HTMLElement).closest('[data-subtitle-index]')?.getAttribute('data-subtitle-index')
-            if (!anchorIndex || !focusIndex) return
-            const aI = Number(anchorIndex)
-            const fI = Number(focusIndex)
-            if (aI >= 0 && fI >= 0) {
-              const endOffset = (focus.textContent?.length || 0) - r.endOffset
-              setTimeout(() => {
-                setAddLabelState({
-                  visible: true,
-                  anchorIdx: aI,
-                  focusIdx: fI,
-                  position: {
-                    x: bounding?.left + bounding.width / 2,
-                    y: Math.max(bounding.top, subtitleContainer.getBoundingClientRect().top)
-                  },
-                  anchorSubtitle: currentSubtitles[aI],
-                  focusSubtitle: currentSubtitles[fI],
-                  text: currentSubtitles
-                    ?.slice(aI, fI + 1)
-                    .map(i => i.text)
-                    .join(' ')
-                    .concat(' '.repeat(currentSubtitles[fI].translation?.length ?? 0))
-                    .slice(r.startOffset, endOffset ? -endOffset : undefined)
-                    .trim()
-                })
-              }, 10)
-            }
-            return
-          }
-        }
-      })
     }
     const selectionC = (e: PointerEvent) => {
       if (e.target instanceof HTMLElement) {
@@ -123,23 +129,17 @@ const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subt
           setAddLabelState(undefined)
         }, 500)
         if (addLabelState?.anchorSubtitle && addLabelState.text) {
-          let selection = window.getSelection()
-          if (!selection) return
+          const position = addLabelState.position
+          if (!position) return
           e.preventDefault()
-          const getRange = selection.getRangeAt(0)
-          const bounding = getRange.getClientRects().item(0)
-          if (!bounding) return
           instance.insertLabel?.(
             {
               name: addLabelState.text,
-              time: addLabelState.anchorSubtitle.startTime
+              time: addLabelState.anchorSubtitle.start
             },
             {
               shouldJumpBack: false,
-              popoverPosition: {
-                x: bounding.left + bounding.width / 2,
-                y: bounding.top + bounding.height
-              }
+              popoverPosition: { ...position, y: position.y - 16 }
             }
           )
         }
@@ -154,14 +154,6 @@ const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subt
       document.removeEventListener('pointerdown', selectionC)
     }
   })
-  useEffect(() => {
-    if (isSelecting) {
-      document.addEventListener('pointermove', pointerMoveHandler)
-      return () => {
-        document.removeEventListener('pointermove', pointerMoveHandler)
-      }
-    }
-  }, [isSelecting])
 
   const rangeExtractor = (range: Range) => {
     if ((isSelecting || addLabelState?.visible) && addLabelState?.anchorIdx !== undefined && addLabelState.focusIdx !== undefined) {
@@ -177,6 +169,31 @@ const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subt
     }
     return defaultRangeExtractor(range)
   }
+
+  const explainItem = useExplainButton({
+    onGetExplain: async () => {
+      closePopover()
+      const text = addLabelState?.text
+      if (text) {
+        return {
+          query: text,
+          source: {
+            ...(await instance.on?.({
+              type: 'getSource'
+            })),
+            selectedText: text,
+            time: addLabelState?.anchorSubtitle?.start
+          }
+        }
+      }
+    }
+  })
+  const closePopover = () => {
+    setAddLabelState(s => ({ ...s, visible: false }))
+    setTimeout(() => {
+      setAddLabelState(undefined)
+    }, 500)
+  }
   const renderPopover = () => (
     <AnimatePopover
       withClickCover={true}
@@ -184,69 +201,62 @@ const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subt
       onClickOutside={() => {
         setAddLabelState(s => ({ ...s, visible: false, anchorIdx: undefined, focusIdx: undefined }))
       }}
-      boundaryElement={containerRef.current}
       boundaryInset={10}
       padding={10}
       disableNudge={true}
       content={
-        <WithBorder borderRadius={4} style={{ display: 'flex' }}>
-          <Button.IconButton
-            style={{
-              padding: '4px 12px 4px 10px',
-              borderRadius: 0,
-              height: 32
-            }}
-            className={'border-right'}
-            onPointerDown={e => {
-              e.preventDefault()
-            }}
-            onClick={e => {
-              setAddLabelState(s => ({ ...s, visible: false }))
-              setTimeout(() => {
-                setAddLabelState(undefined)
-              }, 500)
-              if (addLabelState?.anchorSubtitle && addLabelState.text) {
-                let selection = window.getSelection()
-                if (!selection) return
-                e.preventDefault()
-                const getRange = selection.getRangeAt(0)
-                const bounding = getRange.getClientRects().item(0)
-                if (!bounding) return
-                instance.insertLabel?.(
-                  {
-                    name: addLabelState.text,
-                    time: addLabelState.anchorSubtitle.startTime
-                  },
-                  {
-                    shouldJumpBack: false,
-                    popoverPosition: {
-                      x: bounding.left + bounding.width / 2,
-                      y: bounding.top + bounding.height
-                    }
+        <WithBorder className={'!rounded-lg'}>
+          <ToolbarV2
+            layout={[
+              {
+                key: 'highlight',
+                type: 'button',
+                onClick: e => {
+                  closePopover()
+                  if (addLabelState?.anchorSubtitle && addLabelState.text) {
+                    const position = addLabelState.position
+                    if (!position) return
+                    e.preventDefault()
+                    instance.insertLabel?.(
+                      {
+                        name: addLabelState.text,
+                        time: addLabelState.anchorSubtitle.start
+                      },
+                      {
+                        shouldJumpBack: false,
+                        popoverPosition: { ...position, y: position.y - 16 }
+                      }
+                    )
                   }
-                )
+                },
+                text: t('general.Media highlight'),
+                icon: 'park-high-light'
+              },
+              explainItem,
+              {
+                key: 'translate',
+                type: 'button',
+                text: t(trans.Translate),
+                icon: Icons.Translate,
+                onClick: async e => {
+                  closePopover()
+                  const text = addLabelState?.text
+                  if (text) {
+                    Global.commonOps?.translate?.({
+                      query: text,
+                      e,
+                      source: {
+                        ...(await instance.on?.({
+                          type: 'getSource'
+                        })),
+                        selectedText: text,
+                        time: addLabelState?.anchorSubtitle?.start
+                      }
+                    })
+                  }
+                }
               }
-            }}
-            text={t('general.Media highlight')}
-            icon={'park-high-light'}
-          />
-          <Button.IconButton
-            icon={'park-search'}
-            text={t('general.search')}
-            style={{
-              padding: '4px 12px 4px 10px',
-              height: 32,
-              borderRadius: 0
-            }}
-            onClick={e => {
-              setAddLabelState(s => ({ ...s, visible: false }))
-              setTimeout(() => {
-                setAddLabelState(undefined)
-              }, 500)
-              GlobalSearchInstance.open?.({
-                query: addLabelState?.text
-              })
-            }}
+            ]}
           />
         </WithBorder>
       }
@@ -262,7 +272,8 @@ const useSubtitleSelectAsLabel = (currentSubtitles?: Required<IMediaState>['subt
     renderPopover,
     containerRef,
     rangeExtractor,
-    visible: !!addLabelState?.visible
+    visible: !!addLabelState?.visible,
+    isSelecting
   }
 }
 

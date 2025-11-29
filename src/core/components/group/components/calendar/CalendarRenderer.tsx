@@ -126,13 +126,10 @@ export default memo(({ value }: { value?: MetaGroupChild[] }) => {
                 color: Colors.Font.SuperTransparent
               }
             },
-            '.rbc-event': css([
-              {
-                background: 'transparent',
-                padding: 0
-              },
-              'font-size-14'
-            ]),
+            '.rbc-event': {
+              background: 'transparent',
+              padding: 0
+            },
             '.rbc-event-content': {
               overflow: 'visible',
               borderRadius: 6

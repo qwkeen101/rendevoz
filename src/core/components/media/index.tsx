@@ -1,7 +1,7 @@
-import { Content, Icon } from '@/components'
+import { Icon } from '@/components'
 import { useAssignMediaInstance, useMediaInstance, MediaInstanceAtom } from './hooks/useMediaInstance'
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { createStore, Provider, useAtomValue } from 'jotai'
+import { useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createStore, Provider } from 'jotai'
 import MediaCore from './MediaCore'
 import MediaBottomBar from './MediaBottomBar'
 import useMediaToolbarState from './hooks/useMediaToolbarState'
@@ -13,47 +13,47 @@ import MediaSidebar from './components/sidebar/MediaSidebar'
 import useMediaShortcut from './hooks/useMediaShortcut'
 import { IMediaInstance } from '~/typings'
 import { waitFor } from '@/utils/functions'
-import ResizeAndDrag from '@/components/base/ResizeAndDrag'
-import { createPortal } from 'react-dom'
-import ClassName from '@/styles/classNames'
-import { Rendevoz } from '../../rendevoz'
-import { Zindexes } from '@/consts'
 import { useLatest } from 'react-use'
-import useChangeVideoLayout, { MediaLayoutAtom } from '@/core/components/media/hooks/useVideoLayout'
 import { IMediaEvent } from '~/typings/components/media/event'
-import MediaTranscriber from '@/core/components/media/components/MediaTranscriber'
-import { TabTitle } from '@/core/rendevoz/components'
-import MediaToolbar from '@/core/components/media/components/MediaToolbar'
-import _ from 'lodash'
+import _, { omitBy, pick } from 'lodash'
 import QuickLabelPopover from '@/core/components/media/components/QuickLabelPopover'
-import useMediaSidebarState, { VideoSidebarStateAtom } from '@/core/components/media/hooks/useMediaSidebarState'
-import { GlobalSetting } from '@/core'
-import Subtitle from '@/core/components/media/components/sidebar/Subtitle'
-import { Resizable } from 're-resizable'
-import getLayout from '@/core/components/media/getLayout'
+import MediaDetailsRenderer from '@/core/components/media/components/MediaDetailsRenderer'
+import PageConfigContext from '@/core/components/PageConfigContext'
+import useMeasure from '@/hooks/utils/useMeasure'
+import MediaHeader from '@/core/components/media/components/MediaHeader'
+import FocusAudioPage from '@/core/components/media/components/focus/FocusAudioPage'
+import FocusVideoPage from '@/core/components/media/components/focus/FocusVideoPage'
+import useYoutubeSubtitles from '@/core/components/media/hooks/useYoutubeSubtitles'
+import FocusVideoBody from './components/focus/video/FocusVideoBody'
 export interface MediaProps {
   onInstanceInitialized?: (instance: Partial<IMediaInstance>) => void
   onlyCore?: boolean
   mediaState?: IMediaState
   onMediaStateChange?: (state: IMediaState) => void
   on?: (e: IMediaEvent) => Promise<any>
-  disableTabTitle?: boolean
 }
-const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = true }: MediaProps) => {
+const MediaInner = ({ onInstanceInitialized, onlyCore, on }: MediaProps) => {
   const [playIconVisible, setPlayIconVisible] = useState(false)
   const [, setToolbarState] = useMediaToolbarState()
-  const [cachedSubtitleHeight, setCachedSubtitleHeight] = useState<number>()
   const [mediaState, setMediaState] = useMediaState()
-  const [sidebarState, setSidebarState] = useMediaSidebarState()
+  const { paused, mode, loaded, fullScreen, jumpIndicator, volumeIndicator, volume, muted, totalTime, columnLayout, url } = mediaState
+  useYoutubeSubtitles(url)
   const outerContainerRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const instance = useMediaInstance()
-  instance.on = on
-  const showIcon = mediaState.mode === 'video' && playIconVisible && mediaState.loaded
-  const mediaLayout = useAtomValue(MediaLayoutAtom)
-  const audioMode = mediaState.mode === 'audio'
-  useChangeVideoLayout(outerContainerRef)
-  const columnLayout = mediaLayout
+  instance.on = on || (() => {})
+  const showIcon = mode === 'video' && playIconVisible && loaded
+  const fullSize = mediaState.layout?.fullSize
+  const audioMode = mode === 'audio'
+  const containerSize = useMeasure(outerContainerRef)
+  useLayoutEffect(() => {
+    if (!containerSize.width) return
+    if (containerSize.width <= 1000) {
+      setMediaState(s => ({ ...s, columnLayout: true }))
+    } else {
+      setMediaState(s => ({ ...s, columnLayout: false }))
+    }
+  }, [containerSize.width])
   const getPopIcon = () => {
     if (mediaState.jumpIndicator) {
       if (mediaState.jumpIndicator === 'back') {
@@ -78,7 +78,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
 
   useUpdateEffect(() => {
     setPlayIconVisible(true)
-  }, [mediaState.paused])
+  }, [paused])
 
   useEffect(() => {
     if (mediaState.fullScreen) {
@@ -90,77 +90,47 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
         }
       }
     }
-  }, [mediaState.fullScreen])
+  }, [fullScreen])
   useEffect(() => {
     if (mediaState.jumpIndicator || mediaState.volumeIndicator) {
       setPlayIconVisible(true)
     }
-  }, [mediaState.jumpIndicator, mediaState.volumeIndicator])
+  }, [jumpIndicator, volumeIndicator])
   useEffect(() => {
-    const { muted, loop, volume, totalPlayedTime, totalTime, currentTime } = mediaState
-    instance.on?.({ type: 'externalStateChange', state: { muted, loop, totalTime, currentTime, totalPlayedTime, volume } })
-  }, [mediaState.muted, mediaState.volume, mediaState.loop, mediaState.currentTime, mediaState.totalPlayedTime, mediaState.totalTime])
+    const { muted, loop, volume, totalTime, currentTime, paused } = mediaState
+    instance.on?.({
+      type: 'externalStateChange',
+      state: { muted, loop, totalTime, currentTime, volume, paused }
+    })
+  }, [muted, volume, mediaState.loop, totalTime, paused])
   useMediaShortcut(outerContainerRef)
   useAssignMediaInstance(containerRef)
-  const subtitleInSidebar = GlobalSetting.useSelectSettingAtom('subtitleInSidebar')
-  const latestVideoLoaded = useLatest(mediaState.loaded)
+  const latestMediaState = useLatest(mediaState)
 
   useEffect(() => {
     waitFor(
       () => {
-        return !!(latestVideoLoaded.current && instance.actionOps)
+        const m = latestMediaState.current
+        if (m.layout?.episodeMode) return true
+        return !!(m.loaded && instance.actionOps)
       },
       () => {
         onInstanceInitialized?.(instance)
       },
       {
-        timeout: 15000
+        timeout: 9999999
       }
     )
   }, [])
   const lastMovedRef = useRef(0)
-  useMemo(() => {
-    const { subtitleUnderMain, sidebarOpened } = getLayout(sidebarState, columnLayout, {
-      subtitleInSidebar
-    })
-    if (subtitleUnderMain !== sidebarState.subtitleUnderMain || sidebarOpened !== sidebarState.sidebarOpened) {
-      setSidebarState(s => ({ ...s, subtitleUnderMain, sidebarOpened }))
-    }
-  }, [sidebarState, columnLayout, subtitleInSidebar])
-  const { subtitleUnderMain, sidebarOpened } = sidebarState
-  const subtitleResizeRef = useRef<Resizable>()
-  useEffect(() => {
-    const resize = subtitleResizeRef.current
-    if (resize) {
-      if (sidebarOpened === false) {
-        resize.updateSize({
-          width: '100%',
-          height: 0
-        })
-        resize.resizable?.style.setProperty('flex-basis', '0%')
-      } else {
-        resize.updateSize({
-          width: '100%',
-          height: cachedSubtitleHeight ?? 260
-        })
-      }
-    }
-  }, [subtitleUnderMain, sidebarOpened])
-  const showDetails = !audioMode && !subtitleUnderMain && (!columnLayout || !sidebarOpened)
   const renderCore = () => {
+    const MEDIA_PLAYER_DEFAULT_BORDER_RADIUS = 12
+    const borderRadius = mediaState.styles?.videoBorderRadius ?? MEDIA_PLAYER_DEFAULT_BORDER_RADIUS
     return (
-      <Content
+      <div
         tabIndex={0}
-        ref={ref => {
-          containerRef.current = ref
-          if (mediaState.floated) {
-            outerContainerRef.current = ref
-          }
-        }}
-        style={{
-          height: 'fit-content'
-        }}
-        fullWidth
+        ref={containerRef}
+        className={'w-full max-h-full relative'}
         onPointerMove={e => {
           lastMovedRef.current = Date.now()
           if (mediaState.fullScreen) {
@@ -171,11 +141,8 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
               }
             }, 1500)
           }
-          setToolbarState(s => {
-            if (s.visible) return s
-            else return { ...s, visible: true }
-          })
         }}
+        style={{ borderRadius, overflow: 'hidden' }}
         onPointerLeave={e => {
           setToolbarState(s => ({ ...s, visible: false }))
         }}
@@ -208,7 +175,7 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
               <Icon
                 fill={Colors.Font.White}
                 size={40}
-                theme="filled"
+                theme='filled'
                 containerStyle={{
                   background: 'rgba(0,0,0,0.36)',
                   borderRadius: 999,
@@ -219,169 +186,70 @@ const MediaInner = ({ onInstanceInitialized, onlyCore, on, disableTabTitle = tru
             </motion.div>
           )}
         </AnimatePresence>
-        <MediaCore url={mediaState.url} />
-        {mediaState.mode !== 'web' && mediaState.mode !== 'audio' && (
+        {mediaState.focus?.visible ? null : <MediaCore />}
+        {mode !== 'audio' && (
           <div
             style={{
               position: 'absolute',
               bottom: 0,
               left: 0,
-              right: 0
+              right: 0,
+              opacity: loaded ? 1 : 0
             }}
           >
             <MediaBottomBar />
           </div>
         )}
-      </Content>
-    )
-  }
-  const renderFloated = () => {
-    return createPortal(
-      <ResizeAndDrag
-        lockAspectRatio={mediaState.mode === 'audio' ? false : true}
-        dragHandleClassName="video-drag-handle"
-        minWidth={385}
-        default={{
-          width: mediaState.mode === 'audio' ? 400 : 800,
-          height: 'auto',
-          x: 200,
-          y: 200
-        }}
-        style={{
-          zIndex: Zindexes.VideoFloatWindow,
-          boxShadow: Colors.Background.BoxShadow,
-          borderRadius: 12,
-          background: Colors.Background.Popover
-        }}
-        onResizeStop={(e, dir, element) => {
-          element.style.height = 'auto'
-        }}
-      >
-        {mediaState.mode !== 'audio' && (
-          <Content
-            flex
-            justifyContent="space-between"
-            className={ClassName.Background.pseudoBlubBackground}
-            style={{
-              borderRadius: '4px 4px 0px 0px',
-              cursor: 'grab',
-              padding: '6px 12px'
-            }}
-          >
-            <Content flex gap={10} style={{ flexShrink: 1, flexGrow: 1 }} className="video-drag-handle">
-              <Icon name={Rendevoz.Utils.Object.getMetaObjectIcon('video')} />
-              <div style={{ width: '100%', userSelect: 'none' }} className={ClassName.ellipsisFont(1)}>
-                {mediaState.name}
-              </div>
-            </Content>
-            <Icon
-              containerStyle={{ paddingLeft: 10 }}
-              style={{ cursor: 'pointer' }}
-              name="park-close"
-              onClick={() => setMediaState(s => ({ ...s, floated: false }))}
-            />
-          </Content>
-        )}
-        {mediaState.mode === 'audio' && (
-          <Icon
-            containerStyle={{ position: 'absolute', top: 10, right: 10 }}
-            style={{ cursor: 'pointer', zIndex: 20 }}
-            name="park-close"
-            onClick={() => setMediaState(s => ({ ...s, floated: false }))}
-          />
-        )}
-        {renderCore()}
-      </ResizeAndDrag>,
-      document.body
+      </div>
     )
   }
 
   if (onlyCore) {
     return renderCore()
   }
+  if (mediaState.layout?.focusMode) {
+    if (mode === 'audio') {
+      return (
+        <>
+          <QuickLabelPopover />
+          <FocusAudioPage />
+        </>
+      )
+    }
+    return (
+      <>
+        <QuickLabelPopover />
+        <FocusVideoPage />
+      </>
+    )
+  }
+  if (mediaState.layout?.episode) {
+    return (
+      <>
+        <QuickLabelPopover />
+        <MediaCore />
+      </>
+    )
+  }
   return (
-    <Content fullWidth fullHeight ref={outerContainerRef}>
-      <MediaTranscriber />
-      {!disableTabTitle && <TabTitle title={mediaState.name} icon={<Icon name={'park-video'} />} />}
-      <Content
-        style={{
-          margin: mediaState.mode !== 'audio' ? undefined : '0 auto',
-          width: '100%',
-          height: '100%',
-          flexDirection: columnLayout ? 'column' : 'row',
-          justifyContent: columnLayout && !audioMode ? 'unset' : 'center',
-          alignItems: 'center',
-          overflowY: 'auto'
-        }}
-        tabIndex={0}
-        fullHeight
-        flex
-      >
-        <Content
-          style={{
-            width: '100%',
-            height: columnLayout ? 'fit-content' : '100%',
-            overflowY: columnLayout ? undefined : 'auto',
-            padding: '16px 16px 10px',
-            maxHeight: '100%',
-            display: 'flex'
-          }}
-        >
-          <Content
-            flex
-            centered
-            column
-            gap={10}
+    <>
+      <div ref={outerContainerRef} className={'relative w-full h-full flex'}>
+        <div className={'w-full flex flex-1 justify-center @container overflow-y-auto'}>
+          <div
             style={{
-              width: '100%',
-              maxWidth: 'calc((100vh - 260px) * (1/0.6))',
-              minWidth: 'calc(200px * (1 / 0.5625))',
-              height: 'fit-content',
-              maxHeight: '100%',
-              margin: audioMode ? 'auto' : '0 auto'
+              width: fullSize ? '100%' : audioMode ? '64rem' : '100%',
+              maxWidth: audioMode || columnLayout || fullSize ? undefined : 'calc((100cqh - 240px) * (16 / 9))'
             }}
+            className={'flex h-max flex-col relative gap-5 max-w-full flex-shrink p-8'}
           >
-            {mediaState.floated ? renderFloated() : renderCore()}
-            {showDetails && <div style={{ fontWeight: 500, fontSize: 16, width: '100%', marginTop: 2 }}>{mediaState.name}</div>}
-            {!audioMode && <MediaToolbar showDetails={showDetails} />}
-            {subtitleUnderMain && (
-              <Resizable
-                onResizeStop={(event, direction, elementRef) => {
-                  setCachedSubtitleHeight(elementRef.clientHeight)
-                }}
-                enable={
-                  sidebarOpened && columnLayout
-                    ? {
-                        bottom: true
-                      }
-                    : false
-                }
-                defaultSize={{
-                  width: '100%',
-                  height: sidebarOpened ? cachedSubtitleHeight ?? 0 : 0
-                }}
-                minHeight={150}
-                ref={subtitleResizeRef}
-                maxHeight={sidebarOpened && columnLayout ? '600px' : undefined}
-                className={'border'}
-                style={{
-                  width: '100%',
-                  flexShrink: 1,
-                  flex: sidebarOpened && columnLayout ? undefined : 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  overflow: 'hidden',
-                  borderRadius: 12
-                }}
-              >
-                <Subtitle />
-              </Resizable>
-            )}
-          </Content>
-        </Content>
+            {renderCore()}
+            <MediaDetailsRenderer />
+          </div>
+        </div>
         <MediaSidebar />
-      </Content>
-    </Content>
+      </div>
+      <FocusVideoPage />
+    </>
   )
 }
 
@@ -409,161 +277,111 @@ const transformUrl = (
   }
   if (url.includes('youtube')) {
     const U = new URL(url)
-    const videoId = U.searchParams.get('v')
+    let videoId = U.searchParams.get('v')
+    if (!videoId) {
+      const splitted = url.split('/')
+      const embeded = splitted.findIndex(i => i === 'embed')
+      videoId = splitted[embeded + 1]
+    }
     if (!videoId) return url
-    return `https://www.youtube.com/embed/${videoId}?rel=0&autoplay=${options?.autoPlay ? '1' : '0'}&start=${
-      options?.startTime ? parseInt(`${options.startTime}`) : '0'
-    }`
+    return `https://www.youtube.com/embed/${videoId}?rel=0&controls=0&cc_load_policy=3&autoplay=1&start=${options?.startTime ? parseInt(`${options.startTime}`) : '0'}`
   }
   if (url.startsWith('baidudisk')) return url
   return url
 }
-
-const Media = (props: MediaProps) => {
-  const defaultSidebarChanged = useRef(false)
-  const getMediaMode = (url?: string): IMediaState['mode'] => {
-    if (!url) return 'video'
-    if (url.startsWith('rendefile') || url.startsWith('file')) {
-      return 'video'
-    }
-    if (url.startsWith('baidudisk')) {
-      return 'baidudisk'
-    }
-    if (url.includes('youtube.com') || url.includes('bilibili.com')) {
-      return 'web'
-    }
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return 'web'
-    }
+const getMediaMode = (url?: string): IMediaState['mode'] => {
+  if (!url) return 'video'
+  if (url.startsWith('rendefile') || url.startsWith('file')) {
     return 'video'
   }
+  if (url.startsWith('baidudisk')) {
+    return 'baidudisk'
+  }
+  if (url.includes('youtube.com') || url.includes('bilibili.com')) {
+    return 'web'
+  }
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return 'web'
+  }
+  return 'video'
+}
+const mergableProps: (keyof IMediaState)[] = [
+  'exam',
+  'websiteUrl',
+  'aiChat',
+  'aiSummary',
+  'onlyCore',
+  'thumbnail',
+  'releaseDate',
+  'name',
+  'description',
+  'mode',
+  'chapters',
+  'autoPlay',
+  'isPinned',
+  'toolbar',
+  'subtitleLang',
+  'subtitleMode',
+  'subtitleList',
+  'subtitleFollow',
+  'collectionName',
+  'metaId',
+  'layout',
+  'styles',
+  'state',
+  'labelFolders',
+  'labelSortMode',
+  'labelPriority',
+  'labelScrollOffset',
+  'labelFilter',
+  'labels',
+  'labelType'
+]
+
+const Media = (props: MediaProps) => {
+  const pageConfig = useContext(PageConfigContext)
+  const defaultOpenSidebar = pageConfig.defaultOpenSidebar !== false
   const store = useMemo(() => {
     const store = createStore()
-    const {
-      url,
-      thumbnail,
-      labels,
-      labelType,
-      lastPlayedTime,
-      name,
-      isPinned,
-      description,
-      mode,
-      subtitleLang,
-      subtitleMode = 'list',
-      toolbar,
-      subtitleList,
-      volume,
-      subtitleFollow,
-      collectionName,
-      metaId,
-      layout,
-      labelSortMode,
-      defaultActiveSidebar,
-      labelPriority,
-      labelScrollOffset,
-      styles,
-      autoPlay,
-      currentTime
-    } = props.mediaState || {}
+    const { subtitleMode, url, mode, defaultActiveSidebar, autoPlay, currentTime, defaultSidebarVisible } = props.mediaState || {}
     store.set(MediaInstanceAtom, {})
+    const outerState = (props.mediaState || {}) as IMediaState
     store.set(MediaStateAtom, {
-      ..._.merge({}, DEFAULT_MEDIA_STATE, {
-        thumbnail,
-        isPinned,
-        collectionName,
-        styles,
-        jumpTime: lastPlayedTime,
-        labels,
-        subtitleMode,
-        autoPlay,
-        toolbar,
-        volume,
-        labelType,
-        name,
-        metaId,
-        description,
-        subtitleLang,
-        subtitleList,
-        subtitleFollow,
-        layout,
-        labelSortMode,
-        labelPriority,
-        labelScrollOffset
-      }),
+      ..._.mergeWith(
+        {},
+        DEFAULT_MEDIA_STATE,
+        omitBy(pick(outerState, mergableProps), v => v === undefined),
+        {
+          jumpTime: currentTime,
+          subtitleMode: subtitleMode ?? 'list'
+        }
+      ),
       url: transformUrl(url, {
         autoPlay,
-        startTime: currentTime ?? lastPlayedTime
+        startTime: currentTime
       }),
-      mode: mode || getMediaMode(url)
+      mode: mode || getMediaMode(url),
+      sidebarActive: defaultActiveSidebar ?? DEFAULT_MEDIA_STATE.sidebarActive,
+      sidebarVisible: defaultOpenSidebar ? defaultSidebarVisible ?? false : false
     })
-    if (defaultActiveSidebar) {
-      defaultSidebarChanged.current = true
-      store.set(VideoSidebarStateAtom, { ...store.get(VideoSidebarStateAtom), rightBarActive: defaultActiveSidebar ?? 'hide' })
-    }
     return store
   }, [])
-
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!props.mediaState) return
     const currentState = store.get(MediaStateAtom)
-    const {
-      url,
-      labels = [],
-      labelType,
-      thumbnail,
-      name,
-      description,
-      isPinned,
-      subtitleLang,
-      subtitleList,
-      mode,
-      volume,
-      subtitleMode = 'list',
-      chapters = [],
-      subtitleFollow,
-      metaId,
-      onlyCore,
-      layout,
-      collectionName,
-      autoPlay,
-      toolbar,
-      styles,
-      labelSortMode,
-      labelPriority,
-      labelScrollOffset,
-      defaultActiveSidebar
-    } = props.mediaState
-    if (defaultActiveSidebar && !defaultSidebarChanged.current) {
-      defaultSidebarChanged.current = true
-      store.set(VideoSidebarStateAtom, { ...store.get(VideoSidebarStateAtom), rightBarActive: defaultActiveSidebar ?? 'hide' })
-    }
+    const shouldMerge = pickValues(mergableProps, props.mediaState)
+    console.log(currentState, shouldMerge)
+    const { url, mode, autoPlay, currentTime } = props.mediaState
     store.set(MediaStateAtom, {
       ...currentState,
-      url: transformUrl(url),
-      isPinned,
-      metaId,
-      subtitleMode,
-      autoPlay,
-      styles,
-      onlyCore,
-      toolbar,
-      collectionName,
-      subtitleLang: subtitleLang || currentState.subtitleLang,
-      subtitleList: subtitleList || currentState.subtitleList,
-      subtitleFollow,
-      layout,
-      chapters,
+      ...shouldMerge,
+      subtitleLang: shouldMerge.subtitleLang || currentState.subtitleLang,
+      subtitleList: shouldMerge.subtitleList || currentState.subtitleList,
+      url: transformUrl(url, {
+        autoPlay
+      }),
       mode: mode || getMediaMode(url),
-      sortedChapters: (props.mediaState.chapters || currentState.chapters)?.slice().sort((b, a) => b.startTime - a.startTime) || [],
-      labelType,
-      labels,
-      thumbnail,
-      name,
-      description,
-      labelSortMode,
-      labelPriority,
-      labelScrollOffset
+      sortedChapters: (props.mediaState.chapters || currentState.chapters)?.slice().sort((b, a) => b.startTime - a.startTime) || []
     })
   }, [props.mediaState])
   useEffect(() => {
@@ -573,6 +391,7 @@ const Media = (props: MediaProps) => {
       currentTime: props.mediaState?.currentTime,
       totalTime: props.mediaState?.totalTime,
       subtitles: [],
+      loaded: false,
       subtitleList: props.mediaState?.subtitleList,
       subtitleLang: props.mediaState?.subtitleLang
     })
@@ -582,6 +401,13 @@ const Media = (props: MediaProps) => {
       <MediaInner {...props} />
     </Provider>
   )
+}
+
+function pickValues<T extends object>(keys: (keyof T)[], object: T): Partial<T> {
+  return keys.reduce((acc, key) => {
+    acc[key] = key in object ? object[key] : undefined
+    return acc
+  }, {} as Partial<T>)
 }
 
 export default Media

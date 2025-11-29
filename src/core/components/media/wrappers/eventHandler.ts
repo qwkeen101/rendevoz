@@ -1,13 +1,14 @@
-import { IMediaState } from '~/typings'
+import { IGeneralSource, IMediaState } from '~/typings'
 import { IMediaEvent } from '~/typings/components/media/event'
 import turnIntoMeta from '@/core/components/media/wrappers/turnIntoMeta'
 import Id from '@/utils/id'
 import { MetaStore, ObjectStore } from '@/api/stores'
-import { GlobalInstance } from '@/hooks'
 import useMediaLabelChapter from '@/core/components/media/wrappers/labelChapter'
-import { normalizeSecondsToTime } from '@/core/components/media/utils'
-import _ from 'lodash'
 import FileSystem from '@/api/fileSystem'
+import useMediaTranscribe from '@/core/components/media/hooks/useMediaTranscribe'
+import { useTranslation } from 'react-i18next'
+import toast from 'react-hot-toast'
+import { AI_SUMMARY_PROP_ID } from '@/api/stores/meta/meta.store'
 
 const useMediaEventHandlerWrapper = (options: {
   mediaState: Partial<IMediaState>
@@ -18,37 +19,112 @@ const useMediaEventHandlerWrapper = (options: {
   const { objectId, labelType, type, mediaState } = options
   const object = ObjectStore(type).useValue(objectId)
   const meta = MetaStore.useObjectToMetaValue(objectId)
+  const { t } = useTranslation()
   const handleLabelChapter = useMediaLabelChapter(type, labelType, mediaState, objectId)
   const handler = async (e: IMediaEvent) => {
-    console.log(e)
     let id = objectId
     let metaId = meta?.id
+    if (e.type === 'getMeta') {
+      if (!metaId) {
+        const res = await turnIntoMeta(mediaState, type, e.temp)
+        metaId = res?.meta.id
+      }
+      if (meta?.temp && !e.temp) {
+        MetaStore.updateMetaObject({ id: meta.id, temp: false })
+      }
+      if (metaId) {
+        e.onSuccess(metaId)
+      }
+    }
     switch (e.type) {
-      case 'transcribe':
       case 'addLabel':
       case 'addChapter':
-      case 'copyTimestamp':
-      case 'pin':
-      case 'assignToNewCollection':
         if (!metaId) {
           const res = await turnIntoMeta(mediaState, type)
           metaId = res?.meta.id
           id = res?.one.id
         }
+        if (meta?.temp) {
+          MetaStore.updateMetaObject({ id: meta.id, temp: false })
+        }
     }
     switch (e.type) {
-      case 'transcribeFinished': {
+      case 'aiSummarize':
+      case 'transcribe':
+      case 'transcribeFinished':
+      case 'getSource':
+        if (!metaId) {
+          const res = await turnIntoMeta(mediaState, type, true)
+          metaId = res?.meta.id
+          id = res?.one.id
+        }
+    }
+    switch (e.type) {
+      case 'update': {
         if (object) {
+          await ObjectStore(type).updateOne({ ...e.updater(object) })
+        }
+        break
+      }
+      case 'removeSummary': {
+        if (id) {
+          if (metaId) {
+            MetaStore.property.updateProperty(metaId, AI_SUMMARY_PROP_ID, null)
+          }
+          return await ObjectStore(type).updateOne({ id, aiSummary: undefined })
+        }
+        break
+      }
+      case 'getSource': {
+        return {
+          type: type,
+          youtubeId: mediaState.state?.ytVideoId,
+          objectId: id,
+          episodeId: mediaState.state?.episodeId
+        } as IGeneralSource
+      }
+      case 'transcribeFinished': {
+        if (id) {
+          toast.success(t('media.Successfully transcribed'))
           const path = await FileSystem.fs.writeFile(e.vttText, `/files/subtitle_${Id.getStrId()}.vtt`)
           if (path) {
+            const object = await ObjectStore(type).getOneById(id)
+            if (!object) return
+            const currentTranscription = object.subtitleList?.findIndex(
+              i => i.lang.startsWith('Transcription') && i.lang === object.subtitleLang
+            )
+            if (currentTranscription !== undefined && currentTranscription >= 0) {
+              const c = object.subtitleList?.[currentTranscription]
+              if (c && !c.url && object.subtitleList) {
+                const newList = structuredClone(object.subtitleList)
+                newList[currentTranscription].url = path
+                await ObjectStore(type).updateOne({
+                  id: id,
+                  subtitleList: newList
+                })
+                return path
+              }
+            }
+            const lang = useMediaTranscribe.generateNewName('Transcription', object.subtitleList?.map(i => i.lang) ?? [])
             await ObjectStore(type).updateOne({
-              id: object.id,
-              subtitleList: [{ lang: 'Transcription', url: path }, ...(object.subtitleList || [])]
+              id: id,
+              subtitleList: [{ lang, url: path }, ...(object.subtitleList || [])]
             })
             return path
           }
         }
 
+        break
+      }
+      case 'aiSummarize': {
+        if (id) {
+          if (metaId) {
+            MetaStore.addAIForMeta(metaId, {
+              summary: e.summary.summary.summary
+            })
+          }
+          return await ObjectStore(type).updateOne({ id, aiSummary: e.summary })
+        }
         break
       }
       case 'subtitleUpdated': {
@@ -71,30 +147,17 @@ const useMediaEventHandlerWrapper = (options: {
       case 'updateChapter':
         if (!id) return
         return await handleLabelChapter(e, id)
-      case 'assignToNewCollection':
-        if (!metaId) return
-        return await GlobalInstance.metaOps?.quickAdd(metaId)
-      case 'pin': {
-        console.log(metaId)
-        if (!metaId) return
-        return await MetaStore.updateMetaObject({ id: metaId, pinned: meta ? !meta.pinned : true })
-      }
-      case 'externalStateChange': {
+      case 'currentTimeChanged': {
         if (object) {
-          const merged = _.merge({ ...object }, e.state)
-          ObjectStore(type).updateOne({ ...merged })
+          ObjectStore(type).updateOne({ id: object.id, currentTime: e.currentTime })
         }
         break
       }
-      case 'copyTimestamp': {
-        const type = 'text/html'
-        const url = `rendevoz://object/${metaId}?t=${e.currentTime}`
-        const text = new Blob([url], { type: 'text/plain' })
-        const blob = new Blob([`<a href="${url}">${meta?.name || mediaState.name} — ${normalizeSecondsToTime(e.currentTime)}</a>`], {
-          type
-        })
-        navigator.clipboard.write([new ClipboardItem({ 'text/html': blob, 'text/plain': text })])
-        return
+      case 'externalStateChange': {
+        if (object) {
+          ObjectStore(type).updateOne({ id: object.id, ...e.state })
+        }
+        break
       }
     }
   }

@@ -6,6 +6,13 @@ export const pushNumberIntoUnrepeatableArray = (value: number, origin?: number[]
   return Array.from(set.values())
 }
 
+export const toggleItem = <T>(arr: T[] | undefined, item: T) => {
+  return arr?.includes(item) ? arr?.filter(i => i !== item) : [...(arr || []), item]
+}
+
+export const noRepeatArray = <T>(arr: (T | undefined)[]): T[] => {
+  return Array.from(new Set<T>(arr.filter(i => i !== undefined) as T[]))
+}
 export default function flattenChildren(children: ReactNode, depth: number = 0, keys: (string | number)[] = []): ReactNode[] {
   return Children.toArray(children).reduce((acc: ReactNode[], node: ReactNode, nodeIndex) => {
     if (node?.type === React.Fragment) {

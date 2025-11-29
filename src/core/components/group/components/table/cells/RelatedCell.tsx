@@ -19,7 +19,7 @@ const RelatedCell = ({
   const index = MetaStore.useIndexedMetaLinks()
   const relatedMap = index?.relatedIdsMap
   const related = relatedMap?.get(metaId)
-  const relatedMetas = MetaStore.useMultipleObjects(Array.from(related?.values() || []))
+  const relatedMetas = MetaStore.useMultiple(related)
   const { openPopover, renderPopover, closePopover } = usePopoverCell()
   if (nullIfNoRelated && (!related || related?.size === 0)) {
     return null
@@ -43,7 +43,7 @@ const RelatedCell = ({
         }}
       >
         {relatedMetas.map(meta => (
-          <span className={'object-name-item'} style={optionStyle}>
+          <span className={'object-name-item shrink-0'} style={optionStyle}>
             {meta.name || meta.placeholderName}
           </span>
         ))}
@@ -51,12 +51,7 @@ const RelatedCell = ({
       {renderPopover(
         box => (
           <PopupWrapper box={{ ...box, width: 'min(400px, 90vw)' }}>
-            <div
-              style={{
-                padding: 8,
-                position: 'relative'
-              }}
-            >
+            <div className={'relative'}>
               <Icon
                 size={13}
                 className={ClassName.circleButton()}
@@ -71,7 +66,14 @@ const RelatedCell = ({
                   right: -10
                 }}
               />
-              <RelatedPanel metaId={metaId} />
+              <RelatedPanel
+                style={{
+                  maxHeight: 200,
+                  overflowY: 'auto'
+                }}
+                className={'p-3'}
+                metaId={metaId}
+              />
             </div>
           </PopupWrapper>
         ),

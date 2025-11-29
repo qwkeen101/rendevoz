@@ -5,9 +5,9 @@ import tinycolor from 'tinycolor2'
 import { Options } from 'html-to-image/src/types'
 import { checkCanvasDimensions, createImage, getImageSize, getPixelRatio } from 'html-to-image/es/util'
 
-const getTransformForBounds = (bounds: Box, width: number, height: number, minZoom: number, maxZoom: number, padding = 0.1) => {
-  const xZoom = width / (bounds.width * (1 + padding))
-  const yZoom = height / (bounds.height * (1 + padding))
+const getTransformForBounds = (bounds: Box, width: number, height: number, minZoom: number, maxZoom: number, padding = 20) => {
+  const xZoom = width / (bounds.width + padding)
+  const yZoom = height / (bounds.height + padding)
   const zoom = Math.min(xZoom, yZoom)
   const clampedZoom = clamp(zoom, minZoom, maxZoom)
   const boundsCenterX = bounds.left + bounds.width / 2
@@ -19,57 +19,32 @@ const getTransformForBounds = (bounds: Box, width: number, height: number, minZo
 }
 const clamp = (val: number, min = 0, max = 1): number => Math.min(Math.max(val, min), max)
 
-export const exportWhiteboardAsImage = async (
-  allNodes: IWhiteboardNode[],
-  node: HTMLElement,
-  instance: IWhiteboardInstance,
-  options: {
-    as: 'svg' | 'png'
-    area: 'visible' | 'whole'
-    box?: Box
-    width: number
-    height: number
-    padding?: number
-  } = {
-    area: 'visible',
-    as: 'png',
-    width: 1920,
-    height: 1080
-  }
-) => {
-  const imageWidth = options.width,
-    imageHeight = options.height
-  const viewBox = instance.containerOps?.getViewBox()
-  if (!viewBox) return
+const MAX_WIDTH = 10000
+const MAX_HEIGHT = 10000
+export const exportWhiteboardAsImage = async (allNodes: IWhiteboardNode[], node: HTMLElement, instance: IWhiteboardInstance) => {
   const box = instance.nodeOps?.getDOMBoxOfNodes(allNodes.map(i => i.id))
   if (!box) return
   const outer = getBoxOfBoxes(Array.from(Object.values(box)))
-  const transform = getTransformForBounds(
-    options.box || (options.area === 'visible' ? viewBox : outer),
-    imageWidth,
-    imageHeight,
-    0,
-    2000,
-    options.padding
-  )
+  if (!outer) return
+  const scale = Math.min(MAX_WIDTH / outer.width, MAX_HEIGHT / outer.height, 1)
+  const scaledSize = [outer.width * scale, outer.height * scale]
+  const transform = getTransformForBounds(outer, scaledSize[0], scaledSize[1], 0, 2000, 20)
   const background = window.getComputedStyle(document.body).getPropertyValue('--global-background')
   const rgb = tinycolor(background).toRgbString()
   const config = {
-    width: imageWidth,
-    height: imageHeight,
+    width: scaledSize[0],
+    height: scaledSize[1],
     backgroundColor: rgb,
     pixelRatio: 1,
     skipAutoScale: true,
     style: {
-      width: imageWidth,
-      height: imageHeight,
+      width: scaledSize[0],
+      height: scaledSize[1],
       transform: `translate(${transform[0]}px, ${transform[1]}px) scale(${transform[2]})`
     }
   }
-  if (options.as === 'png') {
-    const canvas = await toCanvas(node, config)
-    return canvas.toDataURL()
-  }
+  const canvas = await toCanvas(node, config)
+  return canvas.toDataURL()
 }
 
 async function toCanvas<T extends HTMLElement>(node: T, options: Options = {}): Promise<HTMLCanvasElement> {

@@ -1,13 +1,8 @@
-import { useEventHandler } from '@/events'
 import { useRafFn } from '@/hooks'
 import { RefObject, useEffect, useRef, useState } from 'react'
-import { IDraggableElement } from 'rendevoz/typings/globalInstances/dragDrop'
-import { Rendevoz } from '../rendevoz'
 import { useGlobalIsDragging } from '@/core'
-import { globalStore } from '@/api/stores'
-import { objectIdToMetaObjectIdMapAtom } from '@/api/stores/meta/meta.store'
-import { TypeToRegisteredObject } from '@/api/stores/object/object.store'
-import { BuiltInDraggableElement } from '~/typings'
+import { MetaStore } from '@/api/stores'
+import { IGlobalEvents, IDraggableElement } from '~/typings'
 
 const useDropObjectArea = (
   dropArea: RefObject<HTMLElement> | HTMLElement,
@@ -20,15 +15,11 @@ const useDropObjectArea = (
   }
 ) => {
   const startDragRef = useRef(false)
-  const handler = useEventHandler('global')
-  const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const [canDropAsMeta, setCanDropAsMeta] = useState<{
     droppable: boolean
-    existed: boolean
-    metaId?: number
+    metaId?: number[]
   }>({
-    droppable: true,
-    existed: false
+    droppable: true
   })
   const [isDragOver, setIsDragOver] = useState(false)
   const [isDragging] = useGlobalIsDragging()
@@ -38,63 +29,23 @@ const useDropObjectArea = (
     if (!e) return
     if (area?.contains(e.target)) {
       let droppable = false
-      const draggingEle = Rendevoz.Actions.State.Drag.getDraggingDetails() as BuiltInDraggableElement | undefined
-      const objectIdToMetaObjectIdMap = globalStore.get(objectIdToMetaObjectIdMapAtom)
-      let objectId: number | undefined = undefined
-      let alreadyExist = false
-      let metaId: number | undefined = undefined
+      const draggingEle = Global.values.draggingDetails
+      let metaId: number[] | undefined = undefined
       if (draggingEle) {
-        if (draggingEle.type && TypeToRegisteredObject.has(draggingEle.type)) {
-          const { getObjectIdFromDraggingEle } = TypeToRegisteredObject.get(draggingEle.type)!
-          objectId = getObjectIdFromDraggingEle?.(draggingEle)
-        }
-        switch (draggingEle.type) {
-          case 'noteBlock':
-            objectId = draggingEle.blockId
-            break
-          case 'noteLabel':
-          case 'videoLabel':
-          case 'audioLabel':
-          case 'pdfLabel':
-          case 'webpageLabel':
-            objectId = draggingEle.labelId
-            break
-          case 'pdf':
-            objectId = draggingEle.pdfId
-            break
-          case 'note':
-            objectId = draggingEle.noteId
-            break
-          case 'whiteboard':
-            objectId = draggingEle.whiteboardId
-            break
-          case 'image':
-            droppable = true
-            break
-          default:
-            droppable = false
-        }
-        if (objectId !== undefined && !objectIdToMetaObjectIdMap?.has(objectId)) droppable = true
-        if (objectId && objectIdToMetaObjectIdMap?.has(objectId)) {
-          alreadyExist = true
-          metaId = objectIdToMetaObjectIdMap?.get(objectId)
-        }
-        if (draggingEle.type === 'metaElement') {
-          alreadyExist = true
-          metaId = draggingEle.metaId
-        }
         if (draggingEle.type === 'groupItem') {
           if (draggingEle.value.length) {
-            const meta = draggingEle.value.find(i => i.type === 'metaObject' && i.id)
-            if (meta) {
-              alreadyExist = true
-              metaId = meta.id
+            const meta = draggingEle.value.filter(i => i.type === 'metaObject').map(i => i.id)
+            if (meta.length) {
+              metaId = meta
             }
           }
         }
+        if (draggingEle.type === 'metaObjects') {
+          metaId = draggingEle.ids
+          droppable = true
+        }
         setCanDropAsMeta({
           droppable,
-          existed: alreadyExist,
           metaId
         })
       }
@@ -107,42 +58,56 @@ const useDropObjectArea = (
       }
     }
   })
-  handler.on('globalDragPointerUp', data => {
+  const handleDragEnd = (data: IGlobalEvents['dragEnd']) => {
     startDragRef.current = false
+    const draggingDetails = Global.values.draggingDetails
     setTimeout(() => {
       setIsDragOver(false)
     })
     setTimeout(() => {
       setCanDropAsMeta({
-        droppable: false,
-        existed: false
+        droppable: false
       })
     }, 500)
-    callback?.onDragEnd?.(data.draggingElement)
-    const area = dropArea instanceof HTMLElement ? dropArea : dropArea.current
-    if (area) {
-      const { event } = data
-      if (event.target instanceof Element && area.contains(event.target)) {
-        callback?.onDrop?.(data.draggingElement)
+    if (draggingDetails) {
+      callback?.onDragEnd?.(draggingDetails)
+      const area = dropArea instanceof HTMLElement ? dropArea : dropArea.current
+      if (area) {
+        const { event } = data
+        if (event.target instanceof Element && area.contains(event.target)) {
+          callback?.onDrop?.(draggingDetails)
+        }
       }
     }
-  })
-  handler.on('globalDragPointerMove', data => {
-    if (!startDragRef.current && data.draggingElement) {
-      callback?.onDragStart?.(data.draggingElement)
+  }
+  const handleDragMove = (data: IGlobalEvents['dragMove']) => {
+    const details = Global.values.draggingDetails
+    if (!startDragRef.current && details) {
+      callback?.onDragStart?.(details)
       startDragRef.current = true
     }
 
     const area = dropArea instanceof HTMLElement ? dropArea : dropArea.current
     if (area) {
-      const { event, draggingElement } = data
-      rafCheck(event, draggingElement)
+      rafCheck(data.event, details)
     }
-  })
+  }
+  const pointerUpHandler = () => {
+    if (isDragOver) {
+      setIsDragOver(false)
+    }
+  }
   useEffect(() => {
-    emitter.addListener('global', handler)
+    const ele = dropArea instanceof HTMLElement ? dropArea : dropArea.current
+    if (ele) {
+      ele.addEventListener('pointerup', pointerUpHandler)
+      Global.addEventListener('dragEnd', handleDragEnd)
+      Global.addEventListener('dragMove', handleDragMove)
+    }
     return () => {
-      emitter.removeListener('global', handler)
+      ele?.removeEventListener('pointerup', pointerUpHandler)
+      Global.removeEventListener('dragEnd', handleDragEnd)
+      Global.removeEventListener('dragMove', handleDragMove)
     }
   })
   useEffect(() => {

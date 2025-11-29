@@ -88,42 +88,36 @@ export default memo(() => {
     {
       title: 'Access key',
       type: 'input',
-      width: 300,
       value: setting.sync.S3Config?.ak,
       onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, S3Config: { ...s.sync.S3Config, ak: v } } }))
     },
     {
       title: 'Secert key',
       type: 'input',
-      width: 300,
       value: setting.sync.S3Config?.sk,
       onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, S3Config: { ...s.sync.S3Config, sk: v } } }))
     },
     {
       title: 'Endpoint',
       type: 'input',
-      width: 300,
       value: setting.sync.S3Config?.endpoint,
       onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, S3Config: { ...s.sync.S3Config, endpoint: v } } }))
     },
     {
       title: 'Region',
       type: 'input',
-      width: 300,
       value: setting.sync.S3Config?.region,
       onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, S3Config: { ...s.sync.S3Config, region: v } } }))
     },
     {
       title: 'Bucket',
       type: 'input',
-      width: 300,
       value: setting.sync.S3Config?.bucket,
       onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, S3Config: { ...s.sync.S3Config, bucket: v } } }))
     },
     {
       title: t('settings.Folder path'),
       type: 'input',
-      width: 300,
       description: t('settings.Folder path desc'),
       value: setting.sync.S3Config?.defaultFolder,
       onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, S3Config: { ...s.sync.S3Config, defaultFolder: v } } }))
@@ -133,28 +127,24 @@ export default memo(() => {
     {
       title: 'URL',
       type: 'input',
-      width: 300,
       value: setting.sync.webdavConfig?.url,
       onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, webdavConfig: { ...s.sync.webdavConfig, url: v } } }))
     },
     {
       title: t('settings.Username'),
       type: 'input',
-      width: 300,
       value: setting.sync.webdavConfig?.username,
       onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, webdavConfig: { ...s.sync.webdavConfig, username: v } } }))
     },
     {
       title: t('settings.Password'),
       type: 'input',
-      width: 300,
       value: setting.sync.webdavConfig?.password,
       onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, webdavConfig: { ...s.sync.webdavConfig, password: v } } }))
     },
     {
       title: t('settings.Folder path'),
       type: 'input',
-      width: 300,
       description: t('settings.Folder path desc'),
       value: setting.sync.webdavConfig?.defaultFolder,
       onChange: v => setSetting(s => ({ ...s, sync: { ...s.sync, webdavConfig: { ...s.sync.webdavConfig, defaultFolder: v } } }))

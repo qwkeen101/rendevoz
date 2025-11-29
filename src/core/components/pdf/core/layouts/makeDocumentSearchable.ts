@@ -5,6 +5,7 @@ import Id from '@/utils/id'
 
 export default (doc: PDFDocumentProxy, instance: IPDFInstance) => {
   const texts = instance.values.texts
+  instance.values.textsLoaded = false
   const currentPage = {
     current: 0
   }
@@ -13,7 +14,10 @@ export default (doc: PDFDocumentProxy, instance: IPDFInstance) => {
   }
   const asyncLoopTextContent = () => {
     if (aborted.current) return
-    if (currentPage.current === doc.numPages) return
+    if (currentPage.current === doc.numPages) {
+      instance.values.textsLoaded = true
+      return
+    }
     doc
       .getPage(currentPage.current + 1)
       .then(async page => {

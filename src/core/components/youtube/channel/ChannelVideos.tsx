@@ -1,33 +1,29 @@
-import { RefObject, useLayoutEffect } from 'react'
-import useYoutubeState from '@/core/components/feed/youtube/useYoutubeState'
-import useFeedInstance from '@/core/components/feed/hooks/useFeedInstance'
-import { useNorepeatNavigate } from '@/hooks'
-import YoutubeServices from '@/core/components/feed/youtube/YoutubeServices'
+import { useLayoutEffect } from 'react'
+import useYoutubeState from '@/core/components/youtube/hooks/useYoutubeState'
+import YoutubeServices from '@/core/components/youtube/YoutubeServices'
 import toast from 'react-hot-toast'
-import { Icon } from '@/components'
-import { Icons } from '@/consts'
-import YoutubeVideos from '@/core/components/feed/youtube/YoutubeVideos'
+import { DotLoading } from '@/components'
+import YoutubeVideos from '@/core/components/youtube/YoutubeVideos'
+import useYoutubeInstance from '@/core/components/youtube/hooks/useYoutubeInstance'
+import { EmptyList } from '@/core/components'
+import trans from '@/consts/trans'
+import { useTranslation } from 'react-i18next'
 
-export default ({
-  channelId,
-  scrollElementRef,
-  channelAppId
-}: {
-  channelId: string
-  scrollElementRef: RefObject<HTMLDivElement>
-  channelAppId: number
-}) => {
+export default ({ channelId }: { channelId: string }) => {
   const [state, setState] = useYoutubeState()
-  const cache = state.dataCache.channel[channelId].videoTab
-  const items = cache?.items ?? []
+  const dataCache = state.dataCache.channel[channelId]
+  const cache = dataCache?.videoTab
+  const search = dataCache?.search
+  const items = search?.query ? search?.videoResults?.map(i => ({ ...i, id: i.id.videoId })) : cache?.items
   const token = cache?.token
-  const instance = useFeedInstance()
-
+  const instance = useYoutubeInstance()
+  const { t } = useTranslation()
   const handleLoad = async () => {
     if (cache?.isLoadingMore) return
     setVideoState(s => ({ ...s, isLoadingMore: true }))
     try {
       const res = await YoutubeServices.getVideosOfChannel(channelId, { token, details: true })
+      console.log(res)
       setVideoState(s => ({
         ...s,
         isLoadingMore: false,
@@ -36,7 +32,7 @@ export default ({
         items: [...(s?.items ?? []), ...(res?.items || [])]
       }))
     } catch (e) {
-      toast.error('Failed to load video!')
+      toast.error(t(trans.Errors.NetworkError))
       setVideoState(s => ({ ...s, failed: true }))
     } finally {
       setVideoState(s => ({ ...s, isLoadingMore: false }))
@@ -62,47 +58,31 @@ export default ({
       }
     }))
   }
-  if (cache?.failed) {
+  if (!items) {
     return (
       <div className={'w-full grow flex items-center justify-center'}>
-        <div onClick={handleLoad} className={'reverse-theme-button py-2 !px-8'}>
-          Retry
-        </div>
-      </div>
-    )
-  }
-  if (!cache?.items) {
-    return (
-      <div className={'w-full grow flex items-center justify-center'}>
-        <Icon name={Icons.Loading} spin size={40} />
+        <DotLoading />
       </div>
     )
   }
 
-  if (cache.items && !cache.items.length) {
-    return (
-      <div className={'w-full grow flex items-center justify-center'}>
-        <div className={'transparent-font font-semibold'}>No video</div>
-      </div>
-    )
+  if (items && !items.length) {
+    return <EmptyList />
   }
+  if (!instance.scrollElementRef) return null
   return (
     <YoutubeVideos
-      hasMore={!!cache?.hasMore}
-      scrollKey={`youtube_channel_${channelAppId}`}
-      scrollElementRef={scrollElementRef}
+      hasMore={search?.query ? !!search.videoHasMore : !!cache?.hasMore}
+      scrollElementRef={instance.scrollElementRef}
       items={items}
-      onNavigate={i => {
-        instance.youtubeOps
-          ?.addVideo(i.snippet.resourceId.videoId, {
-            history: true,
-            channelHistory: channelAppId
-          })
-          .then(res => {
-            instance.youtubeOps?.goTo(res.id, 'video')
-          })
+      size={14}
+      onLoadMore={() => {
+        if (search?.query) {
+          instance.search?.(undefined, channelId)
+          return
+        }
+        handleLoad()
       }}
-      onLoadMore={handleLoad}
     />
   )
 }

@@ -1,29 +1,31 @@
-import { AnimatePopover, Content, Icon, IconWithPopover, WithBorder, ContentEditor } from '@/components'
+import { AnimatePopover, Icon, IconWithPopover, WithBorder, ContentEditor, Markdown } from '@/components'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { CSSProperties, useState } from 'react'
-import { DraggableElement } from '../../global'
-import ClassName from '@/styles/classNames'
 import LabelActionMenu, { LabelActionEvent } from '../menus/LabelActionMenu'
-import { AttachmentWrapper, useRenderObject } from '../index'
+import { InlineObject } from '../index'
 import { useTranslation } from 'react-i18next'
-import { Colors } from '@/consts'
-import { GlobalInstance, useGlobalAtomValue, useIsIn } from '@/hooks'
-import { relatedMetaObjectsMapAtom } from '@/api/stores/meta/meta.store'
-import { Rendevoz } from '@/core/rendevoz'
+import { Colors, Icons } from '@/consts'
+import { useIsIn } from '@/hooks'
 import { ILabel } from '~/typings'
-import { ObjectTag } from '@/core'
+import { GlobalSetting, ObjectTag } from '@/core'
+import classnames from 'classnames'
+import QuestionCard from '@/core/ai/components/question/QuestionCard'
+import { DateFormat } from '@/utils'
+import MetaTagPicker from '@/core/object/MetaTagPicker'
+import toast from 'react-hot-toast'
+import trans from '@/consts/trans'
 const DEFAULT_LABEL_NAME = 'Unnamed Label'
 const useRenderLabel = (opts: {
   objectId: number
   type: 'videoLabel' | 'pdfLabel' | 'noteLabel' | 'webpageLabel'
-  draggable?: boolean
-  onDragStart?: VoidFunction
-  onNavigate?: VoidFunction
+  onDelete?: VoidFunction
+  onMove: VoidFunction
 }) => {
-  const { objectId, type, draggable } = opts
+  const { objectId, type, onMove } = opts
   const label = ObjectStore(opts.type).useValue(opts.objectId) as ILabel | undefined
   const parentMeta = MetaStore.useObjectToMetaValue(label?.parentObjectId)
   const labelMeta = MetaStore.useObjectToMetaValue(opts.objectId)
+  const collapseLongText = GlobalSetting.useSelectSettingAtom('collapseLabelText')
   const { t } = useTranslation()
   const [labelState, setLabelState] = useState<{
     addingAttachment: boolean
@@ -42,17 +44,25 @@ const useRenderLabel = (opts: {
   })
   const { ref, isIn } = useIsIn()
   const currentLabelHasName = label && label.name && label.name !== DEFAULT_LABEL_NAME
-  const relatedMap = useGlobalAtomValue(relatedMetaObjectsMapAtom)
+  const relatedMap = MetaStore.useIndexedMetaLinks().relatedIdsMap
   const metaRelated = labelMeta ? relatedMap.get(labelMeta.id) : []
   const realRelated = new Set(metaRelated)
+  // trigger related change
+  MetaStore.useIndexedMetaObjects()
   if (parentMeta) {
     realRelated.delete(parentMeta.id)
   }
-  const renderName = (options?: { style?: CSSProperties }) => {
+  realRelated.forEach(i => {
+    const m = MetaStore.getCachedMetaObject(i)
+    if (!m || m.deleted) {
+      realRelated.delete(i)
+    }
+  })
+  const renderName = (options?: { style?: CSSProperties; defaultVisible?: boolean }) => {
     return labelState.editingName ? (
       <ContentEditor
-        style={{ fontSize: 13, ...options?.style }}
-        placeholder={t('general.Add note for label')}
+        style={options?.style}
+        placeholder={`${t('general.Add note')}...`}
         value={currentLabelHasName ? label?.name : undefined}
         onChange={async v => {
           if (labelMeta) {
@@ -64,242 +74,159 @@ const useRenderLabel = (opts: {
           setLabelState(s => ({ ...s, editingName: false }))
         }}
       />
-    ) : (
-      <DraggableElement draggable={draggable} onDragStart={opts.onDragStart}>
+    ) : currentLabelHasName || options?.defaultVisible ? (
+      currentLabelHasName ? (
+        <Markdown className={'break-all'}>{label?.name}</Markdown>
+      ) : (
         <div
-          className={'font-size-13'}
-          style={{
-            cursor: 'pointer',
-            whiteSpace: 'pre-wrap',
-            ...options?.style
-          }}
-          onClick={() => {
+          className={'super-transparent-font cursor-pointer w-fit'}
+          onClick={e => {
+            e.preventDefault()
             setLabelState(s => ({ ...s, editingName: true }))
           }}
         >
-          {realRelated.size > 0 && (
-            <AnimatePopover
-              containerStyle={{
-                zIndex: '500'
-              }}
-              align={'center'}
-              disableNudge
-              positions={['top', 'bottom']}
-              content={
-                <WithBorder onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }} width={180} padding={6}>
-                  <div className={'menu-sub-title'}>{t('general.related objects')}</div>
-                  {Array.from(realRelated.values()).map(i => (
-                    <LabelRelatedItem metaId={i} key={i} />
-                  ))}
-                </WithBorder>
-              }
-            >
-              <span
-                onClick={e => {
-                  e.stopPropagation()
-                }}
-                style={{
-                  padding: '1px 4px',
-                  borderRadius: 4,
-                  marginRight: 4,
-                  background: Colors.Common.SelectColorTransparentLight,
-                  color: Colors.Common.SelectColor
-                }}
-              >
-                {realRelated.size}
-              </span>
-            </AnimatePopover>
-          )}
-          <span
-            style={{
-              color: currentLabelHasName ? undefined : Colors.Font.Transparent,
-              fontWeight: 400,
-              wordBreak: 'break-word'
-            }}
-          >
-            {currentLabelHasName ? label?.name : t('general.Add note')}
-          </span>
+          {t('general.Add note')}...
         </div>
-      </DraggableElement>
-    )
-  }
-  const renderPopover = (options?: { on?: (e: LabelActionEvent) => void; style?: CSSProperties; showTag?: boolean }) => {
-    if (labelState.editingName) return null
-    return (
-      <Content
-        flex
-        gap={4}
-        style={{
-          opacity: isIn ? 1 : 0,
-          transition: 'all 0.2s ease',
-          position: 'absolute',
-          right: 0,
-          top: 0,
-          padding: '3px 5px',
-          background: Colors.Background.Global,
-          borderRadius: 999,
-          border: `1px solid ${Colors.Background.Border}`,
-          ...options?.style
-        }}
-      >
-        <Icon
-          size={14}
-          name={'park-share-two'}
-          onClick={() => {
-            opts.onNavigate?.()
-          }}
-          className={ClassName.circleButton(3)}
-        />
-        {options?.showTag && (
-          <Icon
-            size={14}
-            name={'park-tag-one'}
-            onClick={async () => {
-              const meta = labelMeta
-                ? labelMeta
-                : await GlobalInstance.metaOps?.addDraggableAsMeta({
-                    type: type,
-                    labelId: objectId
-                  })
-              if (meta) {
-                GlobalInstance.metaOps?.quickAdd(meta.id, 'tags')
-              }
-            }}
-            className={ClassName.circleButton(3)}
-          />
-        )}
-        <IconWithPopover
-          name="park-more"
-          size={14}
-          className={ClassName.circleButton(3)}
-          placement={['right', 'left']}
-          renderOnParent={false}
-          disableNudge={true}
-          content={setV => (
-            <LabelActionMenu
-              onClose={() => {
-                setV(false)
-              }}
-              on={async event => {
-                options?.on?.(event)
-                switch (event.type) {
-                  case 'editOriginal': {
-                    setLabelState(s => ({ ...s, editingOrigin: true }))
-                    break
-                  }
-                  case 'delete':
-                    break
-                  case 'changeName':
-                    setLabelState(s => ({ ...s, editingName: true }))
-                    break
-                }
-              }}
-              objectId={objectId}
-              type={type}
-            />
-          )}
-        ></IconWithPopover>
-      </Content>
-    )
-  }
-  const renderAttachment = ({
-    style,
-    renderAttOnParent,
-    renderObjectDetailsOnParent
-  }: {
-    style?: CSSProperties
-    renderObjectDetailsOnParent?: boolean
-    renderAttOnParent?: boolean
-  }) => {
-    return labelMeta?.attachments?.length || (labelState.addingAttachment && labelMeta) ? (
-      <AttachmentWrapper
-        style={{ marginTop: 4, ...style }}
-        metaId={labelMeta.id}
-        visible
-        closeIcon={labelState.addingAttachment && !labelMeta.attachments?.length}
-        onClose={() => setLabelState(s => ({ ...s, addingAttachment: false }))}
-        onAttachmentsChange={atts => MetaStore.updateMetaObject({ id: labelMeta.id, attachments: atts })}
-        attachments={labelMeta?.attachments}
-        renderObjectDetailsOnParent={renderObjectDetailsOnParent}
-        renderAttOnParent={renderAttOnParent}
-      />
+      )
     ) : null
   }
-  const renderDescription = ({ style }: { style?: CSSProperties }) => {
-    return (
-      <>
-        {label?.description && !labelState.addingDescription && (
-          <div
-            style={{
-              whiteSpace: 'pre-wrap',
-              textTransform: 'none',
-              wordBreak: 'break-all',
-              ...style
-            }}
-            onContextMenu={() => setLabelState(s => ({ ...s, addingDescription: true }))}
-            className={'font-size-12 transparent-font'}
-          >
-            {label.description}
-          </div>
-        )}
-        {labelState.addingDescription && (
-          <ContentEditor
-            onChange={v => {
-              setLabelState(s => ({ ...s, addingDescription: false }))
-              if (labelMeta) {
-                MetaStore.updateMetaObject({ id: labelMeta.id, description: v })
-                return
-              }
-              ObjectStore(type).updateOne({ id: objectId, description: v })
-            }}
-            value={labelMeta?.description || label?.description}
-            placeholder={'Add description...'}
-          />
-        )}
-      </>
-    )
-  }
 
-  const renderTags = (style?: CSSProperties, small?: boolean) => {
-    if (!labelMeta) return null
-    if (labelMeta && !labelMeta.tags?.length) return null
-    const tags = labelMeta.tags!
+  const renderContextMenu = (on?: (e: LabelActionEvent) => void, onClose?: VoidFunction) => {
     return (
-      <Content flex gap={4} style={{ flexWrap: 'wrap', ...style }}>
-        {tags.map(i => (
-          <ObjectTag
-            clickOpenGroup
-            style={
-              small
-                ? {
-                    fontSize: 11,
-                    lineHeight: '16px',
-                    padding: '0px 4px'
-                  }
-                : {
-                    fontSize: 12,
-                    lineHeight: '18px'
-                  }
+      <LabelActionMenu
+        onClose={() => onClose?.()}
+        on={async event => {
+          on?.(event)
+          switch (event.type) {
+            case 'move':
+              onMove()
+              break
+            case 'addNote': {
+              setLabelState(s => ({ ...s, editingName: true }))
+              break
             }
-            key={i}
-            tag={i}
-            hideDelete
-            square
-          />
-        ))}
-      </Content>
+            case 'editOriginal': {
+              setLabelState(s => ({ ...s, editingOrigin: true }))
+              break
+            }
+            case 'delete':
+              opts?.onDelete?.()
+              break
+            case 'changeName':
+              setLabelState(s => ({ ...s, editingName: true }))
+              break
+          }
+        }}
+        objectId={objectId}
+        type={type}
+      />
     )
   }
 
-  const renderOriginalText = (options: {
-    text: string
+  const renderHeader = (options?: {
+    on?: (e: LabelActionEvent) => void
     style?: CSSProperties
     showEdit?: boolean
-    ellipis?: boolean
-    editorStyle?: CSSProperties
-    onClick?: VoidFunction
-    clickToEdit?: boolean
+    showPage?: boolean
+    showTime?: boolean
+    showPath?: number[]
   }) => {
+    return (
+      <div className={'transparent-font flex justify-between relative'} style={options?.style}>
+        <div className={'font-size-11 leading-none'}>
+          {label &&
+            options?.showPage &&
+            'page' in label &&
+            typeof label.page === 'number' &&
+            label.page !== undefined &&
+            `${t('general.Page', { num: label.page + 1 })}`}
+          {label && options?.showPath && t('general.Paragraph num', { num: options.showPath[0] + 1 })}
+          {label && options?.showTime && 'time' in label && typeof label.time === 'number' && `${DateFormat.formatDuration(label.time)}`}
+          {label &&
+            !options?.showPath &&
+            !options?.showPage &&
+            !options?.showTime &&
+            DateFormat.formatDistanceToNowStrict(label.createdAt, true)}
+        </div>
+        <div
+          className={classnames('items-center gap-3.5 flex transition-opacity absolute top-0 right-0', isIn ? 'opacity-100' : 'opacity-0')}
+        >
+          <Icon
+            className={'cursor-pointer'}
+            name={Icons.Edit}
+            size={14}
+            onClick={e => {
+              e.preventDefault()
+              setLabelState(s => ({ ...s, editingName: !s.editingName }))
+            }}
+          />
+          <Icon
+            name={Icons.Link}
+            className={'cursor-pointer'}
+            onClick={async e => {
+              e.preventDefault()
+              if (labelMeta) {
+                Global.metaOps.copyLink(labelMeta.id)
+              }
+            }}
+            size={14}
+          />
+          <IconWithPopover
+            name={Icons.More}
+            size={14}
+            className={'cursor-pointer'}
+            placement={['right', 'left']}
+            renderOnParent={false}
+            align={'start'}
+            onClick={e => e.preventDefault()}
+            content={setV => renderContextMenu(options?.on, () => setV(false))}
+          ></IconWithPopover>
+        </div>
+      </div>
+    )
+  }
+
+  const renderTags = (style?: CSSProperties) => {
+    if (!labelMeta) return null
+    if (labelMeta && !labelMeta.tags?.length && !realRelated.size) return null
+    const tags = labelMeta.tags
+    return (
+      <div className={'gap-2 flex flex-wrap'} style={style}>
+        {realRelated.size > 0 && (
+          <AnimatePopover
+            containerStyle={{
+              zIndex: '500'
+            }}
+            align={'center'}
+            disableNudge
+            positions={['top', 'bottom']}
+            content={
+              <WithBorder onClick={e => e.stopPropagation()} className={'max-w-md min-w-48 p-1.5'}>
+                <div className={'menu-sub-title'}>{t('general.related objects')}</div>
+                {Array.from(realRelated.values()).map(i => (
+                  <InlineObject id={i} key={i} />
+                ))}
+              </WithBorder>
+            }
+          >
+            <div
+              style={{
+                lineHeight: 1.4,
+                padding: '0px 6px'
+              }}
+              onClick={e => e.stopPropagation()}
+              className={'font-size-12 cursor-pointer em:rounded select-color-font select-color-transparent-bg'}
+            >
+              {realRelated.size} {t('general.related')}
+            </div>
+          </AnimatePopover>
+        )}
+        {tags?.map(i => <ObjectTag className={'font-size-12'} key={i} tag={i} hideDelete square />)}
+      </div>
+    )
+  }
+
+  const renderOriginalText = (options: { text: string; style?: CSSProperties; editorStyle?: CSSProperties; hideIfImage?: boolean }) => {
     if (labelState.editingOrigin) {
       return (
         <ContentEditor
@@ -313,56 +240,72 @@ const useRenderLabel = (opts: {
       )
     }
     if (!options.text) return null
+    if (label?.imageUrl && options.hideIfImage !== false) return null
     return (
       <div
-        className={'font-size-12'}
+        className={classnames(
+          'font-size-13 transparent-font mt-0.5 whitespace-pre-wrap break-words em:pr-2 em:pl-3',
+          collapseLongText && 'line-clamp-3'
+        )}
         style={{
-          padding: '3px 6px 3px 8px',
-          cursor: 'pointer',
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-word',
           borderLeft: label?.color ? `3px solid ${Colors.getAdaptColor(label.color)}` : `3px solid ${Colors.Emphasis.Emphasis}`,
           ...options.style
-        }}
-        onClick={e => {
-          if (!window.getSelection()?.toString()) {
-            if (options.clickToEdit) {
-              setLabelState(s => ({ ...s, editingOrigin: true }))
-              return
-            }
-            if (options.onClick) {
-              options.onClick()
-              return
-            }
-            opts.onNavigate?.()
-          }
         }}
       >
         {options.text}
       </div>
     )
   }
+
+  const renderQuestions = (opts?: { style?: CSSProperties }) => {
+    if (labelMeta?.properties) {
+      const questionProperties = Object.entries(labelMeta.properties).filter(
+        i => MetaStore.property.getPropDetails(i[0])?.propType === 'question' && i[1].value
+      )
+      if (questionProperties.length) {
+        return (
+          <div onClick={e => e.preventDefault()} style={opts?.style} className={'flex flex-col gap-3'}>
+            {questionProperties.map(p => (
+              <div key={p[1].value}>
+                <div className={'font-size-11 transparent-font flex items-center gap-1.5 mb-1'}>
+                  <Icon name={Global.utils.getIcon('question')} />
+                  {MetaStore.property.getPropDetails(p[0])?.name}
+                </div>
+                <QuestionCard
+                  autoFocus={false}
+                  id={p[1].value}
+                  display={{
+                    more: false
+                  }}
+                  styles={{
+                    smallFontSize: '0.82em',
+                    contentFontSize: '0.9em'
+                  }}
+                  containerStyle={{
+                    padding: 0
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        )
+      }
+    }
+  }
   return {
     renderName,
-    renderPopover,
-    renderAttachment,
-    renderDescription,
     renderOriginalText,
     renderTags,
+    renderQuestions,
+    renderHeader,
     labelMeta,
+    renderContextMenu,
     label,
-    setDraggingDetails: Rendevoz.Actions.State.Drag.setDraggingDetails,
+    setDraggingDetails: d => {
+      Global.values.draggingDetails = d
+    },
     ref
   }
 }
 
-const LabelRelatedItem = ({ metaId }: { metaId: number }) => {
-  const { renderInline } = useRenderObject({ metaObjectId: metaId })
-  return renderInline({
-    ellipsisLine: 2,
-    renderObjectDetailsOnParent: true,
-    renderAttOnParent: true,
-    containerStyle: { width: '100%', fontSize: 13 }
-  })
-}
 export default useRenderLabel

@@ -1,70 +1,35 @@
-import { CSSProperties } from 'react'
-import { Button, Toolbar } from '@/components'
 import { IGeneralSource } from '~/typings'
-import classnames from 'classnames'
-import UserService from '@/api/services/user.service'
-import { GlobalInstance } from '@/hooks'
+import trans from '@/consts/trans'
+import { useTranslation } from 'react-i18next'
+import { Icons } from '@/consts'
+import { CoreMessage } from 'ai'
 
-export type ExplainInput = { source?: IGeneralSource; text: string }
-export default ({
-  className,
-  style,
-  onGetExplain,
-  toolbarMode
-}: {
-  className?: string
-  style?: CSSProperties
-  toolbarMode?: boolean
-  onGetExplain?: () => ExplainInput | undefined
-}) => {
-  const isPro = UserService.useIsUserPro(true)
-  if (!isPro) return null
-  if (toolbarMode) {
-    return (
-      <Toolbar.Item
-        onClick={e => {
-          const explainer = onGetExplain?.()
-          if (explainer) {
-            GlobalInstance.commonOps?.explain?.({
-              ...explainer,
-              e
-            })
-          }
-        }}
-        style={{
-          borderRight: '1px solid var(--border-background)',
-          padding: '0px 12px 0 10px',
-          height: '100%',
-          borderRadius: 0,
-          ...style
-        }}
-      >
-        <Button.IconButton
-          style={{
-            background: 'unset',
-            padding: '0px',
-            borderRadius: 0
-          }}
-          icon={'park-translate'}
-          text={'Explain'}
-        />
-      </Toolbar.Item>
-    )
+export type ExplainInput = {
+  source?: IGeneralSource
+  query?: string
+  image?: string
+  targetChatId?: number
+  initialMessages?: CoreMessage[] | (() => Promise<CoreMessage[]>)
+}
+export default ({ onGetExplain }: { onGetExplain?: () => Promise<ExplainInput | undefined> | ExplainInput | undefined }) => {
+  const { t } = useTranslation()
+  return {
+    icon: Icons.Explain,
+    text: t(trans.Explain),
+    type: 'button',
+    key: 'ai-explain',
+    onClick: async (e: MouseEvent | PointerEvent) => {
+      const input = await onGetExplain?.()
+      if (input) {
+        Global.aiOps?.explain?.({
+          initialMessages: input.initialMessages,
+          source: input.source,
+          query: input.query,
+          image: input.image,
+          targetChatId: input.targetChatId,
+          e
+        })
+      }
+    }
   }
-  return (
-    <Button.IconButton
-      className={classnames(className)}
-      style={style}
-      onClick={e => {
-        const explainer = onGetExplain?.()
-        if (explainer) {
-          GlobalInstance.commonOps?.explain?.({
-            ...explainer,
-            e
-          })
-        }
-      }}
-      text={'Explain'}
-    />
-  )
 }

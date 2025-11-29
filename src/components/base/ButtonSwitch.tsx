@@ -28,7 +28,7 @@ export default ({
       flex
       alignItems={'center'}
       justifyContent={'space-between'}
-      className={classnames(!disableButtonStyle && ClassName.flatButton(), className)}
+      className={classnames(!disableButtonStyle && 'button', className)}
     >
       <div>{name}</div>
       <Switch value={value} onChange={onChange} small={true} />

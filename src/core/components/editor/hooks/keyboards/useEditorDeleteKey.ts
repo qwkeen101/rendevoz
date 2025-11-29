@@ -7,7 +7,7 @@ import { IEditorInstance } from '~/typings'
  * 如果有多选，就把多选的块删除，不然正常删除
  */
 const useEditorDeleteKey = (instance: IEditorInstance) => {
-  const deleteKeyHandler = (e: KeyboardEvent) => {
+  return (e: KeyboardEvent) => {
     if (isHotkey(KEY.Delete, e) || isHotkey(KEY.Backspace, e)) {
       const overlayState = instance.overlayOps?.getState()
       if (overlayState?.content === 'slashMenu') {
@@ -23,7 +23,6 @@ const useEditorDeleteKey = (instance: IEditorInstance) => {
       }
     }
   }
-  return deleteKeyHandler
 }
 
 export default useEditorDeleteKey

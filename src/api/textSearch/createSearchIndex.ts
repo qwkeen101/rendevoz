@@ -5,7 +5,7 @@ const createSearchStore = () => {
   const segmenter = new Intl.Segmenter(undefined, { granularity: 'word' })
   let metaSearch = new MiniSearch({
     fields: ['id', 'name', 'description', 'content', 'placeholderName'],
-    storeFields: ['id', 'name', 'description', 'content', 'placeholderName', 'docType', 'metaId', 'metaType'],
+    storeFields: ['id', 'name', 'description', 'content', 'placeholderName', 'metaId', 'metaType'],
     tokenize: str =>
       Array.from(segmenter.segment(str))
         .filter(i => i.isWordLike)
@@ -21,8 +21,7 @@ const createSearchStore = () => {
   }
 
   const addDocuments = (docs: ISearchableDocument[]) => {
-    const metas = docs.filter(i => i.docType === 'metaObject')
-    metaSearch.addAll(metas)
+    metaSearch.addAll(docs)
   }
 
   const searchDocument = (params: ISearchQuery) => {
@@ -56,8 +55,10 @@ const createSearchStore = () => {
   }
 
   const updateDocuments = (documents: ISearchableDocument[]) => {
-    metaSearch.discardAll(documents.map(i => i.id))
-    metaSearch.addAll(documents)
+    if (documents.length) {
+      metaSearch.discardAll(documents.map(i => i.id))
+      metaSearch.addAll(documents)
+    }
   }
 
   const saveIndex = (tableName: 'metaObject' = 'metaObject') => {
@@ -69,7 +70,7 @@ const createSearchStore = () => {
   const load = (json: string) => {
     metaSearch = MiniSearch.loadJSON(json, {
       fields: ['id', 'name', 'description', 'content', 'placeholderName'],
-      storeFields: ['id', 'name', 'description', 'content', 'placeholderName', 'docType', 'metaId', 'metaType'],
+      storeFields: ['id', 'name', 'description', 'content', 'placeholderName', 'metaId', 'metaType'],
       tokenize: str =>
         Array.from(segmenter.segment(str))
           .filter(i => i.isWordLike)

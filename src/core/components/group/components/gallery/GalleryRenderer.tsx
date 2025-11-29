@@ -1,17 +1,16 @@
 import { memo, useRef } from 'react'
-import { Content, Icon } from '@/components'
-import { useVirtualizer } from '@tanstack/react-virtual'
+import { Content, Icon, useVirtualizer } from '@/components'
 import { MetaGroupChild } from '~/typings'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import { useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import { useMeasure } from 'react-use'
 import GalleryItemWrapper from '@/core/components/group/components/gallery/GalleryItemWrapper'
-import { Colors } from '@/consts'
 import { useTranslation } from 'react-i18next'
 import { MetaStore } from '@/api/stores'
 import { isEqual } from 'lodash'
 import { assignProperties } from '@/utils'
+
 const GalleryRenderer = memo(
   ({
     value = [],
@@ -197,14 +196,13 @@ const GalleryRenderer = memo(
                                   height: '100%',
                                   minHeight: 180,
                                   cursor: 'pointer',
-                                  borderRadius: 3,
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
                                   fontWeight: 500,
-                                  transition: 'background 0.25s ease'
+                                  transition: 'background 0.15s ease'
                                 }}
-                                className={'bg-popover border-box-shadow light-hover transparent-font'}
+                                className={'bg-popover rounded-xl border-box-shadow light-hover transparent-font'}
                               >
                                 <Content flex alignItems={'center'} gap={8}>
                                   <Icon name={'park-plus'} />
@@ -266,14 +264,13 @@ const GalleryRenderer = memo(
                     height: '100%',
                     minHeight: 180,
                     cursor: 'pointer',
-                    borderRadius: 3,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontWeight: 500,
-                    transition: 'background 0.25s ease'
+                    transition: 'background 0.15s ease'
                   }}
-                  className={'bg-popover light-hover transparent-font border-box-shadow'}
+                  className={'bg-popover rounded-xl light-hover transparent-font border-box-shadow'}
                 >
                   <Content flex alignItems={'center'} gap={8}>
                     <Icon name={'park-plus'} />

@@ -3,22 +3,26 @@ import { MetaStore, ObjectStore } from '@/api/stores'
 import { memo, useEffect, useState } from 'react'
 import { Whiteboard } from '@/core'
 import { getBoxOfBoxes } from '@/core/components/whiteboard/utils'
-import { Content } from '@/components'
+import { Content, Icon } from '@/components'
 import { LabelDetailsContext } from '@/core/object/renderer/LabelDetailsContext'
 import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 import { IWhiteboard } from '~/typings'
+import { Icons } from '@/consts'
+import { useSelectAtomValue } from '@/hooks'
+import { PDFStateAtom } from '@/core/components/pdf/hooks/usePDFState'
+import EmptyList from '@/core/components/common/EmptyList'
 
 const layout = {
   showControlBar: false,
   showSetting: false,
   showContents: false
 }
-const PDFMindmap = memo(({ id, labelIds }: { id: number; labelIds?: number[] }) => {
+export default memo(({ id }: { id: number }) => {
+  const labelIds = useSelectAtomValue(PDFStateAtom, s => s.document?.labels)
   const [mindmapTempId, setMindmapTempId] = useState<number>()
   const [valid, setValid] = useState(false)
   const [initialized, setInitialized] = useState(false)
   const instance = usePDFInstance()
-  console.log('rerender')
   useEffect(() => {
     instance.getDocument?.().then(doc => {
       doc.getOutline().then(o => {
@@ -70,33 +74,18 @@ const PDFMindmap = memo(({ id, labelIds }: { id: number; labelIds?: number[] }) 
   }, [mindmapTempId])
   return (
     <Content fullWidth fullHeight>
-      {!valid && (
-        <Content
-          flex
-          centered
-          className={'bold-font transparent-font'}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            zIndex: 10
-          }}
-        >
-          No mindmap
-        </Content>
-      )}
+      {!valid && <EmptyList className={'h-full'} />}
       {valid && !initialized && (
-        <Content
-          flex
-          centered
-          className={'bold-font transparent-font'}
+        <div
+          className={'flex items-center justify-center transparent-font'}
           style={{
             position: 'absolute',
             inset: 0,
             zIndex: 10
           }}
         >
-          Loading mindmap...
-        </Content>
+          <Icon name={Icons.Loading} size={48} spin />
+        </div>
       )}
       <Content
         fullHeight
@@ -117,20 +106,19 @@ const PDFMindmap = memo(({ id, labelIds }: { id: number; labelIds?: number[] }) 
                     const box = getBoxOfBoxes(Array.from(Object.values(doms)))
                     box && i.containerOps?.fitTo(box, { skipAnimation: true })
                   }
-                  i.addEventListener?.(async e => {
-                    if (e.type === 'nodeClick') {
-                      if ('pageIndex' in e.node) {
-                        const idx = e.node.pageIndex as number
-                        instance.navigateOps?.jumpToPage(idx)
-                      }
-                      if (e.node.type === 'metaObject') {
-                        const metaId = e.node.metaObjectId
-                        const meta = MetaStore.getCachedMetaObject(metaId)
-                        if (meta && meta.objectId && meta.type === 'pdfLabel') {
-                          const obj = await ObjectStore('pdfLabel').getOneById(meta.objectId)
-                          if (obj) {
-                            instance.navigateOps?.jumpToLabel(obj.id)
-                          }
+                  i.addEventListener('nodeClick', async e => {
+                    console.log(e)
+                    if ('pageIndex' in e.node) {
+                      const idx = e.node.pageIndex as number
+                      instance.navigateOps?.jumpToPage(idx)
+                    }
+                    if (e.node.type === 'metaObject') {
+                      const metaId = e.node.metaObjectId
+                      const meta = MetaStore.getCachedMetaObject(metaId)
+                      if (meta && meta.objectId && meta.type === 'pdfLabel') {
+                        const obj = await ObjectStore('pdfLabel').getOneById(meta.objectId)
+                        if (obj) {
+                          instance.navigateOps?.jumpToLabel(obj.id)
                         }
                       }
                     }
@@ -151,5 +139,3 @@ const PDFMindmap = memo(({ id, labelIds }: { id: number; labelIds?: number[] }) 
     </Content>
   )
 })
-
-export default PDFMindmap

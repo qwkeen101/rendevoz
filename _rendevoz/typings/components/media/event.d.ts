@@ -1,11 +1,30 @@
-import { IMedia, IMediaChapter, IMediaExternalState, IMediaInternalState, IMediaLabel } from '~/typings'
+import { IMedia, IMediaAiSummary, IMediaChapter, IMediaExternalState, IMediaInternalState, IMediaLabel } from '~/typings'
 
 export type IMediaEvent =
   | {
-      type: 'mediaLoaded'
+      type: 'getMeta'
+      onSuccess: (id: number) => void
+      temp?: boolean
     }
   | {
-      type: 'mediaStartPlay'
+      type: 'playEpisode'
+      id: number
+    }
+  | {
+      type: 'update'
+      updater: (curr: IMedia) => IMedia
+    }
+  | { type: 'pauseEpisode' }
+  | {
+      type: 'playlistChange'
+      list: number[]
+    }
+  | {
+      type: 'onNavigate'
+      direction: 'prev' | 'next'
+    }
+  | {
+      type: 'audioPlayButtonClicked'
     }
   | {
       type: 'currentTimeChanged'
@@ -13,31 +32,12 @@ export type IMediaEvent =
       currentTime: number
     }
   | {
-      type: 'addScreenshot'
-      time: number
-      imageDataUrl: string
-    }
-  | {
-      type: 'copyTimestamp'
-      // number
-      currentTime: number
-    }
-  | {
-      type: 'pin'
-    }
-  | {
-      type: 'editDetails'
-    }
-  | {
-      type: 'assignToNewCollection'
-    }
-  | {
       type: 'addLabel'
       currentLabel: Partial<IMediaLabel>
     }
   | {
       type: 'deleteLabel'
-      labelId: number
+      labelId: number | number[]
     }
   | {
       type: 'transcribe'
@@ -70,6 +70,20 @@ export type IMediaEvent =
       subtitleFollow?: IMedia['subtitleFollow']
     }
   | {
+      type: 'jump'
+      time: number
+    }
+  | {
       type: 'externalStateChange'
       state: Partial<IMediaExternalState>
+    }
+  | {
+      type: 'aiSummarize'
+      summary: IMediaAiSummary
+    }
+  | {
+      type: 'removeSummary'
+    }
+  | {
+      type: 'getSource'
     }

@@ -2,7 +2,7 @@ import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import { assignProperties } from '@/utils'
 import useRenderLabelEditor from '@/core/object/renderer/useRenderLabelEditor'
 import { getSetting } from '@/core'
-import { Editor, Selection, Transforms } from 'slate'
+import { Editor, Selection } from 'slate'
 import { useSelectAtomValue } from '@/hooks'
 import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
 import { INoteLabel } from '~/typings'
@@ -16,11 +16,11 @@ export default () => {
   const { renderPopover, labelDetails, open, attachTags } = useRenderLabelEditor<INoteLabel>({
     onCancel: () => {
       const editor = instance.getSlateEditor?.()
+      instance.dehighlightSelection?.()
       if (editor && selectionRef.current) {
         const selection = selectionRef.current
         selectionRef.current = undefined
         editor.selection = selection
-        Editor.removeMark(editor, 'highlight')
       }
     },
     onInsert: (name, tags) => {
@@ -28,7 +28,16 @@ export default () => {
     }
   })
   const handleInsertNote = async (l = labelDetails, name?: string, tags?: number[]) => {
+    instance.dehighlightSelection?.()
     if (l?.id) {
+      const editor = instance.getSlateEditor?.()
+      if (editor) {
+        const selection = selectionRef.current
+        if (selection) {
+          editor.selection = selection
+          Editor.addMark(editor, 'highlight', l.id)
+        }
+      }
       if (!(await ObjectStore(labelType).getOneById(l.id))) {
         instance.labelOps?.addLabel?.({ ...l, name })
         if (tags?.length) {
@@ -47,6 +56,7 @@ export default () => {
       ...instance.labelOps,
       openLabelEditor: async (label, boundingBox, selection, direction) => {
         const setting = getSetting()
+        selectionRef.current = selection
         if (setting.editor.autoOpenHighlightEditor === false) {
           const existed = await ObjectStore(labelType).getOneById(label.id)
           if (!existed) {
@@ -54,8 +64,7 @@ export default () => {
             return
           }
         }
-        console.log(selection)
-        selectionRef.current = selection
+        instance.highlightCurrentSelection?.()
         open(label, boundingBox, direction)
       }
     }

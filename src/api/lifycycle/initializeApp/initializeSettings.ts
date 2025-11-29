@@ -1,24 +1,10 @@
-import KeyvalueStore, { CurrentKeyValues } from '@/api/stores/keyvalue.store'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { globalStore } from '@/api/stores'
 import { GlobalSetting } from '@/core'
 import _ from 'lodash'
 import { getDefaultUserFilePath, shouldChangeToNewDefaultUserFilePath } from '@/utils'
 import SyncAPI from '@/api/sync'
 
-export const DefaultEditorSettings: CurrentKeyValues['editorSettings'] = {
-  editMode: {
-    typeface: 'Inter',
-    fontSize: 15,
-    lineSpacing: 1.4,
-    pageWidth: 'Medium'
-  },
-  readerMode: {
-    pageWidth: 'Medium',
-    typeface: 'Merriweather',
-    fontSize: 18,
-    lineSpacing: 1.6
-  }
-}
 let unsub: VoidFunction | undefined = undefined
 const subSettingChange = () => {
   unsub?.()

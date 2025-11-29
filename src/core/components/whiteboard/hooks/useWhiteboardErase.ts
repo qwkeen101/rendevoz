@@ -1,92 +1,67 @@
-import { useSelectAtomValue } from '@/hooks'
-import { useWhiteboardState, WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
-import { useEffect, useRef } from 'react'
-import { useFlow } from '@/core/components/whiteboard/StateHooks'
+import { useSetWhiteboardState } from '@/core/components/whiteboard/hooks/useWhiteboardState'
+import { useEffect } from 'react'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
-import UseUpdateWhiteboard from '@/core/components/whiteboard/hooks/useUpdateWhiteboard'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
+import { assignProperties } from '@/utils'
+import { IWhiteboardEvent } from '~/typings'
 
 const useWhiteboardErase = () => {
-  const currentTool = useSelectAtomValue(WhiteboardStateAtom, s => s.currentTool)
-  const [whiteboardState, setWhiteboardState] = useWhiteboardState()
-  const flow = useFlow()
-  const updateWhiteboard = UseUpdateWhiteboard()
-  const isErasingRef = useRef({
-    current: false,
-    whiteboardErasing: false
-  })
+  const setWhiteboardState = useSetWhiteboardState()
   const instance = useWhiteboardInstance()
-  useEffect(() => {
-    const container = flow.parentContainerEle
-    if (container && currentTool === 'erase') {
-      const isErasing = isErasingRef.current
-      const pointerDownHandler = (e: PointerEvent) => {
-        if (whiteboardState.isPanning) return
-        if (whiteboardState.pointerMode === 'pan') return
-        ;(e.target as HTMLElement).releasePointerCapture(e.pointerId)
-        if (e.button === 0) {
-          e.preventDefault()
-          e.stopPropagation()
-        }
-        isErasing.whiteboardErasing = true
-        isErasing.current = true
-        setWhiteboardState(s => ({ ...s, erasing: true }))
-      }
-      const keyDownHandler = (e: KeyboardEvent) => {
-        if (isHotkey(KEY.Escape, e)) {
-          isErasing.whiteboardErasing = false
-
-          if (flow.erasedEdgeIds.size || flow.erasedNodeIds.size) e.preventDefault()
-
-          setWhiteboardState(s => ({ ...s, erasing: false }))
-
-          flow.erasedEdgeIds.clear()
-          flow.erasedNodeIds.clear()
+  assignProperties(instance, {
+    nodeOps: {
+      ...instance.nodeOps,
+      erase: id => {
+        if (instance.getState().isErasing) {
+          setWhiteboardState(s => ({ ...s, erasedNodes: new Set([...(s.erasedNodes || []), id]) }))
         }
       }
-      const pointerUpHandler = () => {
-        isErasing.current = false
-        isErasing.whiteboardErasing = false
-        const erasedNodeIds = Array.from(flow.erasedNodeIds.values())
-        const erasedEdgeIds = Array.from(flow.erasedEdgeIds.values())
-        console.log(erasedEdgeIds, erasedNodeIds)
-        updateWhiteboard(w => {
-          if (erasedNodeIds.length > 0) {
-            flow.erasedNodeIds.clear()
-            erasedNodeIds.forEach(id => {
-              w.nodes?.delete(id)
-              instance.values.NODE_TO_EDGE_MAP.get(id)?.forEach(i => w.edges?.delete(i))
-            })
-          }
-          if (erasedEdgeIds.length > 0) {
-            flow.erasedEdgeIds.clear()
-            erasedEdgeIds.forEach(id => {
-              w.edges?.delete(id)
-            })
-          }
+    }
+  })
+  const eventHandler = (e: IWhiteboardEvent) => {
+    const state = instance.getState()
+    if (e.type === 'pointerdown') {
+      if (state.isPanning || state.pointerMode === 'pan') return
+      if (state.currentTool === 'erase') {
+        const event = e.e
+        ;(event.target as HTMLElement).releasePointerCapture(event.pointerId)
+        if (event.button === 0) {
+          event.preventDefault()
+          event.stopPropagation()
+        }
+        setWhiteboardState(s => ({ ...s, isErasing: true }))
+      }
+    }
+    if (e.type === 'pointerup') {
+      const erased = state.erasedNodes
+      if (erased?.size) {
+        instance.updateWhiteboard(w => {
+          erased.forEach(id => {
+            w.nodes?.delete(id)
+            instance.values.NODE_TO_EDGE_MAP.get(id)?.forEach(i => w.edges?.delete(i))
+          })
         }, true)
-
-        setWhiteboardState(s => ({ ...s, erasing: false }))
       }
-      const pointerMoveHandler = (e: PointerEvent) => {
-        if (whiteboardState.isPanning || whiteboardState.pointerMode === 'pan') return
-        e.preventDefault()
-        if (!isErasing.whiteboardErasing && isErasing.current) {
-          setWhiteboardState(s => ({ ...s, erasing: true }))
-          isErasing.whiteboardErasing = true
-        }
+      if (state.isErasing) {
+        setWhiteboardState(s => ({ ...s, isErasing: false, erasedNodes: undefined }))
       }
-      document.addEventListener('keyup', keyDownHandler)
-      container.addEventListener('pointermove', pointerMoveHandler)
-      container.addEventListener('pointerup', pointerUpHandler, true)
-      container.addEventListener('pointerdown', pointerDownHandler)
-      return () => {
-        document.removeEventListener('keyup', keyDownHandler)
-        container.removeEventListener('pointerdown', pointerDownHandler)
-        container.removeEventListener('pointermove', pointerMoveHandler)
-        container.removeEventListener('pointerup', pointerUpHandler, true)
+    }
+    if (e.type === 'keyup') {
+      if (isHotkey(KEY.Escape, e.e)) {
+        if (state.erasedNodes?.size) e.e.preventDefault()
+        setWhiteboardState(s => ({ ...s, isErasing: false, erasedNodes: undefined }))
       }
+    }
+  }
+  useEffect(() => {
+    instance.addEventListener('pointerdown', eventHandler)
+    instance.addEventListener('pointerup', eventHandler)
+    instance.addEventListener('keyup', eventHandler)
+    return () => {
+      instance.removeEventListener('pointerdown', eventHandler)
+      instance.removeEventListener('pointerup', eventHandler)
+      instance.removeEventListener('keyup', eventHandler)
     }
   })
 }

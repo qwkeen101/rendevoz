@@ -1,8 +1,6 @@
 // supports keyboard navigate
 import { useEffect, useState } from 'react'
-import { Rendevoz } from '@/core/rendevoz'
-import { createPortal } from 'react-dom'
-import { GlobalInstance, useMemoizedFn, useSelectAtomValue } from '@/hooks'
+import { useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import { assignProperties } from '@/utils'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
@@ -13,6 +11,7 @@ import { Resizable } from 're-resizable'
 import { Icon, Modal } from '@/components'
 import { DockTabPaneContext } from '@/components/base/dock/DockTabPane'
 import { ClassName } from 'rendevoz'
+import SidebarObjectViewer from '@/core/components/SidebarObjectViewer'
 
 export default () => {
   const [centerState, setCenterState] = useState<{
@@ -35,7 +34,7 @@ export default () => {
       open: (metaId, rowId) => {
         const meta = MetaStore.getMetaObjectsMap().get(metaId)
         if (meta && meta.objectId) {
-          if (GlobalInstance.metaOps?.canPreview(meta)) {
+          if (Global.metaOps?.canPreview(meta)) {
             const prev = instance.valueOps?.getPrevMeta(rowId)
             const next = instance.valueOps?.getNextMeta(rowId)
             const nextMeta = next ? metaMap.get(next.metaId) : undefined
@@ -90,20 +89,12 @@ export default () => {
     }
   }, [groupOpenInCenter, centerState.visible])
   const renderer = () => {
-    if (centerState.visible && centerState.objectId && centerState.type) {
-      const page = Rendevoz.Actions.Layout.getRegisteredTabContent(centerState.type)
-      if (page) {
-        return page({ objectId: centerState.objectId, metaId: centerState.metaId })
-      }
+    if (centerState.visible && centerState.metaId && centerState.type) {
+      return <SidebarObjectViewer id={centerState.metaId} />
     }
   }
   return (
-    <Modal
-      enableClickEvent={true}
-      zIndex={500}
-      visible={centerState.visible}
-      onClose={() => setCenterState(f => ({ ...f, visible: false }))}
-    >
+    <Modal zIndex={500} visible={centerState.visible} onClose={() => setCenterState(f => ({ ...f, visible: false }))}>
       <Resizable
         defaultSize={size}
         onResizeStop={(event, direction, elementRef, delta) => {

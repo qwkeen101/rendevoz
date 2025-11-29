@@ -1,6 +1,6 @@
-import { RefObject, useCallback, useEffect, useLayoutEffect } from 'react'
-import { useNavigation } from 'react-router-dom'
-import { useMemoizedFn } from '@/hooks'
+import { RefObject, useCallback, useEffect, useLayoutEffect, useMemo } from 'react'
+import { useBlocker, useNavigation, useNavigationType } from 'react-router-dom'
+import { useDebounceFn, useMemoizedFn } from '@/hooks'
 
 type Direction = 'vertical' | 'horizontal'
 type ScrollAttribute = 'scrollTop' | 'scrollLeft'
@@ -9,66 +9,82 @@ const DIRECTION: { [direction in Direction]: ScrollAttribute } = {
   horizontal: 'scrollLeft'
 }
 
-export default ({
+const STORAGE_KEY = `position-storage`
+
+const useElementScrollRestore = ({
   elementRef,
   direction = 'vertical',
-  elementKey
+  elementKey,
+  disable
 }: {
-  elementRef: RefObject<HTMLElement | undefined>
+  elementRef?: RefObject<HTMLElement | undefined>
   direction?: Direction
   elementKey: string
-  onScrollRestored: (offset: number) => void
+  disable?: boolean
 }) => {
-  const STORAGE_KEY = `position-storage`
   const navigation = useNavigation()
+  const navigationType = useNavigationType()
   const scrollAttribute = DIRECTION[direction]
-
-  const updatePositions = useMemoizedFn(() => {
-    const element = elementRef.current
-    console.log(element)
+  const updatePositions = () => {
+    const element = elementRef?.current
     if (!element) return
-    let positions = {}
-    try {
-      const rawPositions = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '{}')
-      if (typeof rawPositions === 'object' && rawPositions !== null) {
-        positions = rawPositions
-      }
-    } catch (error) {
-      console.warn(`Error parsing scroll positions from sessionStorage:`, error)
-    }
-    const newPositions = {
-      ...positions,
-      [elementKey]: element[scrollAttribute]
-    }
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(newPositions))
-  })
+    updatePosition(elementKey, element[scrollAttribute])
+  }
   useEffect(() => {
-    console.log(navigation)
-    if (navigation.state === 'idle') {
-      const element = elementRef.current
-      if (element) {
-        try {
-          const positions = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '{}') as any
-          const stored = positions[elementKey]
-          console.log(stored, positions)
-          if (typeof stored === 'number') {
-            element[scrollAttribute] = stored
+    const ele = elementRef?.current
+    if (ele) {
+      ele.addEventListener('scrollend', updatePositions)
+      return () => ele.removeEventListener('scrollend', updatePositions)
+    }
+  })
+  const position = useMemo(() => {
+    if (navigationType !== 'POP') {
+      return undefined
+    }
+    const positions = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '{}') as any
+    const stored = positions[elementKey] as number | undefined
+    return stored
+  }, [navigation.state, navigationType, elementKey])
+  useLayoutEffect(() => {
+    if (!elementRef) return
+    const element = elementRef.current
+    if (element) {
+      if (navigation.state === 'idle' && navigationType === 'POP' && !disable) {
+        if (element) {
+          try {
+            if (typeof position === 'number') {
+              element[scrollAttribute] = position
+            }
+          } catch (error: unknown) {
+            console.error(error)
+            sessionStorage.removeItem(STORAGE_KEY)
           }
-        } catch (error: unknown) {
-          console.error(error)
-          sessionStorage.removeItem(STORAGE_KEY)
         }
       }
     }
-  }, [navigation.state, elementRef])
+  }, [navigationType, navigation.state, elementRef, elementKey, disable])
 
-  useEffect(() => {
-    elementRef.current?.addEventListener('scroll', updatePositions)
-    window.addEventListener('pagehide', updatePositions)
-    return () => {
-      window.removeEventListener('pagehide', updatePositions)
-      elementRef.current?.removeEventListener('scroll', updatePositions)
+  return position
+}
+
+const updatePosition = (key: string, pos: number) => {
+  let positions = {}
+  try {
+    const rawPositions = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '{}')
+    if (typeof rawPositions === 'object' && rawPositions !== null) {
+      positions = rawPositions
     }
-  }, [])
-  return null
+  } catch (error) {
+    console.warn(`Error parsing scroll positions from sessionStorage:`, error)
+  }
+  const newPositions = {
+    ...positions,
+    [key]: pos
+  }
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(newPositions))
+}
+
+useElementScrollRestore.updatePosition = updatePosition
+export default useElementScrollRestore as typeof useElementScrollRestore & {
+  updatePosition: typeof updatePosition
 }

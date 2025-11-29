@@ -1,12 +1,8 @@
-import { Rendevoz } from '@/core/rendevoz'
 import { MetaStore, NoteStore, ObjectStore } from '@/api/stores'
 
 export default async (changedIds: number[]) => {
-  Rendevoz.Events.Emit.emitEventGlobally('editor', {
-    type: 'refreshFromValue',
-    data: {
-      noteId: changedIds
-    }
+  Global.emitEvent('editorRefreshFromValue', {
+    noteId: changedIds
   })
   const noMetaIds = new Set<number>()
   changedIds.forEach(async id => {

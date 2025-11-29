@@ -1,16 +1,16 @@
-import { Transforms } from 'slate'
+import { Node, Transforms } from 'slate'
 import { ReactEditor } from 'slate-react'
 import { CustomEditor } from '~/typings'
 import deserializeHTML from './transformHTML/deserializeHTML'
 import Id from '@/utils/id'
 import FileSystem from '@/api/fileSystem'
 import { deserializeMarkdown } from '@/core/components/editor/plugins/deserializeMarkdown'
+import { getSlateFragmentAttribute } from '@/core/components/editor/slate-react/utils/dom'
 const withHtml = (editor: CustomEditor) => {
   const { insertData } = editor
 
   editor.insertData = data => {
     const html = data.getData('text/html')
-    const slateFragment = data.getData('application/x-rendevoz-slate-fragment')
     const plainText = data.getData('text/plain')
     const imageItem = Array.from(data.items).find(i => i.type.startsWith('image'))
     if (imageItem) {
@@ -43,6 +43,13 @@ const withHtml = (editor: CustomEditor) => {
       return
     }
     if (html) {
+      const slateFragment = getSlateFragmentAttribute(html)
+      if (slateFragment) {
+        const decoded = decodeURIComponent(window.atob(slateFragment))
+        const parsed = JSON.parse(decoded) as Node[]
+        Transforms.insertFragment(editor, parsed)
+        return
+      }
       const parsed = new DOMParser().parseFromString(html, 'text/html')
       const deserialized = deserializeHTML(parsed.body)
       if (deserialized?.length) {
@@ -56,19 +63,24 @@ const withHtml = (editor: CustomEditor) => {
         }
       }
     }
-    if (slateFragment) {
-      ReactEditor.insertFragmentData(editor, data)
-      return
-    }
     if (plainText) {
+      if (isHTML(plainText)) {
+        Transforms.insertText(editor, plainText)
+        return
+      }
       Transforms.insertFragment(editor, deserializeMarkdown(plainText))
-      console.log(deserializeMarkdown(plainText), plainText)
       return
     }
     insertData(data)
   }
 
   return editor
+}
+
+function isHTML(str: string) {
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(str, 'text/html')
+  return doc.body.innerHTML !== ''
 }
 
 export default withHtml

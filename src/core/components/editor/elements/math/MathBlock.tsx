@@ -10,11 +10,12 @@ import katex from 'katex'
 import 'katex/dist/katex.min.css'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import { useTranslation } from 'react-i18next'
+import classnames from 'classnames'
 export default memo(({ children, element }: RenderElementProps) => {
   const mathBlock = element as MathBlockElement
   const editor = useSlateStatic()
-  const [innerValue, setInnerValue] = useState<string>(mathBlock.content)
-  const renderContainerRef = useRef<HTMLDivElement>()
+  const [innerValue, setInnerValue] = useState<string | undefined>(mathBlock.content)
+  const renderContainerRef = useRef<HTMLDivElement>(null)
   const [inputVisible, setInputVisible] = useState(false)
   const instance = useEditorInstance()
   const { t } = useTranslation()
@@ -54,15 +55,7 @@ export default memo(({ children, element }: RenderElementProps) => {
     })
   }, [])
   return (
-    <Content
-      contentEditable={'false'}
-      style={{
-        width: '100%',
-        fontSize: 14,
-        userSelect: 'none',
-        background: innerValue ? 'transparent' : Colors.Background.Secondary
-      }}
-    >
+    <div className={classnames('em:rounded-lg select-none w-full', !innerValue && 'bg-third')} contentEditable={'false'}>
       {children}
       <AnimatePopover
         visible={inputVisible}
@@ -89,29 +82,25 @@ export default memo(({ children, element }: RenderElementProps) => {
           <div style={{ width: '100%' }}>
             <div
               onClick={() => setInputVisible(true)}
-              className={ClassName.flatButton()}
+              className={'button'}
               style={{ width: '100%', overflow: 'hidden', font: 'normal 1.21em KaTeX_Main,Times New Roman,serif' }}
               ref={renderContainerRef}
             ></div>
           </div>
         ) : (
-          <Content
+          <div
             onClick={() => setInputVisible(true)}
-            flex
-            alignItems={'center'}
-            gap={12}
-            className={ClassName.flatButton()}
+            className={'button transparent-font w-full flex items-center'}
             style={{
-              color: Colors.Font.Transparent,
-              padding: '12px 36px 12px 12px',
-              width: '100%'
+              padding: '1em 2.5em 1em 1em',
+              gap: '1em'
             }}
           >
             <Icon size={20} name={'custom-equation'} />
             {t('editor.Add a TeX equation')}
-          </Content>
+          </div>
         )}
       </AnimatePopover>
-    </Content>
+    </div>
   )
 })

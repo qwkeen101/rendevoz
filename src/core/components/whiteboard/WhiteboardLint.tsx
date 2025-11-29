@@ -1,37 +1,27 @@
-import { useWhiteboardState } from '@/core/components/whiteboard/hooks/useWhiteboardState'
-import { Content, Icon, WithBorder } from '@/components'
+import { useSelectWhiteboardState, useSetWhiteboardState } from '@/core/components/whiteboard/hooks/useWhiteboardState'
+import { Icon, WithBorder } from '@/components'
 import { useTranslation } from 'react-i18next'
-import { Colors } from '@/consts'
+import { Colors, Icons } from '@/consts'
+import { memo } from 'react'
 
-export default () => {
-  const [whiteboardState] = useWhiteboardState()
+export default memo(() => {
+  const highlight = useSelectWhiteboardState(s => s.highlightedIds)
   const { t } = useTranslation()
-  const wrapper = (message: string) => {
+  const set = useSetWhiteboardState()
+  if (highlight) {
     return (
-      <WithBorder
-        style={{
-          display: 'flex',
-          gap: 8,
-          alignItems: 'center',
-          padding: '4px 12px',
-          borderRadius: 8,
-          fontSize: 13,
-          position: 'absolute',
-          top: 10,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: Colors.Background.Global,
-          zIndex: 20
+      <div
+        onClick={() => {
+          set(s => ({ ...s, highlightedIds: undefined }))
         }}
+        className={
+          'absolute border font-size-13 z-20 !rounded-xl transparent-font top-4 left-1/2 -translate-x-1/2 button flex items-center gap-3'
+        }
       >
-        <Icon name={'park-info'} />
-        {message}
-      </WithBorder>
+        {t('whiteboard.Esc highlight mode')}
+      </div>
     )
-  }
-  if (whiteboardState.highlightedIds) {
-    return wrapper(t('whiteboard.Esc highlight mode'))
   }
 
   return null
-}
+})

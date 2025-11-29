@@ -46,7 +46,7 @@ const Content = forwardRef<HTMLDivElement, ContentProps>(
           ...style,
           position: style?.position ?? position,
           display: style?.display ?? (flex ? 'flex' : undefined),
-          flexDirection: style?.flexDirection ?? (column ? 'column' : 'row'),
+          flexDirection: style?.flexDirection ?? (column ? 'column' : undefined),
           justifyContent: style?.justifyContent ?? (centered ? 'center' : justifyContent),
           alignItems: style?.alignItems ?? (centered ? 'center' : alignItems),
           width: fullWidth ? '100%' : style?.width,

@@ -1,12 +1,11 @@
 import { MetaStore, ObjectStore } from '@/api/stores'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import GroupStore from '../../../api/stores/group.store'
 import { Content, Icon } from '@/components'
 import TabTitle from '@/components/layout/TabTitle'
 import MetaGroup from '@/core/components/group/MetaGroup'
 import { MetaObject } from '~/typings'
-import { calculateSortObjects } from '@/core/object/filter/BetterSorter'
 
 export default ({ propId }: { propId: number }) => {
   const prop = ObjectStore('metaProp').useValue(propId)
@@ -36,15 +35,7 @@ export default ({ propId }: { propId: number }) => {
             .filter(i => i) as MetaObject[]
         ).values()
       )
-      const sorted = calculateSortObjects(metas, {
-        sorters: [
-          {
-            field: 'createdAt',
-            type: 'ascending',
-            id: 1
-          }
-        ]
-      })
+      const sorted = Global.metaOps.sort('createdAt', 'desc', metas)
       setData(s => ({ ...s, values: sorted.map(i => ({ rowId: i.id, type: 'metaObject', id: i.id })) }))
     }
   }, [propIdToMetaIds])
@@ -54,23 +45,41 @@ export default ({ propId }: { propId: number }) => {
     <Content fullHeight fullWidth>
       <TabTitle title={prop.name || 'Unnamed property'} icon={prop.icon && <Icon name={prop.icon} />} />
       <MetaGroup
-        title={{
-          title: prop.name || 'Unnamed property',
-          icon: prop.icon || 'park-all-application',
-          titleEditable: true
-        }}
-        state={{
-          mustExistProperties: [propId],
-          canHideGroupsInside: true,
-          canDrag: true,
-          canHideObjectsInside: true,
-          canDragInside: true
-        }}
-        layout={{
-          showDeletedMetas: false,
-          showDescription: false,
-          showTitleActions: false
-        }}
+        title={useMemo(
+          () => ({
+            title: prop.name || 'Unnamed property',
+            icon: prop.icon || 'park-all-application',
+            titleEditable: true
+          }),
+          [prop]
+        )}
+        state={useMemo(
+          () => ({
+            mustExistProperties: [propId],
+            canHideGroupsInside: true,
+            canDrag: true,
+            canHideObjectsInside: true,
+            canDragInside: true,
+            canTurnHiddenIntoUnhidden: false
+          }),
+          [propId]
+        )}
+        layout={useMemo(
+          () => ({
+            showDeletedMetas: false,
+            showDescription: false,
+            showTitleActions: false
+          }),
+          []
+        )}
+        styles={useMemo(
+          () => ({
+            titleContainerStyle: {
+              paddingTop: 42
+            }
+          }),
+          []
+        )}
         value={{ ...data, ...propGroup, values: data.values }}
         on={v => {
           if (v.type === 'groupDataChange') {

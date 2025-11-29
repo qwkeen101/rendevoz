@@ -1,23 +1,14 @@
 import { ISearchResult } from '@/api/textSearch/types'
-import { Content, VirtualList } from '@/components'
-import { Rendevoz } from '@/core/rendevoz'
-import { MetaStore } from '@/api/stores'
+import { Content, VirtualList, Virtualizer } from '@/components'
 import { css } from '@emotion/css'
-import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useRef } from 'react'
-import { Virtualizer } from '@tanstack/react-virtual'
 import SearchItemRenderer from '@/core/search/SearchItemRenderer'
 
 const SearchResult = ({ result, onClose, enableOpen }: { result: ISearchResult; onClose: VoidFunction; enableOpen: boolean }) => {
-  const searchHistory = KeyvalueStore.useValue('searchHistory') || []
   const handleOpenResult = (metaId: number) => {
     if (!enableOpen) return
-    Rendevoz.Actions.Open.Meta.openMetaObject(metaId)
-    const metaName = MetaStore.getMetaObjectsMap().get(metaId)?.name
-    if (metaName) {
-      KeyvalueStore.updateOne('searchHistory', [metaName, ...searchHistory.filter(i => i !== metaName).slice(0, 7)])
-    }
+    Global.layoutOps?.openObject(metaId)
     onClose()
   }
   const { t } = useTranslation()
@@ -36,6 +27,7 @@ const SearchResult = ({ result, onClose, enableOpen }: { result: ISearchResult; 
             onSelect={item => {
               handleOpenResult(item.metaId)
             }}
+            paddingEnd={100}
             style={{ width: '100%', height: '100%', marginTop: 6, marginBottom: 6, padding: '0px 6px' }}
             childrenContainerClassname={css({
               '>': {

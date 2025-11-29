@@ -1,92 +1,48 @@
-import { FeedItem } from '@/core/components/feed/types'
 import React from 'react'
-import { Content, Icon } from '@/components'
-import { ClassName } from 'rendevoz'
 import { ObjectStore } from '@/api/stores'
-import ItemsToolbar from '@/core/components/feed/components/items/ItemsToolbar'
-import useFeedIsRead from '@/core/components/feed/hooks/useFeedIsRead'
-import { Colors } from '@/consts'
-import useFeedIsFocused from '@/core/components/feed/hooks/useFeedIsFocused'
-import classnames from 'classnames'
-
+import ContextMenu from '@/components/contextMenu'
+import FeedItemMenu from '@/core/components/feed/components/FeedItemMenu'
+import gN from '@/assets/images/google-news.png?url'
+import { Icon } from '@/components'
 const CardFeedItem = ({
   id,
-  styles,
-  onClick
+  onClick,
+  parentFolderId,
+  showSource = true
 }: {
   id: number
-  styles?: {
-    mainGap?: number
-    titleWeight?: number
-    titleSize?: number
-  }
+  parentFolderId?: number
   onClick?: React.MouseEventHandler
+  showSource?: boolean
 }) => {
   const item = ObjectStore('feed').useValue(id)
-  const { titleSize = 14, titleWeight = 500 } = styles || {}
-  const isRead = useFeedIsRead(id)
-  const isFocused = useFeedIsFocused(id)
+  const collection = ObjectStore('feedCollection').useValue(item?.collectionId)
   if (!item) return null
+  const { image, source, title } = item
+  const sourceIcon = item?.favicon ?? (collection?.icon === 'gNews' ? gN : collection?.icon)
   return (
-    <Content
-      className={classnames('button p-6', isFocused && 'active-button', isRead && !isFocused && 'transparent-font')}
-      flex
-      column
-      gap={4}
-      style={{ width: 'calc(100% / var(--items-per-row) - 18px)' }}
-      onClick={onClick}
-    >
-      {item.image ? (
+    <ContextMenu content={setV => <FeedItemMenu parentFolderId={parentFolderId} id={id} onClose={() => setV(false)} />}>
+      <div onClick={onClick} className={'w-full flex flex-col'}>
         <div
-          style={{
-            width: '100%',
-            paddingBottom: '56%',
-            marginBottom: 5,
-            position: 'relative'
-          }}
+          className={
+            'w-full cursor-pointer relative aspect-video rounded-2xl mb-2 overflow-hidden flex items-center justify-center bg-secondary'
+          }
         >
-          <img
-            src={item.image}
-            style={{
-              objectFit: 'cover',
-              borderRadius: 4,
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '100%'
-            }}
-          />
+          {image ? (
+            <img src={image} className={'absolute w-full h-full inset-0 object-cover'} />
+          ) : (
+            <Icon size={36} className={'transparent-font'} name={'park-broadcast'} />
+          )}
         </div>
-      ) : (
-        <div
-          style={{
-            width: '100%',
-            paddingBottom: '56%',
-            marginBottom: 5,
-            position: 'relative'
-          }}
-          className={'br-6 bg-secondary'}
-        >
-          <Icon
-            name={item.feedType === 'podcast' ? 'park-music' : item.feedType === 'youtube' ? 'park-youtube' : 'park-broadcast'}
-            size={60}
-            className={'super-transparent-font'}
-            containerStyle={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)' }}
-          />
-        </div>
-      )}
-      <div
-        style={{
-          fontSize: titleSize,
-          fontWeight: titleWeight
-        }}
-        className={'ellipsis-font-2'}
-      >
-        {item.title}
+        {source && showSource && (
+          <div className={'flex items-center gap-2 mb-1.5 mt-2 text-sm font-medium leading-none'}>
+            {sourceIcon && <img src={sourceIcon} className={'w-3.5 h-3.5 object-cover rounded-sm'} />}
+            <div>{source}</div>
+          </div>
+        )}
+        <div className={'font-medium cursor-pointer hover:underline line-clamp-2'}>{item.title}</div>
       </div>
-      <div className={classnames('ellipsis-font-3 font-size-12', !isFocused && 'transparent-font')}>{item.description}</div>
-      <ItemsToolbar isFocused={isFocused} itemId={id} />
-    </Content>
+    </ContextMenu>
   )
 }
 

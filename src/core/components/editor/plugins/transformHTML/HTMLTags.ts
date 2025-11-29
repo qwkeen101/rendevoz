@@ -10,10 +10,13 @@ export const ELEMENT_TAGS: Record<string, (el: HTMLElement) => any> = {
   H5: () => ({ type: 'heading-five', id: Id.getId() }),
   H6: () => ({ type: 'heading-six', id: Id.getId() }),
   HR: () => ({ type: 'divider', id: Id.getId() }),
+  PRE: () => ({ type: 'code-block', id: Id.getId(), language: 'plain text' }),
   AUDIO: el => ({ type: 'audio', id: Id.getId(), url: el.getAttribute('src') }),
   IMG: el => ({
     type: 'image',
-    url: el.getAttribute('data-src') || el.getAttribute('src'),
+    url: el.hasAttribute('data-src')
+      ? new URL(el.getAttribute('data-src')!, el.ownerDocument.querySelector('base')!.href).href
+      : el.getAttribute('src'),
     id: Id.getId()
   }),
   IFRAME: el => ({
@@ -22,7 +25,6 @@ export const ELEMENT_TAGS: Record<string, (el: HTMLElement) => any> = {
     id: Id.getId()
   }),
   P: () => ({ type: 'paragraph', id: Id.getId() }),
-  PRE: () => ({ type: 'pre', id: Id.getId() }),
   SUP: () => ({ type: 'sup', id: Id.getId() }),
   FIGCAPTION: () => ({ type: 'figcaption', id: Id.getId() })
 }

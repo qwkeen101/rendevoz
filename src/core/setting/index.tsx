@@ -1,48 +1,35 @@
-import { Content } from '@/components/base'
+import { Button, Content } from '@/components/base'
 import { globalStore } from '@/api/stores'
-import { css } from '@emotion/css'
 import { useAtom } from 'jotai/react'
-import { useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import ComponentSetting from './Component'
 import GeneralSetting from './General'
-import ObjectsAndLinksSetting from './ObjectsAndLinks'
 import ShortCutSetting from './ShortCut'
-import UsageSetting from './Usage'
 import AISetting from './AI'
-import { useUser } from '@/api/services/login.service'
-import { KeyToRegisterdSettings } from '@/core/plugin/RegisterMap'
-import SettingItem from '@/core/setting/SettingItem'
-import {
-  INotificationSetting,
-  IShortCutSetting,
-  IGeneralSetting,
-  IObjectsAndLinkSetting,
-  ISyncSetting,
-  IComponentSetting,
-  IAppearanceSetting,
-  IQuickAddSettings,
-  IAISettings
-} from './types'
+import { IShortCutSetting, IGeneralSetting, IObjectsAndLinkSetting, ISyncSetting, IComponentSetting, IAISettings } from './types'
 import WorkspaceSetting from '@/core/setting/Workspace'
 import { Colors } from '@/consts'
 import { atom } from 'jotai'
-import { useGlobalAtomValue, useSelectGlobalAtomValue } from '@/hooks'
+import { useGlobalAtomValue } from '@/hooks'
 import SyncSetting from './Sync'
-import { ClassName } from 'rendevoz'
-import { Icon } from '@/components'
 import { selectAtom } from 'jotai/utils'
 import { Atom } from 'jotai/vanilla'
+import Modal from '../../components/base/Modal'
+import Account from '@/core/setting/Account'
+import UserService from '@/api/services/user.service'
+import Subscription from '@/core/setting/Subscription'
+import { isEqual } from 'lodash'
 
 enum Settings {
+  'account',
+  'subscription',
   'general',
+  'AI',
   'workspace',
   'components',
   'shortcuts',
-  'object and link',
-  'sync',
-  'AI',
-  'resource usage'
+  'sync'
   // 'about'
 }
 
@@ -52,63 +39,36 @@ const icons: Record<keyof typeof Settings, string> = {
   workspace: 'park-app-switch',
   general: 'park-all-application',
   components: 'park-components',
-  'resource usage': 'park-dashboard-two',
-  'object and link': 'park-share-one',
   AI: 'custom-stars'
 }
-export type Setting = INotificationSetting &
-  IShortCutSetting &
-  IGeneralSetting &
-  IObjectsAndLinkSetting &
-  IAISettings &
-  IComponentSetting &
-  IQuickAddSettings &
-  IAppearanceSetting &
-  ISyncSetting
+export type Setting = IShortCutSetting & IGeneralSetting & IObjectsAndLinkSetting & IAISettings & IComponentSetting & ISyncSetting
 
 const defaultSetting: Setting = {
-  notification: {
-    enabled: true,
-    pdf: true,
-    label: true,
-    collection: true,
-    editor: true,
-    object: true,
-    link: true
-  },
   sync: {},
-  collection: {
-    previewItem: false
+  graph: {
+    previewContent: false,
+    simpleMode: false,
+    showHidden: false,
+    showHighlight: false,
+    nodeDistance: 60,
+    nodeColor: '#F0EBE3',
+    nodeSize: 10,
+    openIn: 'side peek'
   },
   AI: {
-    autoGenerateQuestionAfterSummarizing: true,
-    questionGenerateNum: 5,
-    questionGenerateType: 'text',
-    outputLanguage: 'zh-CN'
+    language: navigator.language === 'zh-CN' ? '简体中文' : 'English',
+    aiTranslator: true
   },
   code: {
     defaultLanguage: 'typescript'
   },
   shortcut: {},
-  quickAdd: {
-    noteMetaType: 'block',
-    addIntoNote: 'last',
-    addIntoGroup: 'last',
-    addIntoGroupHideObject: false,
-    addIntoNoteHideObject: false,
-    addIntoWhiteboardHideObject: false,
-    addIntoGroupAutoOpen: false,
-    addIntoNoteAutoOpen: false,
-    addIntoWhiteboardAutoOpen: false
-  },
   general: {
+    translateTargetLanguage: navigator.language === 'zh-CN' ? 'zh-Hans' : 'en',
     autoSaveLayout: false,
     defaultLanguage: navigator.language === 'zh-CN' ? 'zh-CN' : 'en-US',
-    openNewTab: 'open existing tab',
     darkMode: false,
     copyFileWhenImport: true,
-    defaultSearchEngine: 'google',
-    defaultImageSearchEngine: 'bing',
     autoBackup: 'never',
     dataBackup: 'never',
     minimizeToTray: false,
@@ -118,42 +78,26 @@ const defaultSetting: Setting = {
     openPopoverWhenHighlight: true,
     subtitleInSidebar: false
   },
-  objectAndLink: {
-    enableAll: true,
-    enableDropOnEditorLink: true,
-    enableDropOnPDFLink: true,
-    enableDropOnWhiteboardLink: true,
-    enableDragFromEditorLink: true,
-    enableDragFromPDFLink: true,
-    enableDropAutoGenerateObject: true
-  },
   whiteboard: {
-    enableMinimap: false,
-    scrollModeInSelect: 'pan',
     enableAddLinkBetweenObjectsWhenConnect: false,
-    imageResizeKeepRatio: false,
     snapToObject: true,
-    expandToFixedSize: false,
-    dropFileAutoObject: true,
     defaultLineType: 'curve',
-    defaultBackgroundType: 'none',
-    onlyEraseFreeDraw: true
+    defaultBackgroundType: 'none'
   },
   sidebar: {
     previewTitleMode: false,
-    previewCollectionContent: false
+    previewCollectionContent: false,
+    hoveredSidebar: true
   },
   editor: {
     autoOpenHighlightEditor: true,
     objectAutoBecomeInline: false,
-    addSpacingInReaderMode: true,
-    showHighlightText: true
+    fontSize: 16,
+    lineSpacing: 1.625,
+    pageWidth: 'Medium'
   },
   object: {
-    deleteFileWhenDeleteObject: true,
-    autoHideLabelObject: false,
-    linkType: 'text',
-    showPropertiesInComponentPage: true
+    showPropertiesInComponentPage: false
   },
   translate: {
     autoGotoHoverText: true,
@@ -162,37 +106,44 @@ const defaultSetting: Setting = {
   background: {},
   pdf: {
     renderMode: 'followTheme',
-    defaultLabelColor: '#ffe082',
-    autoWidth: true,
     autoOpenHighlightEditor: true,
-    showHighlightText: true
+    autoExtractText: false
   },
   label: {
-    showOriginalText: true
+    showOriginalText: true,
+    collapseOriginalText: false
   },
   video: {
     autoPlay: false,
     loop: true
   },
   webpage: {
-    saveImageLocally: false,
-    enableSearchAutoSuggestion: true
+    defaultCleanMode: true,
+    saveImageLocally: false
   }
 }
 
 export const SettingAtom = atom<Setting>(defaultSetting)
 const SettingAtoms = {
+  codeLang: selectAtom(SettingAtom, s => s.code.defaultLanguage),
+  collapseLabelText: selectAtom(SettingAtom, s => s.label.collapseOriginalText),
+  AI: selectAtom(SettingAtom, s => s.AI),
+  openAIKey: selectAtom(SettingAtom, s => s.general.openaiApiKey),
+  openAIBaseUrl: selectAtom(SettingAtom, s => s.general.openaiBaseUrl),
+  openAIModel: selectAtom(SettingAtom, s => s.general.openaiModel),
   darkMode: selectAtom(SettingAtom, s => s.general.darkMode),
   sync: selectAtom(SettingAtom, s => s.sync),
-  addSpacingInReaderMode: selectAtom(SettingAtom, s => s.editor.addSpacingInReaderMode),
-  enableNotification: selectAtom(SettingAtom, s => s.notification.enabled),
   language: selectAtom(SettingAtom, s => s.general.language),
   subtitleInSidebar: selectAtom(SettingAtom, s => s.media.subtitleInSidebar),
-  pdfShowHighlightText: selectAtom(SettingAtom, s => s.pdf.showHighlightText),
-  editorShowHighlightText: selectAtom(SettingAtom, s => s.editor.showHighlightText),
-  pdfDefaultExpandHighlightDetails: selectAtom(SettingAtom, s => s.pdf.defaultExpandHighlightText),
-  editorDefaultExpandHighlightDetails: selectAtom(SettingAtom, s => s.editor.defaultExpandHighlightText),
-  enableCustomEditorStateAtom: selectAtom(SettingAtom, s => s.editor.enableFormat),
+  editorSettings: selectAtom(
+    SettingAtom,
+    s => ({
+      fontSize: s.editor.fontSize,
+      pageWidth: s.editor.pageWidth,
+      lineSpacing: s.editor.lineSpacing
+    }),
+    isEqual
+  ),
   previewSidebarTitleAtom: selectAtom(SettingAtom, s => s.sidebar.previewTitleMode),
   previewCollectionContentAtom: selectAtom(SettingAtom, s => s.sidebar.previewCollectionContent),
   showPropertiesInComponentPage: selectAtom(SettingAtom, s => s.object.showPropertiesInComponentPage)
@@ -200,6 +151,7 @@ const SettingAtoms = {
 type extractGeneric<Type> = Type extends Atom<infer X> ? X : never
 type Keys = keyof typeof SettingAtoms
 type Values<K extends Keys> = extractGeneric<(typeof SettingAtoms)[K]>
+type FocusableKeys = 'youtubeApiKey' | 'openaiApiKey'
 function useSelectSettingAtom<K extends Keys>(key: K): Values<K> {
   const a = SettingAtoms[key]
   return useGlobalAtomValue(a) as Values<K>
@@ -212,10 +164,21 @@ const setSetting = (updater: ((curr: Setting) => Setting) | Setting) => {
 
 const SettingDialog = () => {
   const { t } = useTranslation()
+  const [visible, setVisible] = useState(false)
   const [currentSettingPanel, setCurrentSettingPanel] = useState<keyof typeof Settings>('general')
-  const [user] = useUser()
-  const registeredPanels = new Map(Array.from(KeyToRegisterdSettings.values()).map(i => [i.registerPanelName, i.settingItems]))
-
+  const [focusedKey, setFocusedKey] = useState<string>()
+  GlobalSetting.openSetting = () => {
+    setVisible(true)
+  }
+  GlobalSetting.closeSetting = () => {
+    setVisible(false)
+  }
+  GlobalSetting.focusSetting = (panel, key) => {
+    setVisible(true)
+    setCurrentSettingPanel(panel)
+    setFocusedKey(key)
+  }
+  const containerRef = useRef<HTMLDivElement>()
   const renderContent = () => {
     switch (currentSettingPanel) {
       case 'general':
@@ -224,93 +187,96 @@ const SettingDialog = () => {
         return <AISetting />
       case 'shortcuts':
         return <ShortCutSetting />
-      case 'object and link':
-        return <ObjectsAndLinksSetting />
       case 'components':
         return <ComponentSetting />
       case 'sync':
         return <SyncSetting />
-      case 'resource usage':
-        return user ? <UsageSetting /> : null
       case 'workspace':
         return <WorkspaceSetting />
-    }
-    if (registeredPanels.has(currentSettingPanel)) {
-      const items = registeredPanels.get(currentSettingPanel)
-
-      if (items) {
-        return (
-          <Content flex column fullHeight>
-            {items?.map((i, idx) => <SettingItem {...i} key={idx} />)}
-          </Content>
-        )
-      }
+      case 'subscription':
+        return <Subscription />
+      case 'account':
+        return <Account />
     }
   }
   const [settings] = useSetting()
-  return (
-    <Content
-      flex
-      style={{
-        width: 1150,
-        maxWidth: 'calc(100vw - 100px)',
-        height: 'calc(100vh - 100px)',
-        maxHeight: '715px',
-        overflow: 'hidden',
-        borderRadius: 12
-      }}
-    >
-      <div
+  const [user] = UserService.useUser()
+  useEffect(() => {
+    if (focusedKey) {
+      setFocusedKey(undefined)
+      const ele = containerRef.current?.querySelector(`#${focusedKey}`) as HTMLElement | undefined
+      if (ele) {
+        ele.scrollIntoView()
+        const input = ele.querySelector('input,textarea')
+        if (input) {
+          input.focus()
+          return
+        }
+        ele.classList.add('focus-shadow', 'rounded-md')
+        setTimeout(() => {
+          ele.classList.remove('focus-shadow', 'rounded-md')
+        }, 2000)
+      }
+    }
+  }, [focusedKey])
+  useLayoutEffect(() => {
+    if (currentSettingPanel === 'account' && !user) {
+      setCurrentSettingPanel('general')
+    }
+  }, [user, currentSettingPanel])
+  const renderSidebarItem = (key: string, text: string, icon: string) => {
+    return (
+      <Button.IconButton
+        icon={icon}
+        text={text}
+        key={key}
+        onClick={() => setCurrentSettingPanel(key)}
         style={{
-          display: 'flex',
-          flexDirection: 'column',
-          width: '220px',
-          padding: '12px 4px',
-          overflowY: 'auto',
-          flexShrink: 0,
-          fontSize: 14,
-          background: settings.general.darkMode ? 'rgba(255,255,255,0.03)' : 'rgb(251, 251, 250)'
+          background: currentSettingPanel === key ? Colors.Background.ButtonHover : undefined,
+          textTransform: 'capitalize'
+        }}
+      />
+    )
+  }
+  return (
+    <Modal noStyle zIndex={1000} visible={visible} onClose={() => setVisible(false)}>
+      <Content
+        ref={containerRef}
+        flex
+        style={{
+          width: 1150,
+          maxWidth: 'calc(100vw - 100px)',
+          height: 'calc(100vh - 100px)',
+          maxHeight: '715px',
+          overflow: 'hidden',
+          borderRadius: 12
         }}
       >
         <div
-          className={'transparent-font font-size-12 bold-font'}
           style={{
-            margin: '0px 0px 6px 12px'
+            display: 'flex',
+            flexDirection: 'column',
+            width: '220px',
+            padding: '12px 8px',
+            overflowY: 'auto',
+            flexShrink: 0,
+            background: settings.general.darkMode ? 'rgba(255,255,255,0.03)' : 'rgb(251, 251, 250)'
           }}
         >
-          {t('general.Settings')}
+          {user && (
+            <>
+              <div className={'menu-sub-title pl-2 mb-1 mt-3'}>{t('settings.Account')}</div>
+              {renderSidebarItem('account', t('settings.My account'), 'park-user')}
+              {renderSidebarItem('subscription', t('settings.Subscription'), 'park-crown')}
+            </>
+          )}
+          <div className={'menu-sub-title pl-2 mb-1 mt-3'}>{t('general.Settings')}</div>
         </div>
-        {[...Object.keys(Settings), ...registeredPanels.keys()]
-          .filter(i => isNaN(Number(i)))
-          .filter(i => {
-            if (i === 'resource usage' && !user) {
-              return false
-            }
-            return true
-          })
-          .map(i => (
-            <Content
-              flex
-              alignItems={'center'}
-              gap={10}
-              className={ClassName.flatButton(4, '4px 12px')}
-              onClick={() => setCurrentSettingPanel(i)}
-              key={i}
-              style={{
-                background: currentSettingPanel === i ? Colors.Background.ButtonHover : undefined,
-                textTransform: 'capitalize',
-                fontWeight: currentSettingPanel === i ? 500 : undefined
-              }}
-            >
-              {icons[i] && <Icon name={icons[i]} />}
-              <div>{t(`settings.${i}`)}</div>
-            </Content>
-          ))}
-      </div>
-      <Content style={{ padding: '32px 60px', overflowY: 'auto' }} fullHeight fullWidth flex column gap={36}>
-        {renderContent()}
+        <div className={'w-full h-full flex flex-col overflow-y-auto gap-10'} style={{ padding: '32px 60px' }}>
+          {renderContent()}
+        </div>
       </Content>
-    </Content>
+    </Modal>
   )
 }
 
@@ -323,7 +289,10 @@ const GlobalSetting = {
   getSetting: () => {
     return globalStore.get(SettingAtom)
   },
+  closeSetting: () => {},
+  openSetting: () => {},
   settingAtom: SettingAtom,
-  defaultSetting
+  defaultSetting,
+  focusSetting: (p: keyof typeof Settings, key?: FocusableKeys) => {}
 }
 export default GlobalSetting

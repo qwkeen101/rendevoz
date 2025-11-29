@@ -1,4 +1,3 @@
-import { GlobalInstance } from '@/hooks'
 import { ObjectStore } from '@/api/stores/index'
 
 const LabelStore = {
@@ -16,16 +15,15 @@ const LabelStore = {
     const labelMetas = await Promise.all(
       existedIds.map(
         async i =>
-          await GlobalInstance.metaOps?.addDraggableAsMeta(
-            {
+          (
+            await Global.metaOps.addDraggableAsMeta({
               labelId: i,
-              type
-            },
-            true
-          )
+              type: 'label'
+            })
+          )[0]
       )
     )
-    GlobalInstance.metaOps?.copyLink(labelMetas.filter(i => i).map(i => i.id))
+    Global.metaOps.copyLink(labelMetas.filter(i => i).map(i => i.id))
   }
 }
 

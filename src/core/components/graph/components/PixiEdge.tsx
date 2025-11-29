@@ -1,23 +1,38 @@
-import { FC, memo, MouseEventHandler, useRef, useState } from 'react'
+import { FC, memo, useEffect, useRef } from 'react'
 import { GraphEdge } from '../types/edge'
-import { MarkerColor } from '@/consts'
+import { Colors, MarkerColor } from '@/consts'
 import useGraph from '../hooks/useGraph'
 import { useMemoizedFn } from '@/hooks'
-
-import { NodeFakeHiddenOpacity } from '../consts/opacity'
 import { useStore } from 'jotai'
-import { Container, Graphics, Sprite, Text } from '@pixi/react'
+import { Container, Graphics, Sprite } from '@pixi/react'
 import drawEdgeBetweenTwoNodes from '@/core/components/graph/utils/drawEdgeBetweenTwoNodes'
-import { BLEND_MODES, Graphics as _Graphics, Polygon, Text as _Text } from 'pixi.js'
-import { fontStyle } from '@/core/components/graph/components/node/PixiIconNode'
-import { oppositeEdgesMapAtom } from '@/core/components/graph/hooks/useEdges'
+import { Graphics as _Graphics, Polygon, Container as _Container } from 'pixi.js'
 import arrowSvg from '@/assets/upSvg.svg'
-import { Rendevoz } from '@/core/rendevoz'
+import { GraphNodesMapAtom } from '@/core/components/graph/hooks/useGraphNodes'
+const drawLineWithOffset = (x1: number, y1: number, x2: number, y2: number, distance: number) => {
+  // 计算两点之间的向量
+  const vectorX = x2 - x1
+  const vectorY = y2 - y1
 
+  // 计算向量的长度
+  const length = Math.sqrt(vectorX * vectorX + vectorY * vectorY)
+
+  // 计算单位向量
+  const unitX = vectorX / length
+  const unitY = vectorY / length
+
+  // 调整起点和终点，使它们离原点有指定的距离
+  const startX = x1 + unitX * distance
+  const startY = y1 + unitY * distance
+  const endX = x2 - unitX * distance
+  const endY = y2 - unitY * distance
+
+  // 返回调整后的起点和终点
+  return { startX, startY, endX, endY }
+}
 interface EdgeProps {
   edge: GraphEdge
 }
-const getRadius = t => Rendevoz.Utils.Meta.getTypeRadius(t)
 const PixiEdge: FC<EdgeProps> = memo(({ edge }) => {
   const graph = useGraph()
 
@@ -27,28 +42,55 @@ const PixiEdge: FC<EdgeProps> = memo(({ edge }) => {
     sourcex: number
     sourcey: number
   }>()
-  const [highlight, setHighlight] = useState(false)
-  const textRectRef = useRef<_Graphics>(null)
-  const textRef = useRef<_Text>(null)
+  const containerRef = useRef<_Container>(null)
   const edgeGraphicRef = useRef<_Graphics>(null)
   const arrowHeadRef = useRef<_Graphics>(null)
   const isHidden = edge.opacity && edge.opacity < 1
-  const arrowColor = edge.highlight || highlight ? edge.color || MarkerColor.EMPHASIS : edge.color || MarkerColor.LIGHTGREY
+  const arrowColor = edge.highlight
+    ? Colors.getAdaptColor(edge.color || MarkerColor.EMPHASIS)
+    : Colors.getAdaptColor(edge.color || MarkerColor.LIGHTGREY)
   const store = useStore()
-  const hasOppo = store.get(oppositeEdgesMapAtom).has(edge.id)
-  const shouldRender = () => {
-    if (hasOppo) {
-      if (finalPositionRef.current && finalPositionRef.current?.sourcex > finalPositionRef.current?.targetx) {
-        return true
+
+  const drawLine = (w = 1) => {
+    const graphics = edgeGraphicRef.current
+    const finalPosition = finalPositionRef.current
+    if (graphics && finalPosition) {
+      const { startX, startY, endX, endY } = drawLineWithOffset(
+        finalPosition.sourcex,
+        finalPosition.sourcey,
+        finalPosition.targetx,
+        finalPosition.targety,
+        graph.size + 10
+      )
+      graphics.clear()
+      graphics.lineStyle(w, arrowColor)
+      graphics.moveTo(startX, startY)
+      graphics.lineTo(endX, endY)
+
+      graphics.hitArea = new Polygon([
+        startX - w * 5,
+        startY - w * 5,
+        startX + w * 5,
+        startY + w * 5,
+        endX - w * 5,
+        endY - w * 5,
+        endX + w * 5,
+        endY + w * 5
+      ])
+      const arrowHead = arrowHeadRef.current
+      if (arrowHead) {
+        arrowHead.width = w * 15
+        arrowHead.height = w * 15
+        arrowHead.x = endX
+        arrowHead.y = endY
       }
-      return false
     }
-    return true
   }
   const drawEdge = useMemoizedFn(() => {
+    const nodes = store.get(GraphNodesMapAtom)
     edgeGraphicRef.current?.clear()
-    const targetNode = graph?.nodesMap?.get(edge.targetId)
-    const sourceNode = graph?.nodesMap?.get(edge.sourceId)
+    const targetNode = nodes.get(edge.targetId)
+    const sourceNode = nodes.get(edge.sourceId)
     if (!sourceNode || !targetNode || targetNode.x === undefined || sourceNode.x === undefined) return
     const { finalPosition: _f } = drawEdgeBetweenTwoNodes(
       {
@@ -62,10 +104,9 @@ const PixiEdge: FC<EdgeProps> = memo(({ edge }) => {
         }
       },
       {
-        target: getRadius(targetNode.type),
-        source: getRadius(sourceNode.type)
-      },
-      false
+        target: graph.size,
+        source: graph.size
+      }
     )
     finalPositionRef.current = {
       sourcex: _f.sourceX,
@@ -79,174 +120,24 @@ const PixiEdge: FC<EdgeProps> = memo(({ edge }) => {
       const degree = Math.atan2(veriticalDis, horizontalDis)
       const angle = (degree * 180) / Math.PI
       const arrowHead = arrowHeadRef.current
-      const pos = hasOppo ? 0.3 : edge.label ? 0.4 : 0.5
-      arrowHead.x = _f.targetX - horizontalDis * pos
-      arrowHead.y = _f.targetY - veriticalDis * pos
-      arrowHead.width = 12
-      arrowHead.height = 12
       arrowHead.angle = 90 + angle
     }
-
-    if (shouldRender() && edgeGraphicRef.current) {
-      edgeGraphicRef.current.lineStyle(1, arrowColor, 0.6)
-      edgeGraphicRef.current.moveTo(_f.sourceX, _f.sourceY)
-      edgeGraphicRef.current.lineTo(_f.targetX, _f.targetY)
-      edgeGraphicRef.current.hitArea = new Polygon([
-        _f.sourceX - 5,
-        _f.sourceY - 5,
-        _f.sourceX + 5,
-        _f.sourceY + 5,
-        _f.targetX - 5,
-        _f.targetY - 5,
-        _f.targetX + 5,
-        _f.targetY + 5
-      ])
-      const text = textRef.current
-      if (text) {
-        const center = {
-          x: (_f.sourceX + _f.targetX) / 2,
-          y: (_f.sourceY + _f.targetY) / 2
-        }
-        const { width, height } = text
-        drawLabelRect(center.x, center.y, width, height)
-        text.x = center.x
-        text.y = center.y
-      }
-    }
+    drawLine()
   })
-  const drawLabelRect = (centerX: number, centerY: number, width: number, height: number) => {
-    const textRect = textRectRef.current
-    if (textRect) {
-      textRect.clear()
-      textRect.blendMode = BLEND_MODES.DST_OUT
-      textRect.beginFill('white', 1)
-      textRect.drawRoundedRect(centerX - width / 2 - 4, centerY - height / 2 - 3, width + 8, height + 6, 6)
-
-      textRect.endFill()
-    }
-  }
   graph?.ID_TO_EDGE_FUNCTION_MAP.set(edge.id, {
     drawEdge,
-    resetLineWidth: w => {
-      const graphics = edgeGraphicRef.current
-      const finalPosition = finalPositionRef.current
-      if (graphics && finalPosition) {
-        if (shouldRender()) {
-          graphics.clear()
-          graphics.lineStyle(w, arrowColor, 0.6)
-          graphics.moveTo(finalPosition?.sourcex, finalPosition?.sourcey)
-          graphics.lineTo(finalPosition.targetx, finalPosition.targety)
-
-          graphics.hitArea = new Polygon([
-            finalPosition.sourcex - w * 2,
-            finalPosition.sourcey - w * 2,
-            finalPosition.sourcex + w * 2,
-            finalPosition.sourcey + w * 2,
-            finalPosition.targetx - w * 2,
-            finalPosition.targety - w * 2,
-            finalPosition.targetx + w * 2,
-            finalPosition.targety + w * 2
-          ])
-        }
-
-        const arrowHead = arrowHeadRef.current
-        if (arrowHead) {
-          arrowHead.width = w * 12
-          arrowHead.height = w * 12
-        }
-      }
-    },
     hideLabel: () => {
-      if (textRef.current && textRectRef.current) {
-        textRef.current.visible = false
-        textRectRef.current.visible = false
-      }
     },
     unhidenLabel: () => {
-      if (textRef.current && textRectRef.current) {
-        textRef.current.visible = true
-        textRectRef.current.visible = true
-      }
     }
   })
-  console.log('rerender edge')
-  const edgeMouseEnterHandler = () => {
-    console.log('enter')
-    if (edge.opacity !== NodeFakeHiddenOpacity) setHighlight(true)
-  }
-  const edgeMouseLeaveHandler = () => {
-    setHighlight(false)
-  }
-
-  const edgeClickHandler: MouseEventHandler = e => {
-    e.stopPropagation()
-    e.preventDefault()
-    if (!graph) return
-    const manager = graph?.overlayManager
-    graph.currentClickEdgeId = edge.id
-    if (manager && !isHidden) {
-      manager.setOverlayState(s => {
-        return {
-          visible: s.object?.id === edge.id ? !s.visible : true,
-          content: 'edgeToolbar',
-          position: {
-            left: e.clientX,
-            top: e.clientY - 10
-          },
-          object: edge
-        }
-      })
-    }
-  }
-
+  useEffect(() => {
+    drawLine()
+  }, [edge.label, arrowColor])
   return (
-    <Container interactive={true} zIndex={isHidden ? 0 : 10} eventMode={(edge.opacity || 1) < 1 ? 'none' : 'auto'}>
-      <Graphics
-        interactive={true}
-        cursor="pointer"
-        onmouseenter={edgeMouseEnterHandler}
-        onmouseleave={edgeMouseLeaveHandler}
-        click={edgeClickHandler}
-        ref={edgeGraphicRef}
-        tint={arrowColor}
-        // blendMode={BLEND_MODES.SRC_OUT}
-        alpha={edge.opacity ?? 1}
-      />
-      <Sprite
-        interactive={true}
-        cursor="pointer"
-        onmouseenter={edgeMouseEnterHandler}
-        onmouseleave={edgeMouseLeaveHandler}
-        click={edgeClickHandler}
-        // texture={graph?.CACHED_ICON_TEXTURE.get('_edge_arrow')}
-        anchor={0.5}
-        image={arrowSvg}
-        ref={arrowHeadRef}
-        tint={arrowColor}
-        alpha={edge.opacity ?? 1}
-      />
-      {edge.label && (
-        <>
-          <Graphics ref={textRectRef} />
-          <Text
-            text={edge.label}
-            resolution={3}
-            x={(finalPositionRef.current?.sourcex + finalPositionRef.current?.targetx) / 2}
-            anchor={0.5}
-            style={fontStyle}
-            interactive={true}
-            cursor="pointer"
-            blendMode={BLEND_MODES.SRC_OVER}
-            onmouseenter={edgeMouseEnterHandler}
-            onmouseleave={edgeMouseLeaveHandler}
-            click={edgeClickHandler}
-            y={(finalPositionRef.current?.sourcey + finalPositionRef.current?.targety) / 2}
-            ref={textRef}
-            tint={arrowColor}
-            alpha={edge.opacity ?? 1}
-          />
-        </>
-      )}
+    <Container ref={containerRef} zIndex={isHidden ? 0 : 10}>
+      <Graphics ref={edgeGraphicRef} alpha={edge.opacity ?? 1} />
+      <Sprite anchor={0.5} image={arrowSvg} ref={arrowHeadRef} tint={arrowColor} alpha={edge.opacity ?? 1} />
     </Container>
   )
 })

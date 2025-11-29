@@ -74,11 +74,12 @@ const MathElement = memo(({ element, children, attributes }: RenderElementProps)
       >
         {innerValue ? (
           <div
-            className={ClassName.flatButton(3, '0px')}
+            className={'button'}
             style={{
               display: 'inline-block',
               lineHeight: 1,
-              transition: 'background 0.16s ease-out',
+              borderRadius: '0.25em',
+              padding: '0px 0.25em',
               userSelect: 'auto'
             }}
             onClick={toggleFormVisible}
@@ -89,20 +90,21 @@ const MathElement = memo(({ element, children, attributes }: RenderElementProps)
           <div
             style={{
               display: 'inline-block',
-              background: Colors.Background.Secondary,
-              margin: '0px 2px',
+              margin: '0px 0.2em',
               verticalAlign: 'top',
-              borderRadius: 3
+              borderRadius: '0.25em'
             }}
+            className={'rounded bg-third'}
             onClick={toggleFormVisible}
           >
             <div
-              className={ClassName.flatButton(3, '2px 4px')}
+              className={'transparent-font button'}
               style={{
-                color: Colors.Font.Transparent,
-                fontSize: '0.8em',
+                fontSize: '0.75em',
                 userSelect: 'auto',
-                transition: 'background 0.16s ease-out'
+                lineHeight: 1,
+                padding: '0.5em',
+                borderRadius: '0.25em'
               }}
             >
               {t('editor.New equation')}

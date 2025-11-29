@@ -28,6 +28,7 @@ const GroupStore = {
     })
   },
   initializeGroup: () => {
+    const viewId = Id.getId()
     return {
       id: Id.getId(),
       createdAt: Date.now(),
@@ -41,10 +42,11 @@ const GroupStore = {
         filterType: 'group'
       },
       autoAddto: 'first',
+      lastViewId: viewId,
       views: [
         {
           type: 'table',
-          id: Id.getId(),
+          id: viewId,
           name: t('general.Table'),
           unToggledIds: [],
           valueIndex: [],
@@ -63,7 +65,6 @@ const GroupStore = {
         }
       ],
       syncVersion: 1,
-      hideGroupsInside: false,
       hideObjectsInside: true
     } as MetaGroup
   }

@@ -14,11 +14,8 @@ import { Colors } from '@/consts'
 
 const shortCutNameToTitle = {
   function: {
-    openObjectPanel: 'Open object details',
     quickCreateObject: 'Create object',
-    openScreenShot: 'open screen shot',
-    openTranslatePanel: 'open translate panel',
-    openGlobalSearch: 'open global text search'
+    openGlobalSearch: 'Search'
   },
   layout: {
     openSidebar: 'Open sidebar',
@@ -30,8 +27,7 @@ const shortCutNameToTitle = {
     switchToNextTab: 'Switch to next tab'
   },
   video: {
-    makeVideoLabel: 'make video label',
-    copyVideoTimestamp: 'Copy video timestamp'
+    makeVideoLabel: 'make video label'
   }
 }
 const flattened = {
@@ -158,9 +154,8 @@ const ShortCutItem = memo(({ shortCutName }: { shortCutName: keyof IShortCutSett
   return (
     <Content flex gap={10} ref={containerRef} alignItems="center">
       {conflictState.isConflicted && conflictState.conflictWith && (
-        <div style={{ display: 'flex', gap: 10 }} className={ClassName.description()}>
-          <span>{t('settings.Conflicting with')}:</span>
-          {conflictState.conflictWith?.length > 1 ? `${conflictState.conflictWith?.length} Shortcuts` : conflictState.conflictWith[0]}
+        <div className={'font-size-12 transparent-font max-w-md line-clamp-1'}>
+          {t('settings.Conflicting with')}: {conflictState.conflictWith.join(', ')}
         </div>
       )}
       <div

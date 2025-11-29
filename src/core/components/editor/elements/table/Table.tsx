@@ -1,17 +1,15 @@
 import { ReactEditor, RenderElementProps, useSlateStatic } from '../../slate-react'
 import { CustomElement, TableCellElement, TableElement } from '~/typings'
-import { Editor, Path, Range, Transforms } from 'slate'
-import { createContext, RefObject, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Editor, Path, Transforms } from 'slate'
+import { createContext, useEffect, useMemo, useRef } from 'react'
 import { useMemoizedFn, useMergedRef, useSelectAtomValue } from '@/hooks'
-import produce from 'immer'
-import { ID_TO_PATH_MAP } from '../../weakMaps'
 import Id from '@/utils/id'
 import useReadOnlyEditor from '../../hooks/useReadOnly'
 import { atom, createStore, Provider } from 'jotai'
 import TableSeletionOverlay from '@/core/components/editor/elements/table/TableSeletionOverlay'
 import TableInsertHandle from '@/core/components/editor/elements/table/TableInsertHandle'
 import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
-import { Utils } from 'rendevoz'
+import { range as createRange } from 'lodash'
 
 export const TableContext = createContext<
   | {
@@ -76,7 +74,7 @@ const Table = ({ element, children }: RenderElementProps) => {
             })
           })
         } else {
-          const range = Utils.range(0, columns - currColumnLength - 1)
+          const range = createRange(0, columns - currColumnLength)
           const newColumns = [...draft.columns, ...range.map(i => ({ width: 200, accessor: Id.getStrId() }))]
           Transforms.setNodes(
             editor,
@@ -107,7 +105,7 @@ const Table = ({ element, children }: RenderElementProps) => {
       if (rows !== currRowLength) {
         draft = Editor.node(editor, tablePath)[0] as TableElement
         if (rows < currRowLength) {
-          const range = Utils.range(0, currRowLength - rows - 1)
+          const range = createRange(0, currRowLength - rows)
           range.forEach((n, idx) => {
             Transforms.removeNodes(editor, {
               at: [...tablePath, rows + idx]
@@ -115,7 +113,7 @@ const Table = ({ element, children }: RenderElementProps) => {
           })
         }
         if (rows > currRowLength) {
-          const range = Utils.range(0, rows - currRowLength - 1)
+          const range = createRange(0, rows - currRowLength)
           range
             .map(() => ({
               id: Id.getId(),
@@ -136,7 +134,6 @@ const Table = ({ element, children }: RenderElementProps) => {
       }
     })
   })
-
   const canExecute = useRef(true)
   const handleInsertHandleDrag = useMemoizedFn((e: PointerEvent, direction: 'row' | 'column' | 'both', type: 'dragStart' | 'drag') => {
     if (type === 'dragStart') {

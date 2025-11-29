@@ -1,11 +1,11 @@
 import { CustomElement } from 'rendevoz'
-import { Node, Text } from 'slate'
+import { Descendant, Node, Text } from 'slate'
 import { globalStore } from '@/api/stores'
 import { metaObjectsAtom } from '@/api/stores/meta/meta.store'
-import { getSetting } from '@/core'
+import { getSetting, GlobalSetting } from '@/core'
 import { TableRowElement } from '~/typings'
 
-export const slateToMarkdown = (value: CustomElement[]) => {
+export const slateToMarkdown = (value: (CustomElement | Descendant)[]) => {
   let content = ''
   value.forEach((i, idx) => {
     const s = parseNode(idx, value)
@@ -81,28 +81,42 @@ const parseNode = (idx: number, eles: CustomElement[]) => {
     if (ele.originId) {
       const meta = globalStore.get(metaObjectsAtom).get(ele.originId)
       if (meta) {
-        str += `[${meta.name}](rendevoz://object/${ele.originId})`
+        str += `[${meta.name || meta.placeholderName}](rendevoz://object/${ele.originId})`
       }
     }
   }
   if (ele.type === 'math') {
-    str += ele.content
+    str += `$${ele.content}$`
+    return str
+  }
+  if (ele.type === 'math-block') {
+    return `$$${ele.content}$$\n`
   }
   if (ele.type === 'block-quote') {
     str += '> '
   }
   if (ele.type === 'list-item') {
+    let preSpace = 0
+    if (ele.level) {
+      preSpace = ele.level * 4
+    }
     str += '- '
+    if (preSpace) {
+      for (let i = 0; i < preSpace; i++) {
+        str = ' ' + str
+      }
+    }
   }
   if (ele.type === 'code-block') {
-    if (ele.language) {
-      str += '```' + ele.language + '\n'
-    } else {
-      str += '```\n'
+    const defaultLang = GlobalSetting.getSetting().code.defaultLanguage || 'typescript'
+    str += '```' + (ele.language || defaultLang) + '\n'
+    if ('children' in ele && Array.isArray(ele.children)) {
+      ele.children.forEach((c, idx) => {
+        str += parseNode(idx, ele.children)
+      })
     }
-
-    str += ele.content
-    str += '```'
+    str += '```\n'
+    return str
   }
   if (ele.type === 'image') {
     if (ele.url.startsWith('rendefile')) {
@@ -117,15 +131,24 @@ const parseNode = (idx: number, eles: CustomElement[]) => {
   if (ele.type === 'order-list-item') {
     const order = getOrderOfNode(idx, eles)
     str += `${order}. `
+    let preSpace = 0
+    if (ele.level) {
+      preSpace = ele.level * 4
+    }
+    if (preSpace) {
+      for (let i = 0; i < preSpace; i++) {
+        str = ' ' + str
+      }
+    }
   }
   if (ele.type === 'link') {
-    str += `[${Node.string(ele)}](${ele.url})`
+    return `[${Node.string(ele)}](${ele.url})`
   }
   if (ele.type === 'inline-metaObject') {
     if (ele.originId) {
       const meta = globalStore.get(metaObjectsAtom).get(ele.originId)
       if (meta) {
-        str += `[${meta.name}](rendevoz://object/${ele.originId})`
+        str += `[${meta.name || meta.placeholderName}](rendevoz://object/${ele.originId})`
       }
     }
   }
@@ -137,7 +160,11 @@ const parseNode = (idx: number, eles: CustomElement[]) => {
     if (ele.italic) {
       text = `*${text}*`
     }
+    if (ele.underline) {
+      text = `<u>${text}</u>`
+    }
     str += text
+    return str
   }
   if ('children' in ele && Array.isArray(ele.children)) {
     ele.children.forEach((c, idx) => {
@@ -148,12 +175,15 @@ const parseNode = (idx: number, eles: CustomElement[]) => {
 }
 
 const getOrderOfNode = (idx: number, eles: CustomElement[]) => {
+  const curr = eles[idx] as CustomElement
   let prevIdx = idx - 1
   let prev = eles[prevIdx]
   let prevNum = 0
-  while (prev && prev.type === 'order-list-item') {
+  while (prev && (prev.type === 'order-list-item' || prev.type === 'list-item') && (prev.level ?? 0) === (curr.level ?? 0)) {
+    if (prev.type === 'order-list-item') {
+      prevNum += 1
+    }
     prevIdx -= 1
-    prevNum += 1
     prev = eles[prevIdx]
   }
   return prevNum + 1

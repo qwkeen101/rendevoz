@@ -1,16 +1,12 @@
-import { Rendevoz } from '@/core/rendevoz'
-import { BuiltInDraggableElement, CustomEditor, IEditorInstance } from '~/typings'
+import { BuiltInDraggableElement, CustomEditor, IEditorInstance, IGlobalEvents } from '~/typings'
 import { Editor, Path, Transforms } from 'slate'
 import { useEffect } from 'react'
 import Id from '@/utils/id'
 
 const useDragCreateSyncBlock = (instance: IEditorInstance, editor: CustomEditor) => {
-  const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
-  const handler = Rendevoz.Events.Emit.useEventHandler('editor')
-  handler.on('turnElementsToSyncBlock', async data => {
+  const handle = (data: IGlobalEvents['editorTurnElementsToSync']) => {
     const currentDraggingDetails = data.draggingDetails as BuiltInDraggableElement
     // transform elements to synced block
-    console.log(currentDraggingDetails)
     if (currentDraggingDetails.type === 'noteBlock' && currentDraggingDetails.editorId === editor.id) {
       const elements = currentDraggingDetails.elements || [currentDraggingDetails.element]
       const start = elements[0]
@@ -41,13 +37,13 @@ const useDragCreateSyncBlock = (instance: IEditorInstance, editor: CustomEditor)
         }
       )
     }
-  })
+  }
   useEffect(() => {
-    emitter.addListener('editor', handler)
+    Global.addEventListener('editorTurnElementsToSync', handle)
     return () => {
-      emitter.removeListener('editor', handler)
+      Global.removeEventListener('editorTurnElementsToSync', handle)
     }
-  }, [])
+  })
 }
 
 export default useDragCreateSyncBlock

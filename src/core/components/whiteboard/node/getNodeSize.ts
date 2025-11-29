@@ -28,6 +28,9 @@ export default (node: IWhiteboardNode, defaultAutoWidth = true) => {
   if (node.type === 'text') {
     minWidth = 100
   }
+  if (node.type === 'mindmap' && node.nodeType === 'text') {
+    minWidth = 160
+  }
   if (node.rootId && node.type === 'text') {
     maxWidth = 600
   }

@@ -13,3 +13,20 @@ export type IWebRequest<T> = {
   message?: string
   result: T
 }
+
+export type ISidebarDefaultProps = {
+  defaultActiveSidebar?:
+    | 'label'
+    | 'ai'
+    | 'contents'
+    | 'content'
+    | 'info'
+    | 'summary'
+    | 'chapter'
+    | 'playlist'
+    | 'channel'
+    | 'subtitles'
+    | 'exam'
+  defaultSidebarWidth?: number
+  defaultSidebarVisible?: boolean
+}

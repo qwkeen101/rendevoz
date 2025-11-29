@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useLayoutEffect, useRef } from 'react'
 import getDirection from 'direction'
 import { Editor, Element as SlateElement, Node, Range } from 'slate'
 
@@ -7,7 +7,8 @@ import useChildren from '../hooks/use-children'
 import { ReactEditor, useReadOnly, useSlateStatic } from '../index'
 import { EDITOR_TO_KEY_TO_ELEMENT, ELEMENT_TO_NODE, NODE_TO_ELEMENT, NODE_TO_INDEX, NODE_TO_PARENT } from '../utils/weak-maps'
 import { isDecoratorRangeListEqual } from '../utils/range-list'
-import { RenderElementProps, RenderLeafProps, RenderPlaceholderProps } from './editable'
+import { RenderElementProps, RenderLeafProps } from './editable'
+import { useMemoizedFn } from '@/hooks'
 
 /**
  * Element.
@@ -17,36 +18,37 @@ const Element = (props: {
   decorations: Range[]
   element: SlateElement
   renderElement?: (props: RenderElementProps) => JSX.Element
-  renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
-  innerRef?: (element: HTMLElement) => void
-  index?: number
   selection: Range | null
+  index?: number
+  measureElement?: (ref: HTMLElement | null) => void
 }) => {
   const {
     decorations,
     element,
+    index,
+    measureElement,
     renderElement = (p: RenderElementProps) => <DefaultElement {...p} />,
-    renderPlaceholder,
     renderLeaf,
-    selection,
-    innerRef,
-    index
+    selection
   } = props
 
   const editor = useSlateStatic()
   const readOnly = useReadOnly()
   const isInline = editor.isInline(element)
   const key = ReactEditor.findKey(editor, element)
+  const measured = useRef<HTMLElement>()
   const ref = useCallback(
     (ref: HTMLElement | null) => {
       // Update element-related weak maps with the DOM element ref.
       const KEY_TO_ELEMENT = EDITOR_TO_KEY_TO_ELEMENT.get(editor)
       if (ref) {
-        try {
-          innerRef?.(ref)
-        } catch (e) {
-          console.log(e)
+        if (measureElement) {
+          // prevents call measure element when rerender
+          if (measured.current !== ref) {
+            measureElement(ref)
+            measured.current = ref
+          }
         }
         KEY_TO_ELEMENT?.set(key, ref)
         NODE_TO_ELEMENT.set(element, ref)
@@ -62,7 +64,6 @@ const Element = (props: {
     decorations,
     node: element,
     renderElement,
-    renderPlaceholder,
     renderLeaf,
     selection
   })
@@ -79,7 +80,7 @@ const Element = (props: {
     ref: any
   } = {
     'data-slate-node': 'element',
-    'data-index': index !== undefined ? String(index) : undefined,
+    'data-index': index !== undefined ? `${index}` : undefined,
     ref
   }
 
@@ -119,7 +120,7 @@ const Element = (props: {
           position: 'absolute'
         }}
       >
-        <Text renderPlaceholder={renderPlaceholder} decorations={[]} isLast={false} parent={element} text={text} />
+        <Text decorations={[]} isLast={false} parent={element} text={text} />
       </Tag>
     )
 
@@ -134,8 +135,6 @@ const MemoizedElement = React.memo(Element, (prev, next) => {
   return (
     prev.element === next.element &&
     prev.renderElement === next.renderElement &&
-    prev.renderLeaf === next.renderLeaf &&
-    prev.index === next.index &&
     isDecoratorRangeListEqual(prev.decorations, next.decorations) &&
     (prev.selection === next.selection || (!!prev.selection && !!next.selection && Range.equals(prev.selection, next.selection)))
   )

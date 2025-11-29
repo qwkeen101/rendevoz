@@ -58,7 +58,7 @@ const MetaRow = ({
         }}
         style={{
           position: 'relative',
-          background: isSelected ? Colors.Common.SelectColorTransparent : undefined,
+          background: isSelected ? Colors.Common.SelectColorTransparentLight : undefined,
           borderBottom: `1px solid ${Colors.Background.Border}`,
           transition: 'background 0.15s ease'
         }}

@@ -1,47 +1,64 @@
-import { FC, memo, MouseEventHandler, useCallback, useEffect, useMemo, useRef } from 'react'
+import { FC, memo, useCallback, useEffect, useMemo, useRef } from 'react'
 import useGraph from '@/core/components/graph/hooks/useGraph'
-import { useAtomValue, useSetAtom } from 'jotai'
 import { MetaStore } from '@/api/stores'
-import { GraphPathFilterAtom } from '@/core/components/graph/components/GraphPathFilter'
-import { GraphModeAtom } from '@/core/components/graph/hooks/useGraphMode'
 import { GraphNode } from '@/core/components/graph/types/node'
 import PixiImageNode from '@/core/components/graph/components/node/PixiImageNode'
 import { Container, Text } from '@pixi/react'
 import { DisplayObject, FederatedPointerEvent, Container as PContainer } from 'pixi.js'
-import { GlobalInstance, useMemoizedFn, usePrevious } from '@/hooks'
+import { useGlobalAtomValue, useMemoizedFn, usePrevious } from '@/hooks'
 import PixiIconNode, { fontStyle } from '@/core/components/graph/components/node/PixiIconNode'
 import { animate } from 'framer-motion'
-import { Rendevoz } from '@/core/rendevoz'
-import { truncate } from 'lodash'
+import { isEqual, truncate } from 'lodash'
+import { GlobalSetting } from '@/core'
+import PixiSimpleMode from '@/core/components/graph/components/node/PixiSimpleMode'
+import { selectAtom } from 'jotai/utils'
+import { NodeMouseEventHandler } from '@/core/components/graph/components/NodeContainer'
+import { Colors } from '@/consts'
 
-const getRadius = t => Rendevoz.Utils.Meta.getTypeRadius(t)
-const PixiNode: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onContextMenu, onClick }) => {
+const selectedAtom = selectAtom(
+  GlobalSetting.settingAtom,
+  s => ({
+    simpleMode: s.graph.simpleMode,
+    nodeSize: s.graph.nodeSize,
+    nodeColor: s.graph.nodeColor
+  }),
+  isEqual
+)
+const PixiNode: FC<{
+  node: GraphNode
+  onMouseEnter: NodeMouseEventHandler
+  onMouseLeave: NodeMouseEventHandler
+  onClick: NodeMouseEventHandler
+  onContextMenu: NodeMouseEventHandler
+}> = memo(({ node, onMouseEnter, onMouseLeave, onContextMenu, onClick }) => {
   const nodeRef = useRef<PContainer<DisplayObject>>(null)
   const graph = useGraph()
   const meta = MetaStore.useValue(node.id)
-  const setPathFilter = useSetAtom(GraphPathFilterAtom)
-  const graphMode = useAtomValue(GraphModeAtom)
+  const { simpleMode, nodeColor, nodeSize } = useGlobalAtomValue(selectedAtom)
+  const realColor = node.isCenter ? 'rgb(35,131,226)' : node.color || nodeColor
   const dragTimer = useRef(0)
-  const radius = getRadius(node.type || 'normal')
-  const d = radius * 2
-  const originNode = graph?.nodesMap?.get(node.id)
+  const d = nodeSize * 2
   const previousAlpha = usePrevious(node.opacity)
   useEffect(() => {
     const nodee = nodeRef.current
-    if (nodee && previousAlpha !== undefined && node.opacity !== undefined) {
-      animate(previousAlpha, node.opacity, {
-        onUpdate: v => {
-          nodee.alpha = v
-        }
-      })
+    if (nodee && node.opacity !== undefined) {
+      if (previousAlpha !== undefined) {
+        animate(previousAlpha, node.opacity, {
+          onUpdate: v => {
+            nodee.alpha = v
+          }
+        })
+      } else {
+        nodee.alpha = node.opacity
+      }
     }
   }, [node.opacity])
   const realNode = useMemo(() => {
     return {
       ...node,
       label: truncate(meta?.name || meta?.placeholderName || '', {
-        length: 32
-      }),
+        length: 20
+      }).replaceAll('\n', ' '),
       coverImgSrc: meta?.coverImgSrc,
       icon: meta?.icon
     } as Partial<GraphNode>
@@ -51,36 +68,19 @@ const PixiNode: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onCont
   const isDragging = useRef(false)
 
   const renderNode = () => {
-    if (graphMode === 'simple') {
-      return null
+    if (simpleMode) {
+      return <PixiSimpleMode color={realColor} size={nodeSize} />
     }
     if (!meta || meta.deleted) return null
     if (meta.coverImgSrc) {
-      return <PixiImageNode node={realNode} />
+      return <PixiImageNode size={nodeSize} color={realColor} node={realNode} />
     }
-    switch (meta.type) {
-      case 'note':
-      case 'whiteboard':
-      case 'pdfLabel':
-      case 'noteLabel':
-      case 'noteBlock':
-      case 'pdf':
-      case 'image':
-        return <PixiIconNode node={realNode} />
-      default:
-        return <PixiIconNode node={realNode} />
-    }
+    return <PixiIconNode size={nodeSize} node={realNode} />
   }
   useEffect(() => {
     if (nodeRef.current) {
       const n = nodeRef.current
       graph?.ID_TO_PIXI_NODE_MAP.set(node.id, n)
-      graph?.ID_TO_NODE_FUNCTION_MAP.set(node.id, {
-        changePosition: pos => {
-          n.x = pos.x
-          n.y = pos.y
-        }
-      })
       const firstChild = n.children[0]
       if (firstChild.pivot.x === 0) {
         const bound = firstChild.getLocalBounds()
@@ -94,75 +94,21 @@ const PixiNode: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onCont
 
   const handleMouseEnter = (e: FederatedPointerEvent) => {
     onMouseEnter?.(e, node)
-    if (graph?.isChoosingNode === 'end') {
-      graph.overlayManager?.setContent('pathIndicator')
-      const nodeBounding = {
-        left: e.clientX,
-        top: e.clientY,
-        width: e.width
-      }
-      console.log(nodeBounding)
-      graph.overlayManager?.setPosition({
-        left: nodeBounding?.left + nodeBounding?.width / 2,
-        top: nodeBounding?.top - 15
-      })
-      graph.overlayManager?.open()
-
-      setPathFilter(f => ({ ...f, tempEndNodeId: node.id }))
-    }
   }
   const handleMouseLeave = (e: FederatedPointerEvent) => {
     onMouseLeave?.(e, node)
-    if (graph?.isChoosingNode === 'end') {
-      setPathFilter(f => {
-        if (f?.tempEndNodeId === node.id) {
-          graph.overlayManager?.close()
-          return { ...f, tempEndNodeId: undefined }
-        }
-        return f
-      })
-    }
   }
   const handleContextMenu = (e: FederatedPointerEvent) => {
     onContextMenu?.(e, node)
-    const rect = {
-      left: e.clientX,
-      top: e.clientY,
-      width: e.width
-    }
-    graph?.overlayManager?.setOverlayState({
-      position: {
-        left: rect.left + rect.width / 2,
-        top: rect.top - 10
-      },
-      visible: true,
-      content: 'nodePopover',
-      nodeId: node.id,
-      metaId: node.id
-    })
   }
   const handleClick = (e: FederatedPointerEvent) => {
     e.preventDefault()
-
     e.nativeEvent.preventDefault()
-    if (graph?.isChoosingNode === 'start') {
-      setPathFilter(f => ({ ...f, startNodeId: node.id }))
-      graph.isChoosingNode = false
-      return
-    }
-    if (graph?.isChoosingNode === 'end') {
-      setPathFilter(f => ({ ...f, endNodeId: node.id }))
-      graph.isChoosingNode = false
-      return
-    }
-    onClick?.(e, node)
-
     if (graph?.isDragging) return
-    if (meta) {
-      GlobalInstance.layoutOps?.openObject(meta.id)
-    }
+    onClick?.(e, node)
   }
 
+  // see drag and drop in pixi renderer -> /graph/components/pixirenderer
   const handleMouseDown = useCallback(() => {
     isDragging.current = true
     if (graph?.pixiViewport) {
@@ -175,40 +121,27 @@ const PixiNode: FC<NodeProps> = memo(({ node, onMouseEnter, onMouseLeave, onCont
   }, [])
 
   const handleMouseUp = useMemoizedFn(() => {
-    if (isDragging.current && originNode) {
-      if (graph?.isAddingEdge) return
-      if (Date.now() - dragTimer.current < 100) return
-      originNode.fx = null
-      originNode.fy = null
-    }
-
     isDragging.current = false
   })
-
-  const handleMouseMove = useMemoizedFn((e: FederatedPointerEvent) => {})
   const primaryFontColor = getComputedStyle(document.body).getPropertyValue('--font-primary')
   return (
     <Container
-      interactive={true}
+      eventMode={'static'}
       rightclick={handleContextMenu}
       click={handleClick}
       onmouseenter={handleMouseEnter}
       onmouseleave={handleMouseLeave}
-      mousemove={handleMouseMove}
       mousedown={handleMouseDown}
       mouseup={handleMouseUp}
       cursor="pointer"
       ref={nodeRef}
-      // alpha={node.opacity || 1}
-      // position={[node.x ?? 0, node.y ?? 0]}
+      position={[(node.x ?? 0) + nodeSize, (node.y ?? 0) + nodeSize]}
     >
-      <Container cursor="pointer" position={[0, 0]}>
-        {renderNode()}
-      </Container>
+      <Container position={[0, 0]}>{renderNode()}</Container>
       <Text
         text={realNode.label}
         x={d / 2}
-        y={d + 6}
+        y={d + 7}
         anchor={0.5}
         style={fontStyle}
         resolution={3}

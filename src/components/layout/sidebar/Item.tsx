@@ -1,24 +1,5 @@
 import * as React from 'react'
-import { motion } from 'framer-motion'
-import { css } from '@emotion/css'
-import ClassName from '@/styles/classNames'
-
-const variants = {
-  open: {
-    y: 0,
-    opacity: 1,
-    transition: {
-      y: { stiffness: 1000, velocity: -100 }
-    }
-  },
-  closed: {
-    y: 50,
-    opacity: 0,
-    transition: {
-      y: { stiffness: 1000 }
-    }
-  }
-}
+import classnames from 'classnames'
 
 export const MenuItem = React.forwardRef(
   (
@@ -30,31 +11,20 @@ export const MenuItem = React.forwardRef(
     }: {
       className?: string
       children: React.ReactNode
-      to?: string
       onClick?: React.MouseEventHandler
       style?: React.CSSProperties
     },
     ref: React.ForwardedRef<HTMLLIElement>
   ) => {
     return (
-      <motion.li
+      <div
         style={style}
         ref={ref}
         onClick={onClick}
-        className={css([
-          className,
-          ClassName.flatButton(4, '4px'),
-          ClassName.flexLayout('center', 'center'),
-          {
-            cursor: 'pointer',
-            userSelect: 'none',
-            flexShrink: 0
-          }
-        ])}
-        variants={variants}
+        className={classnames([className, 'square-button flex items-center justify-center shrink-0'])}
       >
         {children}
-      </motion.li>
+      </div>
     )
   }
 )

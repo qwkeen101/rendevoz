@@ -3,7 +3,6 @@ import { PopoverPortal } from './PopoverPortal'
 import { EMPTY_RECT, rectsAreEqual } from './util'
 import { usePopover, PopoverPosition, PopoverProps, PopoverState, Rect } from 'react-tiny-popover'
 import useMemoizedArray from './useMemoizedArray'
-
 const DEFAULT_POSITIONS: PopoverPosition[] = ['top', 'left', 'right', 'bottom']
 
 const PopoverInternal = forwardRef(
@@ -77,48 +76,49 @@ const PopoverInternal = forwardRef(
 
     useLayoutEffect(() => {
       let shouldUpdate = true
-      const updatePopover = () => {
-        if (isOpen && shouldUpdate) {
-          let childRect = cRect || childRef?.current?.getBoundingClientRect()
-          if (!cachedChildRect.current && childRect) {
-            cachedChildRect.current = childRect
-          }
-          if (keepTracking === false && cachedChildRect.current) {
-            childRect = cachedChildRect.current
-          }
-          const popoverRect = popoverRef?.current?.getBoundingClientRect()
-          if (
-            childRect != null &&
-            popoverRect != null &&
-            (!rectsAreEqual(childRect, popoverState.childRect) ||
-              popoverRect.width !== popoverState.popoverRect.width ||
-              popoverRect.height !== popoverState.popoverRect.height ||
-              popoverState.padding !== padding ||
-              popoverState.align !== align ||
-              positions !== prevPositions.current ||
-              reposition !== prevReposition.current)
-          ) {
-            positionPopover({ childRect })
+      if (isOpen) {
+        const updatePopover = () => {
+          if (isOpen && shouldUpdate) {
+            let childRect = cRect || childRef?.current?.getBoundingClientRect()
+            if (!cachedChildRect.current && childRect) {
+              cachedChildRect.current = childRect
+            }
+            if (keepTracking === false && cachedChildRect.current) {
+              childRect = cachedChildRect.current
+            }
+            const popoverRect = popoverRef?.current?.getBoundingClientRect()
+            if (
+              childRect != null &&
+              popoverRect != null &&
+              (!rectsAreEqual(childRect, popoverState.childRect) ||
+                popoverRect.width !== popoverState.popoverRect.width ||
+                popoverRect.height !== popoverState.popoverRect.height ||
+                popoverState.padding !== padding ||
+                popoverState.align !== align ||
+                positions !== prevPositions.current ||
+                reposition !== prevReposition.current)
+            ) {
+              positionPopover({ childRect })
+            }
+
+            // TODO: factor prev checks out into the custom prevs hook
+            if (positions !== prevPositions.current) {
+              prevPositions.current = positions
+            }
+            if (reposition !== prevReposition.current) {
+              prevReposition.current = reposition
+            }
+
+            if (shouldUpdate) {
+              window.requestAnimationFrame(updatePopover)
+            }
           }
 
-          // TODO: factor prev checks out into the custom prevs hook
-          if (positions !== prevPositions.current) {
-            prevPositions.current = positions
-          }
-          if (reposition !== prevReposition.current) {
-            prevReposition.current = reposition
-          }
-
-          if (shouldUpdate) {
-            window.requestAnimationFrame(updatePopover)
-          }
+          prevIsOpen.current = isOpen
         }
 
-        prevIsOpen.current = isOpen
+        window.requestAnimationFrame(updatePopover)
       }
-
-      window.requestAnimationFrame(updatePopover)
-
       return () => {
         shouldUpdate = false
       }
@@ -139,14 +139,16 @@ const PopoverInternal = forwardRef(
     ])
 
     useEffect(() => {
-      const popoverElement = popoverRef.current
+      if (isOpen) {
+        const popoverElement = popoverRef.current
 
-      Object.assign(popoverElement.style, containerStyle)
+        Object.assign(popoverElement.style, containerStyle)
 
-      return () => {
-        Object.keys(containerStyle ?? {}).forEach(
-          key => delete popoverElement.style[key as keyof Omit<typeof containerStyle, 'length' | 'parentRule'>]
-        )
+        return () => {
+          Object.keys(containerStyle ?? {}).forEach(
+            key => delete popoverElement.style[key as keyof Omit<typeof containerStyle, 'length' | 'parentRule'>]
+          )
+        }
       }
     }, [containerStyle, isOpen, popoverRef])
 
@@ -177,16 +179,18 @@ const PopoverInternal = forwardRef(
       }
     }, [isOpen])
     useEffect(() => {
-      const body = parentElement.ownerDocument.body
-      body.addEventListener('click', handleOnClickOutside, clickOutsideCapture)
-      body.addEventListener('contextmenu', handleOnClickOutside, clickOutsideCapture)
-      body.addEventListener('resize', handleWindowResize)
-      return () => {
-        body.removeEventListener('click', handleOnClickOutside, clickOutsideCapture)
-        body.removeEventListener('contextmenu', handleOnClickOutside, clickOutsideCapture)
-        body.removeEventListener('resize', handleWindowResize)
+      if (isOpen) {
+        const body = parentElement.ownerDocument.body
+        body.addEventListener('click', handleOnClickOutside, clickOutsideCapture)
+        body.addEventListener('contextmenu', handleOnClickOutside, clickOutsideCapture)
+        body.addEventListener('resize', handleWindowResize)
+        return () => {
+          body.removeEventListener('click', handleOnClickOutside, clickOutsideCapture)
+          body.removeEventListener('contextmenu', handleOnClickOutside, clickOutsideCapture)
+          body.removeEventListener('resize', handleWindowResize)
+        }
       }
-    }, [clickOutsideCapture, handleOnClickOutside, handleWindowResize, parentElement])
+    }, [clickOutsideCapture, handleOnClickOutside, handleWindowResize, parentElement, isOpen])
 
     const handleRef = useCallback(
       (node: HTMLElement) => {
@@ -205,7 +209,6 @@ const PopoverInternal = forwardRef(
     const renderChild = () => cloneElement(children, { ref: handleRef })
 
     const renderPopover = () => {
-      if (!isOpen) return null
       return (
         <PopoverPortal element={popoverRef.current} scoutElement={scoutRef.current} container={parentElement}>
           {typeof content === 'function' ? content(popoverState) : content}
@@ -216,7 +219,7 @@ const PopoverInternal = forwardRef(
     return (
       <>
         {children && renderChild()}
-        {renderPopover()}
+        {isOpen && renderPopover()}
       </>
     )
   }

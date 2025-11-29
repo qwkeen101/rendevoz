@@ -5,50 +5,49 @@ import TrueOrFalseQuestionCard from '@/core/ai/components/question/TrueOrFalseQu
 import SingleSelectQuestionCard from '@/core/ai/components/question/SingleSelectQuestionCard'
 import MultiSelectQuestionCard from '@/core/ai/components/question/MultiSelectQuestionCard'
 import TextQuestionCard from '@/core/ai/components/question/TextQuestionCard'
-import { ClassName } from 'rendevoz'
-import { Content, Icon, IconWithPopover, MentionInput, WithBorder } from '@/components'
-import { Colors } from '@/consts'
+import { Content, Icon, IconWithPopover, MentionInput, WithBorder, AutosizeTextarea } from '@/components'
+import { Colors, Icons } from '@/consts'
 import { css } from '@emotion/css'
 import { useTranslation } from 'react-i18next'
-import produce from 'immer'
 import QuestionActionMenu from '@/core/ai/components/question/QuestionActionMenu'
-import goToQuestionPointer from '@/core/ai/components/question/goToQuestionPointer'
-import { DraggableElement, IconNameRenderer } from '@/core'
-import { Rendevoz } from '@/core/rendevoz'
-import AutosizeTextarea from '@/components/custom/input/AutoSizeTextArea'
+import { IconNameRenderer } from '@/core'
 import Select from '@/components/base/select'
 import QuestionStore from '@/api/stores/question.store'
 import SimpleEditor from '@/core/components/editor/SimpleEditor'
 import ClozeQuestion from '@/core/ai/components/question/ClozeQuestion'
-import QuestionPointer from '@/core/ai/components/question/QuestionPointer'
+import trans from '@/consts/trans'
+import classnames from 'classnames'
+
 export default ({
   id,
   on,
   showAnswer = false,
-  pointerEllipsis = 2,
   containerStyle,
   display,
+  autoFocus = true,
   styles = {
-    contentFontSize: 14,
-    smallFontSize: 13,
-    titleFontSize: 15
+    contentFontSize: '1rem',
+    smallFontSize: '0.86rem',
+    titleFontSize: '1.2rem'
   }
 }: {
   id: number
   on?: (e: IAIEvent) => any
   showAnswer?: boolean
-  pointerEllipsis?: number
   containerStyle?: CSSProperties
+  autoFocus?: boolean
   styles?: {
-    smallFontSize?: number
-    contentFontSize?: number
-    titleFontSize?: number
+    smallFontSize?: number | string
+    contentFontSize?: number | string
+    titleFontSize?: number | string
   }
   display?: {
     from?: boolean
     pointers?: boolean
     title?: boolean
     headBar?: boolean
+    more?: boolean
+    delete?: boolean
   }
 }) => {
   const question = ObjectStore('question').useValue(id)
@@ -121,25 +120,9 @@ export default ({
   }
   if (!question) return null
   return (
-    <div
-      style={{
-        padding: '6px 12px 24px',
-        ...(isEditing
-          ? {
-              padding: 12,
-              borderRadius: 8,
-              boxShadow: 'inset 0 0 0 1px var(--select-color)'
-            }
-          : undefined),
-        ...containerStyle
-      }}
-    >
+    <div className={'p-3'} style={containerStyle}>
       {display?.headBar !== false && (
-        <Content
-          flex
-          justifyContent={'space-between'}
-          style={{ fontSize: styles.smallFontSize, color: Colors.Font.Transparent, marginBottom: 6, height: 24 }}
-        >
+        <div className={'flex justify-between items-center transparent-font'} style={{ fontSize: styles.smallFontSize }}>
           <Select
             closeOnSelect
             style={{
@@ -156,71 +139,71 @@ export default ({
             }}
             value={question?.questionType}
           ></Select>
-          <Content flex gap={4} style={{ fontSize: 15 }}>
+          <div
+            className={'flex gap-2'}
+            style={{
+              fontSize: '1.15em'
+            }}
+          >
             <Icon
-              className={ClassName.circleButton()}
+              className={'square-button-small'}
               name={showAnswer || showInnerAnswer ? 'park-preview-open' : 'park-preview-close'}
               onClick={() => {
                 setShowInnerAnswer(!showInnerAnswer)
               }}
             />
-            <Icon onClick={() => setIsEditing(!isEditing)} className={ClassName.circleButton()} name={'park-edit'} />
-            <IconWithPopover
-              className={ClassName.circleButton()}
-              name={'park-more'}
-              size={15}
-              placement={['right', 'left']}
-              boundaryInset={10}
-              renderOnParent={false}
-              closeOnContentClick={true}
-              content={
-                <WithBorder padding={6} width={140}>
-                  <QuestionActionMenu id={question.id} />
-                </WithBorder>
-              }
-            ></IconWithPopover>
-          </Content>
-        </Content>
+            <Icon
+              onClick={() => setIsEditing(!isEditing)}
+              className={classnames('square-button-small', isEditing && 'active-button')}
+              name={'park-edit'}
+            />
+            {display?.more !== false && (
+              <IconWithPopover
+                className={'square-button-small'}
+                name={Icons.More}
+                align={'start'}
+                size={null}
+                placement={['right', 'left']}
+                renderOnParent={false}
+                closeOnContentClick={true}
+                content={
+                  <WithBorder className={'p-1 min-w-48'}>
+                    <QuestionActionMenu id={question.id} />
+                  </WithBorder>
+                }
+              ></IconWithPopover>
+            )}
+          </div>
+        </div>
       )}
       {display?.title !== false && (
-        <DraggableElement
-          draggingDetails={{
-            type: 'question',
-            objectId: id
+        <AutosizeTextarea
+          style={{
+            fontWeight: 500,
+            width: '100%',
+            fontSize: styles.contentFontSize,
+            resize: 'none',
+            userSelect: 'auto',
+            display: 'block',
+            cursor: 'text'
           }}
-          draggable={false}
-          ref={titleRef}
-        >
-          <AutosizeTextarea
-            style={{
-              fontWeight: 500,
-              width: '100%',
-              fontSize: styles.contentFontSize,
-              resize: 'none',
-              userSelect: 'auto',
-              display: 'block',
-              marginBottom: 12,
-              cursor: 'text'
-            }}
-            disabled={!isEditing}
-            className={ClassName.noStyleInput}
-            value={question.name}
-            placeholder={'Untitled'}
-            debounceChange
-            onChange={e => {
-              if (questionMeta) {
-                MetaStore.updateMetaObject({ id: questionMeta.id, name: e ?? '' })
-              } else {
-                ObjectStore('question').updateOne({ id: question.id, name: e ?? '' })
-              }
-            }}
-          />
-        </DraggableElement>
+          autoFocus={autoFocus}
+          value={question.name}
+          placeholder={t(trans.Unnamed)}
+          debounceChange
+          onChange={e => {
+            if (questionMeta) {
+              MetaStore.updateMetaObject({ id: questionMeta.id, name: e ?? '' })
+            } else {
+              ObjectStore('question').updateOne({ id: question.id, name: e ?? '' })
+            }
+          }}
+        />
       )}
       {renderContent()}
       {(showAnswer || showInnerAnswer || isEditing) && (
         <>
-          <div style={{ fontSize: styles.smallFontSize, color: Colors.Font.Transparent, marginTop: 12, marginBottom: 4 }}>
+          <div className={'transparent-font font-size-12'} style={{ fontSize: styles.smallFontSize, marginTop: 12 }}>
             {t('general.Explanation')}
           </div>
           <SimpleEditor
@@ -234,41 +217,6 @@ export default ({
             }}
           />
         </>
-      )}
-      {question.answerPointers?.length > 0 && (
-        <Content flex column gap={4} style={{ fontSize: styles.smallFontSize, color: Colors.Font.Transparent, marginTop: 12 }}>
-          <div>{t('general.Relevant paragraphs')}</div>
-          {question.answerPointers?.map((i, idx) => (
-            <QuestionPointer
-              isEditing={isEditing}
-              ellipsis={pointerEllipsis}
-              idx={idx}
-              onGotoOriginal={() => {
-                if (
-                  !on?.({
-                    type: 'questionGotoOriginalPlace',
-                    originalId: i.blockId || i.page
-                  })
-                ) {
-                  goToQuestionPointer(question.id, i.id)
-                }
-              }}
-              onDelete={() => {
-                if (question?.answerPointers) {
-                  const newOriginals = produce(question.answerPointers, draft => {
-                    draft.splice(
-                      draft.findIndex(o => o.id === i.id),
-                      1
-                    )
-                  })
-                  ObjectStore('question').updateOne({ id: question.id, answerPointers: newOriginals })
-                }
-              }}
-              key={i.id}
-              pointer={i}
-            />
-          ))}
-        </Content>
       )}
       {display?.from && !isEditing && parentMeta && (
         <Content
@@ -287,7 +235,7 @@ export default ({
           </div>
           <IconNameRenderer
             style={{ cursor: 'pointer' }}
-            icon={Rendevoz.Utils.Object.getMetaObjectIcon(parentMeta.type)}
+            icon={Global.utils.getIcon(parentMeta.type)}
             name={parentMeta.name}
             className={css({
               ':hover': {
@@ -296,42 +244,9 @@ export default ({
               transition: 'color 0.2s ease'
             })}
             onClick={() => {
-              Rendevoz.Actions.Open.Meta.openMetaObject(parentMeta.id)
+              Global.layoutOps?.openObject(parentMeta.id)
             }}
           />
-        </Content>
-      )}
-      {isEditing && (
-        <Content flex gap={12}>
-          <div
-            className={ClassName.selectButton()}
-            style={{
-              marginTop: 12,
-              fontWeight: 600,
-              width: 'fit-content',
-              padding: '2px 12px',
-              fontSize: 14
-            }}
-            onClick={() => setIsEditing(false)}
-          >
-            完成
-          </div>
-          <div
-            className={ClassName.selectButton()}
-            style={{
-              marginTop: 12,
-              fontWeight: 600,
-              width: 'fit-content',
-              padding: '2px 12px',
-              fontSize: 14,
-              background: Colors.Common.Red
-            }}
-            onClick={() => {
-              ObjectStore('question').deleteOneById(question?.id)
-            }}
-          >
-            删除
-          </div>
         </Content>
       )}
     </div>

@@ -1,49 +1,29 @@
 import { Box, IWhiteboardInstance } from '~/typings'
 import { assignProperties, boxContain, boxesIntersect } from '@/utils'
-import { useFlow } from '@/core/components/whiteboard/StateHooks'
 import { getBoxOfNodes } from '@/core/components/whiteboard/utils'
-import { isEqual } from 'lodash'
 
 const assignContainerOps = (instance: IWhiteboardInstance) => {
-  const flow = useFlow()
-  // node: 106 417
-  // left top: -58 -227 0.55
-  // center: 717 112
-  // bounding: 1537 837 * 0.55 -> 845 460
   assignProperties(instance, {
     containerOps: {
-      fitToNode: nodeId => {
+      ...instance.containerOps,
+      fitToNode: (nodeId, opts) => {
         const n = instance.getNode?.(nodeId)
         if (n) {
-          instance.containerOps?.fitTo?.({
-            left: n.x,
-            top: n.y,
-            width: n.width ?? 0,
-            height: n.height ?? 0
-          })
-        }
-      },
-      undoTransform: () => {
-        if (instance.values.transformHistory.undos.length > 1) {
-          const last = instance.values.transformHistory.undos.pop()
-          // instance.values.transformHistory.redos.push(last)
-          instance.containerOps?.setTransform(instance.values.transformHistory.undos[instance.values.transformHistory.undos.length - 1])
-          if (instance.values.transformHistory.undos.length === 1) {
-            instance.values.transformHistory.undos.pop()
-          }
-        }
-      },
-      redoTransform: () => {
-        if (instance.values.transformHistory.redos.length) {
-          const last = instance.values.transformHistory.redos.pop()
-          instance.values.transformHistory.undos.push(last)
-          instance.containerOps?.setTransform(last)
+          instance.containerOps?.fitTo?.(
+            {
+              left: n.x,
+              top: n.y,
+              width: n.width ?? 0,
+              height: n.height ?? 0
+            },
+            opts
+          )
         }
       },
       getViewBox: () => {
         const transform = instance.getTransform?.()
         if (!transform) throw 'Failed to find container node!'
-        const containerBounding = instance.getOutestContainerNode?.().getBoundingClientRect()
+        const containerBounding = instance.getOutestContainerNode?.()?.getBoundingClientRect()
         if (!containerBounding) throw 'Failed to find container node!'
         const inViewBox: Box = {
           left: -transform.x / transform.scale,
@@ -71,8 +51,12 @@ const assignContainerOps = (instance: IWhiteboardInstance) => {
           return boxesIntersect(inViewBox, nodeBox)
         })
       },
-      setTransform: t => {
-        flow.panzoom?.setTransform(t)
+      // placeholder here, real in whiteboard panzoom
+      setTransform: (t, skipAnimation) => {
+        instance.panzoom?.setTransform(t, undefined, skipAnimation)
+      },
+      moveBy: (x, y) => {
+        instance.panzoom?.moveBy(x, y, false)
       },
       fitTo: (box, opts) => {
         const container = instance.getContainerNode?.().parentElement
@@ -85,7 +69,6 @@ const assignContainerOps = (instance: IWhiteboardInstance) => {
           const boxTop = box.top + box.height / 2
           const boxCenterHori = box.left + box.width / 2
           const currentTransform = instance.getTransform?.()
-
           if (currentTransform) {
             if (ratio && currentTransform) {
               const s = opts?.changeScale === false ? currentTransform.scale : Math.min(ratio, opts?.maxScale || 0.8)
@@ -93,32 +76,12 @@ const assignContainerOps = (instance: IWhiteboardInstance) => {
                 x: -boxCenterHori * s + (bounding.width / s / 2) * s,
                 y: -boxTop * s + (bounding.height / s / 2) * s
               }
-              const lastUndo = instance.values.transformHistory.undos[instance.values.transformHistory.undos.length - 1]
-              let pushCurr = true
-
-              if (lastUndo) {
-                if (JSON.stringify(lastUndo) === JSON.stringify(currentTransform)) {
-                  pushCurr = false
-                }
-              }
-              if (pushCurr) {
-                // if curr not equals undo last transform, clear transform
-                instance.values.transformHistory.undos.push(structuredClone(currentTransform))
-              }
-              instance.values.transformHistory.undos.push(
-                structuredClone({
-                  x: pos.x,
-                  y: pos.y,
-                  scale: s
-                })
-              )
-              flow.panzoom?.setTransform(
+              instance.containerOps?.setTransform(
                 {
                   x: pos.x,
                   y: pos.y,
                   scale: s
                 },
-                undefined,
                 opts?.skipAnimation
               )
             }

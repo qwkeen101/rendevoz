@@ -1,0 +1,858 @@
+{
+    "news": [
+        {
+            "url": "https://www.foxnews.com",
+            "name": "Fox News",
+            "feed": "http://feeds.foxnews.com/foxnews/national",
+            "description": "A conservative American cable news channel and website."
+        },
+        {
+            "url": "https://www.cnn.com",
+            "name": "CNN",
+            "feed": "http://rss.cnn.com/rss/money_topstories.rss",
+            "description": "A major American cable news network providing 24-hour coverage of national and international news."
+        },
+        {
+            "url": "https://www.nytimes.com",
+            "name": "The New York Times",
+            "feed": "https://www.nytimes.com/athletic/rss/podcast/283-between-the-lines-a-podcast-about-race-and-diversity-in-the-nfl/",
+            "description": "An influential American daily newspaper with a global readership, known for its in-depth reporting."
+        },
+        {
+            "url": "https://www.washingtonpost.com",
+            "name": "The Washington Post",
+            "feed": "https://feeds.washingtonpost.com/rss/world",
+            "description": "A major American daily newspaper, renowned for its political reporting and investigative journalism."
+        },
+        {
+            "url": "https://www.wsj.com",
+            "name": "The Wall Street Journal",
+            "feed": "https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml",
+            "description": "An American business-focused, international daily newspaper."
+        },
+        {
+            "url": "https://www.reuters.com",
+            "name": "Reuters",
+            "feed": "https://blogs.thomsonreuters.com/answerson/topic/academic-research/feed/",
+            "description": "An international news organization providing financial, national, and international news."
+        },
+        {
+            "url": "https://www.apnews.com",
+            "name": "Associated Press",
+            "feed": "https://apnews.com/index.rss",
+            "description": "A global non-profit news agency providing unbiased news coverage from around the world."
+        },
+        {
+            "url": "https://www.theguardian.com",
+            "name": "The Guardian",
+            "feed": "https://www.theguardian.com/world/rss",
+            "description": "A British daily newspaper with a progressive and international perspective."
+        },
+        {
+            "url": "https://www.npr.org",
+            "name": "NPR",
+            "feed": "https://feeds.feedburner.com/romeo-y-julieta",
+            "description": "A non-profit media organization in the U.S. that produces and distributes news and cultural programming."
+        },
+        {
+            "url": "https://www.politico.com",
+            "name": "Politico",
+            "feed": "https://rss.politico.com/magazine.xml",
+            "description": "A political journalism company covering politics and policy in Washington D.C. and globally."
+        },
+        {
+            "url": "https://www.bloomberg.com",
+            "name": "Bloomberg",
+            "feed": "http://www.newslookup.com/rss/wires/newslookup-wires.rss",
+            "description": "A global financial, software, data, and media company."
+        },
+        {
+            "url": "https://abcnews.go.com",
+            "name": "ABC News",
+            "feed": "https://abcnews.go.com/abcnews/topstories",
+            "description": "The news division of the American Broadcasting Company (ABC), providing national and international news."
+        },
+        {
+            "url": "https://www.cbsnews.com",
+            "name": "CBS News",
+            "feed": "https://www.cbsnews.com/latest/rss/cbs-this-morning",
+            "description": "The news division of the American television and radio service CBS."
+        },
+        {
+            "url": "https://www.nbcnews.com",
+            "name": "NBC News",
+            "feed": "https://feeds.nbcnews.com/nbcnews/public/news",
+            "description": "The news division of the American television network NBC, offering breaking news and in-depth reporting."
+        },
+        {
+            "url": "https://www.usatoday.com",
+            "name": "USA Today",
+            "feed": "https://feeds.feedblitz.com/usatoday-NewsTopStories",
+            "description": "An American multi-platform news and information media company with a focus on national news."
+        },
+        {
+            "url": "https://www.latimes.com",
+            "name": "Los Angeles Times",
+            "feed": "https://www.latimes.com/index.rss",
+            "description": "A daily newspaper based in Los Angeles, California, covering local, national, and international news."
+        },
+        {
+            "url": "https://www.forbes.com",
+            "name": "Forbes",
+            "feed": "https://www.forbes.com/sites/bradthomas/feed/",
+            "description": "An American business magazine focusing on business, investing, technology, entrepreneurship, leadership, and lifestyle."
+        },
+        {
+            "url": "https://time.com",
+            "name": "Time",
+            "feed": "https://time.com/magazine/%25time_region%25/%25post_id%25/feed/",
+            "description": "An American weekly news magazine and news website covering current events, politics, and culture."
+        },
+        {
+            "url": "https://www.aljazeera.com",
+            "name": "Al Jazeera",
+            "feed": "https://www.aljazeera.com:443/xml/rss/all.xml",
+            "description": "A Qatari state-funded global news organization with an international perspective."
+        }
+    ],
+    "health": [
+        {
+            "url": "https://www.who.int",
+            "name": "World Health Organization",
+            "feed": "https://www.who.int/rss-feeds/news-english.xml",
+            "description": "The United Nations' specialized agency for international public health, providing global health information and guidance."
+        },
+        {
+            "url": "https://www.webmd.com",
+            "name": "WebMD",
+            "feed": "https://rssfeeds.webmd.com/rss/rss.aspx?RSSSource=RSS_PUBLIC",
+            "description": "An American online publisher of news and information pertaining to human health and well-being."
+        },
+        {
+            "url": "https://www.healthline.com",
+            "name": "Healthline",
+            "feed": "https://www.healthline.com/rss/health-news",
+            "description": "A provider of health and wellness information, reviewed by medical professionals."
+        },
+        {
+            "url": "https://www.nih.gov",
+            "name": "National Institutes of Health",
+            "feed": "https://www.nih.gov/rss.xml",
+            "description": "The primary agency of the U.S. government responsible for biomedical and public health research."
+        },
+        {
+            "url": "https://www.mayoclinic.org",
+            "name": "Mayo Clinic",
+            "feed": "https://www.mayoclinic.org/rss/research-news.xml?src=webfeed",
+            "description": "A non-profit American academic medical center focused on integrated health care, education, and research."
+        },
+        {
+            "url": "https://www.cdc.gov",
+            "name": "Centers for Disease Control",
+            "feed": "https://tools.cdc.gov/api/v2/resources/media/342778.rss",
+            "description": "The national public health agency of the United States, providing information on diseases, conditions, and public health."
+        },
+        {
+            "url": "https://medlineplus.gov",
+            "name": "MedlinePlus",
+            "feed": "https://medlineplus.gov/feeds/topics/stroke.xml",
+            "description": "An online information service produced by the United States National Library of Medicine, offering reliable health information."
+        },
+        {
+            "url": "https://www.medicalnewstoday.com",
+            "name": "Medical News Today",
+            "feed": "https://www.medicalnewstoday.com/news/feed.rss",
+            "description": "An online publication for medical news and health information for both consumers and professionals."
+        },
+        {
+            "url": "https://www.menshealth.com",
+            "name": "Men's Health",
+            "feed": "https://www.menshealth.com/rss/all.xml",
+            "description": "A men's magazine and website focusing on fitness, nutrition, relationships, and lifestyle."
+        },
+        {
+            "url": "https://www.womenshealthmag.com",
+            "name": "Women's Health",
+            "feed": "https://www.womenshealthmag.com/rss/all.xml",
+            "description": "A magazine and website focusing on health, fitness, nutrition, and lifestyle for women."
+        },
+        {
+            "url": "https://www.psychologytoday.com",
+            "name": "Psychology Today",
+            "feed": "https://www.psychologytoday.com/us/front/feed",
+            "description": "A media organization focusing on psychology, mental health, and human behavior."
+        },
+        {
+            "url": "https://www.prevention.com",
+            "name": "Prevention",
+            "feed": "https://www.prevention.com/rss/all.xml",
+            "description": "An American healthy-lifestyle magazine offering trusted health information and wellness advice."
+        },
+        {
+            "url": "https://www.self.com",
+            "name": "SELF",
+            "feed": "https://www.self.com/feed/rss",
+            "description": "An American online magazine for women that specializes in health, fitness, beauty, and style."
+        },
+        {
+            "url": "https://www.shape.com",
+            "name": "Shape",
+            "feed": "http://www.shape.com/rss.xml",
+            "description": "A fitness and lifestyle magazine for women, providing exercise, nutrition, and wellness tips."
+        },
+        {
+            "url": "https://www.verywellfit.com",
+            "name": "Verywell Fit",
+            "feed": "https://feeds-api.dotdashmeredith.com/v1/rss/google/3ef98e3d-2a4a-4dd1-9195-7c017877e7cd",
+            "description": "An online resource for nutrition and fitness information, offering expert advice and meal plans."
+        },
+        {
+            "url": "https://www.verywellmind.com",
+            "name": "Verywell Mind",
+            "feed": "https://feeds.buzzsprout.com/1307449.rss",
+            "description": "An online resource for mental health and psychology information, with a focus on evidence-based guidance."
+        },
+        {
+            "url": "https://www.eatingwell.com",
+            "name": "EatingWell",
+            "feed": "https://feeds-api.dotdashmeredith.com/v1/rss/standard/48f08cc7-75b6-45a5-b611-78f56e60deb1",
+            "description": "A magazine and website devoted to healthy eating, with a focus on delicious and nutritious recipes."
+        },
+        {
+            "url": "https://www.goodrx.com",
+            "name": "GoodRx",
+            "feed": "https://www.goodrx.com/rss-feeds/health-all.xml",
+            "description": "A telemedicine platform that tracks prescription drug prices and provides free drug coupons."
+        },
+        {
+            "url": "https://www.drugs.com",
+            "name": "Drugs.com",
+            "feed": "https://www.drugs.com/feeds/medical_news.xml",
+            "description": "An online pharmaceutical encyclopedia providing comprehensive and up-to-date drug information."
+        }
+    ],
+    "game": [
+        {
+            "url": "https://www.ign.com",
+            "name": "IGN",
+            "feed": "https://www.ign.com/rss/wikis/feed",
+            "description": "An American video game and entertainment media website and brand."
+        },
+        {
+            "url": "https://www.gamespot.com",
+            "name": "GameSpot",
+            "feed": "https://www.gamespot.com/feeds/mashup",
+            "description": "A video gaming website that provides news, reviews, previews, and downloads for all platforms."
+        },
+        {
+            "url": "https://www.polygon.com",
+            "name": "Polygon",
+            "feed": "https://www.polygon.com/rss/news/index.xml",
+            "description": "A video game website that publishes news, culture, reviews, and in-depth feature stories."
+        },
+        {
+            "url": "https://kotaku.com",
+            "name": "Kotaku",
+            "feed": "https://kotaku.com/rss",
+            "description": "A video game website and blog that covers news, reviews, and gaming culture."
+        },
+        {
+            "url": "https://www.pcgamer.com",
+            "name": "PC Gamer",
+            "feed": "https://forums.pcgamer.com/forums/-/index.rss",
+            "description": "A magazine and website dedicated to PC gaming, offering news, reviews, and hardware guides."
+        },
+        {
+            "url": "https://www.gamesradar.com",
+            "name": "GamesRadar+",
+            "feed": "https://www.gamesradar.com/all-platforms/rss/",
+            "description": "A multi-format video game and entertainment website."
+        },
+        {
+            "url": "https://www.eurogamer.net",
+            "name": "Eurogamer",
+            "feed": "https://www.eurogamer.net/?format=rss",
+            "description": "A UK-based website focusing on video game news, reviews, and features with a European perspective."
+        },
+        {
+            "url": "https://www.gameinformer.com",
+            "name": "Game Informer",
+            "feed": "https://www.gameinformer.com/rss.xml",
+            "description": "An American monthly video game magazine featuring reviews, previews, and news."
+        },
+        {
+            "url": "https://www.rockpapershotgun.com",
+            "name": "Rock Paper Shotgun",
+            "feed": "https://www.rockpapershotgun.com/feed",
+            "description": "A UK-based blog about PC video games, known for its opinion pieces and reviews."
+        },
+        {
+            "url": "https://www.destructoid.com",
+            "name": "Destructoid",
+            "feed": "https://www.destructoid.com/elephant/index.phtml?mode=atom",
+            "description": "A blog focused on video game news and reviews with a community-driven approach."
+        },
+        {
+            "url": "https://www.giantbomb.com",
+            "name": "Giant Bomb",
+            "feed": "https://www.giantbomb.com/feeds/mashup",
+            "description": "A video game website that features personality-driven videos, commentary, news, and reviews."
+        },
+        {
+            "url": "https://store.steampowered.com",
+            "name": "Steam",
+            "feed": "https://store.steampowered.com/feeds/daily_deals.xml",
+            "description": "A digital distribution platform for video games developed by Valve, offering a vast library of PC games."
+        },
+        {
+            "url": "https://www.vg247.com",
+            "name": "VG247",
+            "feed": "https://www.vg247.com/feed",
+            "description": "A video game blog that covers news, reviews, and features with a focus on breaking stories."
+        },
+        {
+            "url": "https://toucharcade.com",
+            "name": "TouchArcade",
+            "feed": "https://toucharcade.com/community/forums/-/index.rss",
+            "description": "A website that covers mobile video game news and reviews for iOS and Android devices."
+        },
+        {
+            "url": "https://gematsu.com",
+            "name": "Gematsu",
+            "feed": "https://www.gematsu.com/feed",
+            "description": "A video game news website with a focus on Japanese games, including RPGs and niche titles."
+        },
+        {
+            "url": "https://nichegamer.com",
+            "name": "Niche Gamer",
+            "feed": "https://nichegamer.com/feed/",
+            "description": "A video game website that focuses on niche and lesser-known titles across various platforms."
+        },
+        {
+            "url": "https://www.siliconera.com",
+            "name": "Siliconera",
+            "feed": "https://www.siliconera.com/category/news/feed/",
+            "description": "A website focused on Japanese video game news, particularly role-playing and otaku-centric games."
+        },
+        {
+            "url": "https://www.pushsquare.com",
+            "name": "Push Square",
+            "feed": "https://www.pushsquare.com/feeds/latest",
+            "description": "A website dedicated to PlayStation news, reviews, and features for PS5 and PS4."
+        }
+    ],
+    "tech": [
+        {
+            "url": "https://www.theverge.com",
+            "name": "The Verge",
+            "feed": "https://www.theverge.com/tech/rss/index.xml",
+            "description": "An American technology news and media network that covers the intersection of technology, science, art, and culture."
+        },
+        {
+            "url": "https://www.wired.com",
+            "name": "Wired",
+            "feed": "https://www.wired.com/feed",
+            "description": "A monthly American magazine and website that focuses on how emerging technologies affect culture, the economy, and politics."
+        },
+        {
+            "url": "https://techcrunch.com",
+            "name": "TechCrunch",
+            "feed": "https://techcrunch.com/feed/",
+            "description": "An American online newspaper focusing on high-tech and startup companies, providing news and analysis."
+        },
+        {
+            "url": "https://www.cnet.com",
+            "name": "CNET",
+            "feed": "https://www.cnet.com/rss/all/",
+            "description": "An American media website that publishes reviews, news, articles, and videos on technology and consumer electronics."
+        },
+        {
+            "url": "https://arstechnica.com",
+            "name": "Ars Technica",
+            "feed": "https://arstechnica.com/civis/forums/-/index.rss",
+            "description": "A website covering news and opinions in technology, science, politics, and society with in-depth technical detail."
+        },
+        {
+            "url": "https://www.engadget.com",
+            "name": "Engadget",
+            "feed": "https://www.engadget.com/tomorrow/rss.xml",
+            "description": "A multilingual technology blog network with daily coverage of gadgets and consumer electronics."
+        },
+        {
+            "url": "https://gizmodo.com",
+            "name": "Gizmodo",
+            "feed": "https://gizmodo.com/feed",
+            "description": "A design, technology, science, and science fiction website that offers news and reviews."
+        },
+        {
+            "url": "https://www.digitaltrends.com",
+            "name": "Digital Trends",
+            "feed": "https://es.digitaltrends.com/feed/",
+            "description": "A technology news, reviews, and information website that covers a wide range of consumer electronics."
+        },
+        {
+            "url": "https://www.tomsguide.com",
+            "name": "Tom's Guide",
+            "feed": "https://www.tomsguide.com/feeds.xml",
+            "description": "A website that provides reviews and buying guides for technology products, helping consumers make informed decisions."
+        },
+        {
+            "url": "https://www.tomshardware.com",
+            "name": "Tom's Hardware",
+            "feed": "https://www.tomshardware.com/rss.xml",
+            "description": "An online publication focusing on technology and PC hardware, with news, reviews, and benchmarks."
+        },
+        {
+            "url": "https://mashable.com",
+            "name": "Mashable",
+            "feed": "https://mashable.com/feeds/rss/all",
+            "description": "A global, multi-platform media and entertainment company that covers technology, digital culture, and entertainment."
+        },
+        {
+            "url": "https://www.zdnet.com",
+            "name": "ZDNet",
+            "feed": "https://www.zdnet.com/search/?t=1,7&mode=rss",
+            "description": "A business technology news website that provides news and analysis for IT professionals and decision-makers."
+        },
+        {
+            "url": "https://www.macrumors.com",
+            "name": "MacRumors",
+            "feed": "https://forums.macrumors.com/forums/-/index.rss",
+            "description": "A website that aggregates Mac and Apple-related news, rumors, and reports."
+        },
+        {
+            "url": "https://9to5mac.com",
+            "name": "9to5Mac",
+            "feed": "https://9to5mac.com/feed/",
+            "description": "A website that provides news and reviews on Apple products, apps, and rumors."
+        },
+        {
+            "url": "https://www.androidpolice.com",
+            "name": "Android Police",
+            "feed": "https://www.androidpolice.com/news/feed/",
+            "description": "A blog dedicated to everything about the Android operating system, including news, apps, and reviews."
+        },
+        {
+            "url": "https://www.androidauthority.com",
+            "name": "Android Authority",
+            "feed": "http://feed.androidauthority.com/",
+            "description": "An online publication that provides news, reviews, and features on the Android ecosystem and related technology."
+        },
+        {
+            "url": "https://thenextweb.com",
+            "name": "The Next Web",
+            "feed": "https://thenextweb.com/feed/",
+            "description": "A website and annual conference focused on new technology and start-up companies in Europe."
+        },
+        {
+            "url": "https://www.techradar.com",
+            "name": "TechRadar",
+            "feed": "https://www.techradar.com/rss",
+            "description": "An online publication focused on technology, with comprehensive reviews of the latest gadgets and electronics."
+        },
+        {
+            "url": "https://www.howtogeek.com",
+            "name": "How-To Geek",
+            "feed": "https://feeds.howtogeek.com",
+            "description": "An online tech magazine with a focus on how-to articles, guides, and explainers for various technologies."
+        },
+        {
+            "url": "https://lifehacker.com",
+            "name": "Lifehacker",
+            "feed": "https://lifehacker.com/feed/rss",
+            "description": "A weblog about life hacks and software which provides tips, tricks, and downloads for getting things done."
+        }
+    ],
+    "sports": [
+        {
+            "url": "https://www.espn.com",
+            "name": "ESPN",
+            "feed": "https://www.espn.com/espn/rss/",
+            "description": "An American multinational basic cable sports channel offering live sports, scores, news, and highlights."
+        },
+        {
+            "url": "https://www.cbssports.com",
+            "name": "CBS Sports",
+            "feed": "https://www.cbssports.com/rss/headlines/",
+            "description": "The sports division of the American television network CBS, providing sports news, scores, and live coverage."
+        },
+        {
+            "url": "https://www.foxsports.com",
+            "name": "Fox Sports",
+            "feed": "https://api.foxsports.com/v2/content/optimized-rss?partnerKey=MB0Wehpmuj2lUhuRhQaafhBjAJqaPU244mlTDK1i&size=30",
+            "description": "The sports programming division of the Fox Corporation, offering live sports, news, and original content."
+        },
+        {
+            "url": "https://sports.yahoo.com",
+            "name": "Yahoo! Sports",
+            "feed": "https://sports.yahoo.com/rss/",
+            "description": "A sports news website owned by Yahoo, providing comprehensive sports coverage, scores, and fantasy games."
+        },
+        {
+            "url": "https://bleacherreport.com",
+            "name": "Bleacher Report",
+            "feed": "https://bleacherreport.com/articles/feed",
+            "description": "A website that focuses on sport and sports culture, delivering content tailored to sports fans."
+        },
+        {
+            "url": "https://www.nbcsports.com",
+            "name": "NBC Sports",
+            "feed": "https://www.nbcsports.com/motor-sports.atom",
+            "description": "The sports division of the American television network NBC, covering a wide range of sports and the Olympics."
+        },
+        {
+            "url": "https://www.si.com",
+            "name": "Sports Illustrated",
+            "feed": "https://www.si.com/.rss/full",
+            "description": "An American sports magazine and website known for its sports journalism, photography, and swimsuit issue."
+        },
+        {
+            "url": "https://theathletic.com",
+            "name": "The Athletic",
+            "feed": "https://theathletic.com/podcast/283-between-the-lines-a-podcast-about-race-and-diversity-in-the-nfl/?rss=1",
+            "description": "A subscription-based sports website offering in-depth, ad-free coverage from a team of sports writers."
+        },
+        {
+            "url": "https://www.deadspin.com",
+            "name": "Deadspin",
+            "feed": "https://deadspin.com/rss",
+            "description": "A sports blog that provides news, commentary, and analysis with a critical and often humorous perspective."
+        },
+        {
+            "url": "https://www.sbnation.com",
+            "name": "SB Nation",
+            "feed": "https://blog.sbnation.com/rss/current.xml",
+            "description": "A sports blogging network featuring hundreds of individual fan-centric sports communities."
+        },
+        {
+            "url": "https://www.mlb.com",
+            "name": "MLB",
+            "feed": "https://www.mlb.com/feeds/news/rss.xml",
+            "description": "The official website for Major League Baseball, providing news, scores, stats, and live game coverage."
+        },
+        {
+            "url": "https://www.nhl.com",
+            "name": "NHL",
+            "feed": "https://feeds.simplecast.com/a2tWJAIV",
+            "description": "The official website for the National Hockey League, offering news, scores, stats, and live game action."
+        },
+        {
+            "url": "https://www.sportingnews.com",
+            "name": "Sporting News",
+            "feed": "https://www.sportingnews.com/rss",
+            "description": "A global sports media company providing news, analysis, and scores for a wide variety of sports."
+        },
+        {
+            "url": "https://www.runnersworld.com",
+            "name": "Runner's World",
+            "feed": "https://www.runnersworld.com/rss/all.xml",
+            "description": "A globally circulated magazine for runners of all skills sets, offering training advice, gear reviews, and race information."
+        }
+    ],
+    "business": [
+        {
+            "url": "https://www.wsj.com",
+            "name": "The Wall Street Journal",
+            "feed": "https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml",
+            "description": "An American business-focused, international daily newspaper."
+        },
+        {
+            "url": "https://www.bloomberg.com",
+            "name": "Bloomberg",
+            "feed": "http://www.newslookup.com/rss/wires/newslookup-wires.rss",
+            "description": "A global financial, software, data, and media company that provides business and market news."
+        },
+        {
+            "url": "https://www.forbes.com",
+            "name": "Forbes",
+            "feed": "https://www.forbes.com/sites/bradthomas/feed/",
+            "description": "An American business magazine focusing on business, investing, technology, entrepreneurship, leadership, and lifestyle."
+        },
+        {
+            "url": "https://www.cnbc.com",
+            "name": "CNBC",
+            "feed": "https://www.cnbc.com/id/100727362/device/rss",
+            "description": "An American basic cable business news channel providing live market coverage and business news."
+        },
+        {
+            "url": "https://www.ft.com",
+            "name": "Financial Times",
+            "feed": "https://www.ft.com/news-feed?format=rss",
+            "description": "A British daily newspaper with a focus on business and economic news, offering a global perspective."
+        },
+        {
+            "url": "https://www.marketwatch.com",
+            "name": "MarketWatch",
+            "feed": "http://feeds.marketwatch.com/marketwatch/financial",
+            "description": "A website that provides financial information, business news, analysis, and stock market data."
+        },
+        {
+            "url": "https://www.investopedia.com",
+            "name": "Investopedia",
+            "feed": "https://www.investopedia.com/feedbuilder/feed/getfeed?feedName=rss_headline",
+            "description": "A financial website that provides investment dictionaries, advice, reviews, and educational content."
+        },
+        {
+            "url": "https://finance.yahoo.com",
+            "name": "Yahoo Finance",
+            "feed": "https://finance.yahoo.com/news/rssindex",
+            "description": "A media property that is part of the Yahoo network, providing financial news, data, and commentary."
+        },
+        {
+            "url": "https://www.businessinsider.com",
+            "name": "Business Insider",
+            "feed": "https://feeds.businessinsider.com/custom/all",
+            "description": "A financial and business news website, covering technology, finance, markets, and more."
+        },
+        {
+            "url": "https://www.economist.com",
+            "name": "The Economist",
+            "feed": "https://www.economist.com/feeds/print-sections/all/all.xml",
+            "description": "An international weekly newspaper that focuses on current affairs, international business, politics, and technology."
+        },
+        {
+            "url": "https://fortune.com",
+            "name": "Fortune",
+            "feed": "https://fortune.com/feed/fortune-feeds/?id=3230629",
+            "description": "A multinational business magazine known for its annual rankings of top companies, such as the Fortune 500."
+        },
+        {
+            "url": "https://www.fool.com",
+            "name": "The Motley Fool",
+            "feed": "https://www.fool.com/a/feeds/foolwatch?format=rss2&id=foolwatch&apikey=foolwatch-feed",
+            "description": "A private financial and investing advice company that provides stock recommendations and analysis."
+        },
+        {
+            "url": "https://seekingalpha.com",
+            "name": "Seeking Alpha",
+            "feed": "https://seekingalpha.com/feed.xml",
+            "description": "A crowd-sourced content service for financial markets, offering investment research and analysis."
+        },
+        {
+            "url": "https://www.inc.com",
+            "name": "Inc. Magazine",
+            "feed": "https://www.inc.com/rss/homepage.xml",
+            "description": "An American business media property for small businesses and startups, providing advice and resources."
+        },
+        {
+            "url": "https://www.entrepreneur.com",
+            "name": "Entrepreneur",
+            "feed": "https://www.entrepreneur.com/rss/topic/marketing",
+            "description": "An American magazine and website that carries news stories about entrepreneurship, small business management, and business."
+        },
+        {
+            "url": "https://www.barrons.com",
+            "name": "Barron's",
+            "feed": "https://video-api.barrons.com/podcast/rss/barrons/barrons-adviser-australia",
+            "description": "An American weekly magazine/newspaper that provides in-depth analysis and commentary on financial markets."
+        },
+        {
+            "url": "https://hbr.org",
+            "name": "Harvard Business Review",
+            "feed": "http://feeds.hbr.org/harvardbusiness",
+            "description": "A general management magazine published by Harvard Business Publishing, offering research and insights on business management."
+        },
+        {
+            "url": "https://www.kiplinger.com",
+            "name": "Kiplinger",
+            "feed": "https://www.kiplinger.com/feeds.xml",
+            "description": "A publisher of business forecasts and personal finance advice, providing guidance on investing and retirement."
+        }
+    ],
+    "food": [
+        {
+            "url": "https://www.allrecipes.com",
+            "name": "Allrecipes",
+            "feed": "https://feeds-api.dotdashmeredith.com/v1/rss/google/afd5e9ea-c220-419e-9135-d8457772e240",
+            "description": "A food-focused online resource that provides a vast collection of recipes, cooking tips, and meal ideas from a community of home cooks."
+        },
+        {
+            "url": "https://www.bonappetit.com",
+            "name": "Bon Appétit",
+            "feed": "https://www.bonappetit.com/feed/rss",
+            "description": "A monthly American food and entertaining magazine and website featuring recipes, restaurant reviews, and cooking tips."
+        },
+        {
+            "url": "https://www.epicurious.com",
+            "name": "Epicurious",
+            "feed": "https://www.epicurious.com/feed/rss",
+            "description": "An American digital brand that focuses on food and cooking, offering a wide range of recipes and cooking guides."
+        },
+        {
+            "url": "https://www.thekitchn.com",
+            "name": "The Kitchn",
+            "feed": "https://www.thekitchn.com/main.rss",
+            "description": "A daily web magazine devoted to home cooking and kitchen design, with recipes, tips, and product reviews."
+        },
+        {
+            "url": "https://www.simplyrecipes.com",
+            "name": "Simply Recipes",
+            "feed": "https://feeds-api.dotdashmeredith.com/v1/rss/standard/3b53043e-ca31-4817-b47f-47f69efbb29c",
+            "description": "A recipe blog with a focus on family-friendly, from-scratch cooking, providing well-tested recipes for everyday meals."
+        },
+        {
+            "url": "https://www.delish.com",
+            "name": "Delish",
+            "feed": "https://www.delish.com/rss/all.xml",
+            "description": "A food media brand that offers easy-to-follow recipes, fun food videos, and articles on the latest food trends."
+        },
+        {
+            "url": "https://www.seriouseats.com",
+            "name": "Serious Eats",
+            "feed": "https://feeds-api.dotdashmeredith.com/v1/rss/standard/17e11a7f-5129-4b1e-b6e2-ccb43be260a9",
+            "description": "A website and blog focused on celebrating and demystifying food with rigorously tested recipes and in-depth cooking techniques."
+        },
+        {
+            "url": "https://smittenkitchen.com",
+            "name": "Smitten Kitchen",
+            "feed": "https://smittenkitchen.com/comments/feed/",
+            "description": "A popular food blog featuring step-by-step recipes from a home kitchen, with a focus on approachable comfort food."
+        },
+        {
+            "url": "https://www.budgetbytes.com",
+            "name": "Budget Bytes",
+            "feed": "https://www.budgetbytes.com/feed/",
+            "description": "A food blog specializing in affordable and easy-to-make recipes, with detailed cost breakdowns for each dish."
+        },
+        {
+            "url": "https://damndelicious.net",
+            "name": "Damn Delicious",
+            "feed": "https://damndelicious.net/feed/",
+            "description": "A food blog featuring quick and easy recipes for the home cook, with a focus on simple, flavorful meals."
+        },
+        {
+            "url": "https://sallysbakingaddiction.com",
+            "name": "Sally's Baking Addiction",
+            "feed": "https://sallysbakingaddiction.com/feed/",
+            "description": "A food blog focused on baking with detailed, step-by-step tutorials for cookies, cakes, pastries, and more."
+        },
+        {
+            "url": "https://minimalistbaker.com",
+            "name": "Minimalist Baker",
+            "feed": "https://minimalistbaker.com/feed/",
+            "description": "A food blog specializing in recipes that require 10 ingredients or less, one bowl, or 30 minutes or less to prepare."
+        },
+        {
+            "url": "https://www.loveandlemons.com",
+            "name": "Love & Lemons",
+            "feed": "https://www.loveandlemons.com/feed/",
+            "description": "A food blog featuring healthy, seasonal, and vegetable-forward recipes, with a focus on fresh ingredients."
+        },
+        {
+            "url": "https://cookieandkate.com",
+            "name": "Cookie and Kate",
+            "feed": "https://cookieandkate.com/feed/",
+            "description": "A food blog that features whole foods and vegetarian recipes, with a focus on healthy and delicious meals."
+        },
+        {
+            "url": "https://www.eatingwell.com",
+            "name": "EatingWell",
+            "feed": "https://feeds-api.dotdashmeredith.com/v1/rss/standard/48f08cc7-75b6-45a5-b611-78f56e60deb1",
+            "description": "A magazine and website devoted to healthy eating, with a focus on delicious and nutritious recipes."
+        },
+        {
+            "url": "https://www.tasteofhome.com",
+            "name": "Taste of Home",
+            "feed": "https://www.tasteofhome.com/feed/",
+            "description": "A media brand that focuses on home cooking and baking, with a collection of user-submitted and tested recipes."
+        },
+        {
+            "url": "https://www.thespruceeats.com",
+            "name": "The Spruce Eats",
+            "feed": "https://feeds-api.dotdashmeredith.com/v1/rss/google/6c9cc8fe-7825-4dfa-8639-83b2b323e1fb",
+            "description": "An online resource offering practical, tested recipes and cooking advice for home cooks of all levels."
+        }
+    ],
+    "lifestyle": [
+        {
+            "url": "https://www.vogue.com",
+            "name": "Vogue",
+            "feed": "https://www.vogue.com/feed/rss",
+            "description": "An American monthly fashion and lifestyle magazine that is an authority on fashion, culture, beauty, and runway."
+        },
+        {
+            "url": "https://www.gq.com",
+            "name": "GQ",
+            "feed": "https://www.gq.com/feed/rss",
+            "description": "An American international monthly men's magazine focusing on fashion, style, and culture for men."
+        },
+        {
+            "url": "https://www.cntraveler.com",
+            "name": "Condé Nast Traveler",
+            "feed": "https://www.cntraveler.com/feed/rss",
+            "description": "A luxury and lifestyle travel magazine, providing inspiration and advice for discerning travelers."
+        },
+        {
+            "url": "https://www.travelandleisure.com",
+            "name": "Travel + Leisure",
+            "feed": "https://feeds.distribution.dotdashmeredith.com/v3/rss/5d9fe66b-8748-4de3-9923-9d22d2ad553f",
+            "description": "A travel magazine based in New York City, offering travel guides, tips, and destination inspiration."
+        },
+        {
+            "url": "https://www.lonelyplanet.com",
+            "name": "Lonely Planet",
+            "feed": "https://www.lonelyplanet.com/articles/feature/feed",
+            "description": "A large travel guide book publisher, providing expert advice and information for every kind of traveler."
+        },
+        {
+            "url": "https://www.elle.com",
+            "name": "Elle",
+            "feed": "https://www.elle.com/rss/all.xml",
+            "description": "A worldwide lifestyle magazine of French origin that focuses on fashion, beauty, health, and entertainment."
+        },
+        {
+            "url": "https://www.harpersbazaar.com",
+            "name": "Harper's Bazaar",
+            "feed": "https://www.harpersbazaar.com/rss/all.xml",
+            "description": "An American monthly women's fashion magazine, renowned for its sophisticated and elegant take on fashion."
+        },
+        {
+            "url": "https://www.cosmopolitan.com",
+            "name": "Cosmopolitan",
+            "feed": "https://www.cosmopolitan.com/rss/all.xml",
+            "description": "An American monthly fashion and entertainment magazine for women, covering topics like relationships, beauty, and fashion."
+        },
+        {
+            "url": "https://www.esquire.com",
+            "name": "Esquire",
+            "feed": "https://www.esquire.com/rss/all.xml",
+            "description": "An American men's magazine that covers style, culture, politics, and lifestyle for the modern man."
+        },
+        {
+            "url": "https://www.refinery29.com",
+            "name": "Refinery29",
+            "feed": "https://www.refinery29.com/index.xml",
+            "description": "A multinational digital media and entertainment website focused on young women, covering fashion, beauty, and culture."
+        },
+        {
+            "url": "https://www.apartmenttherapy.com",
+            "name": "Apartment Therapy",
+            "feed": "https://www.apartmenttherapy.com/main.rss",
+            "description": "A lifestyle blog and publishing company focused on home design and decor, offering inspiration and tips for creating a happy home."
+        },
+        {
+            "url": "https://www.goodhousekeeping.com",
+            "name": "Good Housekeeping",
+            "feed": "https://www.goodhousekeeping.com/uk/rss/all.xml",
+            "description": "A women's magazine featuring articles about women's interests, product testing by The Good Housekeeping Institute, recipes, diet, and health."
+        },
+        {
+            "url": "https://www.realsimple.com",
+            "name": "Real Simple",
+            "feed": "https://feeds-api.dotdashmeredith.com/v1/rss/standard/570ed1ce-607e-4e10-8318-73b6aa11895b",
+            "description": "A monthly women's interest magazine that provides smart, practical solutions for everyday life."
+        },
+        {
+            "url": "https://hypebeast.com",
+            "name": "Hypebeast",
+            "feed": "https://hypebeast.com/feed",
+            "description": "A lifestyle, fashion, and streetwear online magazine that is a premier destination for men's contemporary fashion and culture."
+        },
+        {
+            "url": "https://www.highsnobiety.com",
+            "name": "Highsnobiety",
+            "feed": "https://www.highsnobiety.com/category/footwear/feed/",
+            "description": "A global fashion and lifestyle media brand that covers news and trends in fashion, art, music, and culture."
+        }
+    ]
+}

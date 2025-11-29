@@ -1,29 +1,23 @@
-import { useEffect, useState } from "react";
-import useCallbackRef from "./useCallbackRef";
-import ResizeObserver from "resize-observer-polyfill";
+import { useLayoutEffect, useState } from 'react'
 
-const useMeasure = (ref: React.RefObject<unknown>) => {
-  const [element, attachRef] = useCallbackRef();
-  const [bounds, setBounds] = useState<{ width?: number; height?: number }>({});
+export default (ref: React.RefObject<HTMLElement>) => {
+  const [bounds, setBounds] = useState<{ width: number; height: number }>({ width: 0, height: 0 })
   function onResize([entry]) {
     setBounds({
-      height: entry.contentRect.height,
-      width: entry.contentRect.width,
-    });
+      width: entry.borderBoxSize[0].inlineSize,
+      height: entry.borderBoxSize[0].blockSize
+    })
   }
-  useEffect(() => {
-    const observer = new ResizeObserver(onResize);
-    if (element && element.current) {
-      observer.observe(element.current);
+  useLayoutEffect(() => {
+    const observer = new ResizeObserver(onResize)
+    const element = ref.current
+    if (element) {
+      setBounds({ width: element.offsetWidth, height: element.offsetHeight })
+      observer.observe(element)
     }
     return () => {
-      observer.disconnect();
-    };
-  }, [element]);
-  useEffect(() => {
-    attachRef(ref);
-  }, [attachRef, ref]);
-  return bounds;
-};
-
-export default useMeasure;
+      observer.disconnect()
+    }
+  }, [ref.current])
+  return bounds
+}

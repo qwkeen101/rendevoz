@@ -5,7 +5,6 @@ import { assignProperties } from '@/utils'
 import getClosestLink from '@/core/components/whiteboard/node/mindmap/drag/getClosestNodeLink'
 import { debounce } from 'lodash'
 import getAttachableNodes from '@/core/components/whiteboard/node/mindmap/utils/getAttachableNodes'
-
 export default memo(() => {
   const [fakeMindmapNode, setFakeMindmapNode] = useState<{
     element: HTMLElement
@@ -20,7 +19,7 @@ export default memo(() => {
   useEffect(() => {
     const overlay = overlayRef.current
     if (fakeMindmapNode && overlay) {
-      const { offset, initialPointer, node } = fakeMindmapNode
+      const { offset, initialPointer, node, element } = fakeMindmapNode
 
       const debounced = debounce((e: PointerEvent) => {
         const windowPos = {
@@ -30,10 +29,14 @@ export default memo(() => {
         const transformed = instance.coordOps?.transformWindowPositionToPosition(windowPos)
         if (transformed) {
           const targetMindmapNode = getClosestLink({ ...node, x: transformed.x, y: transformed.y }, instance, e)
-          console.log(targetMindmapNode)
-          Array.from(instance.values.ID_TO_NODE_MAP.values()).forEach(
-            i => i.checkMindmapDrag?.(targetMindmapNode, { ...node, x: transformed.x, y: transformed.y })
-          )
+          instance.emit({
+            type: 'nodeDrag',
+            draggingNode: { ...node, x: transformed.x, y: transformed.y },
+            attachableNode: targetMindmapNode,
+            delta: offset,
+            ignoreSnap: true,
+            nodeElement: element
+          })
         }
       }, 0)
       const pointerHandler = (e: PointerEvent) => {
@@ -63,24 +66,11 @@ export default memo(() => {
             }
             const transformed = instance.coordOps?.transformWindowPositionToPosition(windowPos)
             if (transformed) {
-              // not attach to any mindmap, remove it from mindmap
-              if (
-                !Array.from(instance.values.ID_TO_NODE_MAP.values()).some(
-                  i => i.endDragNode?.({ ...node, x: transformed.x, y: transformed.y })
-                )
-              ) {
-                instance.updateNode?.(
-                  fakeMindmapNode.node.id,
-                  w => ({
-                    ...w,
-                    rootId: undefined,
-                    side: undefined,
-                    x: transformed.x,
-                    y: transformed.y
-                  }),
-                  true
-                )
-              }
+              instance.emit({
+                type: 'nodeDragEnd',
+                attachableNode: getClosestLink({ ...node, x: transformed.x, y: transformed.y }, instance, e),
+                draggingNode: { ...node, x: transformed.x, y: transformed.y }
+              })
             }
           }
           moved.current = false
@@ -98,7 +88,6 @@ export default memo(() => {
     mindmapOps: {
       ...instance.mindmapOps,
       startDragMindmapChild: (nodeId, e) => {
-        if (e.target instanceof HTMLElement && e.target.closest('[data-disable-add-sub]')) return
         getAttachableNodes(instance, nodeId)
         const nodeDOM = instance.nodeOps?.getNodeDOM(nodeId)
         const node = instance.getNode?.(nodeId)

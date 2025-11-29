@@ -12,7 +12,7 @@ export default ({ onClose, onAddProp }: { onClose?: VoidFunction; onAddProp?: (p
   }, [allPropKeys])
   const allProps = ObjectStore('metaProp').useMultiple(keys)
   return (
-    <WithBorder padding={'0.25rem 0'}>
+    <WithBorder className={'py-1 min-w-52'}>
       <Menu.NavigationMenu
         onSelect={item => {
           if (!item.subMenu) {
@@ -26,24 +26,27 @@ export default ({ onClose, onAddProp }: { onClose?: VoidFunction; onAddProp?: (p
           }
         }}
         layout={[
-          {
-            type: 'item',
-            icon: 'park-all-application',
-            text: 'Existing properties',
-            key: 'existing-props',
-            subMenuStyle: {
-              maxHeight: 300,
-              overflowY: 'auto'
-            },
-            subMenu: allProps.map(i => ({
-              type: 'item',
-              key: i.id,
-              text: i.name,
-              icon: i.icon,
-              id: i.id,
-              propType: i.propType
-            }))
-          },
+          allProps.length > 0
+            ? {
+                type: 'item',
+                icon: 'park-all-application',
+                text: 'Existing properties',
+                key: 'existing-props',
+                subMenuStyle: {
+                  maxHeight: 300,
+                  overflowY: 'auto',
+                  minWidth: 200
+                },
+                subMenu: allProps.map(i => ({
+                  type: 'item',
+                  key: i.id,
+                  text: i.name,
+                  icon: i.icon,
+                  id: i.id,
+                  propType: i.propType
+                }))
+              }
+            : undefined,
           {
             type: 'item',
             text: 'Text',
@@ -99,8 +102,17 @@ export default ({ onClose, onAddProp }: { onClose?: VoidFunction; onAddProp?: (p
             propType: 'file',
             key: 'file',
             icon: 'park-link'
+          },
+          {
+            type: 'item',
+            text: 'Question',
+            propType: 'question',
+            key: 'question',
+            icon: 'park-comments'
           }
-        ].map(i => ({ ...i, text: t(`general.${i.text}`) }))}
+        ]
+          .filter(i => i)
+          .map(i => ({ ...i, text: t(`general.${i.text}`) }))}
       />
     </WithBorder>
   )

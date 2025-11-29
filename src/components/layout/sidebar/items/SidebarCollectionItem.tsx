@@ -1,226 +1,157 @@
-import { AnimatePopover, Content, Icon, Modal } from '@/components'
-import CollectionForm from '@/components/form/CollectionForm'
-import { collectionsAtom } from '@/api/stores/collection.store'
-import { CollectionStore, globalStore, MetaStore } from '@/api/stores'
-import ClassName from '@/styles/classNames'
-import { css } from '@emotion/css'
+import { AnimatePopover, Content } from '@/components'
+import { CollectionStore, MetaStore } from '@/api/stores'
 import { FC, memo, useMemo, useRef } from 'react'
-import { useGlobalAtomValue, useSelectGlobalAtomValue, useToggle } from '@/hooks'
-import { ICollectionItem } from '~/typings/data'
-import { IconNameItem } from '../SidebarCollection'
 import useSidebarItemContextMenu from '../useSidebarItemContextMenu'
-import useSidebarItemDrag, { sidebarDraggingState } from '../useSidebarItemDrag'
+import useSidebarItemDrag from '../useSidebarItemDrag'
 import { ISidebarItem } from './type'
 import SidebarObjectItem from './SidebarObjectItem'
-import { Rendevoz } from '@/core/rendevoz'
 import { DraggableElement } from '@/core'
-import { droppableItemHovered } from '@/styles/classNames/drag'
+import { SidebarExpandItem } from '@/components/layout/sidebar/main'
+import usePasteMetaObject from '@/core/object/usePasteMetaObject'
+import { compareStrings } from '@/utils/str'
+import { Icons } from '@/consts'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
+import { toggleItem } from '@/utils'
 
-const SidebarCollectionItem: FC<ISidebarItem> = memo(
-  ({ id, parentId, parentType, draggable = true, onClick, onlyCollection, selectMode, displayPinned = false }) => {
-    const { updateCollection, deleteCollection } = CollectionStore
-
-    const collection = useSelectGlobalAtomValue(collectionsAtom, c => c.get(id))
-
-    const items = collection?.items
-
-    const { childrenCollections, childrenMetas } = useMemo(() => {
-      console.log(items)
-      if (!items) {
-        return {
-          childrenMetas: [],
-          childrenCollections: []
-        }
-      }
-      const childrenCollections = items?.filter(i => i.type === 'collection' && i.id) as Required<ICollectionItem>[]
-      const childrenMetas = items?.filter(i => i.type === 'meta' && i.id) as Required<ICollectionItem>[]
-      const map = MetaStore.getMetaObjectsMap()
-      const collectionMap = globalStore.get(collectionsAtom)
-      childrenCollections.sort((a, b) =>
-        (collectionMap.get(a.id)?.name || '1').localeCompare(collectionMap.get(b.id)?.name || '1', undefined, {
-          numeric: true,
-          sensitivity: 'base'
-        })
-      )
-      if (!onlyCollection) {
-        childrenMetas.sort((a, b) =>
-          (map.get(a.id)?.name || '1').localeCompare(map.get(b.id)?.name || '1', undefined, { numeric: true, sensitivity: 'base' })
-        )
-      }
+const SidebarCollectionItem: FC<ISidebarItem> = memo(({ id, pin, parentId, draggable = true, onClick }) => {
+  const collection = CollectionStore.useValue(id)
+  const items = collection?.items
+  const sidebarExpandData = KeyvalueStore.useValue('sidebarExpandData')
+  const collapseKey = `${pin ? 'pin' : 'collection'}_${id}`
+  const expanded = sidebarExpandData?.includes(collapseKey)
+  const inCollectionCollections = CollectionStore.useMultiple(
+    useMemo(() => items?.filter(i => i.type === 'collection').map(i => i.id) || [], [items])
+  )
+  const inCollectionMetas = MetaStore.useMultiple(useMemo(() => items?.filter(i => i.type === 'meta').map(i => i.id) || [], [items]))
+  const { childrenCollections, childrenMetas } = useMemo(() => {
+    if (!items) {
       return {
-        childrenCollections,
-        childrenMetas: onlyCollection ? [] : childrenMetas
+        childrenMetas: [],
+        childrenCollections: []
       }
-    }, [items])
-
-    const allMetas = MetaStore.useMetaObjectsMap()
-    const allCollections = useGlobalAtomValue(collectionsAtom)
-
-    const childrenCollectionsSize = childrenCollections.filter(u => !allCollections.get(u.id)?.deleted).length
-    const childrenMetasSize = childrenMetas.filter(i => !allMetas.get(i.id)?.deleted && allMetas.has(i.id)).length
-
-    const childrenLength = childrenCollectionsSize + childrenMetasSize
-
-    const hideChildren = !collection?.toggled
-
-    const [editModalVisible, toggleEditModalVisible] = useToggle(false)
-
-    const ref = useRef<HTMLDivElement>(null)
-
-    const { droppable, hovered } = draggable
-      ? useSidebarItemDrag({
-          id,
-          type: 'collection',
-          draggableElementRef: ref,
-          droppableElementRef: ref,
-          isInRoot: parentId === 0,
-          parentId,
-          parentType
-        })
-      : {
-          droppable: false,
-          hovered: false
-        }
-
-    const { contextMenuPortal } = useSidebarItemContextMenu(
-      ref,
-      {
+    }
+    const sortedCollections = inCollectionCollections.toSorted((a, b) => compareStrings(a.name, b.name))
+    const sortedMetas = inCollectionMetas.filter(i => !i.deleted).toSorted((a, b) => compareStrings(a.name, b.name))
+    return {
+      childrenCollections: sortedCollections,
+      childrenMetas: sortedMetas
+    }
+  }, [collection, inCollectionMetas, inCollectionCollections])
+  const childrenCollectionsSize = childrenCollections.length
+  const childrenMetasSize = childrenMetas.length
+  const childrenLength = childrenCollectionsSize + childrenMetasSize
+  const hideChildren = !expanded
+  const ref = useRef<HTMLDivElement>(null)
+  const { droppable, hovered } = draggable
+    ? useSidebarItemDrag({
+        id,
         type: 'collection',
-        id
-      },
-      {
-        pinned: collection?.pinned,
-        name: collection?.name,
-        onEdit: () => collection && toggleEditModalVisible(true),
-        onPin: () => collection && updateCollection({ id: collection.id, pinned: !collection.pinned }),
-        onDelete: () => collection && deleteCollection(collection.id, false),
-        onDeleteWithMeta: () => collection && deleteCollection(collection.id, true)
+        draggableElementRef: ref,
+        droppableElementRef: ref,
+        isInRoot: parentId === 0,
+        parentId
+      })
+    : {
+        droppable: false,
+        hovered: false
       }
-    )
 
-    if (!collection || collection.deleted || (collection.pinned && displayPinned === false)) return null
+  const { contextMenuPortal } = useSidebarItemContextMenu(
+    ref,
+    {
+      type: 'collection',
+      id
+    },
+    {
+      pinned: collection?.pinned
+    }
+  )
+  usePasteMetaObject(ref, metas => {
+    const currentItems = collection?.items
+    const notInMetas = metas.filter(i => !currentItems?.some(o => o.id === i.id))
+    if (notInMetas.length) {
+      CollectionStore.addItemToCollection(
+        notInMetas.map(i => ({
+          type: 'meta',
+          id: i.id
+        })),
+        id
+      )
+    }
+  })
+  if (!collection || collection.deleted) return null
 
-    return (
-      <Content
-        flex
-        column
-        style={{
-          userSelect: 'none'
-        }}
+  return (
+    <Content
+      flex
+      column
+      style={{
+        userSelect: 'none'
+      }}
+    >
+      {contextMenuPortal}
+      <AnimatePopover
+        visible={hovered && !droppable}
+        padding={10}
+        content={`${!droppable && "Can't"} Move into ${collection.name}`}
+        positions={['top']}
+        containerStyle={{ zIndex: '10000', pointerEvents: 'none' }}
+        innerRef={ref}
       >
-        <Modal noStyle visible={editModalVisible} onClose={toggleEditModalVisible}>
-          <CollectionForm
-            initialObject={collection}
-            onSubmit={collection => {
-              updateCollection({
-                id,
-                ...collection
-              })
-              toggleEditModalVisible(false)
-            }}
-            onBack={toggleEditModalVisible}
-          />
-        </Modal>
-        {contextMenuPortal}
-        <AnimatePopover
-          visible={hovered && !droppable}
-          padding={10}
-          content={
-            <div
-              className={'font-size-13'}
-              style={{
-                background: 'rgba(0,0,0,0.8)',
-                color: 'white',
-                borderRadius: 4,
-                padding: '2px 4px'
-              }}
-            >
-              {!droppable && "Can't"} Move into {collection.name}
-            </div>
-          }
-          positions={['top']}
-          containerStyle={{ zIndex: '10000', pointerEvents: 'none' }}
-          innerRef={ref}
+        <DraggableElement
+          onDragStart={() => {
+            CollectionStore.dragState = {
+              draggingItemId: collection.id,
+              draggingItemType: 'collection',
+              sourceFromId: parentId
+            }
+          }}
+          draggable={draggable}
+          draggingDetails={{ type: 'collection', collectionId: collection.id }}
         >
-          <DraggableElement
-            onDragStart={() => {
-              sidebarDraggingState.current = {
-                draggingItemId: collection.id,
-                draggingItemType: 'collection',
-                itemIsInRoot: parentId === 0,
-                sourceFromId: parentId,
-                sourceFromType: parentType
-              }
-            }}
-            draggable={draggable}
-            draggingDetails={{ type: 'collection', collectionId: collection.id }}
-          >
-            <Content
-              flex
-              onClick={e => {
-                onClick?.(e, {
-                  type: 'collection',
-                  id
-                })
+          <div>
+            <SidebarExpandItem
+              expandable={childrenLength > 0}
+              onExpand={() => {
+                KeyvalueStore.updateOne('sidebarExpandData', toggleItem(sidebarExpandData, collapseKey))
               }}
-              alignItems="center"
-              justifyContent="space-between"
-              className={css([ClassName.flatButton(4, '3px 8px 3px 6px'), hovered && droppableItemHovered(droppable)])}
-            >
-              <Content flex gap={4}>
-                <Icon
-                  onClick={e => {
-                    e.stopPropagation()
-                    CollectionStore.updateCollection({ ...collection, toggled: !collection.toggled }, true)
-                  }}
-                  style={{
-                    transform: !hideChildren ? 'rotate(90deg)' : undefined,
-                    transition: 'all 0.2s ease',
-                    transformOrigin: 'center'
-                  }}
-                  size={14}
-                  theme="filled"
-                  name="park-right-one"
-                />
-                {collection && (
-                  <IconNameItem
-                    onClick={e => {
-                      if (onClick) {
-                        return
-                      }
-                      Rendevoz.Actions.Open.Group.openCollectionGroup(collection.id)
-                    }}
-                    className={'font-size-13'}
-                    name={collection.name || 'Unnamed Collection'}
-                    color={collection.color}
-                    icon={collection.icon || 'park-folder-close'}
-                  />
-                )}
-              </Content>
-              {childrenLength ? <div className={'transparent-font font-size-12'}>{childrenLength}</div> : undefined}
-            </Content>
-          </DraggableElement>
-        </AnimatePopover>
-        {!hideChildren && (
-          <Content flex column style={{ paddingLeft: 15 }}>
-            {childrenCollections?.map(i => (
-              <SidebarCollectionItem
-                displayPinned={displayPinned}
-                selectMode={selectMode}
-                onClick={onClick}
-                onlyCollection={onlyCollection}
-                key={i.id}
-                id={i.id}
-                parentId={id}
-                parentType="collection"
-              />
-            ))}
-            {!onlyCollection && childrenMetas.map(i => <SidebarObjectItem key={i.id} id={i.id} parentId={id} parentType="collection" />)}
-          </Content>
-        )}
-      </Content>
-    )
-  }
-)
+              childrenSize={childrenLength}
+              name={collection.name}
+              color={collection.color}
+              expanded={expanded}
+              icon={Icons.Folder}
+              style={
+                hovered && droppable
+                  ? {
+                      background: 'var(--select-color-transparent-light)',
+                      boxShadow: '0 0 0 1px var(--select-color)'
+                    }
+                  : undefined
+              }
+              onClick={e => {
+                if (onClick) {
+                  onClick?.(e, {
+                    type: 'collection',
+                    id
+                  })
+                  return
+                }
+                KeyvalueStore.updateOne('sidebarExpandData', toggleItem(sidebarExpandData, collapseKey))
+              }}
+            />
+          </div>
+        </DraggableElement>
+      </AnimatePopover>
+      {!hideChildren && (
+        <div className={'pl-3'}>
+          {childrenCollections?.map(i => <SidebarCollectionItem onClick={onClick} key={i.id} id={i.id} parentId={id} />)}
+          {childrenMetas.map(i => (
+            <SidebarObjectItem key={i.id} id={i.id} parentId={id} parentType="collection" />
+          ))}
+        </div>
+      )}
+    </Content>
+  )
+})
 
 export default SidebarCollectionItem

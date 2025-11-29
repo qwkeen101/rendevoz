@@ -4,7 +4,7 @@ import { ReactEditor, useSlateStatic } from '../index'
 import { useIsomorphicLayoutEffect } from '../hooks/use-isomorphic-layout-effect'
 import { isDecoratorRangeListEqual } from '../utils/range-list'
 import { EDITOR_TO_KEY_TO_ELEMENT, ELEMENT_TO_NODE, NODE_TO_ELEMENT } from '../utils/weak-maps'
-import { RenderLeafProps, RenderPlaceholderProps } from './editable'
+import { RenderLeafProps } from './editable'
 import Leaf from './leaf'
 
 /**
@@ -15,11 +15,10 @@ const Text = (props: {
   decorations: Range[]
   isLast: boolean
   parent: Element
-  renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
   text: SlateText
 }) => {
-  const { decorations, isLast, parent, renderPlaceholder, renderLeaf, text } = props
+  const { decorations, isLast, parent, renderLeaf, text } = props
   const editor = useSlateStatic()
   const ref = useRef<HTMLSpanElement>(null)
   const leaves = SlateText.decorations(text, decorations)
@@ -33,7 +32,6 @@ const Text = (props: {
       <Leaf
         isLast={isLast && i === leaves.length - 1}
         key={`${key.id}-${i}`}
-        renderPlaceholder={renderPlaceholder}
         leaf={leaf}
         text={text}
         parent={parent}

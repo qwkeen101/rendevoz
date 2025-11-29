@@ -1,19 +1,19 @@
 import { RenderElementProps } from 'slate-react'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { SyncedBlockElement } from '~/typings/components/editor/outerElements'
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useState } from 'react'
 import { Editor, Node, Range, Transforms } from 'slate'
-import { ReactEditor, useRenderObject, useSlate, useSlateStatic } from '@/core'
-import { GlobalInstance, useDebounceEffect, useIsIn, useMemoizedFn, useSelectAtomValue } from '@/hooks'
-import { Colors } from '@/consts'
-import { AnimatePopover, Button, Content, Icon, IconWithPopover, WithBorder } from '@/components'
-import { ClassName } from 'rendevoz'
+import { InlineObject, ReactEditor, useSlate } from '@/core'
+import { useDebounceEffect, useIsIn, useMemoizedFn, useSelectAtomValue } from '@/hooks'
+import { Colors, Icons } from '@/consts'
+import { AnimatePopover, Button, Icon, IconWithPopover, WithBorder } from '@/components'
 import useCheckSyncInWhere from '@/core/components/editor/elements/synced/useCheckSyncInWhere'
 import _ from 'lodash'
 import { HistoryEditor } from 'slate-history'
 import { useTranslation } from 'react-i18next'
 import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
 import useEditorBlockHandle from '@/core/components/editor/hooks/useBlockHandle'
+import trans from '@/consts/trans'
 
 const SyncedBlock = ({ element, children }: RenderElementProps) => {
   const syncElement = element as SyncedBlockElement
@@ -41,7 +41,6 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
   const memoizedReplace = useMemoizedFn(() => {
     if (blockDetails && blockDetails.syncVersion > syncElement.syncVersion) {
       const path = ReactEditor.findPath(editor, element)
-      console.log('sync yo block')
       Promise.resolve().then(() => {
         Editor.withoutNormalizing(editor, () => {
           Transforms.removeNodes(editor, {
@@ -101,7 +100,7 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
     [syncElement.children],
     { wait: 250 }
   )
-  const [isIn, setIsIn] = useState(false)
+  const { ref, isIn } = useIsIn()
   const [popoverVisible, setPopoverVisible] = useState(false)
   const handleUnsync = () => {
     const path = ReactEditor.findPath(editor, element)
@@ -119,7 +118,7 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
 
   return (
     <>
-      <div data-drag={true} onPointerMove={() => setIsIn(true)} onPointerLeave={() => setIsIn(false)}>
+      <div data-drag={true} ref={ref}>
         {children}
         <div contentEditable={'false'}>
           {showBlockShadow !== false && (
@@ -138,102 +137,79 @@ const SyncedBlock = ({ element, children }: RenderElementProps) => {
             ></div>
           )}
           <div
-            contentEditable={'false'}
+            className={
+              'flex absolute top-0 right-0 items-center pointer-events-none gap-1 transition-opacity transparent-font font-size-12 z-20'
+            }
             style={{
-              position: 'absolute',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              top: 0,
-              left: 0,
-              opacity: focused || isIn || popoverVisible ? 1 : 0,
-              width: '100%',
-              pointerEvents: 'none',
-              zIndex: 20,
-              transition: 'opacity 0.2s ease'
+              marginLeft: 'auto',
+              marginBottom: '-4px',
+              opacity: focused || isIn || popoverVisible ? 1 : 0
             }}
-            className={'transparent-font font-size-12'}
+            contentEditable={'false'}
           >
-            <Content
-              flex
-              gap={4}
-              style={{
-                background: Colors.Background.Global,
-                border: Colors.Consts.Border,
-                marginLeft: 'auto',
-                marginBottom: '-4px',
-                padding: '3px 3px 3px 6px',
-                borderRadius: 4
-              }}
-              contentEditable={'false'}
-              alignItems={'center'}
+            <AnimatePopover
+              onVisiblityChange={v => setPopoverVisible(v)}
+              parentElement={ref.current}
+              positions={['bottom', 'top']}
+              padding={6}
+              content={
+                <WithBorder className={'popover-menu flex flex-col gap-0.5 px-2 !py-2'}>
+                  {blockDetails?.syncedMetaIds.map(i => (
+                    <InlineObject
+                      onClick={() => {
+                        Global.goBackOps.goBackToSyncBlock(syncMeta.id, i)
+                      }}
+                      id={i}
+                      key={i}
+                    />
+                  ))}
+                </WithBorder>
+              }
             >
-              <AnimatePopover
-                onVisiblityChange={v => setPopoverVisible(v)}
-                withClickCover={true}
-                positions={['bottom', 'top']}
-                content={
-                  <WithBorder style={{ maxWidth: 300 }} padding={'4px 8px'} width={140}>
-                    {blockDetails?.syncedMetaIds.map(i => <InlinePageRenderer syncMetaId={syncMeta.id} metaId={i} />)}
-                  </WithBorder>
-                }
-              >
-                <Content
-                  flex
-                  gap={6}
-                  contentEditable={'false'}
-                  style={{
-                    pointerEvents: 'auto',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {t('editor.sync in objects', { num: blockDetails?.syncedMetaIds.length })}
-                </Content>
-              </AnimatePopover>
+              <div className={'pointer-events-auto cursor-pointer mr-1'}>
+                {t('editor.sync in objects', { num: blockDetails?.syncedMetaIds.length })}
+              </div>
+            </AnimatePopover>
 
-              {editor.editorMode !== 'syncedBlock' && (
+            {editor.editorMode !== 'syncedBlock' && (
+              <>
+                <Icon
+                  tooltip={t(trans.CopyLink)}
+                  name={Icons.Link}
+                  size={14}
+                  className={'square-button pointer-events-auto'}
+                  onClick={() => {
+                    Global.metaOps.copyLink?.(syncMeta.id)
+                  }}
+                />
                 <IconWithPopover
+                  size={14}
                   onVisiblityChange={v => setPopoverVisible(v)}
-                  renderOnParent={false}
                   withClickCover={true}
+                  placement={['bottom', 'top']}
                   content={setV => (
-                    <WithBorder padding={6}>
+                    <WithBorder className={'popover-menu-mid px-1'}>
                       <Button.IconButton
-                        icon={'park-info'}
-                        text={t('general.View details')}
+                        icon={Icons.Info}
+                        text={t(trans.Meta.ViewDetails)}
                         onClick={() => {
                           setV(false)
-                          GlobalInstance.metaOps?.openDetails(syncMeta.id)
+                          Global.metaOps.openDetails?.(syncMeta.id)
                         }}
                       />
                       <Button.IconButton icon={'park-unlink'} onClick={handleUnsync} text={t('editor.unsync in this note')} />
-                      <Button.IconButton icon={'park-delete-one'} text={t('general.delete')} onClick={handleDelete} dangerous />
+                      <Button.IconButton icon={Icons.Delete} text={t(trans.Delete)} onClick={handleDelete} dangerous />
                     </WithBorder>
                   )}
-                  name={'park-more'}
-                  containerStyle={{
-                    background: Colors.Background.Global,
-                    pointerEvents: 'auto'
-                  }}
-                  className={ClassName.flatButton(3, '1px 2px')}
+                  name={Icons.More}
+                  className={'square-button pointer-events-auto'}
                 />
-              )}
-            </Content>
+              </>
+            )}
           </div>
         </div>
       </div>
     </>
   )
-}
-
-const InlinePageRenderer = ({ metaId, syncMetaId }: { metaId: number; syncMetaId: number }) => {
-  const { renderInline } = useRenderObject({ metaObjectId: metaId })
-  return renderInline({
-    ellipsisLine: 1,
-    containerStyle: { fontSize: 13 },
-    onClick: () => {
-      GlobalInstance.goBackOps?.goBackToSyncBlock(syncMetaId, metaId)
-    }
-  })
 }
 export default SyncedBlock

@@ -33,7 +33,7 @@ export default (
     if (e.clientY < editorNodeBounding.y) {
       const firstElement = editor.children[0] as CustomElement | undefined
       if (firstElement) {
-        return getDragResult('top', firstElement.id, e)
+        return getDragResult('top', firstElement.id, e, editor)
       }
       return
     }
@@ -42,7 +42,7 @@ export default (
       if (lastVisibleElement) {
         const lastVisibleNodeBounding = ReactEditor.toDOMNode(editor, lastVisibleElement).getBoundingClientRect()
         if (e.clientY > lastVisibleNodeBounding.bottom) {
-          return getDragResult('bottom', lastVisibleElement.id, e)
+          return getDragResult('bottom', lastVisibleElement.id, e, editor)
         }
       }
     } catch (e) {

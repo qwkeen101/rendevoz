@@ -12,9 +12,8 @@ import {
   WhiteboardIcon
 } from './icons'
 import { ReactElement } from 'react'
-import { Rendevoz } from '@/core/rendevoz'
 
-export const NAME_TO_ICON: Record<ReturnType<typeof Rendevoz.Utils.Object.getMetaObjectIcon> | 'park-pin', ReactElement> = {
+export const NAME_TO_ICON: Record<ReturnType<typeof Global.utils.getIcon> | 'park-pin', ReactElement> = {
   'park-notes': <NotesIcon />,
   'park-pdf': <PdfIcon />,
   'park-web-page': <WebpageIcon />,

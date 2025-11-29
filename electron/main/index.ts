@@ -1,7 +1,6 @@
 import { app } from 'electron'
 import { release } from 'os'
 import startElectron from './startup/startup'
-
 // Disable GPU Acceleration for Windows 7
 if (release().startsWith('6.1')) app.disableHardwareAcceleration()
 
@@ -12,5 +11,6 @@ if (!app.requestSingleInstanceLock()) {
   app.quit()
   process.exit(0)
 }
-
 startElectron()
+
+// createWebServer()

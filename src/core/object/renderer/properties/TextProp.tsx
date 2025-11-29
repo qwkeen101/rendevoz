@@ -1,8 +1,8 @@
-import AutosizeTextarea from '@/components/custom/input/AutoSizeTextArea'
 import { CSSProperties, useRef, useState } from 'react'
 import usePopoverCell from '@/core/components/group/hooks/usePopoverCell'
 import { PopupWrapper } from '@/core/components/group/components'
 import { ClassName } from 'rendevoz'
+import { AutosizeTextarea } from '@/components'
 import isHotkey from 'is-hotkey'
 import { Colors, KEY } from '@/consts'
 
@@ -57,7 +57,7 @@ export default ({
         style={{
           width: '100%',
           height: '100%',
-          color: placeholder && value === undefined ? Colors.Font.Transparent : style?.color,
+          color: placeholder && !value ? Colors.Font.Transparent : style?.color,
           ...style
         }}
         onClick={e => {
@@ -67,14 +67,13 @@ export default ({
           openPopover(popoverElement || parent)
         }}
       >
-        {value ?? placeholder}
+        {value || placeholder}
       </div>
       {renderPopover(box => (
         <PopupWrapper box={box}>
           <AutosizeTextarea
             autoFocus={true}
             className={ClassName.noStyleInput}
-            spellCheck="false"
             onKeyDown={e => {
               if (isHotkey(KEY.Enter, e)) {
                 e.preventDefault()
@@ -86,7 +85,8 @@ export default ({
               padding: '6px 6px',
               resize: 'none',
               width: '100%',
-              fontSize: 14,
+              maxHeight: '400px',
+              overflowY: 'auto',
               display: 'block'
             }}
             value={value}

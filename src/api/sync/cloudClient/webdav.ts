@@ -49,13 +49,17 @@ const WebdavSync: Omit<ICloudSyncClient, 'queueFiles'> & {
   registerClient: (opts: { url: string; username: string; password: string; defaultFolder?: string }) => void
 } = {
   registerClient: opts => {
-    const client = webdav.createClient(opts.url, {
-      username: opts.username,
-      password: opts.password,
-      authType: AuthType.Password
-    })
-    WebdavSync.defaultFolder = opts.defaultFolder
-    WebdavSync.client = client
+    try {
+      const client = webdav.createClient(opts.url, {
+        username: opts.username,
+        password: opts.password,
+        authType: AuthType.Password
+      })
+      WebdavSync.defaultFolder = opts.defaultFolder
+      WebdavSync.client = client
+    } catch (e) {
+      console.error(e)
+    }
   },
   cancelAllTasks: () => {
     Array.from(CancelControllersMap.values()).forEach(f => {

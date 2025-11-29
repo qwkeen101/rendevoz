@@ -136,7 +136,7 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
                 />
               )}
               <Button.IconButton
-                icon={'park-card-two'}
+                icon={'park-degree-hat'}
                 text={t('general.Flashcards')}
                 suffixIcon={'park-right'}
                 onClick={() => {
@@ -172,7 +172,7 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
                   instance.deleteView?.(groupState.currentView?.id)
                 }
               }}
-              text={t('general.Delete view')}
+              text={t('group.Delete view')}
             />
           </>
         )
@@ -202,7 +202,7 @@ export default ({ onClose }: { onClose: VoidFunction }) => {
       {currentView !== 'main' && (
         <Content flex gap={10} style={{ marginBottom: 10, padding: '6px 6px 0px 8px' }}>
           <Icon
-            className={'button p-4'}
+            className={'button p-4px'}
             name={'park-arrow-left'}
             onClick={() => {
               if (typeof currentView === 'object') {

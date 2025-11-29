@@ -2,7 +2,6 @@ import { ObjectFamily } from '@/api/stores/object/object.store'
 import FileSystem from '@/api/fileSystem'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import getLocalTable from '../getLocalTable'
-import { deleteRendefile } from '@/utils'
 import { INote, MetaGroup } from '~/typings'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 

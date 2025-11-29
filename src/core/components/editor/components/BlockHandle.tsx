@@ -1,38 +1,120 @@
-import { Icon, Tooltip } from '@/components'
-import { useGlobalIsDragging } from '@/core'
-import { css } from '@emotion/css'
+import { Icon } from '@/components'
+import { ReactEditor, useGlobalIsDragging } from '@/core'
 import { AnimatePresence, motion } from 'framer-motion'
-import { FC, memo, MouseEventHandler, RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { FC, memo, MouseEventHandler, RefObject, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import useReadOnlyEditor from '../hooks/useReadOnly'
 import ClassName from '@/styles/classNames'
-import { useAtomValue } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 import { EditorBlockHandleAtom } from '../hooks/useBlockHandle'
 import useEventListener from '@/hooks/utils/useEventListener'
 import { Colors } from '@/consts'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import { EditorOverlayStateAtom } from '@/core/components/editor/components/overlay/useEditorOverlay'
+import PageConfigContext from '@/core/components/PageConfigContext'
+import { HistoryEditor } from 'slate-history'
+import { Path, Transforms } from 'slate'
+import rebuildDragSelect from '@/core/components/editor/utils/rebuildDragSelect'
+import { normalizeEditorDragBlocksToGlobalDraggingDetails } from '@/core/components/editor/hooks/drag/useEditorDrag'
+import useIsDragging from '@/core/components/editor/hooks/useIsDragging'
+import { CustomEditor } from '~/typings'
+import { Id } from '@/utils'
+import { useClickOutside } from '@/hooks'
+import useEditorPointerMove from '@/core/components/editor/hooks/useEditorPointerMove'
 
 type IBlockHandle = FC<{
-  outerVisible: boolean
-  onDragClick: MouseEventHandler
-  onMenuClick: MouseEventHandler
-  onAddClick: MouseEventHandler
-  containerRef: RefObject<HTMLElement>
+  editor: CustomEditor
+  scrollElementRef: RefObject<HTMLElement>
 }>
-const BlockHandle: IBlockHandle = ({ outerVisible, onAddClick, onDragClick, onMenuClick, containerRef }) => {
+const BlockHandle: IBlockHandle = ({ scrollElementRef, editor }) => {
   const [innerVisible, setInnerVisible] = useState(false)
   const [globalDragging] = useGlobalIsDragging()
-  const instance = useEditorInstance()
-  const blockHandleState = useAtomValue(EditorBlockHandleAtom)
+  const [isDragging, setIsDragging] = useIsDragging()
+  const [blockHandleState, setBlockHandle] = useAtom(EditorBlockHandleAtom)
   const { visible, targetHeight, top, left } = blockHandleState
   const overlayStata = useAtomValue(EditorOverlayStateAtom)
-  const realVisible = (outerVisible && visible) || (overlayStata.visible && overlayStata.content === 'blockDetailsMenu')
   const isReadOnly = useReadOnlyEditor()
+  const realVisible = (!!(!isDragging && !isReadOnly) && visible) || (overlayStata.visible && overlayStata.content === 'blockDetailsMenu')
   const { t } = useTranslation()
+  const pageConfig = useContext(PageConfigContext)
   const currentXY = useRef(undefined)
-
+  const instance = useEditorInstance()
+  useEditorPointerMove(instance, editor, scrollElementRef)
+  useClickOutside(() => {
+    setBlockHandle(s => (s.visible === false ? s : { ...s, visible: false }))
+  }, scrollElementRef)
+  useLayoutEffect(() => {
+    const keyDownHandler = () => {
+      setBlockHandle(s => (s.visible ? { ...s, visible: false } : s))
+    }
+    document.addEventListener('keydown', keyDownHandler)
+    return () => {
+      document.removeEventListener('keydown', keyDownHandler)
+    }
+  }, [])
+  const handleDragClick = useCallback(
+    e => {
+      HistoryEditor.withoutSaving(editor, () => {
+        Transforms.deselect(editor)
+      })
+      if (instance.values.selectedBlocks.size > 0) {
+        const rebuild = rebuildDragSelect(instance, e)
+        if (rebuild) {
+          Global.commonOps?.setDraggingElements(rebuild)
+        }
+      } else {
+        const dragElement = editor.currentEnterElement
+        if (dragElement) {
+          const dragDOM = ReactEditor.toDOMNode(editor, dragElement)
+          const cloned = dragDOM.cloneNode(true)
+          const rect = dragDOM.getBoundingClientRect()
+          const wrapper = document.createElement('div')
+          wrapper.style.width = `${rect.width}px`
+          wrapper.style.height = `${rect.height}px`
+          wrapper.appendChild(cloned)
+          wrapper.classList.add('disable-all-pointer-events')
+          Global.commonOps?.setDraggingElements(wrapper)
+        }
+      }
+      normalizeEditorDragBlocksToGlobalDraggingDetails(instance).then(res => {
+        Global.values.draggingDetails = res
+        Global.commonOps?.startDrag()
+      })
+    },
+    [setIsDragging]
+  )
+  const handleAddClick = () => {
+    editor.currentAddClickElement = editor.currentEnterElement
+    if (editor.currentAddClickElement) {
+      const currentElementPath = instance.getElementPathById?.(editor.currentAddClickElement.id)
+      if (currentElementPath) {
+        Transforms.insertNodes(
+          editor,
+          {
+            type: 'paragraph',
+            id: Id.getId(),
+            children: [{ text: '' }]
+          },
+          { at: Path.next(currentElementPath) }
+        )
+        Transforms.select(editor, Path.next(currentElementPath))
+      }
+    }
+  }
+  const handleMenuClick: MouseEventHandler = e => {
+    const ele = editor.currentEnterElement
+    if (ele) {
+      instance.selectOps?.selectBlock(ele.id)
+      editor.currentAddClickElement = ele
+      setIsDragging(false)
+      const rect = e.currentTarget.getBoundingClientRect()
+      instance.overlayOps?.open('blockDetailsMenu', {
+        x: rect.right - 16,
+        y: rect.top
+      })
+    }
+  }
   const hasMouseSelection = () => {
     return !window.getSelection()?.isCollapsed
   }
@@ -60,39 +142,7 @@ const BlockHandle: IBlockHandle = ({ outerVisible, onAddClick, onDragClick, onMe
       }
     }
   }, [realVisible])
-  const AddTooltip = (
-    <div
-      className={css({
-        fontSize: '13px',
-        fontWeight: 500,
-        pointerEvents: 'none'
-      })}
-    >
-      <span style={{ color: 'white' }}>{t('editor.click')} </span>
-      <span style={{ color: 'rgba(255,255,255,0.5)' }}>{t('editor.to add a block below')}</span>
-    </div>
-  )
-  const DragTooltip = (
-    <div
-      className={css({
-        fontSize: '13px',
-        fontWeight: 500,
-        display: 'flex',
-        pointerEvents: 'none',
-        flexDirection: 'column',
-        alignItems: 'center'
-      })}
-    >
-      <div>
-        <span style={{ color: 'white' }}>{t('editor.drag')} </span>
-        <span style={{ color: 'rgba(255,255,255,0.5)' }}>{t('editor.to move block')}</span>
-      </div>
-      <div>
-        <span style={{ color: 'white' }}>{t('editor.click')} </span>
-        <span style={{ color: 'rgba(255,255,255,0.5)' }}>{t('editor.to open menu')}</span>
-      </div>
-    </div>
-  )
+
   const menuClickedRef = useRef(false)
 
   const renderHandle = () => {
@@ -122,82 +172,66 @@ const BlockHandle: IBlockHandle = ({ outerVisible, onAddClick, onDragClick, onMe
               userSelect: 'none'
             }}
           >
-            {blockHandleState.showAdd && (
-              <Tooltip delay={300} style={{ background: 'rgba(0,0,0,0.8)' }} position="top" content={AddTooltip}>
-                <div
-                  onClick={e => {
-                    onAddClick?.(e)
-                    setInnerVisible(false)
-                  }}
-                  className={ClassName.flatButton(undefined, '3px')}
-                  style={{
-                    position: 'absolute',
-                    left: -48,
-                    width: 24,
-                    height: 24,
-                    cursor: 'pointer',
-                    color: Colors.Font.SuperTransparent
-                  }}
-                >
-                  <Icon size={18} name="park-plus" />
-                </div>
-              </Tooltip>
-            )}
-            <Tooltip
-              delay={300}
-              style={{
-                background: 'rgba(0,0,0,0.8)'
-              }}
-              positions={['top', 'bottom']}
-              content={DragTooltip}
-            >
+            {blockHandleState.showAdd && pageConfig.editorAdd !== false && (
               <div
-                onPointerDown={e => {
-                  console.log(e)
-                  currentXY.current = {
-                    x: e.clientX,
-                    y: e.clientY
-                  }
-                }}
-                onPointerMove={e => {
-                  const currentXYz = currentXY.current
-                  console.log(currentXYz, dragClickedRef.current)
-                  if (dragClickedRef.current) return
-                  if (currentXYz) {
-                    console.log('here')
-                    // if (Math.abs(currentXYz.x - e.clientX) > 2 || Math.abs(currentXYz.y - e.clientY) > 2) {
-                    onDragClick?.(e)
-                    dragClickedRef.current = true
-                    // }
-                  }
-                }}
-                onPointerUp={e => {
-                  onMenuClick?.(e)
-                  menuClickedRef.current = true
-                  setTimeout(() => {
-                    menuClickedRef.current = false
-                  }, 100)
+                onClick={() => {
+                  handleAddClick()
+                  setInnerVisible(false)
                 }}
                 className={ClassName.flatButton(undefined, '3px')}
-                role={'editor-drag-handle'}
                 style={{
                   position: 'absolute',
-                  left: -24,
+                  left: -48,
                   width: 24,
                   height: 24,
-                  cursor: 'grab',
+                  cursor: 'pointer',
                   color: Colors.Font.SuperTransparent
                 }}
               >
-                <Icon size={18} name="park-drag" />
+                <Icon strokeWidth={4} size={18} name="park-plus" />
               </div>
-            </Tooltip>
+            )}
+            <div
+              onPointerDown={e => {
+                currentXY.current = {
+                  x: e.clientX,
+                  y: e.clientY
+                }
+              }}
+              onPointerMove={e => {
+                const currentXYz = currentXY.current
+                if (dragClickedRef.current) return
+                if (currentXYz) {
+                  handleDragClick?.(e)
+                  dragClickedRef.current = true
+                }
+              }}
+              onPointerUp={e => {
+                handleMenuClick(e)
+                menuClickedRef.current = true
+                setTimeout(() => {
+                  menuClickedRef.current = false
+                }, 100)
+              }}
+              className={ClassName.flatButton(undefined, '3px')}
+              role={'editor-drag-handle'}
+              style={{
+                position: 'absolute',
+                left: -24,
+                width: 24,
+                height: 24,
+                cursor: 'grab',
+                color: Colors.Font.SuperTransparent
+              }}
+            >
+              <Icon size={18} name="park-drag" />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
     )
   }
-  const container = containerRef.current
+  const container = scrollElementRef.current
   if (container) {
     return createPortal(renderHandle(), container)
   }

@@ -1,23 +1,26 @@
 import { MetaStore, ObjectStore } from '@/api/stores'
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import { Content } from '@/components'
+import { MetaObject } from '~/typings'
+import EmptyCard from '@/core/components/common/EmptyCard'
 
-export default ({id}: {id: number}) => {
+export default ({ id }: { id: number }) => {
   const group = ObjectStore('group').useValue(id)
   const [names, setNames] = useState<string[]>([])
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (group?.values) {
       const map = MetaStore.getMetaObjectsMap()
       const metaIds = new Set(group.values.map(i => i.id))
       setNames(
-        Array.from(metaIds.values())
-          .map(i => map.get(i))
-          .filter(i => i)
-          .map(i => i.name || i.placeholderName) as string[]
+        (
+          Array.from(metaIds.values())
+            .map(i => map.get(i))
+            .filter(i => i && (i.name || i.placeholderName)) as MetaObject[]
+        ).map(i => i.name || i.placeholderName) as string[]
       )
     }
   }, [group?.values])
-  if (!names.length) return null
+  if (!names.length) return <EmptyCard />
   return (
     <Content
       flex

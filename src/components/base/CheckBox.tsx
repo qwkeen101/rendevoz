@@ -1,33 +1,34 @@
-import { css } from '@emotion/css'
-import { CSSProperties } from 'react'
-import Content from './Content'
+import { CSSProperties, useEffect, useRef } from 'react'
 
 const CheckBox = ({
   checked,
   onChange,
   style,
-  className
+  className,
+  indeterminate
 }: {
   checked?: boolean
   onChange?: (checked: boolean) => void
   style?: CSSProperties
   className?: string
+  indeterminate?: boolean
 }) => {
+  const ref = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    const ele = ref.current
+    if (ele) {
+      ele.indeterminate = indeterminate ?? false
+    }
+  }, [indeterminate])
   return (
-    <Content
-      flex
-      centered
-      onClick={() => onChange?.(!checked)}
-      style={{
-        width: 14,
-        height: 14,
-        cursor: 'pointer',
-        ...style
-      }}
+    <input
+      ref={ref}
+      onChange={() => onChange?.(!checked)}
       className={className}
-    >
-      <input type={'checkbox'} checked={checked} style={{ width: '100%', height: '100%', cursor: 'pointer' }} />
-    </Content>
+      type={'checkbox'}
+      checked={checked}
+      style={{ width: 14, height: 14, cursor: 'pointer', ...style }}
+    />
   )
 }
 

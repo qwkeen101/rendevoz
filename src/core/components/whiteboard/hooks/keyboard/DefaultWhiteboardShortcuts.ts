@@ -27,22 +27,6 @@ export const WhiteboardDefaultKeyboardShortcut = {
     key: ['v'],
     text: 'V'
   },
-  OpenInSidebar: {
-    text: 'Shift+S',
-    key: ['shift+s']
-  },
-  OpenInFloat: {
-    text: 'Shift+F',
-    key: ['shift+f']
-  },
-  OpenInCenter: {
-    text: 'Shift+C',
-    key: ['shift+c']
-  },
-  OpenInNewTabs: {
-    text: 'Shift+T',
-    key: ['shift+t']
-  },
   HighlightRelated: {
     key: ['h'],
     text: 'H'

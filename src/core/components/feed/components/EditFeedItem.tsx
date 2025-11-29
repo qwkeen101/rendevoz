@@ -30,22 +30,11 @@ export default memo(() => {
   })
   return (
     <Modal visible={!!(visible && innerCollection)} onClose={() => setVisible(false)}>
-      <Content className={'font-size-14'} style={{ padding: '18px 24px', width: 400 }}>
-        <div
-          className={'bold-font'}
-          style={{
-            fontSize: 18,
-            marginBottom: '1.5rem'
-          }}
-        >
-          {t('feed.Edit feed details')}
-        </div>
+      <div className={'p-6 flex flex-col gap-6 max-w-lg w-[90vw]'}>
+        <div className={'font-bold text-xl'}>{t('feed.Edit feed details')}</div>
         <BorderInput
           placeholder={t('general.name')}
           style={{ padding: '8px 12px' }}
-          containerStyle={{
-            marginBottom: 16
-          }}
           value={innerCollection?.name}
           className={'font-size-13'}
           onChange={v => {
@@ -57,9 +46,6 @@ export default memo(() => {
           style={{ padding: '8px 12px' }}
           value={innerCollection?.feedUrl}
           className={'font-size-13'}
-          containerStyle={{
-            marginBottom: 16
-          }}
           onChange={v => {
             setInnerCollection(s => ({ ...s, feedUrl: v }))
           }}
@@ -73,7 +59,7 @@ export default memo(() => {
             setVisible(false)
           }}
         />
-      </Content>
+      </div>
     </Modal>
   )
 })

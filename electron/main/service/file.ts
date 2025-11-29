@@ -3,7 +3,7 @@ import fs from 'fs'
 import { app, shell } from 'electron'
 import { digestBuffer } from '../utils'
 import { join } from 'path'
-
+import * as crypto from 'crypto'
 const DEFAULT_USER_DATA_PATH = app.getPath('documents')
 
 export const DefaultRendevozDataPath = path.join(DEFAULT_USER_DATA_PATH, 'Rendevoz')
@@ -49,6 +49,10 @@ const transformRendefileToLocalFilePath = (rendefile: string) => {
 }
 
 const deleteFile = async (filePath: string) => {
+  // only delete rendefile
+  if (!filePath.startsWith('rendefile')) {
+    return
+  }
   const realPath = transformRendefileToLocalFilePath(filePath)
   if (!fs.existsSync(realPath)) {
     return
@@ -62,7 +66,7 @@ const deleteFile = async (filePath: string) => {
 
 const openLocalFile = async (filePath: string) => {
   const realPath = transformRendefileToLocalFilePath(filePath)
-  await shell.openPath(realPath)
+  shell.showItemInFolder(realPath)
 }
 
 const writeFile = async (data: string, filePath: string, type: 'base64' | 'utf8' | 'binary') => {
@@ -71,6 +75,9 @@ const writeFile = async (data: string, filePath: string, type: 'base64' | 'utf8'
   const absolutePath = path.join(folderPath, filePath)
   const protocolPath = absolutePath.replace(folderPath, 'rendefile://')
   return new Promise(resolve => {
+    // writeFileWithUniqueName(absolutePath, data, type).then(path => {
+    //   resolve(normalizePath(path.replace(folderPath, 'rendefile://')))
+    // })
     fs.writeFile(absolutePath, data, { encoding: type }, () => {
       resolve(normalizePath(protocolPath))
     })
@@ -83,6 +90,9 @@ const copyFile = async (from: string, to: string) => {
   const absolutePath = path.join(folderPath, to)
   const protocolPath = 'rendefile://' + to
   return new Promise(resolve => {
+    // copyFileWithUniqueName(from, absolutePath).then(path => {
+    //   resolve(normalizePath(path.replace(folderPath, 'rendefile://')))
+    // })
     fs.copyFile(from, absolutePath, () => {
       resolve(normalizePath(protocolPath))
     })
@@ -204,6 +214,43 @@ const FileService = {
   writeFile,
   openFolder,
   getRendeFileFolderPath
+}
+async function copyFileWithUniqueName(from: string, to: string): Promise<string> {
+  let fileDir = path.dirname(to)
+  let baseName = path.basename(to, path.extname(to))
+  let extName = path.extname(to)
+  let uniquePath = to
+  let counter = 1
+  while (fs.existsSync(uniquePath)) {
+    uniquePath = path.join(fileDir, `${baseName}(${counter})${extName}`)
+    counter++
+  }
+
+  // 写入文件
+  return await new Promise(res =>
+    fs.copyFile(from, uniquePath, () => {
+      res(uniquePath)
+    })
+  )
+}
+
+async function writeFileWithUniqueName(filePath: string, content: string, type: 'base64' | 'utf8' | 'binary'): Promise<string> {
+  let fileDir = path.dirname(filePath)
+  let baseName = path.basename(filePath, path.extname(filePath))
+  let extName = path.extname(filePath)
+  let uniquePath = filePath
+  let counter = 1
+  while (fs.existsSync(uniquePath)) {
+    uniquePath = path.join(fileDir, `${baseName}(${counter})${extName}`)
+    counter++
+  }
+
+  // 写入文件
+  return await new Promise(res =>
+    fs.writeFile(uniquePath, content, { encoding: type }, () => {
+      res(uniquePath)
+    })
+  )
 }
 
 export default FileService

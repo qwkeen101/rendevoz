@@ -1,9 +1,11 @@
 import { Descendant, NodeEntry, Operation, Path, PathRef, Selection } from 'slate'
-import { CustomEditor, CustomElement, ElementFunctions, INoteLabel } from '.'
+import { CustomEditor, CustomElement, ElementFunctions, IEditorAISummary, IEditorEvent, INoteLabel } from '.'
 import { CustomText, EmptyText } from '.'
 import { EditorOverlayManager } from '../../../../src/core/components/editor/components/overlay/useEditorOverlay'
 import { Box, XYPosition } from '~/typings'
 import { createStore } from 'jotai'
+import { RefObject } from 'react'
+import { CoreMessage } from 'ai'
 
 export type IEditorOverlayContent =
   | 'emojiPicker'
@@ -13,24 +15,40 @@ export type IEditorOverlayContent =
   | 'slashMenu'
   | 'linkForm'
   | 'transformMenu'
+
+export type IEditorInnerEvents = {
+  tableCellOps: {
+    type: 'pointerEnterCell' | 'pointerLeaveCell' | 'pointerEnterResizer' | 'pointerLeaveResizer' | 'selectCol'
+    colName: string
+    rowIndex?: number
+    tableId: number
+  }
+  valueChange: void
+}
+
 export type IEditorInstance = Partial<{
-  focusTitle: (onlyWhenEmpty?: boolean) => void
   getTitle: () => string
-  closeBlockHandleMenu: VoidFunction
+  highlightBlock: (id: number | number[]) => void
   scrollToBlock: (options: { blockId?: number; highlight?: boolean }) => Promise<void>
   selectBlock: (options: { blockId?: number }) => Promise<void>
   scrollToHighlight: (options: { highlightId: number }) => Promise<void>
-  getSlateEditor: () => CustomEditor
-  isSelectionCollapsed?: () => boolean
-  triggerContentsChange?: VoidFunction
+  highlightCurrentSelection: VoidFunction
+  dehighlightSelection: VoidFunction
   indexPath: VoidFunction
   dragManager: any
-  getScrollPosition: () => number
-  scrollToPosition: (offset: number) => void
   // trigger change index without triggering onChange
   handleChange: VoidFunction
   // inside meta ids
   getInsideMetas: () => number[]
+  aiOps: {
+    getActiveChatId: (ignoreVisible?: boolean) => number | undefined
+    summarize: () => Promise<IEditorAISummary>
+    mindmap: () => Promise<string>
+    exam: () => Promise<void>
+    scrollToMessage: (id: number) => void
+    scrollToQuestion: (id: number) => void
+    getInitialMessages: () => CoreMessage[]
+  }
   blockOps: {
     getClosestOutestBlock: (windowPoint: XYPosition, container?: HTMLElement) => CustomElement | undefined
     isBlockEmpty: (customElement: CustomElement) => boolean
@@ -84,7 +102,7 @@ export type IEditorInstance = Partial<{
     openLabelEditor: (label: Partial<INoteLabel>, boundingBox: Box, selection: Selection, direction: 'top' | 'bottom') => void
     openLabelInSidebar: (labelId: number) => void
     addLabel: (label: Partial<INoteLabel>) => Promise<INoteLabel | void>
-    deleteLabel: (id: number) => Promise<void>
+    deleteLabel: (id: number | number[]) => Promise<void>
     scrollToLabel: (labelId: number) => void
   }
   searchOps: {
@@ -100,18 +118,26 @@ export type IEditorInstance = Partial<{
   printToPDF: VoidFunction
   applyOperation: (operation: Operation, debounce?: boolean) => void
   getScrollElement: () => HTMLElement | undefined | null
-  getHighlightLocation: (highlightId: number) => NodeEntry<CustomText | EmptyText>[]
   getOverlayManager: () => EditorOverlayManager
-  /**
-   * Get element path by its id
-   */
-  getElementPathById: (id: number) => Path | undefined
   getSelectedElements: () => CustomElement[]
-  getElementFunctionById: (id: number) => ElementFunctions | undefined
 }> & {
+  addEventListener: <K extends keyof IEditorInnerEvents>(key: K, f: (args: IEditorInnerEvents[K]) => void) => void
+  removeEventListener: <K extends keyof IEditorInnerEvents>(key: K, f: (args: IEditorInnerEvents[K]) => void) => void
+  emitEvent: <K extends keyof IEditorInnerEvents>(key: K, args?: IEditorInnerEvents[k]) => void
+  on: (event: IEditorEvent) => Promise<any>
+  getSlateEditor: () => CustomEditor
+  editor: CustomEditor
+  serialize: (mode?: 'markdown' | 'html') => string
+  getElementPathById: (id: number) => Path | undefined
+  getHighlightLocation: (highlightId: number) => NodeEntry<CustomText | EmptyText>[]
   values: {
+    scrollElementRef: RefObject<HTMLDivElement>
+    metaId?: number
+    displayMode?: boolean
     editorLevelStore: ReturnType<typeof createStore>
     selectingAll?: boolean
+    ID_TO_ELEMENT: Map<number, ElementFunctions>
+    ID_TO_PATH: Map<number, Path>
     // indicator's path and element are safe to use
     indicator?: {
       direction: 'left' | 'top' | 'bottom' | 'right'
@@ -119,7 +145,6 @@ export type IEditorInstance = Partial<{
       element: CustomElement
       path: Path
     }
-    labelNoteRendered: Set<number>
     // selected id to element and pathRef map
     selectedBlocks: Map<
       number,

@@ -63,19 +63,15 @@ export type IWhiteboardNode = {
   // mindmap side
   side?: 'left' | 'right'
   z: number
+  expanded?: boolean
 } & (
   | {
       type: 'metaObject'
       metaObjectId: number
-      expanded?: boolean
     }
   | {
       type: 'image'
       imageUrl: string
-    }
-  | {
-      type: 'video'
-      videoUrl: string
     }
   | {
       type: 'mindmap'
@@ -87,24 +83,6 @@ export type IWhiteboardNode = {
       leftCollapse?: boolean
       edgeColor?: string
       edgeType?: IWhiteboardEdge['lineType']
-    }
-  | {
-      type: 'webpage'
-      url: string
-      webpageId: number
-    }
-  | {
-      type: 'audio'
-      audioUrl: string
-    }
-  | {
-      type: 'note'
-      noteId: number
-      isCard: boolean
-    }
-  | {
-      type: 'pdf'
-      documentId: number
     }
   | {
       type: 'group'
@@ -150,11 +128,11 @@ export interface IWhiteboard extends IBase {
   name?: string
   nodes?: Map<number, IWhiteboardNode>
   edges?: Map<number, IWhiteboardEdge>
-  items?: ICollectionItem[]
   color?: string
   icon?: string
   backgroundType?: 'dot' | 'line' | 'none'
   lineType: 'straight' | 'polyline' | 'curve'
+  hideObjects?: boolean
   lastViewport?: {
     x: number
     y: number
@@ -172,6 +150,7 @@ export type IWhiteboardOutline = {
   name: string
   icon?: string
   children?: IWhiteboardOutline[]
+  type: string | 'whiteboard mindmap' | 'whiteboard group' | 'whiteboard text'
 }
 
 export type IWhiteboardAlignment = 'left' | 'top' | 'right' | 'bottom' | 'horizontallyCenter' | 'verticallyCenter'

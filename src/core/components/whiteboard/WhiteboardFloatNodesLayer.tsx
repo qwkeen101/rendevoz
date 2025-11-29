@@ -1,13 +1,11 @@
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import { assignProperties } from '@/utils'
 import { memo, useState } from 'react'
-import { Rendevoz } from '@/core/rendevoz'
-import { DockTabPaneContext } from '@/components/base/dock/DockTabPane'
 import { Icon, ResizeAndDrag } from '@/components'
 import { MetaStore } from '@/api/stores'
 import { Colors } from '@/consts'
 import { ClassName } from 'rendevoz'
-import { GlobalInstance } from '@/hooks'
+import SidebarObjectViewer from '@/core/components/SidebarObjectViewer'
 
 export default memo(() => {
   const instance = useWhiteboardInstance()
@@ -56,20 +54,21 @@ export default memo(() => {
   })
   const renderItem = (type: string, metaId: number, objectId?: number) => {
     if (!type || !objectId) return
-    const page = GlobalInstance.layoutOps?.getRegisteredTabData(type)
-    console.log(page, type)
-    if (page) {
-      return (
-        <div
-          onWheelCapture={e => {
-            e.stopPropagation()
+    return (
+      <div
+        onWheelCapture={e => {
+          e.stopPropagation()
+        }}
+        style={{ width: '100%', height: '100%' }}
+      >
+        <SidebarObjectViewer
+          id={metaId}
+          pageConfig={{
+            defaultOpenSidebar: false
           }}
-          style={{ width: '100%', height: '100%' }}
-        >
-          <DockTabPaneContext.Provider value={{ currentTabId: '' }}>{page.content({ objectId, type, metaId })}</DockTabPaneContext.Provider>
-        </div>
-      )
-    }
+        />
+      </div>
+    )
   }
   if (currentFloatNodes.length) {
     return (

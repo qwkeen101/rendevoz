@@ -1,13 +1,11 @@
-import { Content, Icon } from '@/components'
-import { FC, useEffect, useMemo, memo } from 'react'
-import { EditorProps, IWebpageInstance, MetaObject } from '~/typings'
-import { createStore, Provider } from 'jotai'
-import { useAssignWebpageInstance, WebpageInstanceAtom } from './hooks/useWebpageInstance'
-import useWebpageState, { IWebpageState } from './hooks/useWebpageState'
-import useWebpageContent from '@/core/components/webpage/hooks/useWebpageContent'
+import { FC, useMemo, memo, useLayoutEffect } from 'react'
+import { EditorProps, IParsedWebpage, IWebpageInstance } from '~/typings'
+import { createStore, Provider, useSetAtom } from 'jotai'
+import { WebpageInstanceAtom } from './hooks/useWebpageInstance'
+import { WebpageStateAtom } from './hooks/useWebpageState'
 import WebpageContentRenderer from '@/core/components/webpage/WebpageContentRenderer'
-import { TabTitle } from '@/core/rendevoz/components'
-import { MetaStore } from '@/api/stores'
+import { Descendant } from 'slate'
+import { GlobalSetting } from '@/core'
 
 /**
  * Webpage can be a controlled or uncontrolled component
@@ -15,60 +13,69 @@ import { MetaStore } from '@/api/stores'
  * controlled: pass content, title, author...
  */
 export type IWebpageProps = {
-  initialUrl?: string
-  initialWebpageId?: number
   onInstanceInitialized?: (instance: IWebpageInstance) => void
-  webpageFrom?: MetaObject['fromObject']
-  disableTabTitle?: boolean
-  onWebpageParsed?: (webpage: IWebpageState['externalState']) => void
-  state?: IWebpageState['externalState']
+  onWebpageParsed?: (webpage: IParsedWebpage) => void
+  onShowOriginal?: (value: boolean) => void
+  showOriginal?: boolean
+  initialHeight?: number
+  switcherHeader?: boolean
   onStartLoad?: VoidFunction
   onEndLoad?: VoidFunction
+  editorOptions?: Omit<EditorProps, 'id'> & { noteId?: number }
+  url: string
+  name?: string
+  value?: Descendant[]
+  metaId?: number
+  feedCollectionId?: number
   onFailLoad?: VoidFunction
-  initialHeight?: number
-  editorOptions?: Omit<EditorProps, 'id'>
+  favicon?: string
 }
 
 const WebpageInner = ({
-  initialWebpageId,
-  disableTabTitle,
   initialHeight,
   onWebpageParsed,
-  initialUrl: externalInitialUrl,
-  webpageFrom,
+  switcherHeader,
+  url,
+  name = '',
+  value,
+  onShowOriginal,
+  showOriginal,
   onInstanceInitialized,
+  editorOptions,
   onEndLoad,
   onStartLoad,
-  state,
-  editorOptions,
-  onFailLoad
+  onFailLoad,
+  metaId,
+  favicon,
+  feedCollectionId
 }: IWebpageProps) => {
-  const [webpageState, setWebpageState] = useWebpageState()
-  useWebpageContent({
-    onParsed: onWebpageParsed,
-    onStartLoad,
-    onEndLoad,
-    onFailLoad
-  })
-  useEffect(() => {
-    setWebpageState(s => ({ ...s, currentWebpageId: initialWebpageId, currentUrl: externalInitialUrl }))
-  }, [initialWebpageId, externalInitialUrl])
-  useEffect(() => {
-    setWebpageState(s => ({ ...s, webpageFrom }))
-  }, [webpageFrom])
-  useEffect(() => {
-    setWebpageState(s => ({ ...s, externalState: state }))
-  }, [state])
-  const webpageMeta = MetaStore.useObjectToMetaValue(webpageState.currentWebpageId)
+  const setWebpageState = useSetAtom(WebpageStateAtom)
+  useLayoutEffect(() => {
+    setWebpageState(s => ({
+      ...s,
+      name,
+      url,
+      content: value,
+      favicon,
+      feedCollectionId,
+      metaId,
+      showOriginal,
+      noteId: editorOptions?.noteId
+    }))
+  }, [url, name, value, feedCollectionId, metaId, favicon, showOriginal, editorOptions?.noteId])
   return (
     <>
-      {!disableTabTitle && (
-        <TabTitle
-          icon={<Icon size={16} name={'park-web-page'} />}
-          title={webpageMeta?.name || webpageState.externalState?.title || webpageState.currentWebpage?.title}
-        />
-      )}
-      <WebpageContentRenderer initialHeight={initialHeight} onInstanceInitialized={onInstanceInitialized} editorOptions={editorOptions} />
+      <WebpageContentRenderer
+        initialHeight={initialHeight}
+        onInstanceInitialized={onInstanceInitialized}
+        editorOptions={editorOptions}
+        onWebpageParsed={onWebpageParsed}
+        onShowOriginal={onShowOriginal}
+        switcherHeader={switcherHeader}
+        onStartLoad={onStartLoad}
+        onEndLoad={onEndLoad}
+        onFailLoad={onFailLoad}
+      />
     </>
   )
 }
@@ -76,6 +83,15 @@ const Webpage: FC<IWebpageProps> = props => {
   const store = useMemo(() => {
     const store = createStore()
     store.set(WebpageInstanceAtom, {})
+    const noteId = props.editorOptions?.noteId
+    store.set(WebpageStateAtom, {
+      ...store.get(WebpageStateAtom),
+      showOriginal: !GlobalSetting.getSetting().webpage.defaultCleanMode,
+      isLoading: props.value || noteId ? false : true,
+      loaded: props.value || noteId ? true : false,
+      content: props.value,
+      noteId
+    })
     return store
   }, [])
   return (

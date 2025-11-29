@@ -46,7 +46,13 @@ export default ({ value, onChange }: { value: string; onChange: (filePath?: stri
         )}
       </Content>
       {renderPopover(box => (
-        <PopupWrapper box={{ ...box, width: Math.max(360, box.width) }}>
+        <PopupWrapper
+          box={{ ...box, width: Math.min(500, Math.max(box.width, 320)) }}
+          style={{
+            borderRadius: '0.75rem',
+            overflow: 'hidden'
+          }}
+        >
           <ImageRenderer
             value={value}
             onDelete={() => {

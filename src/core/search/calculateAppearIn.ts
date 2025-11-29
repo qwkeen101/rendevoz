@@ -1,5 +1,6 @@
-import { IWhiteboardNode, MetaObject } from '~/typings'
-import { MetaStore, ObjectStore } from '@/api/stores'
+import { MetaObject } from '~/typings'
+import { MetaStore } from '@/api/stores'
+import calculateContains from '@/core/object/objectList/calculateContains'
 
 export type AppearIn = {
   parent: MetaObject
@@ -15,6 +16,7 @@ export default async (
     audio?: boolean
     pdf?: boolean
     webpage?: boolean
+    chat?: boolean
   }
 ) => {
   const metaIdSet = new Set(currentMetas)
@@ -26,6 +28,9 @@ export default async (
     pdf: AppearIn[]
     audio: AppearIn[]
     webpage: AppearIn[]
+    chat: AppearIn[]
+    attachment: AppearIn[]
+    exam: AppearIn[]
   } = {
     group: [],
     video: [],
@@ -33,7 +38,10 @@ export default async (
     whiteboard: [],
     audio: [],
     webpage: [],
-    note: []
+    note: [],
+    chat: [],
+    attachment: [],
+    exam: []
   }
   if (!metaIdSet.size) return related
   const groups: MetaObject[] = [],
@@ -42,10 +50,24 @@ export default async (
     audios: MetaObject[] = [],
     videos: MetaObject[] = [],
     pdfs: MetaObject[] = [],
-    webpages: MetaObject[] = []
+    webpages: MetaObject[] = [],
+    chats: MetaObject[] = [],
+    exams: MetaObject[] = []
   Array.from(MetaStore.getMetaObjectsMap().values()).forEach(m => {
     if (m.deleted) return
+    if (m.attachments?.length) {
+      const attachmentContains = m.attachments.filter(i => metaIdSet.has(i.id))
+      if (attachmentContains.length) {
+        related.attachment.push({
+          parent: m,
+          children: attachmentContains.map(i => MetaStore.getCachedMetaObject(i.id)).filter(i => i) as MetaObject[]
+        })
+      }
+    }
     switch (m.type) {
+      case 'exam':
+        exams.push(m)
+        break
       case 'group':
         groups.push(m)
         break
@@ -67,21 +89,22 @@ export default async (
       case 'note':
         notes.push(m)
         break
+      case 'chat':
+        chats.push(m)
+        break
     }
   })
-  const metaMap = MetaStore.getMetaObjectsMap()
+
   if (groups.length && options?.group !== false) {
     await Promise.all(
       groups.map(async i => {
-        const groupObj = await ObjectStore('group').fetchOneById(i.objectId!)
-        if (groupObj) {
-          const within = groupObj.values.filter(i => metaIdSet.has(i.id))
-          console.log(metaIdSet, within, groupObj)
+        const contains = await calculateContains(i)
+        if (contains?.length) {
+          const within = contains.filter(i => metaIdSet.has(i.id))
           if (within.length) {
-            const c = Array.from(new Set(within.map(i => i.id)).values()).map(id => metaMap.get(id)!)
             related.group.push({
-              parent: metaMap.get(i.id)!,
-              children: c
+              parent: i,
+              children: within
             })
           }
         }
@@ -91,17 +114,45 @@ export default async (
   if (whiteboards.length && options?.whiteboard !== false) {
     await Promise.all(
       whiteboards.map(async i => {
-        const wObj = await ObjectStore('whiteboard').fetchOneById(i.objectId!)
-        console.log(wObj)
-        if (wObj) {
-          const withIn = (Array.from(wObj.nodes?.values() || []) as IWhiteboardNode[]).filter(
-            i => i.type === 'metaObject' && metaIdSet.has(i.metaObjectId)
-          )
-          if (withIn.length) {
-            const c = Array.from(new Set(withIn.map(i => i.metaObjectId).values())).map(i => metaMap.get(i)!)
+        const contains = await calculateContains(i)
+        if (contains?.length) {
+          const within = contains.filter(i => metaIdSet.has(i.id))
+          if (within.length) {
             related.whiteboard.push({
-              parent: metaMap.get(i.id)!,
-              children: c
+              parent: i,
+              children: within
+            })
+          }
+        }
+      })
+    )
+  }
+  if (chats.length && options?.chat !== false) {
+    await Promise.all(
+      chats.map(async i => {
+        const contains = await calculateContains(i)
+        if (contains?.length) {
+          const within = contains.filter(i => metaIdSet.has(i.id))
+          if (within.length) {
+            related.chat.push({
+              parent: i,
+              children: within
+            })
+          }
+        }
+      })
+    )
+  }
+  if (exams.length) {
+    await Promise.all(
+      exams.map(async i => {
+        const contains = await calculateContains(i)
+        if (contains?.length) {
+          const within = contains.filter(i => metaIdSet.has(i.id))
+          if (within.length) {
+            related.exam.push({
+              parent: i,
+              children: within
             })
           }
         }
@@ -111,27 +162,13 @@ export default async (
   if (notes.length && options?.note !== false) {
     await Promise.all(
       notes.map(async i => {
-        const nObj = await ObjectStore('note').fetchOneById(i.objectId!)
-        if (nObj && nObj.insideMetas) {
-          const withIn = Object.keys(nObj.insideMetas)
-            .filter(i => metaIdSet.has(Number(i)))
-            .map(i => Number(i))
-          const labels = nObj.labels
-          if (labels) {
-            const labelMetas = labels.map(id => MetaStore.getMetaObjectByObjectId(id)).filter(i => i) as MetaObject[]
-            labelMetas
-              .filter(i => metaIdSet.has(i.id))
-              .forEach(m => {
-                if (!withIn.includes(m.id)) {
-                  withIn.push(m.id)
-                }
-              })
-          }
-          if (withIn.length) {
-            const c = withIn.map(i => metaMap.get(i)!)
+        const contains = await calculateContains(i)
+        if (contains?.length) {
+          const within = contains.filter(i => metaIdSet.has(i.id))
+          if (within.length) {
             related.note.push({
-              parent: metaMap.get(i.id)!,
-              children: c
+              parent: i,
+              children: within
             })
           }
         }
@@ -141,18 +178,14 @@ export default async (
   const transformLabels = async (type: 'pdf' | 'webpage' | 'video' | 'audio', metas: MetaObject[]) => {
     await Promise.all(
       metas.map(async m => {
-        if (m.objectId) {
-          const obj = await ObjectStore(type).fetchOneById(m.objectId)
-          if (obj && obj.labels?.length) {
-            const labels = obj.labels
-            const labelMetas = labels.map(id => MetaStore.getMetaObjectByObjectId(id)).filter(i => i) as MetaObject[]
-            const withIn = labelMetas.filter(i => metaIdSet.has(i.id))
-            if (withIn.length) {
-              related[type].push({
-                parent: m,
-                children: withIn
-              })
-            }
+        const contains = await calculateContains(m)
+        if (contains?.length) {
+          const within = contains.filter(i => metaIdSet.has(i.id))
+          if (within.length) {
+            related[type].push({
+              parent: m,
+              children: within
+            })
           }
         }
       })

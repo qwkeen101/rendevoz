@@ -1,24 +1,24 @@
-import { Content, Icon } from '@/components'
+import { Content, Icon, AutosizeTextarea } from '@/components'
 import { KEY } from '@/consts'
-import Colors from '@/consts/colors'
-import ClassName from '@/styles/classNames'
 import isHotkey from 'is-hotkey'
 import { CSSProperties, useRef, useState } from 'react'
-import AutosizeTextarea from '@/components/custom/input/AutoSizeTextArea'
 import SimpleEditor from '@/core/components/editor/SimpleEditor'
+import classnames from 'classnames'
 
 const NameEditor = ({
   value,
   onChange,
   style,
   contentMode = 'textarea',
-  placeholder = 'Edit content...',
+  placeholder = '',
   onCancel,
-  editorStyle
+  editorStyle,
+  className
 }: {
   value?: string
   onChange: (v: string) => void
   style?: CSSProperties
+  className?: string
   placeholder?: string
   onCancel?: VoidFunction
   editorStyle?: CSSProperties
@@ -29,25 +29,16 @@ const NameEditor = ({
   return (
     <Content
       onClick={e => e.stopPropagation()}
-      className={'border-box-shadow focus-within-input'}
-      style={{
-        padding: '5px 6px',
-        borderRadius: 4,
-        width: '100%',
-        flexWrap: 'wrap',
-        gap: 4,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'flex-end',
-        fontSize: 13,
-        ...style
-      }}
+      className={classnames(
+        'border-box-shadow flex flex-wrap items-center gap-1 justify-end focus-within-input py-1.5 pr-1.5 pl-2 rounded-md w-full font-size-13',
+        className
+      )}
+      style={style}
     >
       {contentMode === 'textarea' ? (
         <AutosizeTextarea
           autoFocus
           ref={inputRef}
-          spellCheck="false"
           style={{
             resize: 'none',
             padding: 0,
@@ -75,20 +66,16 @@ const NameEditor = ({
       ) : (
         <SimpleEditor fontSize={13} textareaMode={true} placeholder={placeholder} value={value} onChange={e => setInnerValue(e)} />
       )}
-      <Content flex gap={6} justifyContent={'flex-end'} alignItems={'center'} style={{ width: 'min-content' }}>
-        <Icon
-          name={'park-up-small'}
-          size={15}
-          strokeWidth={5}
-          className={ClassName.selectButton()}
-          style={{
-            color: 'white',
-            padding: 2,
-            borderRadius: 999
-          }}
-          onClick={() => onChange?.(innerValue)}
-        ></Icon>
-      </Content>
+      <Icon
+        name={'park-up-small'}
+        size={15}
+        strokeWidth={5}
+        className={'select-button !rounded-full !p-1'}
+        style={{
+          color: 'white'
+        }}
+        onClick={() => onChange?.(innerValue)}
+      ></Icon>
     </Content>
   )
 }

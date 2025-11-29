@@ -3,8 +3,6 @@ import { Container } from '@/components'
 import TabTitle from '@/components/layout/TabTitle'
 import { IPDFInstance } from '~/typings'
 import { MetaStore, ObjectStore } from '@/api/stores'
-import Pdf from '@/core/components/pdf'
-import { Rendevoz } from '@/core/rendevoz'
 import UncontrolledPDF from '@/core/components/pdf/UncontrolledPDF'
 
 const PdfPage: FC<{
@@ -17,10 +15,7 @@ const PdfPage: FC<{
   return (
     <>
       {!disableTitle && (
-        <TabTitle
-          title={pdfMeta?.name || document?.metadata?.title || document?.name || 'Unknown PDF'}
-          icon={Rendevoz.Utils.Object.getMetaObjectIcon('pdf')}
-        />
+        <TabTitle title={pdfMeta?.name || document?.metadata?.title || document?.name} icon={Global.utils.getIcon('pdf')} />
       )}
       <Container auto>
         <UncontrolledPDF id={pdfId} onInstanceInitialized={onInstanceInitialized} />

@@ -3,7 +3,7 @@ import { ReactEditor, RenderElementProps, useSlateStatic } from '../../slate-rea
 import { ImageElement } from '~/typings'
 import { useEffect, useRef, useState } from 'react'
 import { Icon, Tooltip } from '@/components'
-import { Path, Transforms } from 'slate'
+import { Editor, Path, Transforms } from 'slate'
 import useReadOnlyEditor from '../../hooks/useReadOnly'
 import Id from '@/utils/id'
 import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
@@ -13,6 +13,7 @@ import { selectAtom } from 'jotai/utils'
 import { useAtomValue } from 'jotai'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 
+const alreadyFetchedCache = new Set<string>()
 const saveImageLocallyAtom = selectAtom(EditorStateAtom, s => s.state?.saveImgLocally)
 const Image = ({ element, children }: RenderElementProps) => {
   const imageEle = element as ImageElement
@@ -25,36 +26,67 @@ const Image = ({ element, children }: RenderElementProps) => {
 
   useEffect(() => {
     if (imageEle.url?.startsWith('http')) {
+      if (alreadyFetchedCache.has(imageEle.url)) return
+      const currentPath = ReactEditor.findPath(editor, element)
+      if (!currentPath) return
+      const pathRef = Editor.pathRef(editor, currentPath)
       // if remote can be touched, don't save and remove
-      try {
-        fetch(imageEle.url).then(res => {
+      fetch(imageEle.url, {
+        method: 'HEAD'
+      })
+        .then(res => {
+          alreadyFetchedCache.add(imageEle.url)
+          const p = pathRef.unref()
+          if (!p) return
+          const contentType = res.headers.get('Content-Type')
+          if (contentType === 'image/svg+xml') {
+            Transforms.removeNodes(editor, {
+              at: p
+            })
+            return
+          }
           if (res.ok) {
-            if (shouldSaveImageLocally) {
-              FileSystem.saveImage(imageEle.url).then(path => {
-                Transforms.setNodes(
-                  editor,
-                  {
-                    url: path
-                  },
-                  {
-                    at: ReactEditor.findPath(editor, imageEle)
-                  }
-                )
+            // delete small images (< 15kb)
+            const size = res.headers.get('Content-Length')
+            if (!size || Number(size) < 1024 * 10) {
+              Transforms.removeNodes(editor, {
+                at: p
               })
+              return
+            }
+            if (shouldSaveImageLocally) {
+              // set here to prevent request image block UI
+              setTimeout(() => {
+                requestIdleCallback(() => {
+                  FileSystem.saveImage(imageEle.url).then(path => {
+                    Transforms.setNodes(
+                      editor,
+                      {
+                        url: path
+                      },
+                      {
+                        at: ReactEditor.findPath(editor, imageEle)
+                      }
+                    )
+                  })
+                })
+              }, 200)
             }
           } else {
             Transforms.removeNodes(editor, {
-              at: ReactEditor.findPath(editor, element)
+              at: p
             })
           }
         })
-      } catch (e) {
-        Transforms.removeNodes(editor, {
-          at: ReactEditor.findPath(editor, element)
+        .catch(() => {
+          const p = pathRef.unref()
+          if (!p) return
+          Transforms.removeNodes(editor, {
+            at: p
+          })
         })
-      }
     }
-  }, [])
+  }, [shouldSaveImageLocally])
   if (!imageEle.url) {
     Transforms.removeNodes(editor, {
       at: ReactEditor.findPath(editor, element)
@@ -104,7 +136,7 @@ const Image = ({ element, children }: RenderElementProps) => {
                       {
                         type: 'figcaption',
                         id: Id.getId(),
-                        children: [{ text: 'Caption For Image' }]
+                        children: [{ text: '' }]
                       },
                       { at: Path.next(path) }
                     )

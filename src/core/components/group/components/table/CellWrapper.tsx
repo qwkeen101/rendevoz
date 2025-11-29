@@ -18,6 +18,7 @@ import FileProp from '@/core/object/renderer/properties/FileProp'
 import OriginalTextProp from '@/core/object/renderer/properties/OriginalTextProp'
 import AIQuestionsProp from '@/core/object/renderer/properties/AIQuestionsProp'
 import AttCell from '@/core/components/group/components/table/cells/AttCell'
+import QuestionProp from '@/core/object/renderer/properties/QuestionProp'
 
 const CellWrapper = memo(
   ({
@@ -65,16 +66,9 @@ const CellWrapper = memo(
           )
         }
         switch (propType) {
-          case 'AI summary':
           case 'string':
           case 'number':
-            return (
-              <TextProp
-                mode={propType === 'string' || propType === 'AI summary' ? 'text' : 'number'}
-                value={value}
-                onChange={handleChange}
-              />
-            )
+            return <TextProp mode={propType === 'string' ? 'text' : 'number'} value={value} onChange={handleChange} />
           case 'AI questions':
             return <AIQuestionsProp metaId={metaId} />
           case 'URL':
@@ -107,7 +101,8 @@ const CellWrapper = memo(
           case 'file': {
             return <FileProp value={value} onChange={handleChange} />
           }
-          case 'reviewState':
+          case 'question':
+            return <QuestionProp value={value} onChange={handleChange} />
           case 'singleSelect': {
             return (
               <SelectProp
@@ -132,7 +127,7 @@ const CellWrapper = memo(
               value={emptyValue ? '' : value}
               placeholder={placeholder}
               showToggle={!!hasChildren}
-              openMeta={metaId}
+              openMeta={Global.metaOps.canPreview(metaId) ? metaId : undefined}
               toggled={toggled}
               rowId={rowId}
               indent={indent}
@@ -181,7 +176,16 @@ const CellWrapper = memo(
         case 'fromObject':
           return <FromCell value={value} />
         case 'tags':
-          return <TagCell wrap={wrap} value={value} metaId={metaId} />
+          return (
+            <TagCell
+              style={{
+                padding: '1px 0px'
+              }}
+              wrap={wrap}
+              value={value}
+              metaId={metaId}
+            />
+          )
         case 'viewAt':
         case 'updatedAt':
         case 'createdAt':
@@ -211,7 +215,6 @@ const CellWrapper = memo(
           if (e.target === e.currentTarget) {
             e.currentTarget.querySelector('[role="prop-container"]')?.click()
           }
-          console.log(field, index)
           instance.viewOps?.tableOps?.selectCell(rowId, index)
         }}
       >
@@ -219,7 +222,7 @@ const CellWrapper = memo(
         {selected && (
           <div
             style={{
-              background: 'var(--select-color-transparent)',
+              background: 'var(--select-color-transparent-light)',
               boxShadow: 'rgba(35, 131, 226, 0.57) 0px 0px 0px 1px inset',
               position: 'absolute',
               inset: 0,

@@ -1,24 +1,24 @@
-import { memo, useEffect, useState } from 'react'
+import { memo, useEffect, useLayoutEffect, useState } from 'react'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { Content } from '@/components'
+import EmptyCard from '@/core/components/common/EmptyCard'
 
 function WhiteboardDisplayer({ id }: { id: number }) {
   const whiteboard = ObjectStore('whiteboard').useValue(id)
   const [names, setNames] = useState<string[]>([])
-  useEffect(() => {
-    console.log(id, whiteboard)
+  useLayoutEffect(() => {
     if (whiteboard?.nodes) {
       const map = MetaStore.getMetaObjectsMap()
       setNames(
         Array.from(whiteboard.nodes.values())
           .filter(i => i.type === 'metaObject')
           .map(i => map.get(i.metaObjectId))
-          .filter(i => i)
+          .filter(i => i && (i.name || i.placeholderName))
           .map(i => i.name || i.placeholderName) as string[]
       )
     }
   }, [whiteboard?.nodes])
-  if (!names.length) return null
+  if (!names.length) return <EmptyCard />
   return (
     <Content
       flex

@@ -50,6 +50,7 @@ const EditableCell = ({
   const instance = useGroupInstance()
   const ref = useRef<HTMLElement>()
   const { t } = useTranslation()
+  console.log(placeholder)
   return (
     <>
       <div

@@ -11,12 +11,13 @@ export interface ToolbarProps extends React.DetailedHTMLProps<React.HTMLAttribut
   children?: ReactNode
   className?: string
   itemClassName?: string
-  itemSpace?: number
-  itemSize?: number
-  itemRadius?: number
+  itemSpace?: number | string
+  itemSize?: string
+  itemRadius?: number | string
   itemStyle?: CSSProperties
   itemClickPreventDefault?: boolean
   style?: CSSProperties
+  gap?: string | number
   innerRef?: Ref<HTMLDivElement>
   disableDefaultStyle?: boolean
 }
@@ -28,15 +29,15 @@ const Toolbar: IToolbar = ({
   className,
   children,
   direction = 'horizontal',
-  itemRadius = 4,
+  itemRadius = 'rounded',
+  gap,
   itemSpace = 6,
-  itemSize,
+  itemSize = 'icon-16',
   itemClickPreventDefault = false,
   style,
   itemClassName,
   innerRef,
   itemStyle,
-  disableDefaultStyle,
   ...rest
 }) => {
   let tools
@@ -51,15 +52,15 @@ const Toolbar: IToolbar = ({
           key: index,
           direction: direction,
           space: itemSpace,
-          size: itemSize,
           clickPreventDefault: itemClickPreventDefault,
           className: itemClassName,
           radius: itemRadius,
+          iconSize: itemSize,
           ...element.props,
           style: {
             ...itemStyle,
             ...element.props.style
-          },
+          }
         })
       }
       return element
@@ -71,10 +72,10 @@ const Toolbar: IToolbar = ({
       {...rest}
       ref={innerRef}
       style={style}
-      gap={style?.gap ?? 5}
+      gap={style?.gap ?? gap ?? 5}
       flex
       centered
-      className={classNames(!disableDefaultStyle && styles.toolbar, className)}
+      className={className}
       column={direction === 'vertical'}
     >
       {tools}

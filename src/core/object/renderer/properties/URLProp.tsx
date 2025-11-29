@@ -1,4 +1,4 @@
-import AutosizeTextarea from '@/components/custom/input/AutoSizeTextArea'
+import { AutosizeTextarea } from '@/components'
 import { CSSProperties, useRef, useState } from 'react'
 import usePopoverCell from '@/core/components/group/hooks/usePopoverCell'
 import { PopupWrapper } from '@/core/components/group/components'
@@ -48,7 +48,6 @@ export default ({ value, onChange, style }: { value: string; onChange?: (v: stri
           <AutosizeTextarea
             autoFocus={true}
             className={ClassName.noStyleInput}
-            spellCheck="false"
             onKeyDown={e => {
               if (isHotkey(KEY.Enter, e)) {
                 e.preventDefault()

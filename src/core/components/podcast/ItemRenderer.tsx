@@ -1,34 +1,73 @@
 import { ObjectStore } from '@/api/stores'
 import { memo } from 'react'
-import { Icon, IconWithPopover, WithBorder } from '@/components'
+import { IconWithPopover } from '@/components'
 import classnames from 'classnames'
-import PodcastMenu from '@/core/components/feed/components/podcast/menu/PodcastMenu'
-import formatReleaseDate from '@/core/components/feed/components/podcast/utils/formatReleaseDate'
-import formatEpisodeDuration from '@/core/components/feed/components/podcast/utils/formatEpisodeDuration'
-import { DateFormat } from '@/utils'
+import PodcastMenu from '@/core/components/podcast/menu/PodcastMenu'
+import formatReleaseDate from '@/core/components/podcast/utils/formatReleaseDate'
+import formatEpisodeDuration from '@/core/components/podcast/utils/formatEpisodeDuration'
 import ContextMenu from '@/components/contextMenu'
-import useEpisodeIsMeta from '@/core/components/feed/components/podcast/hooks/useEpisodeIsMeta'
+import { useTranslation } from 'react-i18next'
+import { Icons } from '@/consts'
 
 export default memo(
-  ({ id, type, onClick, columnMode }: { id: number; type: 'episode' | 'podcast'; onClick?: VoidFunction; columnMode?: boolean }) => {
+  ({
+    id,
+    type,
+    onClick,
+    columnMode,
+    className,
+    metaMode = false,
+    parentFolderId
+  }: {
+    id: number
+    type: 'episode' | 'podcast'
+    parentFolderId?: number
+    onClick?: VoidFunction
+    columnMode?: boolean
+    className?: string
+    metaMode?: boolean
+  }) => {
     switch (type) {
       case 'episode':
-        return <EpisodeItem onClick={onClick} id={id} columnMode={columnMode} />
+        return (
+          <EpisodeItem
+            parentFolderId={parentFolderId}
+            metaMode={metaMode}
+            className={className}
+            onClick={onClick}
+            id={id}
+            columnMode={columnMode}
+          />
+        )
       case 'podcast':
-        return <PodcastItem onClick={onClick} id={id} columnMode={columnMode} />
+        return <PodcastItem parentFolderId={parentFolderId} className={className} onClick={onClick} id={id} columnMode={columnMode} />
     }
   }
 )
 
-const PodcastItem = ({ id, onClick, columnMode }: { id: number; onClick?: VoidFunction; columnMode?: boolean }) => {
+const PodcastItem = ({
+  id,
+  onClick,
+  columnMode,
+  className,
+  parentFolderId
+}: {
+  id: number
+  parentFolderId?: number
+  onClick?: VoidFunction
+  columnMode?: boolean
+  className?: string
+}) => {
   const podcast = ObjectStore('podcast').useValue(id)
+  const { t } = useTranslation()
   if (!podcast) return null
   return (
-    <ContextMenu content={setV => <PodcastMenu id={id} type={'podcast'} onClose={() => setV(false)} />}>
+    <ContextMenu content={setV => <PodcastMenu parentFolderId={parentFolderId} id={id} type={'podcast'} onClose={() => setV(false)} />}>
       <div
-        className={
-          'border shrink-0 relative hover:scale-[1.01] transition-transform rounded-lg overflow-hidden flex items-center cursor-pointer'
-        }
+        className={classnames(
+          'border shrink-0 light-hover relative transition-colors rounded-lg overflow-hidden flex items-center cursor-pointer',
+          className
+        )}
         onClick={onClick}
       >
         {podcast?.thumbnail && (
@@ -39,24 +78,36 @@ const PodcastItem = ({ id, onClick, columnMode }: { id: number; onClick?: VoidFu
             src={podcast.thumbnail}
           />
         )}
-        <div className={classnames('flex w-full items-center gap-4', columnMode ? 'p-3' : 'px-5')}>
+        <div className={classnames('flex w-full items-center gap-4', columnMode ? 'p-3' : 'px-4')}>
           <div className={classnames('flex flex-col mr-auto', columnMode ? 'gap-1' : 'gap-0.5')}>
             <div className={classnames('items-center gap-2 flex font-medium', columnMode ? 'text-base' : 'text-lg')}>
               {columnMode && podcast.thumbnail && <img className={'object-cover w-6 h-6 rounded'} src={podcast.thumbnail} />}
               {podcast.name}
             </div>
             <div className={'transparent-font ellipsis-font-2 text-sm'}>{podcast.description}</div>
-            {podcast.followedAt && (
-              <div className={'transparent-font text-sm'}>
-                Followed: {DateFormat.format(podcast.followedAt, DateFormat.Formats.yearMonthDays)}
-              </div>
-            )}
+            <div className={'transparent-font text-sm flex gap-x-3 mt-0.5 flex-wrap gap-y-1'}>
+              {podcast.followedAt && (
+                <span>
+                  {t('podcast.Follow time')}: {formatReleaseDate(podcast.followedAt)}
+                </span>
+              )}
+              {podcast.lastUpdated && (
+                <span>
+                  {t('podcast.Update time')}: {formatReleaseDate(podcast.lastUpdated)}
+                </span>
+              )}
+              {podcast.viewAt && (
+                <span>
+                  {t('podcast.View time')}: {formatReleaseDate(podcast.viewAt)}
+                </span>
+              )}
+            </div>
           </div>
           <IconWithPopover
-            name={'park-more'}
+            name={Icons.More}
             placement={['right', 'left']}
             align={'start'}
-            content={setV => <PodcastMenu onClose={() => setV(false)} type={'podcast'} id={podcast.id} />}
+            content={setV => <PodcastMenu parentFolderId={parentFolderId} onClose={() => setV(false)} type={'podcast'} id={podcast.id} />}
             containerStyle={{
               marginBottom: 'auto'
             }}
@@ -69,17 +120,31 @@ const PodcastItem = ({ id, onClick, columnMode }: { id: number; onClick?: VoidFu
   )
 }
 
-const EpisodeItem = ({ id, onClick, columnMode }: { id: number; onClick?: VoidFunction; columnMode?: boolean }) => {
+const EpisodeItem = ({
+  id,
+  onClick,
+  columnMode,
+  className,
+  metaMode = false,
+  parentFolderId
+}: {
+  id: number
+  onClick?: VoidFunction
+  columnMode?: boolean
+  className?: string
+  metaMode?: boolean
+  parentFolderId?: number
+}) => {
   const episode = ObjectStore('episode').useValue(id)
-  const isMeta = useEpisodeIsMeta(id)
   if (!episode) return null
   const { releaseDate, duration, thumbnail, description, name } = episode
   return (
-    <ContextMenu content={setV => <PodcastMenu id={id} type={'episode'} onClose={() => setV(false)} />}>
+    <ContextMenu content={setV => <PodcastMenu parentFolderId={parentFolderId} id={id} type={'episode'} onClose={() => setV(false)} />}>
       <div
-        className={
-          'border shrink-0 relative hover:scale-[1.01] transition-transform rounded-lg overflow-hidden flex items-center cursor-pointer'
-        }
+        className={classnames(
+          'border shrink-0 light-hover relative transition-colors rounded-xl overflow-hidden flex items-center cursor-pointer',
+          className
+        )}
         onClick={onClick}
       >
         {thumbnail && (
@@ -90,30 +155,27 @@ const EpisodeItem = ({ id, onClick, columnMode }: { id: number; onClick?: VoidFu
             src={thumbnail}
           />
         )}
-        <div className={classnames('flex w-full items-center gap-4', columnMode ? 'p-3' : 'px-5')}>
-          <div className={classnames('flex flex-col mr-auto', columnMode && 'gap-1')}>
-            <div className={'transparent-font gap-1 flex text-sm'}>
+        <div className={classnames('flex w-full items-center gap-4', columnMode ? 'p-3' : 'px-4')}>
+          <div className={classnames('flex w-full flex-col', columnMode ? 'gap-1.5' : 'pr-12')}>
+            <div className={'transparent-font font-semibold gap-1 flex text-xs'}>
               <span>{formatReleaseDate(releaseDate)}</span>
               <span>·</span>
               <span>{formatEpisodeDuration(duration)}</span>
-              {isMeta && <Icon className={'ml-1'} name={'park-share-one'} />}
             </div>
-            <div className={classnames('items-center gap-2 flex font-medium', columnMode ? 'text-base' : 'text-lg')}>
+            <div className={classnames('items-center gap-2 flex font-medium', columnMode ? '' : 'font-size-15')}>
               {columnMode && episode.thumbnail && <img className={'object-cover w-6 h-6 rounded'} src={thumbnail} />}
-              {name}
+              <span className={classnames('line-clamp-1')}>{name}</span>
             </div>
-            <div className={'transparent-font ellipsis-font-2 text-sm'}>{description}</div>
+            <div className={'line-clamp-2 break-all font-size-12'}>{description}</div>
           </div>
           <IconWithPopover
-            name={'park-more'}
+            name={Icons.More}
             placement={['right', 'left']}
             align={'start'}
-            content={setV => <PodcastMenu onClose={() => setV(false)} type={'episode'} id={episode.id} />}
-            containerStyle={{
-              marginBottom: 'auto'
-            }}
+            content={setV => <PodcastMenu parentFolderId={parentFolderId} onClose={() => setV(false)} type={'episode'} id={episode.id} />}
+            containerClassName={'absolute top-3 right-3'}
             onClick={e => e.stopPropagation()}
-            className={'text-2xl !p-1 button'}
+            className={'hover-active-button'}
           ></IconWithPopover>
         </div>
       </div>

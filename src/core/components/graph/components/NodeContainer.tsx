@@ -1,8 +1,5 @@
 import { useMemoizedFn } from '@/hooks'
-import { MetaStore } from '@/api/stores'
-import Id from '@/utils/id'
-import { memo, MouseEvent, useEffect } from 'react'
-import { MetaLink } from '~/typings/data'
+import { memo, MouseEvent, useEffect, useRef } from 'react'
 import useEdges from '../hooks/useEdges'
 import useGraph from '../hooks/useGraph'
 import useGraphNodes from '../hooks/useGraphNodes'
@@ -10,27 +7,75 @@ import { GraphNode } from '../types/node'
 import useGraphFilter from '../hooks/useGraphFilter'
 import { Container, useApp } from '@pixi/react'
 import PixiNode from '@/core/components/graph/components/node/PixiNode'
+import { GlobalSetting } from '@/core'
+import { LeftTopPosition } from '~/typings'
+import { mousePos } from '@/hooks/utils/useMousePositionRef'
 
 export type NodeMouseEventHandler = (e: MouseEvent, node: GraphNode) => void
 
 export const NodeFakeHiddenOpacity = 0.1
 export const NodeFullVisibleOpacity = 1
-const NodeContainer = memo(({ type }: { type: 'canvas' | 'svg' }) => {
+type ContainerProps = {
+  onMouseEnter?: NodeMouseEventHandler
+  onMouseLeave?: NodeMouseEventHandler
+  nodes: GraphNode[]
+  onClick: NodeMouseEventHandler
+  onContextMenu: NodeMouseEventHandler
+}
+const NodeContainer = memo(() => {
   const [nodes] = useGraphNodes()
   const [edges] = useEdges()
-
-  const { addMetaLink } = MetaStore
   const graph = useGraph()
+  const hoverNodeId = useRef<{
+    id: number
+    pos: LeftTopPosition
+  }>()
   const { handleNodePointerEnter, handleNodePointerLeave } = useGraphFilter()
   const nodeMouseEnterHandler: NodeMouseEventHandler = useMemoizedFn((e, node) => {
     if (nodes && edges && graph) {
       if (graph.isDragging) return
+      if ((node.opacity ?? 1) < 1) return
+      const oState = graph.overlayManager?.getState()
+      if (!(oState && oState.visible && oState.content === 'contentDisplayer' && oState.metaId === node.id)) {
+        hoverNodeId.current = {
+          id: node.id,
+          pos: {
+            left: e.clientX,
+            top: e.clientY
+          }
+        }
+      }
+      setTimeout(() => {
+        if (graph.currentClickNodeId) {
+          hoverNodeId.current = undefined
+          return
+        }
+        if (hoverNodeId.current && hoverNodeId.current.id === node.id) {
+          const setting = GlobalSetting.getSetting().graph.previewContent
+          if (setting) {
+            graph.overlayManager?.setOverlayState(s =>
+              s.visible && s.content === 'contentDisplayer' && s.metaId === hoverNodeId.current?.id
+                ? s
+                : {
+                    visible: true,
+                    content: 'contentDisplayer',
+                    metaId: hoverNodeId.current!.id,
+                    position: {
+                      left: mousePos.current[0],
+                      top: mousePos.current[1]
+                    }
+                  }
+            )
+          }
+        }
+      }, 500)
       handleNodePointerEnter(node.id)
     }
   })
 
   const nodeMouseLeaveHandler: NodeMouseEventHandler = useMemoizedFn((e, node) => {
     if (nodes && edges && graph) {
+      hoverNodeId.current = undefined
       if (graph.isDragging) return
       handleNodePointerLeave()
     }
@@ -38,62 +83,55 @@ const NodeContainer = memo(({ type }: { type: 'canvas' | 'svg' }) => {
 
   const nodeClickHandler: NodeMouseEventHandler = useMemoizedFn((e, node) => {
     e.stopPropagation()
-    if (graph) {
-      if (graph.isAddingEdge) {
-        const startNode = graph.contextMenuNode
-        const endNode = node
-        if (startNode && endNode) {
-          const newEdge = {
-            sourceId: startNode.id,
-            targetId: endNode.id,
-            id: Id.getId()
-          }
-          if (newEdge.sourceId === newEdge.targetId) {
-            graph.endAddEdge()
-            return
-          }
-          if (edges?.some(e => e.sourceId === newEdge.sourceId && e.targetId === newEdge.targetId)) {
-            graph.endAddEdge()
-            return
-          }
-          const metaLink: Partial<MetaLink> = {
-            sourceId: newEdge.sourceId,
-            targetId: newEdge.targetId,
-            targetType: node.type,
-            sourceType: startNode.type
-          }
-          addMetaLink(metaLink)
-          graph.registerNewAddedEdge(newEdge)
-          graph.registerEdges([newEdge])
-          graph.endAddEdge()
-        }
-      }
+    hoverNodeId.current = undefined
+    const setting = GlobalSetting.getSetting()
+    if (setting.graph.openIn === 'side peek') {
+      graph.sidePeek?.(node.id)
+    } else {
+      Global.layoutOps?.openObject(node.id)
     }
   })
-  const nodeContextMenuHandler: NodeMouseEventHandler = useMemoizedFn((e, node) => {})
-  const app = type === 'canvas' && useApp()
+  const nodeContextMenuHandler: NodeMouseEventHandler = useMemoizedFn((e, node) => {
+    hoverNodeId.current = undefined
+    graph.overlayManager?.setOverlayState({
+      content: 'nodePopover',
+      nodeId: node.id,
+      metaId: node.id,
+      visible: true,
+      position: { left: e.clientX, top: e.clientY }
+    })
+  })
+  return (
+    <PIXIContainer
+      nodes={nodes}
+      onContextMenu={nodeContextMenuHandler}
+      onClick={nodeClickHandler}
+      onMouseEnter={nodeMouseEnterHandler}
+      onMouseLeave={nodeMouseLeaveHandler}
+    />
+  )
+})
+
+const PIXIContainer = ({ nodes, onClick, onMouseEnter, onMouseLeave, onContextMenu }: ContainerProps) => {
+  const app = useApp()
+  const graph = useGraph()
   useEffect(() => {
-    if (type === 'canvas' && app) {
-
-      const resize = () => {
-        console.log('resize')
-        const parent = app.view.parentNode
-        if (parent) {
-          const width = parent.clientWidth,
-            height = parent.clientHeight
-          app.renderer.resize(width, height)
-          graph?.pixiViewport?.resize(width, height, width, height)
-
-        }
+    const resize = () => {
+      const parent = app.view.parentNode
+      if (parent) {
+        const width = parent.clientWidth,
+          height = parent.clientHeight
+        app.renderer.resize(width, height)
+        graph?.pixiViewport?.resize(width, height, width, height)
       }
-      const resizeHandler = () => {
-        resize()
-      }
-      window.addEventListener('resize', resizeHandler)
+    }
+    const resizeHandler = () => {
       resize()
-      return () => {
-        window.removeEventListener('resize', resizeHandler)
-      }
+    }
+    window.addEventListener('resize', resizeHandler)
+    resize()
+    return () => {
+      window.removeEventListener('resize', resizeHandler)
     }
   }, [app])
   return (
@@ -102,12 +140,13 @@ const NodeContainer = memo(({ type }: { type: 'canvas' | 'svg' }) => {
         <PixiNode
           node={node}
           key={node.id}
-          onMouseEnter={nodeMouseEnterHandler}
-          onMouseLeave={nodeMouseLeaveHandler}
-          onClick={nodeClickHandler}
+          onContextMenu={onContextMenu}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+          onClick={onClick}
         />
       ))}
     </Container>
   )
-})
+}
 export default NodeContainer

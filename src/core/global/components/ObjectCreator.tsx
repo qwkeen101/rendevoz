@@ -1,131 +1,86 @@
-import { assignProperties } from '@/utils'
-import { GlobalInstance } from '@/hooks'
-import { useRef, useState } from 'react'
+import { assignProperties, Id } from '@/utils'
+import { useEffect, useRef, useState } from 'react'
 import { Modal } from '@/components'
-import FileImporter from '@/api/components/fileImporter'
+import FileImporter from '@/api/components/objectImporter'
 import { MetaObject } from '~/typings'
-import { ObjectStore } from '@/api/stores'
-import GroupStore from '../../../api/stores/group.store'
+import { ObjectStore, GroupStore } from '@/api/stores'
+import { IFileUploaderTab } from '@/api/components/objectImporter/ObjectFileUploader'
+import { range } from 'lodash'
 
 export const ObjectCreateHandler: Partial<
   Record<
     MetaObject['type'],
-    () => Promise<{
+    (opts?: { name?: string; tags?: number[] }) => Promise<{
       meta: MetaObject
       one: any
     }>
   >
 > = {
-  note: () => ObjectStore('note').addOneWithMeta({}),
-  whiteboard: () => ObjectStore('whiteboard').addOneWithMeta({}),
-  group: () => ObjectStore('group').addOneWithMeta(GroupStore.initializeGroup()),
-  code: () => ObjectStore('code').addOneWithMeta({ content: '' }),
-  question: () => ObjectStore('question').addOneWithMeta(),
-  tweet: () =>
-    ObjectStore('tweet').addOneWithMeta(
-      {},
-      {
-        showMetaModal: true
-      }
-    ),
-  video: () =>
-    ObjectStore('video').addOneWithMeta(
-      {},
-      {
-        showMetaModal: true
-      }
-    ),
-
-  image: () =>
-    ObjectStore('image').addOneWithMeta(
-      {},
-      {
-        showMetaModal: true
-      }
-    ),
-  audio: () =>
-    ObjectStore('audio').addOneWithMeta(
-      {},
-      {
-        showMetaModal: true
-      }
-    ),
-  webpage: () =>
-    ObjectStore('webpage').addOneWithMeta(
-      {},
-      {
-        showMetaModal: true
-      }
-    ),
-  localFile: () => ObjectStore('localFile').addOneWithMeta({}, { showMetaModal: true }),
-  pdf: () =>
-    ObjectStore('pdf').addOneWithMeta(
-      {},
-      {
-        showMetaModal: true
-      }
-    )
+  note: opts => ObjectStore('note').addOneWithMeta({}, { currentMeta: opts }),
+  whiteboard: opts => ObjectStore('whiteboard').addOneWithMeta({}, { currentMeta: opts }),
+  group: opts => ObjectStore('group').addOneWithMeta(GroupStore.initializeGroup(), { currentMeta: opts }),
+  question: opts => ObjectStore('question').addOneWithMeta({}, { currentMeta: opts }),
+  chat: opts => ObjectStore('chat').addOneWithMeta({ messages: [] }, { currentMeta: opts }),
+  exam: async opts => {
+    const examId = Id.getId()
+    const q1 = await ObjectStore('examQuestion').addOne({
+      type: 'text',
+      parentObjectId: examId
+    })
+    const q2 = await ObjectStore('examQuestion').addOne({
+      type: 'singleSelect',
+      parentObjectId: examId,
+      choices: range(0, 3).map(() => ({ id: Id.getId(), name: '' }))
+    })
+    return await ObjectStore('exam').addOneWithMeta({ questions: [q1.id, q2.id], id: examId }, { currentMeta: opts })
+  }
 }
 export default () => {
   const [visible, setVisible] = useState(false)
-  const callbackRef = useRef<{
-    resolve: typeof Promise.resolve
-    reject: typeof Promise.reject
-  }>()
-  const createHandlerRef = useRef()
-  const parentCollectionRef = useRef()
-  assignProperties(GlobalInstance, {
+  const createHandlerRef = useRef<(o: MetaObject, trigger?: boolean) => void>()
+  const parentCollectionRef = useRef<number>()
+  const [defaultTab, setDefaultTab] = useState<IFileUploaderTab>()
+  useEffect(() => {
+    if (!visible) {
+      setDefaultTab(undefined)
+    }
+  }, [visible])
+  assignProperties(Global, {
     metaOps: {
-      ...GlobalInstance.metaOps,
+      ...Global.metaOps,
+      openUploaderTab: t => {
+        setDefaultTab(t)
+        setTimeout(() => setVisible(true))
+      },
       createObjects: (type, onMetaCreated, opts) => {
-        createHandlerRef.current = onMetaCreated
+        const handleCreate = (m: MetaObject, trigger?: boolean) => {
+          if (trigger && opts?.openAfterTriggerOnce) {
+            Global.layoutOps?.openObject(m.id)
+          }
+          onMetaCreated?.(m)
+        }
         parentCollectionRef.current = opts?.parentCollectionId
+        createHandlerRef.current = handleCreate
         if (type) {
           if (ObjectCreateHandler[type]) {
-            ObjectCreateHandler[type]?.().then(o => onMetaCreated?.(o.meta))
+            ObjectCreateHandler[type]?.().then(o => handleCreate?.(o.meta, true))
           }
           return
         }
         setVisible(true)
-      },
-      createObject: type => {
-        createHandlerRef.current = undefined
-        parentCollectionRef.current = undefined
-        if (type) {
-          if (ObjectCreateHandler[type]) {
-            return new Promise(res => {
-              ObjectCreateHandler[type]?.().then(o => res(o.meta))
-            })
-          } else {
-            return Promise.reject()
-          }
-        }
-        setVisible(true)
-        return new Promise((resolve, reject) => {
-          callbackRef.current = {
-            reject,
-            resolve
-          }
-        })
       }
     }
   })
   return (
     <Modal visible={visible} onClose={() => setVisible(false)}>
       <FileImporter
-        createHandler={createHandlerRef.current}
+        defaultTab={defaultTab}
         onClose={() => setVisible(false)}
         parentCollectionId={parentCollectionRef.current}
-        onCreate={object => {
+        onCreate={(object, trigger) => {
           setVisible(false)
-          setTimeout(() => {
-            callbackRef.current?.resolve(object)
-            setTimeout(() => {
-              callbackRef.current = undefined
-            })
-          }, 200)
+          createHandlerRef.current?.(object, trigger)
         }}
-        autoOpen={false}
       />
     </Modal>
   )

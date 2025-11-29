@@ -2,12 +2,28 @@ import { enableMapSet, enablePatches } from 'immer'
 import { createRoot } from 'react-dom/client'
 import initI18n from './config/i18n'
 import { Provider } from 'jotai'
-import { Utils, Hooks } from 'rendevoz'
 import App from './App'
+import DateFormat from './utils/dateFormat'
+import { globalStore } from '@/api/stores'
+
+window.DateFormat = DateFormat
 enableMapSet()
 enablePatches()
-const lang = Utils.Navigator.getDefaultLanguage()
+const lang = navigator.language === 'zh-CN' ? navigator.language : 'en-US'
 initI18n(lang)
+// 禁止focus滚动页面
+const originalFocus = HTMLElement.prototype.focus
+
+// 重写 focus 方法
+HTMLElement.prototype.focus = function (options) {
+  if (options === undefined || typeof options !== 'object') {
+    options = {}
+  }
+
+  // 默认 preventScroll 为 true
+  options.preventScroll = true
+  originalFocus.call(this, options)
+}
 
 document.addEventListener(
   'error',
@@ -41,9 +57,9 @@ document.addEventListener(
 // }
 
 const root = createRoot(document.getElementById('root')!)
-
+document.body.spellcheck = false
 root.render(
-  <Provider store={Hooks.globalStore}>
+  <Provider store={globalStore}>
     <App />
   </Provider>
 )

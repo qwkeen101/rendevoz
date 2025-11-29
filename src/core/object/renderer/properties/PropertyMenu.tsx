@@ -3,8 +3,6 @@ import { IMetaProp } from '~/typings'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import { MetaStore } from '@/api/stores'
 import { useTranslation } from 'react-i18next'
-import { ClassName } from 'rendevoz'
-import { Rendevoz } from '@/core/rendevoz'
 
 export default ({
   property,
@@ -71,7 +69,7 @@ export default ({
             icon: 'park-info',
             onSelect: async () => {
               onClose?.()
-              Rendevoz.Actions.Open.Group.openPropGroup(property.id)
+              Global.layoutOps?.openPage('propGroup', { id: property.id })
             }
           },
           show?.deleteForMeta && {
@@ -105,7 +103,6 @@ export default ({
             : undefined,
           show?.delete && editable
             ? {
-                dangerous: true,
                 text: t('general.Delete property for all'),
                 type: 'item',
                 key: 'delete-for-all',
@@ -113,6 +110,13 @@ export default ({
                 onSelect: async () => {
                   instance.viewOps?.deleteCustomProperty?.(property.id, false)
                   MetaStore.property.deleteProperty(property.id)
+                  const tab = Global.layoutOps?.hasTargetTab({
+                    type: 'propGroup',
+                    objectId: property.id
+                  })
+                  if (tab) {
+                    Global.layoutOps?.closeTab(tab)
+                  }
                 }
               }
             : undefined

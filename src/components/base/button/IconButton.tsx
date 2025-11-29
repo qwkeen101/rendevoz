@@ -1,25 +1,16 @@
 import { useMergedRef } from '@/hooks'
-import ClassName from '@/styles/classNames'
-import { css } from '@emotion/css'
 import classNames from 'classnames'
-import React, { CSSProperties, forwardRef, MouseEventHandler, useLayoutEffect, useRef } from 'react'
+import React, { CSSProperties, forwardRef, MouseEventHandler, ReactElement, useLayoutEffect, useRef } from 'react'
 import { Icon, Tooltip } from '..'
-import Content from '../Content'
 import Colors from '@/consts/colors'
+import classnames from 'classnames'
 
-const DangerousButtonClassName = css({
-  color: Colors.Common.Red
-})
-
-const NoShrinkClassName = css({
-  flexShrink: 0
-})
 const IconButton = forwardRef(
   (
     {
       icon,
       text,
-      gap = 10,
+      gap,
       onClick,
       dangerous,
       className,
@@ -34,18 +25,27 @@ const IconButton = forwardRef(
       suffixStr,
       enabled,
       theme,
+      iconClassName,
       onSuffixIconClick,
       iconColor,
       suffixIcon,
-      size,
+      textClassName,
+      size = 16,
       suffixIconStyle,
       suffixIconClassName,
+      image,
+      suffixStrClassName = 'font-size-11',
+      strokeWidth,
+      smallText = true,
       ...rest
     }: {
-      icon?: string
+      icon?: string | ReactElement
       onClick?: MouseEventHandler
       gap?: number
       text?: string
+      image?: string
+      strokeWidth?: number
+      smallText?: boolean
       suffixIconStyle?: CSSProperties
       theme?: string
       suffixIconClassName?: string
@@ -53,6 +53,7 @@ const IconButton = forwardRef(
       className?: string
       dangerous?: boolean
       reverse?: boolean
+      iconClassName?: string
       spaceBetween?: boolean
       tabIndex?: number
       selected?: boolean
@@ -61,7 +62,9 @@ const IconButton = forwardRef(
       onSuffixIconClick?: React.MouseEventHandler
       size?: number
       suffixStr?: string | number
-      tooltip?: string
+      suffixStrClassName?: string
+      textClassName?: string
+      tooltip?: string | ReactElement
       spin?: boolean
       onPointerEnter?: React.PointerEventHandler
       iconColor?: string
@@ -73,56 +76,56 @@ const IconButton = forwardRef(
 
     return (
       <Tooltip content={tooltip} ref={mergedRef}>
-        <Content
-          role="button"
+        <div
           onClick={onClick}
-          gap={gap}
-          flex
           tabIndex={tabIndex}
-          alignItems={'center'}
           onPointerEnter={onPointerEnter}
           {...rest}
           style={{
-            flexDirection: reverse && icon ? 'row-reverse' : 'row',
+            gap,
+            flexDirection: reverse && icon ? 'row-reverse' : undefined,
             justifyContent: spaceBetween ? 'space-between' : undefined,
             background: selected === true ? Colors.Background.ButtonHover : selected === false ? 'none' : undefined,
             ...style
           }}
-          className={classNames(
-            className,
-            NoShrinkClassName,
-            ClassName.flatButton(undefined, '3px 8px', dangerous ? 'rgb(253, 138, 138, 0.2)' : undefined),
-            dangerous && DangerousButtonClassName
-          )}
+          className={classNames(className, 'icon-button', dangerous && 'text-red-500')}
         >
-          {icon && (
-            <Icon
-              style={{
-                color: iconColor,
-                fontSize: 16
-              }}
-              theme={theme}
-              spin={spin}
-              name={icon}
-              size={size}
-            />
-          )}
-          {text && <div className={ClassName.ellipsisFont(1)}>{text}</div>}
+          {image ? (
+            <img src={image} className={'em:size-5 shrink-0 object-cover rounded'} />
+          ) : icon ? (
+            React.isValidElement(icon) ? (
+              icon
+            ) : typeof icon === 'string' ? (
+              <Icon
+                strokeWidth={strokeWidth}
+                style={{
+                  color: iconColor
+                }}
+                className={iconClassName}
+                theme={theme}
+                spin={spin}
+                name={icon}
+                size={size}
+              />
+            ) : null
+          ) : null}
+          {text && <div className={classnames('line-clamp-1 break-all', textClassName)}>{text}</div>}
           {(enabled || suffixIcon || suffixStr) && (
-            <Content className={'font-size-12 super-transparent-font'} flex gap={4} style={{ marginLeft: 'auto', paddingLeft: 18 }}>
-              {enabled && <Icon name="park-check-small" />}
-              {suffixStr && <span>{suffixStr}</span>}
+            <div className={'ml-auto gap-2 shrink-0 flex pl-5 suffix-font'}>
+              {enabled && <Icon name="park-check" />}
+              {suffixStr && <span className={suffixStrClassName}>{suffixStr}</span>}
               {suffixIcon && (
                 <Icon
+                  size={size}
                   className={suffixIconClassName}
                   onClick={onSuffixIconClick}
                   name={suffixIcon}
-                  containerStyle={{ color: Colors.Font.Transparent, ...suffixIconStyle }}
+                  containerStyle={suffixIconStyle}
                 />
               )}
-            </Content>
+            </div>
           )}
-        </Content>
+        </div>
       </Tooltip>
     )
   }

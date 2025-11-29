@@ -9,29 +9,9 @@ export interface IOuterElement extends ElementWithId {
   children: EmptyText[]
 }
 
-export interface ThoughtElement extends IOuterElement {
-  type: 'thought'
-  title: string
-  content: string
-}
-
 export interface SyncedBlockElement extends IOuterElement {
   type: 'synced'
-  synced: boolean
   syncVersion: number
-}
-
-export interface BookHighlightElement extends IOuterElement {
-  type: 'book-highlight'
-  selectedText: string
-  documentId?: number
-  page?: number
-  title?: string
-  collapsed?: boolean
-}
-export interface SubPageElement extends IOuterElement {
-  type: 'subPage'
-  iconName?: string
 }
 
 export interface MetaObjectElement extends IOuterElement {
@@ -40,10 +20,4 @@ export interface MetaObjectElement extends IOuterElement {
 export interface InlineMetaObjectElement extends IOuterElement {
   type: 'inline-metaObject'
 }
-export type OuterElement =
-  | ThoughtElement
-  | BookHighlightElement
-  | SubPageElement
-  | MetaObjectElement
-  | InlineMetaObjectElement
-  | SyncedBlockElement
+export type OuterElement = MetaObjectElement | InlineMetaObjectElement | SyncedBlockElement

@@ -1,33 +1,14 @@
-import { FeedItem } from '~/typings'
-import toast from 'react-hot-toast'
-import { truncate } from 'lodash'
+import { IFeedItem } from '~/typings'
 import FeedParser from '@/core/components/feed/utils/parser'
 
-export default async (url: string, feedType: FeedItem['feedType']) => {
+const universalFeedFetcher = async (url: string, feedType: IFeedItem['feedType']) => {
   try {
     const text = await fetch(url, {
       cache: 'no-cache'
     }).then(res => res.text())
-    const initialRes = await FeedParser(text, {
-      transformGoogle: true,
-      urlFilterRule: s => {
-        if (s.includes('reuters') || s.includes('wsj.com')) return false
-        return true
-      }
-    })
-    console.log(initialRes)
-    if (url.includes('youtube.com')) {
-      feedType = 'youtube'
-    }
-    if (url.includes('twitter')) {
-      feedType = 'tweet'
-    }
+    const initialRes = await FeedParser(text)
     const initialItems = initialRes.items.map(i => {
-      let feedT = feedType
-      if (i.link.includes('bilibili.com/video')) {
-        feedT = 'bilibili'
-      }
-      return { ...i, feedType: feedT }
+      return { ...i, feedType }
     })
     return {
       ...initialRes,
@@ -37,3 +18,5 @@ export default async (url: string, feedType: FeedItem['feedType']) => {
     console.error(e)
   }
 }
+
+export default universalFeedFetcher

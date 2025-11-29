@@ -1,35 +1,26 @@
 import '@icon-park/react/styles/index.less'
 import './styles/global.less'
-import './styles/font.less'
 import './styles/styles.less'
-import { GlobalDragOverlay, GlobalScreenShot, GlobalSetting } from '@/core'
+import './styles/pro.less'
+import './styles/animate.less'
+import 'mingcute_icon/font/MingCute.css'
+import { GlobalDragOverlay, GlobalSetting } from '@/core'
 import '@/styles/dock.less'
 import SvgMarker from './components/svg/Marker'
-import { Fragment, useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ErrorBoundary } from 'react-error-boundary'
 import ErrorFallback from './components/base/ErrorFallBack'
-import AuthenticatedLayout from './components/base/authenticatedLayout'
 import * as pdfjsLib from 'pdfjs-dist'
 import PdfJsUrl from '@/assets/pdf.worker.mjs?url'
 import ImagePreviewer from './core/global/components/ImagePreviewer'
-import classNames from 'classnames'
-import { css } from '@emotion/css'
-import GlobalTranslateResult from './core/global/translate/GlobalTranslatePanel'
-import GlobalSearchPanel from './core/global/GlobalSearchPanel'
-import 'highlight.js/styles/atom-one-dark.css'
 import TextSearch from './core/global/components/TextSearch'
 import '@/consts/colors.less'
 import FileImporter from './core/global/components/FileImportProcessor'
-import PluginManager from './core/plugin/PluginManager'
-import BuiltinEditorPlugin from './core/plugin/builtin/EditorPlugin'
-import { KeyToRegisteredGlobalElements } from './core/plugin/RegisterMap'
 import GlobalUtils from '@/core/global/GlobalUtils'
 import { BuiltInDraggableElement, BuiltInDropOn, BuiltInMetaObjectTypes, BuiltInObjectTypes, BuiltInTabTypes } from '~/typings'
-import { GlobalBaidudisk } from '@/api/components/fileImporter/baidudisk/BaidudiskDisplayer'
 import GlobalCollection from '@/core/global/components/CollectionSelector'
 import { GlobalObjectDetails } from '@/core/object/details'
-import GlobalPreviewPanel from '@/core/global/components/ObjectPreviewer'
 import GlobalObjectCreator from '@/core/global/components/ObjectCreator'
 import GlobalQuickAdd from '@/components/form/quickAdd/GlobalQuickAdd'
 import GlobalDownloadIndicator from '@/core/global/DownloadIndicator'
@@ -39,6 +30,11 @@ import { ChineseFormats, DateFormat, EnglishFormats } from '@/utils'
 import useGlobalShortcutHandler from '@/core/global/ShortcutHandler'
 import ObjectEditForm from '@/core/global/components/ObjectEditForm'
 import APIComponents from '@/api/components/APIComponents'
+import ExplainPanel from '@/core/global/generalAIHelpers/ExplainPanel'
+import TranslatePanel from '@/core/global/generalAIHelpers/TranslatePanel'
+import LibraryFileImporter from '@/core/global/components/LibraryFileImporter'
+import GlobalExtraPage from '@/core/global/GlobalExtraPage'
+import Layout from '@/components/layout'
 
 export function getOS() {
   const userAgent = window.navigator.userAgent.toLowerCase(),
@@ -62,7 +58,6 @@ export function getOS() {
   return os
 }
 
-export const GlobalPluginManager = new PluginManager()
 declare module 'rendevoz' {
   export interface CustomTypes {
     MetaObject: BuiltInMetaObjectTypes
@@ -83,11 +78,6 @@ const App = () => {
   useGlobalShortcutHandler()
   const lang = GlobalSetting.useSelectSettingAtom('language')
   const { i18n } = useTranslation()
-  const executed = useRef(false)
-  if (!executed.current) {
-    GlobalPluginManager.registerPlugin(BuiltinEditorPlugin)
-    executed.current = true
-  }
   useEffect(() => {
     i18n.changeLanguage(lang)
     const currentLang = i18n.language
@@ -103,33 +93,27 @@ const App = () => {
       }
     }
   }, [lang])
-
-  const registeredGlobalElements = Array.from(KeyToRegisteredGlobalElements.entries())
-
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <GlobalExtraPage />
       <APIComponents />
       <GlobalDownloadIndicator />
+      <LibraryFileImporter />
       <TextSearch />
-      <GlobalScreenShot />
-      <GlobalPreviewPanel />
+      <GlobalSetting.SettingDialog />
       <GlobalQuickAdd />
-      <GlobalBaidudisk />
-      <GlobalSearchPanel />
+      <ExplainPanel />
+      <TranslatePanel />
       <GlobalDialog />
       <ObjectEditForm />
       <GlobalCollection />
       <GlobalObjectCreator />
       <GlobalObjectDetails />
-      <GlobalTranslateResult />
-      <AuthenticatedLayout />
+      <Layout />
       <GlobalDragOverlay />
       <ImagePreviewer />
       <FileImporter />
       <GlobalUtils />
-      {registeredGlobalElements.map(entry => (
-        <Fragment key={entry[0]}>{entry[1]()}</Fragment>
-      ))}
       <svg
         style={{
           position: 'absolute',

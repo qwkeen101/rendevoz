@@ -1,9 +1,7 @@
-import { IGroupInstance, MetaObject, PartialWithId } from '~/typings'
+import { MetaObject, PartialWithId } from '~/typings'
 import { assignProperties } from '@/utils'
 import { MetaStore } from '@/api/stores'
-import { useStore } from 'jotai'
-import { GroupStateAtom, IGroupState } from '@/core/components/group/hooks/useGroupState'
-import { GlobalInstance } from '@/hooks'
+import { IGroupState } from '@/core/components/group/hooks/useGroupState'
 import handleCreateInGrouper from '@/core/components/group/components/grouper/handlers/handleCreateInGrouper'
 import { InnerGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 
@@ -23,9 +21,8 @@ const useAssignMetaOps = (instance: InnerGroupInstance) => {
           }
         }
 
-        GlobalInstance.metaOps?.createObjects(onlyCreate, meta => {
+        Global.metaOps?.createObjects(onlyCreate, meta => {
           handleFilterAdd(groupState, meta)
-          console.log(meta)
           setTimeout(() => {
             MetaStore.triggerObjectIndex()
             // we do not add into group if have only create, add by parent type group
@@ -137,7 +134,7 @@ const useAssignMetaOps = (instance: InnerGroupInstance) => {
 }
 
 // if have filter, add filter properties to meta
-const handleFilterAdd = (groupState: IGroupState, meta: MetaObject) => {
+export const handleFilterAdd = (groupState: IGroupState, meta: MetaObject) => {
   const f = groupState.currentView?.filter
   if (f) {
     const needUpdateProps: Record<string, any> = {}
@@ -177,7 +174,6 @@ const handleFilterAdd = (groupState: IGroupState, meta: MetaObject) => {
       }
     })
     const props = Object.fromEntries(Object.entries(needUpdateProps).map(i => [i[0], { value: i[1] }]))
-    console.log(props, needUpdateBasic, f)
     MetaStore.updateMetaObject({ id: meta.id, properties: props, ...needUpdateBasic })
   }
 }

@@ -4,16 +4,16 @@ import { autoUpdater } from 'electron-updater'
 import { fileURLToPath } from 'url'
 import openUrlHandler from '../global/openUrlHandler'
 import requestIntercepter from '../global/requestIntercepter'
-import HttpsProxyAgent from 'https-proxy-agent'
-import axios from 'axios'
-import { app, BrowserWindow, protocol, session, shell, Menu, Tray, nativeImage } from 'electron'
-import path from 'path'
+import { app, BrowserWindow, protocol, shell, Menu, Tray, nativeImage } from 'electron'
 import '../controller/app'
 import '../controller/file'
 import '../controller/window'
 import '../controller/baidu'
 import '../controller/plugin'
+import '../controller/webpage'
 import '../controller/pdf'
+import '../controller/rag'
+
 import restoreWindowSize from './restoreWindowSize'
 import replaceFilePosition from './replaceFilePosition'
 import { DefaultRendevozDataPath } from '../service/file'
@@ -22,7 +22,7 @@ process.env.DIST_ELECTRON = join(__dirname, '../..')
 process.env.DIST = join(process.env.DIST_ELECTRON, './dist')
 process.env.PUBLIC = app.isPackaged ? process.env.DIST : join(process.env.DIST_ELECTRON, './public')
 const slicedLength = 'rendefile://'.length
-
+export let globalWindow: BrowserWindow | undefined = undefined
 const startElectron = async () => {
   const isDev = !app.isPackaged
   const preload = join(__dirname, '../preload/index.js')
@@ -40,17 +40,13 @@ const startElectron = async () => {
     provider: 'generic',
     url: 'https://rendevoz.com/download'
   })
-  autoUpdater.forceDevUpdateConfig = true
-
   autoUpdater.on('update-available', info => {
     win.webContents.send('updateAvailable')
   })
-
   autoUpdater.on('update-downloaded', () => {
     win.webContents.send('updateDownloaded')
     process.env.IS_DOWNLOADING = 'false'
   })
-
   autoUpdater.on('error', () => {
     process.env.IS_DOWNLOADING = 'false'
   })
@@ -99,13 +95,10 @@ const startElectron = async () => {
       if (url.startsWith('rendefile://')) {
         const FILE_PATH = process.env.FILE_PATH || DefaultRendevozDataPath
         const u = FILE_PATH + url.replace(FILE_PATH, '').slice(slicedLength)
-        console.log(u)
         shell.openExternal('file://' + u)
       } else {
         shell.openExternal(url)
       }
-      console.log('deny')
-      // win.webContents.send('newPage', url)
       return { action: 'deny' }
     })
   })
@@ -128,6 +121,7 @@ const startElectron = async () => {
       y: 12
     }
   })
+  globalWindow = win
   try {
     restoreWindowSize(win, app)
     openUrlHandler(app, win)
@@ -142,7 +136,6 @@ const startElectron = async () => {
     const videoPrePath = process.env.PUBLIC + '/videopre.js'
     const videoAboPath = resolve(videoPrePath)
     if (params.webpreferences.includes('video')) {
-      console.log(videoAboPath)
       webPreferences.preload = videoAboPath
       webPreferences.webSecurity = false
       return
@@ -150,7 +143,6 @@ const startElectron = async () => {
   })
   win.webContents.on('did-attach-webview', (_, contents) => {
     contents.setWindowOpenHandler(details => {
-      console.log(details)
       contents.loadURL(details.url)
       return { action: 'deny' }
     })
@@ -191,7 +183,6 @@ const startElectron = async () => {
       }
       return
     }
-    console.log(process.env.SHOULD_CLOSE)
     if (process.env.SHOULD_CLOSE === 'false') {
       win.webContents.send('unload')
       e.preventDefault()
@@ -226,25 +217,6 @@ const startElectron = async () => {
     c({ cancel: false, responseHeaders: d.responseHeaders })
   })
   requestIntercepter(win)
-
-  // 下面的代码会尝试解析代理配置，如果用户配置了系统代理，
-  // 并且代理规则没有排除 www.google.com，那我们就可以读取到代理信息
-  win.webContents.session.resolveProxy('https://www.google.com').then(proxyUrl => {
-    // DIRECT 表示没有配置代理
-    if (proxyUrl !== 'DIRECT') {
-      // proxyUrl 是这种格式: 'PROXY 127.0.0.1:6152'
-      const hostAndPort = proxyUrl.split(' ')[1]
-      const [proxyHost, proxyPort] = hostAndPort.split(':')
-
-      // 到这里就拿到代理服务器的信息了，这里我用 https-proxy-agent 这个 npm 包让 Axios 的默认请求强制走系统代理
-      // @ts-ignore
-      const agent = new HttpsProxyAgent({
-        host: proxyHost,
-        port: proxyPort
-      })
-      axios.defaults.httpsAgent = agent
-    }
-  })
   if (app.isPackaged) {
     win.loadFile(indexHtml)
   } else {

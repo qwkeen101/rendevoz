@@ -3,14 +3,13 @@ import { memo } from 'react'
 import { Resizable } from 're-resizable'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
 import { assignProperties } from '@/utils'
-import { DockTabPaneContext } from '@/components/base/dock/DockTabPane'
 import { atom, useAtom } from 'jotai'
 import { IWhiteboardRightbarState } from '~/typings'
 import { Colors } from '@/consts'
 import WhiteboardContent from '@/core/components/whiteboard/sidebar/WhiteboardContent'
 import { MetaStore } from '@/api/stores'
 import { css } from '@emotion/css'
-import { GlobalInstance } from '@/hooks'
+import SidebarObjectViewer from '@/core/components/SidebarObjectViewer'
 
 export const WhiteboardSidebarStateAtom = atom<IWhiteboardRightbarState>({ visible: false, width: '480px' })
 
@@ -18,37 +17,35 @@ const WhiteboardRightbar = () => {
   const [rightBarState, setRightBarState] = useAtom(WhiteboardSidebarStateAtom)
   const instance = useWhiteboardInstance()
   const { currentTab } = rightBarState
-  const renderItem = (type: string, metaId: number, objectId?: number) => {
-    if (!type || !objectId) return
-    const page = GlobalInstance.layoutOps?.getRegisteredTabData(type)
-    if (page) {
-      return (
-        <div
-          onWheelCapture={e => {
-            e.stopPropagation()
+  const renderItem = (type: string, metaId: number) => {
+    return (
+      <div
+        onWheelCapture={e => {
+          e.stopPropagation()
+        }}
+        key={metaId}
+        style={{ width: '100%', height: '100%' }}
+      >
+        <SidebarObjectViewer
+          id={metaId}
+          pageConfig={{
+            defaultOpenSidebar: false,
+            editorHeader: true,
+            pdfHeader: true,
+            editorAdd: false,
+            whiteboardHeader: true
           }}
-          key={objectId}
-          style={{ width: '100%', height: '100%' }}
-        >
-          <DockTabPaneContext.Provider value={{ currentTabId: '' }}>{page.content({ objectId, type, metaId })}</DockTabPaneContext.Provider>
-        </div>
-      )
-    }
+        />
+      </div>
+    )
   }
 
   assignProperties(instance, {
     sidebarOps: {
-      openRightBar: active => {
-        setRightBarState(s => ({ ...s, active, visible: true }))
-      },
-      closeRightBar: () => {
-        setRightBarState(s => ({ ...s, visible: false }))
-      },
       openNodeAtSidebar: nodeId => {
         const node = instance.getNode?.(nodeId)
         if (node && node.type === 'metaObject') {
           const meta = MetaStore.getMetaObjectsMap().get(node.metaObjectId)
-          console.log(meta)
           if (meta) {
             setRightBarState(s => ({
               ...s,
@@ -63,8 +60,7 @@ const WhiteboardRightbar = () => {
           }
         }
       }
-    },
-    openTabInSidebar: (type, objectId) => {}
+    }
   })
   const { active, visible, width } = rightBarState
 
@@ -131,14 +127,7 @@ const WhiteboardRightbar = () => {
           />
         </div>
       )}
-      <Tabs disableTabNav activeKey={active}>
-        <TabPane tab={null} key={'content'}>
-          {currentTab && renderItem(currentTab.type, currentTab.metaId, currentTab.objectId)}
-        </TabPane>
-        <TabPane tab={null} key={'outline'}>
-          <WhiteboardContent />
-        </TabPane>
-      </Tabs>
+      {currentTab && renderItem(currentTab.type, currentTab.metaId)}
     </Resizable>
   )
 }

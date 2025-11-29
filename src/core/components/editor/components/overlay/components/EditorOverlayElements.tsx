@@ -1,15 +1,15 @@
 import { WithBorder } from '@/components/base'
-import { CustomEditor } from '~/typings'
+import { CustomEditor, CustomElement } from '~/typings'
 import EditorElementsMenu from '@/core/components/editor/components/EditorElementsMenu'
 import { defaultHandler } from '../../handleAddElementInMenu'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
-import { EditorTypeToElementMap } from '@/core/components/editor/maps'
+import EditorElements from '@/core/components/editor/elements/EditorElements'
 
 const EditorOverlayElements = ({ editor, mode }: { editor: CustomEditor; mode: 'block' | 'slash' }) => {
   const instance = useEditorInstance()
 
-  const handleElementAdd = (type: string) => {
-    const registered = EditorTypeToElementMap.get(type)
+  const handleElementAdd = (type: CustomElement['type']) => {
+    const registered = EditorElements[type]
     if (registered) {
       if (registered.registerInMenu?.onAddInMenu) {
         registered.registerInMenu.onAddInMenu({

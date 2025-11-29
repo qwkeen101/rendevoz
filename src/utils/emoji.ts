@@ -3,24 +3,18 @@ import twitterEmoji from '@/assets/twitter-emoji-32.png'
 
 export type Emoji = {
   name: string
-  unified: string
-  non_qualified: string
-  image: string
-  sheet_x: number
-  sheet_y: number
-  short_name: string
-  short_names: string[]
-  category: string
-  sort_order: number
+  x: number
+  y: number
+  shortName: string
 }
 
-const emojiMap = new Map<string, Emoji>(JSON.parse(emojiJson).map(i => [i.short_name, i]))
+const emojiMap = new Map<string, Emoji>(JSON.parse(emojiJson).map(i => [i.shortName, i]))
 export const getEmoji = (name: string) => {
   const emoji = emojiMap.get(name)
   if (emoji) {
     return {
-      x: emoji.sheet_x,
-      y: emoji.sheet_y,
+      x: emoji.x,
+      y: emoji.y,
       imageSrc: twitterEmoji,
       name
     }

@@ -1,7 +1,6 @@
-import { MetaStore, ObjectStore } from '@/api/stores'
+import { MetaStore } from '@/api/stores'
 import { Button, Content } from '@/components'
 import { useTranslation } from 'react-i18next'
-import { GlobalInstance } from '@/hooks'
 
 export default ({ id }: { id: number }) => {
   const questionMeta = MetaStore.useObjectToMetaValue(id)
@@ -9,15 +8,6 @@ export default ({ id }: { id: number }) => {
   return (
     <Content flex column>
       {[
-        questionMeta?.hidden
-          ? {
-              name: t('general.Unhide object'),
-              icon: 'park-preview-open',
-              onClick: async () => {
-                MetaStore.updateMetaObject({ id: questionMeta.id, hidden: false })
-              }
-            }
-          : undefined,
         !questionMeta
           ? {
               name: t('general.add as object'),
@@ -25,10 +15,12 @@ export default ({ id }: { id: number }) => {
               onClick: async () => {
                 let m = questionMeta
                 if (!m) {
-                  m = await GlobalInstance.metaOps?.addDraggableAsMeta({
-                    type: 'question',
-                    objectId: id
-                  })
+                  m = (
+                    await Global.metaOps.addDraggableAsMeta({
+                      type: 'question',
+                      objectId: id
+                    })
+                  )[0]
                 }
               }
             }
@@ -37,7 +29,7 @@ export default ({ id }: { id: number }) => {
               icon: 'park-share-one',
               onClick: async () => {
                 let m = questionMeta
-                GlobalInstance.metaOps?.openDetails(m.id)
+                Global.metaOps.openDetails?.(m.id)
               }
             },
         {
@@ -46,16 +38,20 @@ export default ({ id }: { id: number }) => {
           onClick: async () => {
             let m = questionMeta
             if (!m) {
-              m = await GlobalInstance.metaOps?.addDraggableAsMeta(
-                {
-                  type: 'question',
-                  objectId: id
-                },
-                true
-              )
+              m = (
+                await Global.metaOps.addDraggableAsMeta(
+                  {
+                    type: 'question',
+                    objectId: id
+                  },
+                  {
+                    temp: true
+                  }
+                )
+              )[0]
             }
             if (m) {
-              GlobalInstance.metaOps?.copyLink(m.id)
+              Global.metaOps.copyLink(m.id)
             }
           }
         },
@@ -65,13 +61,15 @@ export default ({ id }: { id: number }) => {
           onClick: async () => {
             let m = questionMeta
             if (!m) {
-              m = await GlobalInstance.metaOps?.addDraggableAsMeta({
-                type: 'question',
-                objectId: id
-              })
+              m = (
+                await Global.metaOps.addDraggableAsMeta({
+                  type: 'question',
+                  objectId: id
+                })
+              )[0]
             }
             if (m) {
-              GlobalInstance.metaOps?.quickAdd(m.id)
+              Global.metaOps.quickAdd?.(m.id)
             }
           }
         }

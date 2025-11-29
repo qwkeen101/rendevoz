@@ -1,14 +1,17 @@
-import { FeedItem } from '@/core/components/feed/types'
-import { NoteStore, ObjectStore } from '@/api/stores'
+import { MetaStore, NoteStore, ObjectStore } from '@/api/stores'
 import { FEED_CONTENT_CACHE } from '@/core/components/feed/contentCache'
 import FileSystem from '@/api/fileSystem'
-import { Notes } from '@icon-park/react'
+import { IFeedItem } from '~/typings'
 
-export default async (item: FeedItem) => {
-  let imageSrc: string | undefined = undefined
-  if (item.image) {
-    imageSrc = await FileSystem.saveImage(item.image)
+function getDomainFromUrl(url: string) {
+  try {
+    const urlObject = new URL(url)
+    return urlObject.host
+  } catch (e) {
+    return url
   }
+}
+export default async (item: IFeedItem) => {
   let state = item.state
   if (!state) {
     state = {
@@ -17,30 +20,36 @@ export default async (item: FeedItem) => {
     }
   }
   const webpageContent = FEED_CONTENT_CACHE.get(item.id)
-  let noteId = undefined
-  if (webpageContent) {
-    const n = await NoteStore.initializeNoteWithValue(webpageContent)
-    noteId = n.id
-  }
-  console.log(item)
-  const { meta: webpageMeta } = await ObjectStore('webpage').addOneWithMeta(
+  const { meta: webpageMeta, one: webpageOne } = await ObjectStore('webpage').addOneWithMeta(
     {
       url: item.link,
-      author: state.author,
+      author: state?.author,
+      feedCollectionId: item.collectionId,
       title: item.title,
-      domain: state.domain,
-      noteId
+      domain: item.source ?? state?.domain ?? getDomainFromUrl(item.link),
+      favicon: item.favicon ?? state?.favicon
     },
     {
       silent: true,
       currentMeta: {
-        name: item.title,
-        coverImgSrc: imageSrc
+        name: item.title
       }
     }
   )
   if (webpageMeta) {
-    NoteStore.saveNoteAsSearch(webpageContent, webpageMeta.id)
+    NoteStore.saveNoteAsSearch(webpageContent ?? [], webpageMeta.id)
+    if (item.image) {
+      FileSystem.saveImage(item.image).then(image => {
+        MetaStore.updateMetaObject({ id: webpageMeta.id, coverImgSrc: image })
+      })
+    }
+  }
+  if (webpageOne) {
+    if (webpageContent) {
+      NoteStore.initializeNoteWithValue(webpageContent).then(n => {
+        ObjectStore('webpage').updateOne({ id: webpageOne.id, noteId: n.id })
+      })
+    }
   }
   return webpageMeta
 }

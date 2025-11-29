@@ -6,7 +6,7 @@ import InnerContentDisplayer from '@/core/components/group/components/gallery/it
 import { css } from '@emotion/css'
 
 export default (canPreview: boolean, metaId: number) => {
-  const { ref, isIn } = useIsIn(undefined, { pointerMove: false })
+  const { ref, isIn } = useIsIn(undefined)
   const [popoverVisible, setPopoverVisible] = useState(false)
   const [isInContent, setIsInContent] = useState(false)
   const realIsIn = isIn || isInContent
@@ -41,12 +41,12 @@ export default (canPreview: boolean, metaId: number) => {
       }, 200)
     }
   }, [realIsIn])
-  const wrapper = (children: ReactElement) => (
+  const wrapper = (children: ReactElement, align: 'start' | 'center' | 'end' = 'start') => (
     <AnimatePopover
       innerRef={ref}
       visible={popoverVisible}
       positions={['right']}
-      align={'start'}
+      align={align}
       padding={-5}
       content={
         <WithBorder

@@ -1,180 +1,166 @@
-import useFeedState, { FeedStateAtom } from '@/core/components/feed/hooks/useFeedState'
-import { Content, Icon, VirtualList } from '@/components'
 import MagazineFeedItem from '@/core/components/feed/components/items/MagazineFeedItem'
-import keyvalueStore from '@/api/stores/keyvalue.store'
 import CardFeedItem from '@/core/components/feed/components/items/CardFeedItem'
-import { useEffect, useState, memo, useRef, useMemo } from 'react'
-import { ObjectStore } from '@/api/stores'
+import { RefObject } from 'react'
 import TitleFeedItem from '@/core/components/feed/components/items/TitleFeedItem'
-import { useMeasure } from 'react-use'
-import { css } from '@emotion/css'
-import readItem from '@/core/components/feed/utils/service/readItem'
-import { ClassName } from 'rendevoz'
+import VirtualLoader from '@/core/components/common/VirtualLoader'
+import useFeedData from '@/core/components/feed/hooks/useFeedData'
+import { useMeasure } from '@/hooks'
+import { ObjectStore } from '@/api/stores'
+import NoResult from '@/core/components/common/NoResult'
 import useFeedInstance from '@/core/components/feed/hooks/useFeedInstance'
-import { useMemoizedFn, useSelectAtomValue } from '@/hooks'
-import { useSetAtom } from 'jotai'
-import UseMeasure from '@/hooks/utils/useMeasure'
 
-const DEFAULT_CARD_PAG = 20
-const FeedList = () => {
-  const currentCollectionId = useSelectAtomValue(FeedStateAtom, s => s.currentCollectionId)
-  const filtererdItems = useSelectAtomValue(FeedStateAtom, s => s.filteredFeedItems)
-  const allItems = useSelectAtomValue(FeedStateAtom, s => s.allFeedItems)
-  const setFeedState = useSetAtom(FeedStateAtom)
-  const itemMode = keyvalueStore.useValue('feedCardView') || 'magazine'
+const FeedList = ({
+  items,
+  scrollElementRef,
+  scrollKey,
+  onNavigate,
+  parentFolderId,
+  showSource
+}: {
+  items: number[]
+  scrollElementRef: RefObject<HTMLDivElement>
+  scrollKey: string
+  showSource?: boolean
+  onNavigate?: (id: number) => void
+  parentFolderId?: number
+}) => {
+  const itemMode = useFeedData().cardView
   const instance = useFeedInstance()
-  const handleNavigate = useMemoizedFn(async (id: number) => {
-    readItem(id, currentCollection?.id)
-    const idx = items.findIndex(i => i === id)
-    const range = items.slice(Math.max(idx - 2, 0), Math.min(idx + 2, items.length))
-    range.forEach(i => instance.navigateOps?.prepareContent(i))
-    setFeedState(s => ({
-      ...s,
-      currentFocusedFeedItemId: id,
-      modalOpen: true
-    }))
-  })
-  const currentCollection = ObjectStore('feedCollection').useValue(currentCollectionId)
-
-  const [ref, { width }] = useMeasure()
-
-  const items = filtererdItems || allItems
-  const cardItemsPerRow = Math.round(width / 360)
-
-  const [cardPag, setCardPag] = useState({
-    currentPage: 0
-  })
-  const MAX_PAGE = Math.floor(items.length / DEFAULT_CARD_PAG) + 1
-
+  const feeds = ObjectStore('feed').useMultiple(items)
+  const handleNavigate = (id: number) => {
+    if (onNavigate) {
+      onNavigate(id)
+      return
+    }
+    instance.feedOps?.read(id)
+  }
+  if (!feeds.length) {
+    return <NoResult />
+  }
   if (itemMode === 'magazine') {
     return (
-      <Content
-        fullHeight
-        style={{ padding: '10px 0px 0px 10px', overflowY: 'auto', flex: '1 1 auto', maxWidth: '100%', width: '100%' }}
-        gap={10}
-      >
-        <VirtualList
-          items={items}
-          estimateSize={120}
-          paddingEnd={100}
-          style={{
-            paddingRight: 10,
-            height: '100%',
-            width: '100%'
-          }}
-          childrenContainerClassname={css({
-            maxWidth: 800,
-            margin: '0 auto'
-          })}
-          getKey={i => i}
-          renderItem={i => (
-            <MagazineFeedItem
-              onClick={() => {
-                handleNavigate(i)
-              }}
-              id={i}
-            />
-          )}
-        ></VirtualList>
-      </Content>
+      <VirtualLoader
+        count={feeds.length}
+        size={172}
+        scrollKey={scrollKey}
+        className={'pb-20'}
+        scrollElementRef={scrollElementRef}
+        overscan={5}
+        itemClassName={'not-last-not-empty-border-bottom'}
+        renderItem={i => {
+          const item = feeds[i]
+          if (item) {
+            return (
+              <MagazineFeedItem
+                showSource={showSource}
+                parentFolderId={parentFolderId}
+                className={i === 0 ? '!pt-2' : undefined}
+                onClick={() => {
+                  handleNavigate(item.id)
+                }}
+                id={item.id}
+              />
+            )
+          }
+          return null
+        }}
+      ></VirtualLoader>
     )
   }
   if (itemMode === 'title') {
     return (
-      <Content fullHeight style={{ flex: '1 1 auto', maxWidth: '100%', padding: '8px 0px 0px 8px' }} flex column gap={10}>
-        <VirtualList
-          items={items}
-          estimateSize={30}
-          getKey={i => i}
-          style={{
-            paddingRight: '8px',
-            height: '100%'
-          }}
-          paddingEnd={100}
-          overscan={5}
-          renderItem={i => (
-            <TitleFeedItem
-              onClick={() => {
-                handleNavigate(i)
-              }}
-              id={i}
-            />
-          )}
-        ></VirtualList>
-      </Content>
+      <VirtualLoader
+        count={feeds.length}
+        size={32}
+        scrollKey={scrollKey}
+        className={'pb-20'}
+        scrollElementRef={scrollElementRef}
+        overscan={5}
+        renderItem={i => {
+          const item = feeds[i]
+          if (item) {
+            return (
+              <TitleFeedItem
+                parentFolderId={parentFolderId}
+                onClick={() => {
+                  handleNavigate(item.id)
+                }}
+                id={item.id}
+              />
+            )
+          }
+          return null
+        }}
+      ></VirtualLoader>
     )
   }
+
   if (itemMode === 'card') {
     return (
-      <Content
-        ref={ref}
-        flex
-        role={'card-container'}
-        style={{
-          overflowY: 'auto',
-          padding: '18px 12px',
-          justifyContent: 'space-evenly',
-          flexWrap: 'wrap',
-          overflowX: 'hidden',
-          flex: '1 1 820px',
-          maxWidth: '100%',
-          width: '100%',
-          height: 'fit-content',
-          maxHeight: '100%',
-          '--items-per-row': cardItemsPerRow
-        }}
-        gap={18}
-      >
-        {items.slice(cardPag.currentPage * DEFAULT_CARD_PAG, (cardPag.currentPage + 1) * DEFAULT_CARD_PAG).map(i => (
-          <CardFeedItem
-            onClick={event => {
-              const p = event.currentTarget.parentElement
-              const t = p?.scrollTop
-              handleNavigate(i)
-              if (t !== undefined) {
-                setTimeout(() => {
-                  p!.scrollTop = t
-                })
-              }
-            }}
-            id={i}
-            key={i}
-          />
-        ))}
-        {MAX_PAGE > 1 && (
-          <Content flex fullWidth justifyContent={'center'}>
-            <Content flex gap={12} alignItems={'center'}>
-              <Icon
-                size={18}
-                onClick={e => {
-                  e.currentTarget.closest('[role="card-container"]')!.scrollTop = 0
-                  setCardPag({
-                    currentPage: Math.max(cardPag.currentPage - 1, 0)
-                  })
-                }}
-                name={'park-left'}
-                className={ClassName.circleButton()}
-              />
-              <div style={{ fontWeight: 600 }}>
-                {cardPag.currentPage + 1}/{MAX_PAGE}
-              </div>
-              <Icon
-                size={18}
-                name={'park-right'}
-                onClick={e => {
-                  e.currentTarget.closest('[role="card-container"]')!.scrollTop = 0
-                  setCardPag({
-                    currentPage: Math.min(cardPag.currentPage + 1, MAX_PAGE - 1)
-                  })
-                }}
-                className={ClassName.circleButton()}
-              />
-            </Content>
-          </Content>
-        )}
-      </Content>
+      <CardList
+        scrollElementRef={scrollElementRef}
+        onNavigate={handleNavigate}
+        scrollKey={scrollKey}
+        items={items}
+        showSource={showSource}
+        parentFolderId={parentFolderId}
+      />
     )
   }
 }
 
-export default memo(FeedList)
+const CardList = ({
+  scrollElementRef,
+  items,
+  scrollKey,
+  parentFolderId,
+  onNavigate,
+  showSource
+}: {
+  scrollElementRef: RefObject<HTMLDivElement>
+  items: number[]
+  parentFolderId?: number
+  scrollKey: string
+  showSource?: boolean
+  onNavigate?: (id: number) => void
+}) => {
+  const { width } = useMeasure(scrollElementRef)
+  const feeds = ObjectStore('feed').useMultiple(items)
+  const length = feeds.length
+  const cols = Math.floor(width / 340) + 1
+  const rows = length % cols === 0 ? length / cols : Math.floor(length / cols) + 1
+  return (
+    <VirtualLoader
+      className={'pb-40 pt-2'}
+      size={260}
+      overscan={1}
+      scrollElementRef={scrollElementRef}
+      scrollKey={scrollKey}
+      count={rows}
+      renderItem={idx => {
+        const sliced = feeds.slice(idx * cols, (idx + 1) * cols)
+        return (
+          <div
+            style={{
+              gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`
+            }}
+            className={'grid gap-6 pb-6'}
+          >
+            {sliced.map(i => (
+              <CardFeedItem
+                showSource={showSource}
+                parentFolderId={parentFolderId}
+                onClick={() => {
+                  onNavigate?.(i.id)
+                }}
+                id={i.id}
+                key={i.id}
+              />
+            ))}
+          </div>
+        )
+      }}
+    ></VirtualLoader>
+  )
+}
+export default FeedList

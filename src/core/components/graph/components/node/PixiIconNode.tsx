@@ -1,14 +1,13 @@
 import { GraphNode } from '../../types/node'
-import { Rendevoz } from '@/core/rendevoz'
 import { PixiComponent, Sprite, useApp } from '@pixi/react'
 import { useMemo } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Graphics as _Graphics, TextStyle } from 'pixi.js'
-import _ from 'lodash'
 import { SVGScene } from '@pixi-essentials/svg'
 import useGraph from '@/core/components/graph/hooks/useGraph'
 import { Icon } from '@/components'
 import { useUpdate } from 'react-use'
+
 const GraphicsBg = PixiComponent('gbg', {
   create: props => {
     const b = getComputedStyle(document.body).getPropertyValue('--global-background')
@@ -20,26 +19,21 @@ const GraphicsBg = PixiComponent('gbg', {
   }
 })
 export const fontStyle = new TextStyle({
-  fontWeight: '400',
-  fontSize: 8,
+  fontWeight: '300',
+  fontSize: 6,
   align: 'center',
-  fill: 'white',
-  wordWrapWidth: 220,
-  breakWords: true,
-  wordWrap: true,
-  whiteSpace: 'normal'
+  fill: 'white'
 })
 const IS_LOADING_MAP = new Map<string, Set<VoidFunction>>()
-const PixiIconNode = ({ node }: { node: GraphNode }) => {
-  const radius = Rendevoz.Utils.Meta.getTypeRadius(node.type)
-  const d = radius * 2
+const PixiIconNode = ({ node, size }: { node: GraphNode; size: number }) => {
+  const d = size * 2
 
   const primaryFontColor = getComputedStyle(document.body).getPropertyValue('--font-primary')
   const app = useApp()
   const graph = useGraph()
   const update = useUpdate()
   useMemo(() => {
-    const iconz = Rendevoz.Utils.Object.getMetaObjectIcon(node.type)
+    const iconz = Global.utils.getIcon(node.type)
     if (graph?.CACHED_ICON_TEXTURE.has(iconz)) return
     if (IS_LOADING_MAP.has(iconz)) {
       IS_LOADING_MAP.get(iconz)?.add(() => {
@@ -61,7 +55,7 @@ const PixiIconNode = ({ node }: { node: GraphNode }) => {
             const scene = new SVGScene(svg)
             const t = app.renderer?.generateTexture(scene, { resolution: window.devicePixelRatio + 2 })
             if (t) {
-              graph?.CACHED_ICON_TEXTURE.set(iconz, t)
+              graph.CACHED_ICON_TEXTURE.set(iconz, t)
               update()
               IS_LOADING_MAP.get(iconz)?.forEach(i => i())
               IS_LOADING_MAP.delete(iconz)
@@ -72,11 +66,11 @@ const PixiIconNode = ({ node }: { node: GraphNode }) => {
       />
     )
   }, [])
-  const texture = graph?.CACHED_ICON_TEXTURE.get(Rendevoz.Utils.Object.getMetaObjectIcon(node.type))
+  const texture = graph.CACHED_ICON_TEXTURE.get(Global.utils.getIcon(node.type))
   return (
     <>
       <GraphicsBg d={d} />
-      {texture && <Sprite name={'sprite'} texture={texture} width={d - 6} height={d - 6} x={3} y={3} tint={primaryFontColor} />}
+      {texture && <Sprite name={'sprite'} texture={texture} width={d} height={d} x={0} y={0} tint={primaryFontColor} />}
     </>
   )
 }

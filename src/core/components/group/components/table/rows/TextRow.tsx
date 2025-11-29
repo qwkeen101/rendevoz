@@ -1,12 +1,10 @@
 import { IGroupRow } from '@/core/components/group/components/table/rows/types'
 import { MetaGroupChild } from '~/typings'
-import { Content } from '@/components'
-import { Colors, KEY } from '@/consts'
+import { Content, AutosizeTextarea } from '@/components'
+import { Colors } from '@/consts'
 import { ClassName } from 'rendevoz'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import { RowWrapper } from '@/core/components/group/components/table/RowWrapper'
-import isHotkey from 'is-hotkey'
-import AutosizeTextarea from '@/components/custom/input/AutoSizeTextArea'
 import { useState } from 'react'
 import { Container } from '@/core/components/group/components/table/rows/MetaRow'
 import ToggleArrow from '@/core/components/group/components/basic/ToggleArrow'
@@ -27,7 +25,7 @@ const TextRow = ({ rowDetails, rowRef, renderIndicator, isSelected, renderCheckb
         style={{
           position: 'relative',
           borderBottom: `1px solid ${Colors.Background.Border}`,
-          background: isSelected ? Colors.Common.SelectColorTransparent : undefined,
+          background: isSelected ? Colors.Common.SelectColorTransparentLight : undefined,
           transition: 'background 0.2s ease'
         }}
       >

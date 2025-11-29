@@ -1,8 +1,6 @@
-import { Content, Icon } from '@/components'
+import { Content, Icon, TabTitle } from '@/components'
 import QuestionCard from '@/core/ai/components/question/QuestionCard'
 import { MetaStore } from '@/api/stores'
-import { TabTitle } from '@/core/rendevoz/components'
-import { Rendevoz } from '@/core/rendevoz'
 import { memo } from 'react'
 import MetaPropDisplayer from '@/core/object/renderer/properties/MetaPropDisplayer'
 import { useTranslation } from 'react-i18next'
@@ -14,21 +12,12 @@ export default memo(({ id }: { id: number }) => {
   const { t } = useTranslation()
   const showProps = useGlobalAtomValue(GlobalSetting.atoms.showPropertiesInComponentPage)
   return (
-    <Content
-      flex
-      fullHeight
-      fullWidth
-      column
-      style={{
-        overflowY: 'auto',
-        padding: 24
-      }}
-    >
-      <TabTitle title={q?.name || 'Unnamed question'} icon={<Icon name={Rendevoz.Utils.Object.getMetaObjectIcon('question')} />} />
+    <Content flex fullHeight fullWidth column className={'p-3 overflow-y-auto'}>
+      <TabTitle title={q?.name} icon={<Icon name={Global.utils.getIcon('question')} />} />
       <Content
         style={{
           margin: 'auto',
-          minWidth: 'min(600px,90%)',
+          minWidth: 'min(600px,100%)',
           maxWidth: '800px'
         }}
       >

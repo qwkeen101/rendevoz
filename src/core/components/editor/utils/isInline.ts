@@ -1,21 +1,13 @@
 import { CustomElement } from '~/typings'
-import { EditorTypeToElementMap } from '@/core/components/editor/maps'
+import EditorElements from '@/core/components/editor/elements/EditorElements'
 
-export default (ele: CustomElement) => {
-  const inlineElementTypeSet = new Set(
-    Array.from(EditorTypeToElementMap.values())
-      .filter(i => i.isInline)
-      .map(i => i.type)
-  )
-  if (inlineElementTypeSet.has(ele.type)) return true
-  switch (ele.type) {
-    case 'emoji':
-    case 'link':
-    case 'sup':
-    case 'inline-metaObject':
-    case 'math':
-      return true
-    default:
-      return false
-  }
+const inlineKeys = new Set([
+  ...Object.values(EditorElements)
+    .filter(i => i.isInline)
+    .map(i => i.type),
+  'inlne-image',
+  'inline-metapicker'
+])
+export default (ele: CustomElement | string) => {
+  return inlineKeys.has(typeof ele === 'string' ? ele : ele.type)
 }

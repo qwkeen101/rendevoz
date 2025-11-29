@@ -5,6 +5,7 @@ import { css } from '@emotion/css'
 import { useDebounceFn, useMergedRef } from '@/hooks'
 import { Colors } from '@/consts'
 import { setCaretAtEnd } from '@/core/components/editor/utils/positions/caret'
+import { auto } from 'openai/_shims/registry'
 
 // use contenteditable to replace textarea
 type TextareaProps = React.AllHTMLAttributes<HTMLDivElement>
@@ -15,6 +16,8 @@ export interface TextareaAutosizeProps extends Omit<TextareaProps, 'style' | 'on
   value?: string
   defaultValue?: string
   debounceChange?: boolean
+  autoFocusDelay?: number
+  placeholderColor?: 'primary' | 'secondary'
 }
 
 const c = css({
@@ -23,14 +26,14 @@ const c = css({
   ':empty:before': {
     content: 'attr(placeholder)',
     display: 'block',
-    color: Colors.Font.SuperTransparent,
+    color: 'var(--placeholder-color)',
     pointerEvents: 'none',
     minHeight: '1lh'
   }
 })
 const noop = () => {}
 const TextareaAutosize: React.ForwardRefRenderFunction<HTMLDivElement, TextareaAutosizeProps> = (
-  { onChange = noop, debounceChange, ...props },
+  { onChange = noop, debounceChange, autoFocusDelay, value, placeholderColor = 'secondary', ...props },
   userRef: React.Ref<HTMLDivElement>
 ) => {
   const libRef = React.useRef<HTMLDivElement | null>(null)
@@ -39,18 +42,9 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLDivElement, TextareaA
   const edited = useRef(false)
   useEffect(() => {
     if (props.autoFocus) {
-      const interval = setInterval(() => {
-        if (!blured.current) {
-          if (libRef.current !== document.activeElement) {
-            libRef.current?.focus()
-          }
-        } else {
-          clearInterval(interval)
-        }
-      })
-      return () => {
-        clearInterval(interval)
-      }
+      setTimeout(() => {
+        libRef.current?.focus()
+      }, autoFocusDelay ?? 0)
     }
   }, [])
   const isEditing = useRef(false)
@@ -64,12 +58,12 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLDivElement, TextareaA
   )
   useEffect(() => {
     const l = libRef.current
-    if (l) {
-      l.innerText = props.value || props.defaultValue || ''
+    if (l && (value !== undefined || props.defaultValue !== undefined)) {
+      l.innerText = value || props.defaultValue || ''
     }
   }, [])
   useEffect(() => {
-    if (props.defaultValue && !edited.current) {
+    if (props.defaultValue !== undefined && !edited.current) {
       const l = libRef.current
       if (l) {
         l.innerText = props.defaultValue || ''
@@ -78,16 +72,17 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLDivElement, TextareaA
   }, [props.defaultValue])
   useLayoutEffect(() => {
     const l = libRef.current
-    if (l && !isEditing.current) {
-      l.innerText = props.value || ''
+    if (l && !isEditing.current && value !== undefined && value !== l.innerText) {
+      l.innerText = value || ''
     }
-  }, [props.value])
+  }, [value])
   return (
     <div
       {...props}
       className={classnames(c, props.className)}
       style={{
         ...props.style,
+        '--placeholder-color': placeholderColor === 'primary' ? 'var(--font-placeholder)' : 'var(--font-placeholder-secondary)',
         minHeight: props.style?.minHeight || '1lh'
       }}
       onPaste={e => {
@@ -111,6 +106,7 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLDivElement, TextareaA
       onFocus={e => {
         setCaretAtEnd(e.currentTarget)
         isEditing.current = true
+        props.onFocus?.(e)
       }}
       onBlur={event => {
         blured.current = true
@@ -121,7 +117,6 @@ const TextareaAutosize: React.ForwardRefRenderFunction<HTMLDivElement, TextareaA
       }}
       ref={ref}
       contentEditable={props.disabled ? 'false' : 'true'}
-      spellCheck={'false'}
     ></div>
   )
 }

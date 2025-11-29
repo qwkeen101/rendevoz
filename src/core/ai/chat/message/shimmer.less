@@ -1,0 +1,25 @@
+.loading-text {
+  width: fit-content;
+  background: linear-gradient(
+          90deg,
+          rgba(from var(--font-primary) r g b / 0.5) 20%,
+          var(--font-primary) 35%,
+          rgba(from var(--font-primary) r g b / 0.5) 50%
+  );
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 2s infinite linear;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+

@@ -1,225 +1,176 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import Id from '@/utils/id'
+import { useMemo, useRef, useState, memo } from 'react'
 import useWebpageState from '@/core/components/webpage/hooks/useWebpageState'
 import NoteEditor from '@/core/components/editor/noteEditor/NoteEditor'
-import { Content, Tooltip, Icon } from '@/components'
-import { Colors } from '@/consts'
-import { CustomEditor, EditorProps, IEditorEvent, IEditorInstance } from '~/typings'
-import KeyvalueStore from '@/api/stores/keyvalue.store'
-import { DefaultEditorSettings } from '@/api/lifycycle/initializeApp/initializeSettings'
-import { AIStore, MetaStore, ObjectStore } from '@/api/stores'
-import addWebpageAsMeta from '@/core/components/webpage/utils/addWebpageAsMeta'
-import { Rendevoz } from '@/core/rendevoz'
+import { Icon } from '@/components'
+import { Icons } from '@/consts'
+import { IEditorInstance, IParsedWebpage } from '~/typings'
+import { ObjectStore } from '@/api/stores'
 import useWebpageInstance from '@/core/components/webpage/hooks/useWebpageInstance'
 import { IWebpageProps } from '@/core/components/webpage/Webpage'
-import { ClassName } from 'rendevoz'
-import { GlobalSearchInstance } from '@/core/global/GlobalSearchPanel'
-import { AI_QUESTION_PROP_ID, AI_SUMMARY_PROP_ID } from '@/api/stores/meta/meta.store'
 import { useTranslation } from 'react-i18next'
+import trans from '@/consts/trans'
+import toast from 'react-hot-toast'
+import gN from '@/assets/images/google-news.png?url'
+import InPageTagRenderer from '@/core/components/common/InPageTagRenderer'
+import classnames from 'classnames'
+import useWebpageContent from '@/core/components/webpage/hooks/useWebpageContent'
+import WebpageLoadingPage from '@/core/components/webpage/WebpageLoadingPage'
+import { EditorTitleClassName } from '@/core/components/editor/components/EditorTitle'
+
+const getDomain = (url: string) => {
+  try {
+    const domain = new URL(url).hostname
+    // 提取顶级域名（假设是 ".com" 顶级域）
+    const domainParts = domain.split('.')
+    const topLevelDomain = domainParts.slice(domainParts.length - 2).join('.')
+    return topLevelDomain
+  } catch (e) {
+    return ''
+  }
+}
 
 const WebpageTitle = ({
-  title = 'Untitled',
-  author,
-  domain = 'UNKNOWN',
+  title,
   favicon,
-  url
+  url,
+  metaId,
+  feedCollectionId
 }: {
-  title?: string
-  author?: string
-  domain?: string
+  title: string
   favicon?: string
-  url?: string
+  url: string
+  feedCollectionId?: number
+  metaId?: number
 }) => {
+  const feedCollection = ObjectStore('feedCollection').useValue(feedCollectionId)
+  const image = (feedCollection?.icon === 'gNews' ? gN : feedCollection?.icon) ?? favicon
+  const domain = useMemo(() => getDomain(url), [url])
+  const source = feedCollection?.name ?? domain
+  const { t } = useTranslation()
   return (
-    <Content flex column>
-      <div
-        style={{
-          fontSize: 24,
-          fontWeight: 600,
-          hyphens: 'auto'
-        }}
-      >
-        {title}
-      </div>
-      <Content
-        flex
-        gap={10}
-        alignItems={'center'}
-        style={{ color: Colors.Font.Transparent, fontSize: 12, lineHeight: 1, textTransform: 'uppercase', marginTop: 12 }}
-      >
-        {favicon && <img src={favicon} height={14} />}
-        <div
-          onClick={() => url && window.open(url)}
-          style={{
-            cursor: 'pointer'
-          }}
-          className={'ellipsis-font-1'}
-        >
-          {domain || url}
-        </div>
-        {author && (
-          <>
-            <div style={{ fontSize: 18, lineHeight: 0 }}>•</div>
-            <div className={ClassName.ellipsisFont(1)}>{author}</div>
-          </>
+    <div
+      style={{
+        gap: '0.6em'
+      }}
+      className={'flex flex-col @container'}
+    >
+      <div className={EditorTitleClassName}>{title || t(trans.Untitled)}</div>
+      <div className={'em:text-sm gap-2 flex items-center flex-wrap transparent-font uppercase'}>
+        {image && <img crossOrigin={'anonymous'} src={image} className={'em:w-5 em:h-5 rounded-sm object-cover'} />}
+        {source && (
+          <div
+            onClick={() => {
+              if (feedCollection) {
+                Global.layoutOps?.openPage('feed').then(ins => {
+                  ins.feedOps?.navigate(`/feed/collection/${feedCollection.id}`)
+                })
+              } else {
+                url && window.open(url, '_blank')
+              }
+            }}
+            className={'line-clamp-1 mr-3 cursor-pointer'}
+          >
+            {source}
+          </div>
         )}
-      </Content>
-    </Content>
+        {metaId ? <InPageTagRenderer metaId={metaId} /> : null}
+      </div>
+    </div>
+  )
+}
+
+const ModeSwitcher = ({ onChange, mode }: { onChange: (mode: 'original' | 'clean') => void; mode: 'clean' | 'original' }) => {
+  const { t } = useTranslation()
+  return (
+    <div className={'flex shrink-0 rounded-full font-size-12 transparent-font font-semibold'}>
+      <div
+        onClick={() => onChange('original')}
+        className={classnames('button !px-2.5 !py-1 !rounded-full', mode === 'original' && 'bg-hover primary-font')}
+      >
+        {t('general.Original mode')}
+      </div>
+      <div
+        onClick={() => onChange('clean')}
+        className={classnames('button !px-2.5 !py-1 !rounded-full', mode === 'clean' && 'bg-hover primary-font')}
+      >
+        {t('general.Clean mode')}
+      </div>
+    </div>
   )
 }
 
 const WebpageContentRenderer = ({
   editorOptions,
   onInstanceInitialized,
-  initialHeight
+  initialHeight,
+  onWebpageParsed,
+  onShowOriginal,
+  switcherHeader,
+  onEndLoad,
+  onFailLoad,
+  onStartLoad
 }: {
-  editorOptions?: EditorProps
+  editorOptions?: IWebpageProps['editorOptions']
   initialHeight?: number
+  onShowOriginal?: (value: boolean) => void
   onInstanceInitialized: IWebpageProps['onInstanceInitialized']
+  switcherHeader?: boolean
+  onWebpageParsed?: (webpage: IParsedWebpage) => void
+  onStartLoad?: VoidFunction
+  onEndLoad?: VoidFunction
+  onFailLoad?: VoidFunction
 }) => {
-  const editorId = useMemo(() => Id.getStrId(), [])
-  const [webpageState] = useWebpageState()
+  const [{ isLoading, url, showOriginal, name, isFailed, content, metaId, feedCollectionId, favicon }] = useWebpageState()
   const [isReadOnly, setIsReadOnly] = useState(true)
   const editorInstanceRef = useRef<IEditorInstance>()
-  const currentWepbage = ObjectStore('webpage').useValue(webpageState.currentWebpageId)
   const webpageInstance = useWebpageInstance()
-  const webpageMeta = MetaStore.useObjectToMetaValue(webpageState.currentWebpageId)
-  const [showOriginal, setShowOriginal] = useState(false)
-  const realShowOriginal = currentWepbage?.showOriginal ?? showOriginal
-  const isLoading = webpageState.isLoading
-  const failLoading = webpageState.failLoading
-
-  const getWebpageMeta = async (editor: CustomEditor) => {
-    let m = webpageMeta
-    let id = webpageState.currentWebpageId
-    if (!m) {
-      const state = webpageState.externalState || webpageState.currentWebpage
-      console.log(webpageState)
-      if (!state) {
-        throw ''
-      }
-      const result = await addWebpageAsMeta({ ...state, url: webpageState.currentUrl }, editor.children)
-      m = result.meta
-      id = result.one.id
-      return {
-        meta: m,
-        id
-      }
+  const webviewRef = useRef<HTMLWebViewElement>(null)
+  const getHTMLfromWebview = async () => {
+    if (cachedHTML.current) {
+      return cachedHTML.current
     }
-    return {
-      meta: m,
-      id
-    }
-  }
-  const webpageEditorOnHandler = async (e: IEditorEvent & { editor: CustomEditor }) => {
-    editorOptions?.on?.(e)
-    switch (e.type) {
-      case 'AI summarize': {
-        const { meta, id } = await getWebpageMeta(e.editor)
-        if (id) {
-          const questions = await Promise.all(
-            e.questions?.map(async i => await ObjectStore('question').addOne({ ...i, parentObjectId: id })) || []
-          )
-          AIStore.updateMetaAI(meta.id, {
-            summary: e.summary,
-            questions: questions
-          })
-        }
-        return true
-      }
-      case 'copyLink': {
-        const { meta } = await getWebpageMeta(e.editor)
-        if (meta) {
-          const links = e.blocks.map(i => `rendevoz://object/${meta.id}?blockId=${i.id}`).join('\n')
-          const html = e.blocks.map(i => `<p><a href="rendevoz://object/${meta.id}?blockid=${i.id}">${i.text}</a></p>`).join('')
-          const content = [
-            new ClipboardItem({
-              'text/html': new Blob([html], { type: 'text/html' }),
-              'text/plain': new Blob([links], { type: 'text/plain' })
-            })
-          ]
-          navigator.clipboard.write(content)
-        }
-        return true
-      }
-      case 'linkAddAsValue': {
-        ObjectStore('webpage').addOneWithMeta(
-          { url: e.url },
-          {
-            currentMeta: {
-              fromObject: webpageMeta
-                ? {
-                    type: 'webpage',
-                    metaId: webpageMeta.id
-                  }
-                : undefined
-            },
-            showMetaModal: true
-          }
-        )
-        return true
-      }
-      case 'search': {
-        GlobalSearchInstance.open?.({
-          query: e.searchedText,
-          from: webpageMeta
-            ? {
-                type: 'webpage',
-                metaId: webpageMeta.id
-              }
-            : undefined
-        })
-        return true
-      }
-      case 'addLabel': {
-        const { id } = await getWebpageMeta(e.editor)
-        const label = await ObjectStore('webpageLabel').addOne({ ...e.currentLabel, specType: 'webpageLabel', parentObjectId: id })
-        const webpage = await ObjectStore('webpage').getOneById(id)
-        if (!webpage) return
-        await ObjectStore('webpage').updateOne({ id: id, labels: [...(webpage.labels || []), label.id] })
-        return label
-      }
-      case 'deleteLabel': {
-        const webpage = currentWepbage
-        if (!webpage?.labels) return
-        await ObjectStore('webpageLabel').deleteOneById(e.labelId, { force: true })
-        return await ObjectStore('webpage').updateOne({ id: webpage.id, labels: webpage?.labels?.filter(i => i !== e.labelId) })
-      }
-      case 'labelDrag': {
-        Rendevoz.Actions.State.Drag.setDraggingDetails({
-          type: 'webpageLabel',
-          labelId: e.labelId
-        })
-        return true
-      }
-      case 'titleChange': {
-        if (currentWepbage) {
-          ObjectStore('webpage').updateOne({ id: currentWepbage.id, title: e.value })
-        }
-        if (webpageMeta) {
-          MetaStore.updateMetaObject({ id: webpageMeta.id, name: e.value })
-        }
+    const webview = webviewRef.current
+    if (webview) {
+      try {
+        webview.stop()
+        const res = await webview.executeJavaScript(`document.documentElement.outerHTML`, true)
+        return res
+      } catch (e) {
+        console.error(e)
       }
     }
   }
+  const loadWebpage = useWebpageContent({
+    onParsed: onWebpageParsed,
+    enabled: !showOriginal,
+    onStartLoad,
+    onEndLoad,
+    onFailLoad,
+    onGetHTML: async () => {
+      return await getHTMLfromWebview()
+    }
+  })
   const { t } = useTranslation()
-  useLayoutEffect(() => {
-    console.log(webpageState)
-    if (webpageState.loaded) {
-      editorInstanceRef.current?.scrollToPosition?.(0)
+  const cachedHTML = useRef<string>()
+  const changeMode = async (mode: 'original' | 'clean') => {
+    if (mode === 'clean') {
+      const html = await getHTMLfromWebview()
+      cachedHTML.current = html
     }
-  }, [webpageState.currentUrl, webpageState.loaded])
-
-  if (
-    !webpageState.currentWebpageNoteId &&
-    !webpageState.currentParsedContent &&
-    !webpageState.externalState?.content &&
-    !webpageState.currentUrl
-  )
-    return null
+    onShowOriginal?.(mode === 'original' ? true : false)
+  }
+  const copyLink = () => {
+    navigator.clipboard.writeText(url)
+    toast.success(t(trans.Copied))
+  }
   const renderer = () => {
     return (
       <>
+        {switcherHeader && (
+          <div className={'flex items-center justify-center w-full py-1.5'}>
+            <ModeSwitcher onChange={v => changeMode(v)} mode={'clean'} />
+          </div>
+        )}
         <NoteEditor
           {...editorOptions}
           initialHeight={initialHeight}
@@ -228,7 +179,7 @@ const WebpageContentRenderer = ({
             ...editorOptions?.styles,
             containerStyle: {
               ...editorOptions?.styles?.containerStyle,
-              opacity: isLoading || (failLoading && !webpageState.externalState?.content) ? 0 : 1
+              opacity: isLoading || isFailed ? 0 : 1
             }
           }}
           onInstanceInitialized={i => {
@@ -236,147 +187,167 @@ const WebpageContentRenderer = ({
             webpageInstance.editorInstance = i
             onInstanceInitialized?.(webpageInstance)
           }}
-          ai={{
-            summary: webpageMeta?.properties?.[AI_SUMMARY_PROP_ID]?.value,
-            questions: webpageMeta?.properties?.[AI_QUESTION_PROP_ID]?.value
-          }}
-          defaultValue={webpageState.externalState?.content || webpageState.currentParsedContent}
-          id={editorId}
-          noteId={webpageState.currentWebpageNoteId}
-          layout={{
-            showLastSave: false,
-            showProps: !!webpageMeta,
-            propsMetaId: webpageMeta?.id,
-            ...editorOptions?.layout
-          }}
-          state={editorOptions?.state}
+          defaultValue={content}
           header={{
             ...editorOptions?.header,
+            display: {
+              ...editorOptions?.header?.display,
+              modeSwitcher: false
+            },
             rightExtra: (
               <>
+                <ModeSwitcher onChange={v => changeMode(v)} mode={'clean'} />
                 {editorOptions?.header?.rightExtra}
-                <Tooltip content={t('general.Show original webpage')}>
-                  <Icon
-                    size={16}
-                    strokeWidth={3}
-                    className={ClassName.flatButton(4, '5px')}
-                    onClick={() => {
-                      if (currentWepbage) {
-                        ObjectStore('webpage').updateOne({ id: currentWepbage.id, showOriginal: !realShowOriginal })
-                      }
-                      setShowOriginal(!realShowOriginal)
-                    }}
-                    name={'park-web-page'}
-                  />
-                </Tooltip>
               </>
             )
           }}
-          metaId={webpageMeta?.id}
-          labelIds={currentWepbage?.labels || []}
-          on={webpageEditorOnHandler}
-          stringTitle={webpageMeta?.name || webpageState.externalState?.title || webpageState.currentWebpage?.title || 'Untitled'}
+          layout={{
+            showLastSave: false,
+            ...editorOptions?.layout,
+            settings: onClose => [
+              ...(editorOptions?.layout?.settings?.(onClose) || []),
+              {
+                type: 'item',
+                key: 'import-html',
+                text: t('general.Import HTML'),
+                icon: 'park-download',
+                onSelect: () => {
+                  onClose?.()
+                  Global.commonOps?.upload().then(async f => {
+                    if (f instanceof File) {
+                      try {
+                        const str = await f.text()
+                        const isHTML = str => {
+                          const temp = document.createElement('template')
+                          temp.innerHTML = str
+                          return !!temp.content.childElementCount
+                        }
+                        if (isHTML(str)) {
+                          loadWebpage(str, true)
+                        } else {
+                          throw ''
+                        }
+                      } catch (e) {
+                        toast.error('Invalid HTML!')
+                      }
+                      return
+                    }
+                    toast.error('Invalid HTML!')
+                  })
+                }
+              },
+              {
+                type: 'item',
+                key: 'view-original',
+                text: t(trans.ViewOriginal),
+                icon: Icons.Efferent,
+                onSelect: () => {
+                  onClose?.()
+                  window.open(url, '_blank')
+                }
+              },
+              {
+                type: 'item',
+                key: 'copy-link',
+                text: t(trans.CopyLink),
+                icon: Icons.Copy,
+                onSelect: () => {
+                  onClose?.()
+                  copyLink()
+                }
+              },
+              {
+                type: 'separator'
+              }
+            ]
+          }}
+          stringTitle={name}
           readOnly={isReadOnly}
           onReadOnlyChange={v => setIsReadOnly(v)}
           title={{
             customTitleRenderer: () => (
-              <WebpageTitle
-                url={webpageState.currentUrl}
-                {...webpageState.currentWebpage}
-                {...webpageState.externalState}
-                title={webpageMeta?.name || webpageState.externalState?.title || webpageState.currentWebpage?.title}
-              />
+              <WebpageTitle favicon={favicon} url={url} metaId={metaId} feedCollectionId={feedCollectionId} title={name} />
             ),
-            titleContainerStyle: {
-              padding: '15px 0px 10px'
-            }
+            ...editorOptions?.title
           }}
         />
-        {(isLoading || (failLoading && !webpageState.externalState?.content)) && (
-          <Content
-            style={{ margin: 'auto', zIndex: 100, position: 'absolute', inset: 0 }}
-            flex
-            column
-            alignItems={'center'}
-            justifyContent={'center'}
-            gap={10}
-            fullWidth
-          >
-            {failLoading ? (
-              <>
-                <Icon name={'park-error'} theme={'filled'} style={{ color: Colors.Common.Red }} size={48} />
-                <Content flex column fullWidth alignItems={'center'} justifyContent={'center'} gap={4}>
-                  <div style={{ color: Colors.Font.Transparent, fontSize: 13, maxWidth: '60%', wordBreak: 'break-word' }}>
-                    Failed to load webpage
-                  </div>
-                  <div style={{ color: Colors.Font.Transparent, fontSize: 13, maxWidth: '80%', wordBreak: 'break-word' }}>
-                    {webpageState.currentUrl}
-                  </div>
-                </Content>
-              </>
-            ) : (
-              <>
-                <Icon name={'park-loading-four'} spin size={48} style={{ color: Colors.Common.SelectColor }} />
-                <Content flex column fullWidth alignItems={'center'} justifyContent={'center'} gap={4} style={{ marginTop: 18 }}>
-                  <div
-                    style={{
-                      fontSize: 16,
-                      maxWidth: '80%',
-                      wordBreak: 'break-all',
-                      fontWeight: 600,
-                      marginBottom: 12,
-                      textAlign: 'center'
-                    }}
-                  >
-                    {webpageMeta?.name || webpageState.externalState?.title || webpageState.currentWebpage?.title}
-                  </div>
-                  <div
-                    style={{
-                      color: Colors.Font.Transparent,
-                      fontSize: 13,
-                      maxWidth: '80%',
-                      wordBreak: 'break-all',
-                      textAlign: 'center',
-                      cursor: 'pointer'
-                    }}
-                    onClick={() => window.open(webpageState.currentUrl)}
-                  >
-                    {webpageState.currentUrl}
-                  </div>
-                </Content>
-              </>
-            )}
-          </Content>
+        {(isLoading || isFailed) && (
+          <WebpageLoadingPage
+            name={name}
+            onUpload={h => {
+              loadWebpage(h, true)
+            }}
+            onViewOriginal={() => onShowOriginal?.(true)}
+            url={url}
+            isFailed={!!isFailed}
+          />
         )}
       </>
     )
   }
   return (
     <>
-      {realShowOriginal && (
-        <Icon
-          name={'park-close'}
-          containerStyle={{
-            position: 'absolute',
-            right: 20,
-            cursor: 'pointer',
-            top: 15,
-            zIndex: 15,
-            borderRadius: 999,
-            color: 'white',
-            padding: '6px',
-            background: 'rgba(0,0,0,0.7)'
+      {showOriginal ? (
+        <div
+          className={'w-full h-full flex flex-col'}
+          style={{
+            ...editorOptions?.styles?.containerStyle
           }}
-          onClick={() => {
-            if (currentWepbage) {
-              ObjectStore('webpage').updateOne({ id: currentWepbage.id, showOriginal: !realShowOriginal })
+        >
+          {switcherHeader ? (
+            <div className={'flex items-center justify-center w-full py-1.5'}>
+              <ModeSwitcher onChange={v => changeMode(v)} mode={'original'} />
+            </div>
+          ) : (
+            <div className={'w-full @container flex items-center justify-between px-3'}>
+              <div className={'grow flex gap-3 max-w-[60%] items-center'}>
+                {editorOptions?.header?.leftExtra}
+                <div className={'hidden @2xl:line-clamp-1'}>{name || t(trans.Untitled)}</div>
+              </div>
+              <div className={'flex items-center py-2 gap-3'}>
+                <ModeSwitcher onChange={v => changeMode(v)} mode={'original'} />
+                <Icon
+                  onClick={() => {
+                    loadWebpage(undefined, true).then(() => {
+                      toast.success(t(trans.Success.ImportedSuccessfully))
+                    })
+                  }}
+                  name={'park-download'}
+                  tooltip={t('general.Import HTML')}
+                  size={16}
+                  className={'square-button'}
+                />
+                <Icon
+                  tooltip={t(trans.ViewOriginal)}
+                  size={16}
+                  name={Icons.Efferent}
+                  onClick={() => {
+                    window.open(url, '_blank')
+                  }}
+                  className={'square-button'}
+                />
+                {editorOptions?.header?.rightExtra}
+              </div>
+            </div>
+          )}
+          <webview
+            httpreferrer={'https://www.google.com'}
+            disablewebsecurity
+            allowpopups={'true'}
+            ref={n => {
+              if (n) {
+                n.allowpupups = true
+                n.disablewebsecurity = true
+                webviewRef.current = n
+              }
+            }}
+            useragent={
+              'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
             }
-            setShowOriginal(!realShowOriginal)
-          }}
-        />
-      )}
-      {realShowOriginal ? (
-        <webview src={webpageState.currentUrl} style={{ width: '100%', height: '100%', background: 'white' }} />
+            src={url}
+            style={{ width: '100%', flex: 1, background: 'white', overflow: 'hidden' }}
+          />
+        </div>
       ) : (
         renderer()
       )}
@@ -384,4 +355,4 @@ const WebpageContentRenderer = ({
   )
 }
 
-export default WebpageContentRenderer
+export default memo(WebpageContentRenderer)

@@ -8,8 +8,10 @@ export default memo(
     const element = blockRef.current
     const [targetEle, setTargetEle] = useState<HTMLElement>()
     useEffect(() => {
-      const target = element?.classList.contains('selectable') ? element : element?.querySelector('.selectable')
-      setTargetEle(target)
+      if (selected) {
+        const target = element?.classList.contains('selectable') ? element : element?.querySelector('.selectable')
+        setTargetEle(target)
+      }
     }, [e, selected])
     return (
       targetEle &&

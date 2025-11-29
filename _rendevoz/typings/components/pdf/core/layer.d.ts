@@ -1,18 +1,8 @@
-import { RenderTask } from "pdfjs-dist";
-import { TextContentBound, TextItem } from "./text";
+import { RenderTask } from 'pdfjs-dist'
+import { TextContentBound, TextItem } from './text'
 
 export type ITextLayerInstance = {
-  paint: (
-    coordinate: { x: any; y: any; width: any; height: any; offset: any },
-    color: string
-  ) => void;
-  paintBounds: (bounds: TextContentBound[], color?: string) => void;
-  paintItems: (items: TextItem[], color?: string) => void;
-};
-
-export type ICanvasLayerInstance = {
-  getCanvasEle: () => HTMLCanvasElement | undefined
-  getFinalScale: () => number | undefined
-  renderPage: (canvas: HTMLCanvasElement, onRendered?: VoidFunction) => RenderTask
-  pdfDrawFunction?: () => void
+  paint: (coordinate: { x: any; y: any; width: any; height: any; offset: any }, color: string) => void
+  paintBounds: (bounds: TextContentBound[], color?: string) => void
+  paintItems: (items: TextItem[], color?: string) => void
 }

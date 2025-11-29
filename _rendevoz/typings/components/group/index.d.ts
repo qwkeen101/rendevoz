@@ -1,24 +1,14 @@
-import {
-  Box,
-  MetaGroupChild,
-  MetaObject,
-  PartialWithId,
-  MetaGroup,
-  IMetaProperty,
-  MetaGroupProperty,
-  MetaGroupViewProperty,
-  IMetaProp
-} from '../..'
+import { Box, MetaGroupChild, MetaObject, MetaGroup, MetaGroupProperty, MetaGroupViewProperty, IMetaProp } from '../..'
 import { PrimitiveAtom } from 'jotai/esm'
 import { Patch } from 'immer'
 import { Path, PathRef } from 'slate'
-import { Virtualizer } from '@tanstack/react-virtual'
-import { XYPosition } from 'rendevoz'
+import { Virtualizer } from '@tanstack/virtual-core'
+import { XYPosition } from '~/typings'
 import { IGroupEvent } from '~/typings/components/group/events'
 
 export * from './group'
 
-type GroupHistoryItem = {
+export type GroupHistoryItem = {
   atom: PrimitiveAtom<any>
   patches: Patch[]
   inversePatches: Patch[]
@@ -62,8 +52,7 @@ type GroupMetaOps = {
   createMeta: (grouperId?: number) => void
   updateMeta: (nextMeta: Partial<MetaObject>) => Promise<void>
   hasMetaInGroup: (metaId: number) => boolean
-  updateMetaProperty: (field: string, nextValue: any, id?: number) => Promise<void>
-  getAllMetas: () => MetaObject[]
+  updateMetaProperty: (field: string | number, nextValue: any, id?: number) => Promise<void>
 }
 
 export type GroupValueEntry = [MetaGroupChild, Path]
@@ -187,7 +176,6 @@ export type IGroupInstance = Partial<{
   overlayOps: GroupOverlayOps
   openObject: (metaId: number, rowId: number) => void
   triggerChange: VoidFunction
-  openFilterPanel: VoidFunction
   getOuterContainer: () => HTMLElement
   getScrollElement: () => HTMLElement
   getScrollMargin: () => number
@@ -203,8 +191,8 @@ export type IGroupInstance = Partial<{
   buildIndex: VoidFunction
 }> & {
   values: {
-    redos: GroupHistoryItem[]
-    undos: GroupHistoryItem[]
+    redos: GroupHistoryItem[][]
+    undos: GroupHistoryItem[][]
     isFocused: boolean
     currentInsertTarget?: {
       rowId: number
@@ -221,7 +209,6 @@ export type IGroupInstance = Partial<{
     pageContainer: HTMLElement
     // for shift multiple select
     lastSelectRowId?: number
-    rowIdToRowMap: Map<number, MetaGroupChild & { path: Path }>
     tempRowIdToRowIdMap: Map<number, number>
   }
 }

@@ -6,7 +6,6 @@ import { AnimatePopover, Content, Icon } from '@/components'
 import { useTranslation } from 'react-i18next'
 import { RefObject, useState } from 'react'
 import { useIsIn } from '@/hooks'
-import { ClassName } from 'rendevoz'
 import ColumnMenu from '@/core/object/renderer/properties/PropertyMenu'
 import { ObjectStore } from '@/api/stores'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
@@ -81,11 +80,11 @@ const GroupHeaderItem = ({
       }}
     >
       <Resizable
-        className={ClassName.flatButton(0, '0px')}
+        className={'button !rounded-none !p-0'}
         enable={{ right: true }}
         minWidth={32}
         style={{
-          background: isDragging ? Colors.Background.ButtonHover : undefined
+          background: isDragging ? Colors.Background.ButtonHover : isResizing ? 'transparent' : undefined
         }}
         onResize={(event, direction, elementRef) => {
           const newItem = { ...item, width: elementRef.clientWidth }

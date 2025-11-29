@@ -11,7 +11,11 @@ import useMindmapDragHandler from '@/core/components/whiteboard/node/mindmap/dra
 import { Colors } from '@/consts'
 import { updateTree } from '@/core/components/whiteboard/node/mindmap/utils/tree'
 import { useUpdate } from 'react-use'
+import { selectAtom } from 'jotai/utils'
+import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
+import { useAtomValue } from 'jotai'
 
+const isWhiteboardLoaded = selectAtom(WhiteboardStateAtom, s => s.loaded)
 // calculate position based on root
 export default ({
   node,
@@ -23,7 +27,7 @@ export default ({
 }) => {
   const instance = useWhiteboardInstance()
   const edgeLayer = instance.getEdgeLayer?.()
-
+  const loaded = useAtomValue(isWhiteboardLoaded)
   const [links, setLinks] = useState<
     {
       sourceId: number
@@ -41,7 +45,6 @@ export default ({
   })
 
   const getEdges = useMemoizedFn((ids?: Set<number>) => {
-    console.log(node, ids)
     const linkz: typeof links = []
     const traverse = (node: IWhiteboardMindmap, direction: 'right' | 'left') => {
       node.children.forEach(c => {
@@ -86,14 +89,13 @@ export default ({
         traverse(n, 'left')
       })
     }
-    console.log(linkz)
     setLinks(linkz)
   })
   const { handleBothTreeChange, layoutCache, allSubNodeIds } = useKeepMindmapLayout(node, {
     drawEdges: drawAllEdges,
     getEdges
   })
-  const { renderTempLink } = useMindmapDragHandler(node, {
+  const { renderTempLink, isDraggingSelf } = useMindmapDragHandler(node, {
     handleBothTreeChange,
     layoutCache: layoutCache,
     subNodeIds: allSubNodeIds,
@@ -101,12 +103,13 @@ export default ({
     mindmapCoreId
   })
   useLayoutEffect(() => {
-    console.log('trigger')
-
-    setTimeout(() => {
-      handleBothTreeChange()
-    })
-  }, [node.rightChildren, node.leftChildren, node.leftCollapse, node.rightCollapse, node.borderType, node.border])
+    if (loaded) {
+      console.log(node)
+      Promise.resolve().then(() => {
+        handleBothTreeChange()
+      })
+    }
+  }, [node.rightChildren, node.x, node.y, node.leftChildren, node.leftCollapse, node.rightCollapse, node.borderType, node.border, loaded])
   const nodeFunc = instance.values.ID_TO_NODE_MAP.get(node.id)
 
   if (nodeFunc) {
@@ -151,6 +154,7 @@ export default ({
           links.map(link => (
             <Edge
               clickEditLabel
+              hideLabel={isDraggingSelf}
               onLabelChange={v => updateEdgeLabel(link.direction, link.sourceId, link.targetId, v)}
               isMindmapConnection={true}
               strokeWidth={3}

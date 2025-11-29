@@ -1,146 +1,108 @@
-import { FC } from 'react'
+import { FC, useLayoutEffect } from 'react'
 import { ReactEditor, RenderElementProps, useSlateStatic } from '../slate-react'
 import { CustomElement } from '~/typings'
-import { Transforms } from 'slate'
-import { Content, Icon } from '@/components'
+import { Node, Transforms } from 'slate'
+import { Button } from '@/components'
 import Select from '@/components/base/select'
 import { capitalize } from 'lodash'
-import useReadOnlyEditor from '../hooks/useReadOnly'
-import CodeEditor from '@/core/components/code/CodeEditor'
 import { CodeLangs } from '@/core/components/code/CodeHeader'
-import { ClassName } from 'rendevoz'
 import { useIsIn, useSelectGlobalAtomValue } from '@/hooks'
 import { SettingAtom } from '@/core'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
+import trans from '@/consts/trans'
+import { Icons } from '@/consts'
+import classnames from 'classnames'
 
-const Code: FC<RenderElementProps> = ({ element, attributes, children }) => {
+const Code: FC<RenderElementProps> = ({ element, children }) => {
   const codeEle = element as CustomElement & { type: 'code-block' }
   const defaultLang = useSelectGlobalAtomValue(SettingAtom, s => s.code.defaultLanguage)
   const editor = useSlateStatic()
-  const readOnly = useReadOnlyEditor()
-  const { ref, isIn } = useIsIn()
   const { t } = useTranslation()
+  const lang = codeEle.language || defaultLang || 'typescript'
+  const { ref, isIn } = useIsIn()
+  useLayoutEffect(() => {
+    if (codeEle.content) {
+      const path = ReactEditor.findPath(editor, codeEle)
+      const newEle = { ...codeEle }
+      delete newEle.content
+      delete newEle.children
+      Transforms.removeNodes(editor, { at: path })
+      Transforms.insertNodes(
+        editor,
+        {
+          ...newEle,
+          children: [{ text: codeEle.content }]
+        },
+        { at: path }
+      )
+    }
+  }, [])
   return (
-    <div
-      className="editor-disable-format"
-      style={{
-        border: '1px solid var(--border-background)',
-        borderRadius: 8,
-        paddingBottom: 24
-      }}
-      ref={ref}
-      contentEditable={false}
-    >
-      {children}
-      <Content
-        flex
-        alignItems="center"
-        justifyContent="space-between"
-        gap={20}
-        className={'font-size-13 transparent-font'}
-        style={{
-          padding: '5px 5px 0px',
-          fontSize: 14,
-          overflow: 'hidden'
-        }}
-        onClick={() => ReactEditor.blur(editor)}
-      >
-        <input
-          placeholder={'Add title...'}
-          defaultValue={codeEle.title}
-          style={{
-            opacity: codeEle.title ? 1 : isIn ? 1 : 0,
-            transition: 'opacity 0.2s ease',
-            paddingLeft: 4,
-            flex: 1
-          }}
-          onBlur={e => {
-            Transforms.setNodes(
-              editor,
-              {
-                title: e.target.value
-              },
-              {
-                at: ReactEditor.findPath(editor, element)
-              }
-            )
-          }}
-        />
-        <Content flex alignItems={'center'} gap={6} style={{ flexShrink: 0 }}>
-          <Icon
-            size={16}
-            name={'park-copy-one'}
-            tooltip={'Copy'}
-            style={{
-              opacity: isIn && codeEle.content ? 1 : 0
-            }}
-            onClick={() => {
-              if (codeEle.content) {
-                navigator.clipboard.writeText(codeEle.content)
-                toast.success(t('general.Copied'))
-              }
-            }}
-            className={ClassName.flatButton(3, '4px')}
-          />
-          <Select
-            closeOnSelect
-            value={codeEle.language || defaultLang || 'typescript'}
-            menuStyle={{
-              overflowY: 'auto',
-              maxHeight: 300
-            }}
-            options={CodeLangs.sort().map(i => ({
-              value: i,
-              children: capitalize(i)
-            }))}
-            containerStyle={{
-              flexShrink: 0
-            }}
-            align={'center'}
-            onSelect={v =>
-              Transforms.setNodes(
-                editor,
-                {
-                  language: v[0]
-                },
-                {
-                  at: ReactEditor.findPath(editor, element)
-                }
-              )
-            }
-          ></Select>
-        </Content>
-      </Content>
+    <div ref={ref} className="editor-disable-format">
       <div
-        onKeyDown={e => {
-          e.stopPropagation()
+        contentEditable={false}
+        style={{
+          fontSize: '0.86em'
         }}
-        onCopy={e => {
-          e.stopPropagation()
-        }}
-        onPaste={e => {
-          e.stopPropagation()
-        }}
-        style={{ width: '100%', minHeight: 50 }}
+        className={'absolute top-0 left-0 em:pt-1.5 em:pl-2.5 em:pr-1.5 w-full flex items-center justify-between gap-6 transparent-font'}
       >
-        <CodeEditor
-          editable={!readOnly}
-          language={codeEle.language}
-          value={codeEle.content}
-          onChange={v => {
+        <Select
+          closeOnSelect
+          value={lang}
+          style={{
+            padding: '0.15em 0.3em'
+          }}
+          gap={'0.3em'}
+          menuStyle={{
+            overflowY: 'auto',
+            maxHeight: 300
+          }}
+          options={CodeLangs.sort().map(i => ({
+            value: i,
+            children: capitalize(i)
+          }))}
+          containerStyle={{
+            flexShrink: 0
+          }}
+          align={'center'}
+          onSelect={v =>
             Transforms.setNodes(
               editor,
               {
-                content: v
+                language: v[0]
               },
               {
                 at: ReactEditor.findPath(editor, element)
               }
             )
+          }
+        ></Select>
+        <Button.IconButton
+          text={t(trans.Copy)}
+          icon={Icons.Copy}
+          smallText={false}
+          style={{
+            fontSize: '1em'
+          }}
+          size={14}
+          className={classnames('!transition-opacity opacity-0', isIn && 'opacity-100')}
+          onClick={() => {
+            navigator.clipboard.writeText(Node.string(element))
+            toast.success(t('general.Copied'))
           }}
         />
       </div>
+      <pre
+        className={'em:pt-11 em:pb-7 em:px-7'}
+        style={{
+          width: '100%',
+          minHeight: 50,
+          fontFamily: 'SFMono-Regular, Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace'
+        }}
+      >
+        {children}
+      </pre>
     </div>
   )
 }

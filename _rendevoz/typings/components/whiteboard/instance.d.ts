@@ -8,11 +8,14 @@ import {
   IWhiteboardNode,
   PartialWithId,
   XYPosition,
-  IWhiteboardOutline
+  IWhiteboardOutline,
+  IWhiteboardMindmap
 } from '~/typings'
 import { CSSProperties, Dispatch, SetStateAction } from 'react'
-import { Rnd } from 'react-rnd'
 import { ResizeDirection } from 're-resizable'
+import { createStore } from 'jotai'
+import { Patch } from 'immer'
+import * as panzoom from 'panzoom'
 
 export type IWhiteboardToolbarState = {
   // originX and originY is whiteboard coord, for scroll and move
@@ -40,15 +43,10 @@ export type IWhiteboardToolbarState = {
 export type IWhiteboardTransform = { x: number; y: number; scale: number }
 
 export type INodeInnerState = Partial<{
-  popoverVisible: boolean
-  expanded: boolean
   selected: boolean
   focused: boolean
-  isEditingName: boolean
-  locked: boolean
-  keepRatioResize: boolean
   isDragging: boolean
-  isUpdatingName: boolean
+  name?: string
 }>
 export type IEdgeOverlayState = {
   isAdding?: boolean
@@ -88,25 +86,11 @@ export type INodeInnerFuncs = {
   getNodeDOM: () => HTMLElement
   setNodeState: Dispatch<SetStateAction<INodeInnerState>>
   drawMindmapEdges?: VoidFunction
-  focusText?: VoidFunction
-  checkMindmapDrag?: (
-    targetNode:
-      | {
-          node: IWhiteboardNode
-          direction: 'right' | 'left'
-        }
-      | undefined,
-    dragNode: IWhiteboardNode,
-    offset: XYPosition
-  ) => void
-  onNodesDelete?: (nodeIds: number[]) => void
-  onSomeNodeSizeChange?: (node: IWhiteboardNode | IWhiteboardNode[]) => void
-  // return true or false here, check whether attached to a mindmap
-  endDragNode?: (dragNode: IWhiteboardNode) => boolean
-  hasTempMindmapLink?: () => boolean
+  focusText?: () => void
   onNodeCollapse?: (nodeIds: number[], collapse: boolean) => void
   onAddSubNode?: (sourceNodeId: number, newNode: IWhiteboardNode, idx: number, direction: 'right' | 'left') => void
 }
+
 export type IEdgeInnerFuncs = {
   edit: VoidFunction
   drawPath: VoidFunction
@@ -114,7 +98,7 @@ export type IEdgeInnerFuncs = {
   removeTransform: VoidFunction
 }
 
-export type IWhiteboardEvents =
+export type IWhiteboardEvent =
   | ({
       type: 'drop'
     } & (
@@ -142,6 +126,16 @@ export type IWhiteboardEvents =
       type: 'nodeDrag'
       draggingNode: IWhiteboardNode
       nodeElement: HTMLElement
+      ignoreSnap?: boolean
+      //  attachable mindmap child
+      attachableNode?: {
+        node: IWhiteboardNode
+        direction: 'left' | 'right'
+      }
+      delta: {
+        x: number
+        y: number
+      }
     }
   | {
       type: 'nodeResize'
@@ -149,14 +143,21 @@ export type IWhiteboardEvents =
       pointerBox: Box
       resizingNode: IWhiteboardNode
       nodeElement: HTMLElement
-      rnd: Rnd
       resizeDir: ResizeDirection
+      ignoreSnap?: boolean
+      realtimeBox: Box
     }
   | {
       type: 'nodeResizeEnd'
     }
   | {
       type: 'nodeDragEnd'
+      draggingNode: IWhiteboardNode
+      //  attachable mindmap child
+      attachableNode?: {
+        node: IWhiteboardNode
+        direction: 'left' | 'right'
+      }
     }
   | {
       type: 'nodeResizeEnd'
@@ -168,6 +169,10 @@ export type IWhiteboardEvents =
   | {
       type: 'nodeSizeChange'
       changed: IWhiteboardNode[]
+    }
+  | {
+      type: 'nodeDeleted'
+      deleted: number[]
     }
   | {
       type: 'whiteboardUpdated'
@@ -184,8 +189,38 @@ export type IWhiteboardEvents =
   | {
       type: 'zoomChange'
     }
+  | {
+      type: 'keydown'
+      e: KeyboardEvent
+    }
+  | {
+      type: 'keyup'
+      e: KeyboardEvent
+    }
+  | {
+      type: 'pointerdown'
+      e: PointerEvent
+    }
+  | {
+      type: 'pointerup'
+      e: PointerEvent
+    }
+  | {
+      type: 'pointermove'
+      e: PointerEvent
+    }
+  | {
+      type: 'dataContainerClick'
+      e: MouseEvent
+    }
+export type WhiteboardEvents = {
+  [K in IWhiteboardEvent['type']]: Extract<IWhiteboardEvent, { type: K }>
+}
+export type IWhiteboardHistoryItem = {
+  patches: Patch[]
+  inversePatches: Patch[]
+}
 export type IWhiteboardInstance = Partial<{
-  openTabInSidebar?: (type: string, objectId?: number) => void
   getNode: (nodeId: number) => IWhiteboardNode | undefined
   getAllNode: () => IWhiteboardNode[]
   getAllEdge: () => IWhiteboardEdge[]
@@ -196,27 +231,25 @@ export type IWhiteboardInstance = Partial<{
     expandMindmap: (node: IWhiteboardNode & { type: 'mindmap' }) => IWhiteboardNode[]
     startDragMindmapChild: (nodeId: number, e: PointerEvent) => void
   }
-  addEventListener: (listener: (e: IWhiteboardEvents) => void) => void
-  removeEventListener: (listener: (e: IWhiteboardEvents) => void) => void
-  emit: (e: IWhiteboardEvents) => void
   getEdgeLayer: () => SVGGElement | null | undefined
   getEdgeLabelLayer: () => SVGGElement | null | undefined
   deleteNode: (nodeId: number) => void
   deleteEdge: (edgeId: number) => void
   deleteNodes: (nodeIds: number[]) => void
   insertMetasAtPointer: (e: PointerEvent, metas: number[]) => void
-  updateWhiteboard: (updater: (curr: IWhiteboard) => void, withUndo?: boolean) => Promise<void>
   insertNode: (node: Partial<IWhiteboardNode> | Partial<IWhiteboardNode>[]) => Promise<IWhiteboardNode[]>
-  getContainerNode: () => HTMLElement
-  getOutestContainerNode: () => HTMLElement | null | undefined
   buildNodeToEdgeIndex: VoidFunction
   getTransform: () => {
     x: number
     y: number
     scale: number
   }
-  setFocused: (f: boolean) => void
-  isFocused: () => boolean
+  historyOps: {
+    redo: VoidFunction
+    undo: VoidFunction
+    pushUpdates: (item: IWhiteboardHistoryItem) => void
+  }
+  startResizeObserving: VoidFunction
   edgeOps: {
     endAction: VoidFunction
     getEdgeFuncs: (edgeId: number) => IEdgeInnerFuncs | undefined
@@ -228,13 +261,18 @@ export type IWhiteboardInstance = Partial<{
     hasEdge: (sourceNodeId: number, sourcePosition: EdgePosition, targetNodeId: number, targetPosition: EdgePosition) => boolean
   }
   sidebarOps: {
-    openRightBar: (active?: IWhiteboardRightbarState['active']) => void
-    closeRightBar: VoidFunction
     openNodeAtSidebar: (nodeId: number) => void
   }
   containerOps: {
     getViewBox: () => Box
-    fitToNode: (nodeId: number) => void
+    fitToNode: (
+      nodeId: number,
+      opts?: {
+        changeScale?: boolean
+        maxScale?: number
+        skipAnimation?: boolean
+      }
+    ) => void
     getInViewNodes: (fullyInView?: boolean) => IWhiteboardNode[]
     zoomTo: () => void
     // fit container to box
@@ -247,15 +285,14 @@ export type IWhiteboardInstance = Partial<{
       }
     ) => void
     fitToSelected: VoidFunction
-    setTransform: (t: { x: number; y: number; scale: number }) => void
-    undoTransform: VoidFunction
-    redoTransform: VoidFunction
+    setTransform: (t: { x: number; y: number; scale: number }, skipAnimation?: boolean) => void
+    moveBy: (x: number, y: number) => void
   }
   floatOps: {
     openNode: (nodeId: number) => void
   }
   contentOps: {
-    transformToOutline: () => IWhiteboardOutline[]
+    transformToOutline: () => Record<string, IWhiteboardOutline[]>
   }
   moveToMetaNode: (
     metaId: number,
@@ -264,6 +301,9 @@ export type IWhiteboardInstance = Partial<{
     }
   ) => void
   nodeOps: {
+    observe?: (element: HTMLElement) => void
+    unobserve?: (element: HTMLElement) => void
+    erase?: (id: number) => void
     getDOMBoxOfNodes: (ids: number | number[]) => Record<number, Box>
     getMaxZindex: () => number
     updateAfterZ: (currentNodeId: number) => void
@@ -284,7 +324,7 @@ export type IWhiteboardInstance = Partial<{
     fold: (nodeId: number | number[]) => void
     canExpand: (node: IWhiteboardNode) => node is IWhiteboardNode & { type: 'metaObject' }
     canOpenInSidePeekOrCenter: (nodeId: number) => boolean
-    open: (nodeId: number, type: 'center' | 'sidePeek' | 'newTab' | 'float') => void
+    open: (nodeId: number, type: 'sidePeek' | 'newTab' | 'float') => void
   }
   updateEdge: (
     obj: PartialWithId<IWhiteboardEdge> | number,
@@ -315,15 +355,13 @@ export type IWhiteboardInstance = Partial<{
     openSelectToolbar: (position: XYPosition) => void
     openEdgeToolbar: (edgeId: number, position: XYPosition) => void
     openContextMenuToolbar: (position: XYPosition) => void
-    selectPasteOption: (position: XYPosition) => Promise<'text' | 'image' | 'nodes'>
+    selectPasteOption: (position: XYPosition) => Promise<'text' | 'image' | 'nodes' | 'objects'>
   }
   searchOps: {
     toggleSearchPanel: (visible?: boolean) => void
   }
   groupOps: {
     expandGroups: VoidFunction
-    // fit into view and rename
-    renameGroup: (groupNodeId: number) => void
     getParentGroupsOfNode: (nodeId: number, mindmapChildUseRoot?: boolean) => IWhiteboardNode[]
     getNodesInGroup: (groupNodeId: number, includeSelf?: boolean, mindmapChildUseRoot?: boolean) => IWhiteboardNode[]
     groupNodes: (nodeId: number | number[]) => void
@@ -344,17 +382,37 @@ export type IWhiteboardInstance = Partial<{
     isSelecting: () => boolean
   }
 }> & {
+  setFocused: (f: boolean) => void
+  isFocused: (includeInner?: boolean) => boolean
+  getContainerNode: () => HTMLElement
+  getOutestContainerNode: () => HTMLElement | null | undefined
+  updateWhiteboard: (updater: (curr: IWhiteboard) => void, withUndo?: boolean) => Promise<void>
+  emit: (e: IWhiteboardEvent) => void
+  addEventListener: <K extends keyof WhiteboardEvents>(type: K, listener: (e: WhiteboardEvents[K]) => void) => void
+  removeEventListener: <K extends keyof WhiteboardEvents>(type: K, listener: (e: WhiteboardEvents[K]) => void) => void
+  panzoom?: panzoom.PanZoom & {
+    setTransform: (
+      t: {
+        x: number
+        y: number
+        scale: number
+      },
+      duration: number | undefined,
+      skip: boolean | undefined
+    ) => void
+  }
   values: {
+    store: ReturnType<typeof createStore>
     id?: number
+    isFocused: boolean
     mindmapAttachableNodesCache?: IWhiteboardNode[]
     // need this to prevent resizeobserver update height loop.
     isResizingSelectionBox?: boolean
     currentDraggingNodeId?: number
     copiedElements: IWhiteboardNode[]
-    transformHistory: {
-      redos: IWhiteboardTransform[]
-      undos: IWhiteboardTransform[]
-    }
+    mindmapChildrenToFlattenChildren: WeakMap<IWhiteboardMindmap[], IWhiteboardMindmap[]>
+    mindmapRightTreeWeakMap: WeakMap<IWhiteboardNode, Map<number, IWhiteboardMindmap>>
+    mindmapLeftTreeWeakMap: WeakMap<IWhiteboardNode, Map<number, IWhiteboardMindmap>>
     // select box when use pointer
     selectBox?: Box
     // inner node to related edge set map

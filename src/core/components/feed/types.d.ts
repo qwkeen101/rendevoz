@@ -1,3 +1,4 @@
+import { INews } from '~/typings'
 export type FeedItem = {
   id: number
   title: string
@@ -15,3 +16,5 @@ export type FeedItem = {
     content?: import('slate').Descendant[]
   }
 }
+
+export { INews }

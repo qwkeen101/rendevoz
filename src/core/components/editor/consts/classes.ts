@@ -1,17 +1,6 @@
 import { css } from '@emotion/css'
 import { Colors } from '@/consts'
 
-const EditorWrapper = css({
-  maxWidth: '100%',
-  minWidth: 0,
-  width: 'var(--editor-max-width)',
-  outline: 'none',
-  whiteSpace: 'pre-wrap',
-  wordWrap: 'break-word',
-  height: 0,
-  flex: 1
-})
-
 const Editor = css({
   position: 'relative',
   width: 0,
@@ -21,51 +10,8 @@ const Editor = css({
   height: '100%'
 })
 
-const DefaultContentClass = css({
-  'h1,h2,h3,h4,h5,h6': {
-    marginTop: 0,
-    marginBottom: 0
-  },
-  p: {
-    margin: 0
-  },
-  h1: {
-    fontSize: '1.875em'
-  },
-  h2: {
-    fontSize: '1.5em'
-  },
-  h3: {
-    fontSize: '1.25em'
-  },
-  h4: {
-    fontSize: '1.15em'
-  },
-  'h5,h6': {
-    fontSize: '1.1em'
-  },
-  img: {
-    borderRadius: 6,
-    maxWidth: '100%'
-  },
-  figcaption: {
-    color: Colors.Font.Transparent,
-    fontSize: '0.85em',
-    padding: 0,
-    textAlign: 'center'
-  }
-})
-
-const TextBoxClass = css({
-  maxWidth: '100%',
-  width: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center'
-})
-
 const ScrollWrapperClass = css({
-  height: '100%',
+  flex: 1,
   width: '100%',
   minHeight: 'inherit',
   overflowX: 'hidden',
@@ -76,10 +22,13 @@ const ScrollWrapperClass = css({
   overflowAnchor: 'none',
   alignItems: 'center',
   '::highlight(secondary-highlight)': {
-    backgroundColor: 'rgba(209, 146, 56, 0.7)'
+    backgroundColor: 'rgba(209, 146, 56, 0.3)'
   },
   '::highlight(primary-highlight)': {
-    backgroundColor: 'rgba(255, 230, 148, 0.7)'
+    backgroundColor: 'var(--emphasis)'
+  },
+  '::highlight(selection-highlight)': {
+    backgroundColor: Colors.Common.SelectColorTransparent
   }
 })
 
@@ -107,9 +56,6 @@ const DividerWrapperClass = css({
 })
 const EditorClasses = {
   Editor,
-  EditorWrapper,
-  DefaultContentClass,
-  TextBoxClass,
   ScrollWrapperClass,
   DividerClass,
   DividerWrapperClass

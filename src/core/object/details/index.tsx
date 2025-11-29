@@ -1,47 +1,22 @@
-import { MetaStore } from '@/api/stores'
 import { assignProperties } from '@/utils'
-import { GlobalInstance } from '@/hooks'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Content, Icon, ResizeAndDrag } from '@/components'
+import { Content, Icon, IconWithPopover, ResizeAndDrag, WithBorder } from '@/components'
 import Main from '@/core/object/details/Main'
-import { Colors, KEY } from '@/consts'
+import { Colors, Icons, KEY, Zindexes } from '@/consts'
 import { ClassName } from 'rendevoz'
-import { RelatedPanel } from './Related'
 import { Rnd } from 'react-rnd'
 import { useTranslation } from 'react-i18next'
 import Id from '@/utils/id'
 import isHotkey from 'is-hotkey'
+import classnames from 'classnames'
+import DetailsMenu from '@/core/object/details/DetailsMenu'
+import { createPortal } from 'react-dom'
+import { MetaStore } from '@/api/stores'
+import trans from '@/consts/trans'
 
-const ObjectDetails = ({
-  metaId,
-  onClose,
-  canBackward,
-  canForward,
-  onAuto,
-  onBackward,
-  onForward,
-  onPeek,
-  visible
-}: {
-  visible?: boolean
-  metaId: number
-  onClose?: VoidFunction
-  onPeek: VoidFunction
-  onAuto: VoidFunction
-  canForward: boolean
-  canBackward: boolean
-  onForward: VoidFunction
-  onBackward: VoidFunction
-}) => {
-  const [currentDisplay, setCurrentDisplay] = useState<{
-    visible: 'main' | 'tags' | 'links' | 'attachments' | 'preview'
-  }>({
-    visible: 'main'
-  })
+const ObjectDetails = ({ metaId, onClose, visible }: { visible?: boolean; metaId: number; onClose?: VoidFunction }) => {
+  const m = MetaStore.useValue(metaId)
   const { t } = useTranslation()
-  useEffect(() => {
-    setCurrentDisplay({ visible: 'main' })
-  }, [metaId])
   return (
     <Content
       flex
@@ -49,86 +24,57 @@ const ObjectDetails = ({
       fullHeight
       fullWidth
       style={{
-        overflowY: 'auto',
         maxHeight: '80vh'
       }}
     >
-      <Content
-        className={'d-h-g'}
-        style={{
-          display: 'flex',
-          position: 'sticky',
-          top: 0,
-          background: Colors.Background.Popover,
-          justifyContent: 'space-between',
-          padding: '8px 8px 4px 16px',
-          cursor: 'grab',
-          width: '100%',
-          borderRadius: 12,
-          zIndex: 9999
-        }}
-      >
-        <Content flex gap={4}>
+      <div className={classnames('d-h-g shrink-0 flex px-6 py-3 justify-between cursor-grab w-full transition-all')}>
+        <div className={'text-xl font-bold'}>{t('general.Details')}</div>
+        <div className={'flex gap-5 items-center'}>
+          {m && (
+            <>
+              <IconWithPopover
+                placement={['bottom', 'top']}
+                name={Icons.More}
+                className={'opacity-40 -mr-1 hover:opacity-100 transition-opacity cursor-pointer'}
+                size={18}
+                content={setV => <DetailsMenu onClose={() => setV(false)} id={metaId} />}
+              />
+              <Icon
+                name={Icons.Link}
+                onClick={() => {
+                  Global.metaOps?.copyLink(metaId)
+                }}
+                tooltip={t(trans.CopyLink)}
+                size={18}
+                strokeWidth={4}
+                className={'opacity-40 hover:opacity-100 transition-opacity cursor-pointer'}
+              />
+              <Icon
+                name={Icons.Efferent}
+                onClick={() => {
+                  Global.layoutOps?.openObject(metaId)
+                  onClose?.()
+                }}
+                size={18}
+                strokeWidth={4}
+                className={'opacity-40 hover:opacity-100 transition-opacity cursor-pointer'}
+              />
+            </>
+          )}
           <Icon
-            name={'park-arrow-left'}
+            name={'park-close'}
             onClick={() => {
-              if (canBackward) {
-                onBackward()
-              }
+              onClose?.()
             }}
-            style={{
-              color: canBackward ? Colors.Font.Primary : Colors.Font.SuperTransparent
-            }}
-            className={ClassName.flatButton(4, '4px')}
+            size={18}
+            strokeWidth={4}
+            className={'opacity-40 hover:opacity-100 transition-opacity cursor-pointer'}
           />
-          <Icon
-            name={'park-arrow-right'}
-            onClick={() => {
-              if (canForward) {
-                onForward()
-              }
-            }}
-            style={{
-              color: canForward ? Colors.Font.Primary : Colors.Font.SuperTransparent
-            }}
-            className={ClassName.flatButton(4, '4px')}
-          />
-        </Content>
-        <Icon
-          name={'park-close'}
-          onClick={() => {
-            onClose?.()
-          }}
-          className={ClassName.flatButton(4, '4px')}
-        />
-      </Content>
-      <Content
-        fullWidth
-        style={{
-          padding: '8px 16px 16px'
-        }}
-      >
-        {currentDisplay.visible === 'main' && (
-          <Main
-            visible={visible}
-            onPreview={() => {
-              setCurrentDisplay({ visible: 'preview' })
-              onPeek()
-            }}
-            onViewAtt={() => {
-              setCurrentDisplay({ visible: 'attachments' })
-            }}
-            onOpenTag={() => {
-              setCurrentDisplay({ visible: 'tags' })
-            }}
-            onViewLinks={() => {
-              setCurrentDisplay({ visible: 'links' })
-            }}
-            metaId={metaId}
-          />
-        )}
-        {currentDisplay.visible === 'links' && <RelatedPanel metaId={metaId} />}
-      </Content>
+        </div>
+      </div>
+      <div className={'w-full grow overflow-y-auto'}>
+        <Main visible={visible} metaId={metaId} />
+      </div>
     </Content>
   )
 }
@@ -147,9 +93,9 @@ export const GlobalObjectDetails = () => {
       id: number
     }[]
   >([])
-  assignProperties(GlobalInstance, {
+  assignProperties(Global, {
     metaOps: {
-      ...GlobalInstance.metaOps,
+      ...Global.metaOps,
       toggleDetails: (id, visible) => {
         if (id) {
           const openId = Id.getId()
@@ -212,17 +158,16 @@ export const GlobalObjectDetails = () => {
     }
   }, [gState.visible])
   const rndRef = useRef<Rnd>()
-  const prev = useRef()
   const { t } = useTranslation()
-  const currentMetaHistoryIndex = gState.metaId ? metaHistory.current.findIndex(i => i.id === gState.id) : -1
-  return (
+  if (!gState.visible) return null
+  return createPortal(
     <ResizeAndDrag
       minWidth={240}
       ref={rndRef}
       style={{
         opacity: gState.visible ? 1 : 0,
         pointerEvents: gState.visible ? 'auto' : 'none',
-        zIndex: gState.visible ? 1001 : -1
+        zIndex: gState.visible ? Zindexes.ObjectDetails : -1
       }}
       default={{
         width: 600,
@@ -230,58 +175,10 @@ export const GlobalObjectDetails = () => {
       }}
       dragHandleClassName={'d-h-g'}
     >
-      <Content
-        style={{
-          width: '100%',
-          height: '100%',
-          borderRadius: 12,
-          background: Colors.Background.Popover,
-          boxShadow: Colors.Background.PopoverBoxShadow
-        }}
-      >
+      <WithBorder borderRadius={16} className={'w-full h-full rounded-3xl overflow-y-auto'}>
         {gState.metaId ? (
           <ObjectDetails
-            canForward={currentMetaHistoryIndex >= 0 && metaHistory.current.length - 1 > currentMetaHistoryIndex}
-            canBackward={currentMetaHistoryIndex > 0}
-            onBackward={() => {
-              setGState(s => ({ ...s, ...metaHistory.current[currentMetaHistoryIndex - 1] }))
-            }}
-            onForward={() => {
-              setGState(s => ({ ...s, ...metaHistory.current[currentMetaHistoryIndex + 1] }))
-            }}
-            onAuto={() => {
-              if (prev.current) {
-                rndRef.current?.updatePosition({
-                  x: prev.current.x,
-                  y: prev.current.y
-                })
-                rndRef.current?.updateSize({
-                  width: prev.current.width,
-                  height: 'auto'
-                })
-              }
-              prev.current = undefined
-            }}
-            onPeek={() => {
-              const rnd = rndRef.current
-              if (rnd) {
-                const self = rnd.getSelfElement() as HTMLElement
-                const bounding = self.getBoundingClientRect()
-                prev.current = {
-                  width: bounding.width,
-                  y: bounding.y,
-                  x: bounding.x
-                }
-                rnd.updatePosition({
-                  y: 72,
-                  x: (window.innerWidth - Math.min(window.innerWidth - 144, 970)) / 2
-                })
-                rnd.updateSize({
-                  width: Math.min(window.innerWidth - 144, 970),
-                  height: window.innerHeight - 144
-                })
-              }
-            }}
+            key={gState.metaId}
             onClose={() => {
               setGState(s => ({ ...s, visible: false }))
             }}
@@ -313,8 +210,9 @@ export const GlobalObjectDetails = () => {
             {t('general.No selected object')}
           </Content>
         )}
-      </Content>
-    </ResizeAndDrag>
+      </WithBorder>
+    </ResizeAndDrag>,
+    document.body
   )
 }
 

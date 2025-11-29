@@ -3,19 +3,16 @@ import { useToaster } from 'react-hot-toast'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Icon } from '@/components'
 import './notification.less'
-import { GlobalSetting } from '@/core'
+import { Icons } from '@/consts'
 
 const Notification = () => {
   const { toasts, handlers } = useToaster({
     duration: 3500
   })
-  const enableSetting = GlobalSetting.useSelectSettingAtom('enableNotification')
   const { calculateOffset, updateHeight } = handlers
-  if (enableSetting === false) {
-    return null
-  }
+  if (!toasts.length) return null
   return (
-    <motion.div
+    <div
       style={{
         position: 'fixed',
         top: 35,
@@ -60,6 +57,7 @@ const Notification = () => {
               <>
                 {toast.type === 'success' && <Icon fill={'#82CD47'} theme="filled" size={18} name="park-correct" />}
                 {toast.type === 'error' && <Icon fill={'#F55050'} theme="filled" size={18} name="park-error" />}
+                {toast.type === 'loading' && <Icon strokeWidth={4} spin size={18} name={Icons.Loading} />}
                 <div
                   style={{
                     display: 'flex',
@@ -74,7 +72,7 @@ const Notification = () => {
           )
         })}
       </AnimatePresence>
-    </motion.div>
+    </div>
   )
 }
 

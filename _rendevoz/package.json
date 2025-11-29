@@ -1,7 +1,7 @@
 {
   "name": "rendevoz",
   "productName": "Rendevoz",
-  "version": "0.4.68",
+  "version": "0.4.69",
   "author": "Rendevoz Team",
   "main": "dist/index.mjs",
   "scripts": {
@@ -26,9 +26,7 @@
     "rc-progress": "^3.4.1",
     "rc-slider": "^10.1.1",
     "re-resizable": "^6.9.9",
-    "react-calendar": "^4.0.0",
     "react-color": "^2.19.3",
-    "react-flip-toolkit": "^7.0.17",
     "rendevoz": "latest",
     "react-rnd": "^10.3.5",
     "react-style-object-to-css": "^1.1.2",

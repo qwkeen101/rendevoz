@@ -1,72 +1,57 @@
-import { FeedItem } from '@/core/components/feed/types'
-import { Content, Icon } from '@/components'
 import React, { memo } from 'react'
-import { ClassName } from 'rendevoz'
 import { ObjectStore } from '@/api/stores'
-import { Colors } from '@/consts'
-import { DateFormat } from '@/utils'
+import gN from '@/assets/images/google-news.png?url'
 import ItemsToolbar from '@/core/components/feed/components/items/ItemsToolbar'
 import useFeedIsRead from '@/core/components/feed/hooks/useFeedIsRead'
-import useFeedIsFocused from '@/core/components/feed/hooks/useFeedIsFocused'
 import classnames from 'classnames'
+import ContextMenu from '@/components/contextMenu'
+import FeedItemMenu from '@/core/components/feed/components/FeedItemMenu'
 
 const MagazineFeedItem = memo(
   ({
     id,
-    styles,
-    onClick
+    onClick,
+    className,
+    parentFolderId,
+    showSource = true
   }: {
     id: number
-    styles?: {
-      mainGap?: number
-      imageSize?: {
-        width?: number
-        height?: number
-      }
-    }
     onClick?: React.MouseEventHandler
+    className?: string
+    parentFolderId?: number
+    showSource?: boolean
   }) => {
-    const {
-      imageSize = {
-        width: 180,
-        height: 108
-      },
-      mainGap = 20
-    } = styles || {}
     const item = ObjectStore('feed').useValue(id)
     const isRead = useFeedIsRead(id)
-    const isFocused = useFeedIsFocused(id)
+    const collection = ObjectStore('feedCollection').useValue(item?.collectionId)
+    const source = item?.source ?? collection?.name
+    const sourceIcon = item?.favicon ?? (collection?.icon === 'gNews' ? gN : collection?.icon)
     if (!item) return null
     return (
-      <Content
-        flex
-        onClick={onClick}
-        gap={mainGap}
-        className={classnames('button py-6', isFocused && 'active-button', isRead && !isFocused && 'transparent-font')}
-        style={{
-          width: '100%'
-        }}
-      >
-        {item.image && (
-          <img
-            src={item.image}
-            className={'br-4'}
-            style={{
-              objectFit: 'cover',
-              width: imageSize.width,
-              height: imageSize.height,
-              flexShrink: 0
-            }}
-          ></img>
-        )}
-        <Content flex column auto>
-          <div className={'normal-font ellipsis-font-2'}>{item.title}</div>
-          <div className={classnames('ellipsis-font-2 font-size-13', !isFocused && 'transparent-font')}>{item.description}</div>
-          <div style={{ width: '100%', marginTop: 6 }}>
-            <ItemsToolbar isFocused={isFocused} itemId={item.id} />
+      <ContextMenu content={setV => <FeedItemMenu parentFolderId={parentFolderId} id={id} onClose={() => setV(false)} />}>
+        <div className={classnames('@container flex gap-6 py-6 min-h-48', isRead && 'transparent-font', className)}>
+          <div className={'flex flex-col flex-auto gap-1'}>
+            {source && showSource && (
+              <div className={'flex items-center gap-2 text-sm font-medium leading-none'}>
+                {sourceIcon && <img src={sourceIcon} className={'w-3.5 h-3.5 object-cover rounded-sm'} />}
+                <div>{source}</div>
+              </div>
+            )}
+            <div onClick={onClick} className={'font-bold text-xl line-clamp-2 cursor-pointer hover:underline'}>
+              {item.title}
+            </div>
+            {item.description && <div className={classnames('ellipsis-font-2 max-w-5xl')}>{item.description}</div>}
+            <div className={'w-full mt-auto pt-3'}>
+              <ItemsToolbar className={'!gap-4'} isFocused={false} itemId={item.id} />
+            </div>
           </div>
-        </Content>
-      </Content>
+          {item.image && (
+            <div className={'@4xl:w-64 @4xl:h-40 shrink-0 h-36 w-36 rounded-lg overflow-hidden'}>
+              <img crossOrigin={'anonymous'} src={item.image} className={'w-full h-full object-cover shrink-0'}></img>
+            </div>
+          )}
+        </div>
+      </ContextMenu>
     )
   },
   (prev, curr) => prev.id === curr.id

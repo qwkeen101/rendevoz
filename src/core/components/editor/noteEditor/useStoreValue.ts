@@ -1,9 +1,8 @@
 import { Descendant } from 'slate'
-import { IEditorInstance, OperationAppliedEvent } from '~/typings'
-import { RefObject, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { IEditorInstance, IGlobalEvents } from '~/typings'
+import { RefObject, useEffect, useMemo, useRef, useState } from 'react'
 import { useDebounceFn, useMemoizedFn } from '@/hooks'
 import { NoteStore, ObjectStore } from '@/api/stores'
-import { Rendevoz } from '@/core/rendevoz'
 import { isEqual } from 'lodash'
 import SyncAPI from '@/api/sync'
 
@@ -11,25 +10,21 @@ const useStoreValue = (options: {
   onContentLoaded?: VoidFunction
   noteId?: number
   defaultValue?: Descendant[]
+  id: string
   instanceRef: RefObject<IEditorInstance | undefined>
   metaId?: number
 }) => {
-  const shouldSaveRef = useRef(options.defaultValue)
+  const shouldSaveRef = useRef(!!options.defaultValue)
   const { noteId, instanceRef, defaultValue, onContentLoaded } = options
   const { saveNoteAsBuffer, getNoteValue, saveNoteAsSearch } = NoteStore
   const note = ObjectStore('note').useValue(noteId)
   const [fetchedValue, setFetchedValue] = useState<Descendant[]>()
-  const globalEmitter = Rendevoz.Events.Emit.GlobalEventEmitter
-  const handler = Rendevoz.Events.Emit.useEventHandler('editor')
   const saveValueToNote = async (value: Descendant[]) => {
     if (!noteId) return
     if (!shouldSaveRef.current) return
     if (note && note.contentId) {
-      globalEmitter.emit('editor', {
-        type: 'valueSaved',
-        data: {
-          noteId
-        }
+      Global.emitEvent('editorValueSaved', {
+        noteId
       })
       await saveNoteAsBuffer(value, note.contentId)
       saveNoteAsSearch(value, options.metaId)
@@ -51,32 +46,45 @@ const useStoreValue = (options: {
     },
     { wait: 1000 }
   )
-
-  const handleOperationApplied = (e: OperationAppliedEvent) => {
-    if (e.noteId === noteId) {
-      console.log(e)
+  const debounceChangeDefaultValue = useDebounceFn(
+    () => {
+      const currentValue = instanceRef.current?.getSlateEditor?.().children
+      if (currentValue) {
+        setFetchedValue(currentValue)
+      }
+    },
+    { wait: 200 }
+  )
+  const handleOperationApplied = (e: IGlobalEvents['editorOperationApplied']) => {
+    debounceChangeDefaultValue.run()
+    if (e.noteId === noteId && e.id === options.id) {
       shouldSaveRef.current = true
       debounceSaveValue.run()
     }
   }
-  handler.on('valueSaved', data => {
+  const handleValueSaved = (data: IGlobalEvents['editorValueSaved']) => {
     if (data.noteId === noteId) {
       shouldSaveRef.current = false
     }
-  })
-  handler.on('refreshFromValue', data => {
+  }
+  const handleRefreshFromValue = (data: IGlobalEvents['editorRefreshFromValue']) => {
     const instance = instanceRef.current
     if (noteId && instance && data.noteId.includes(noteId)) {
       fetchValue()
     }
-  })
-  handler.on('operationApplied', handleOperationApplied)
+  }
 
   const fetchValue = useMemoizedFn(async () => {
     if (note?.contentId) {
       const noteValue = await getNoteValue(note.contentId)
       if (noteValue) {
         setFetchedValue(noteValue)
+        const instance = instanceRef.current
+        const currentValue = instance?.getSlateEditor?.().children
+        onContentLoaded?.()
+        if (!isEqual(currentValue, fetchedValue)) {
+          instance?.replaceChildren?.(noteValue)
+        }
       }
     }
   })
@@ -85,16 +93,7 @@ const useStoreValue = (options: {
       fetchValue()
     }
   }, [note?.contentId])
-  useLayoutEffect(() => {
-    const instance = instanceRef.current
-    if (fetchedValue) {
-      const currentValue = instance?.getSlateEditor?.().children
-      if (!isEqual(currentValue, fetchedValue)) {
-        instance?.replaceChildren?.(fetchedValue)
-      }
-      onContentLoaded?.()
-    }
-  }, [fetchedValue])
+
   useMemo(() => {
     const instance = instanceRef.current
     if (defaultValue && (noteId ? !note?.contentId : true)) {
@@ -103,11 +102,19 @@ const useStoreValue = (options: {
     }
   }, [defaultValue, note?.contentId])
   useEffect(() => {
-    globalEmitter.addListener('editor', handler)
+    Global.addEventListener('editorOperationApplied', handleOperationApplied)
+    Global.addEventListener('editorValueSaved', handleValueSaved)
+    Global.addEventListener('editorRefreshFromValue', handleRefreshFromValue)
     return () => {
-      globalEmitter.removeListener('editor', handler)
+      Global.removeEventListener('editorOperationApplied', handleOperationApplied)
+      Global.removeEventListener('editorValueSaved', handleValueSaved)
+      Global.removeEventListener('editorRefreshFromValue', handleRefreshFromValue)
+    }
+  })
+  useEffect(() => {
+    return () => {
       const instance = instanceRef.current
-      const value = instance?.getSlateEditor?.().children
+      const value = instance?.editor.children
       if (value) {
         saveValueToNote(value)
       }

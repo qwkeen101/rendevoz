@@ -42,19 +42,6 @@ const ViewportComponent = PixiComponent('Viewport', {
         if (currentZoom !== previousZoom) {
           previousZoom = currentZoom
           const zoom = viewport.scale.x
-          const zoomlevel = Math.sqrt(1 / (zoom || 1)) + 0.2
-
-          props.graph.ID_TO_EDGE_FUNCTION_MAP.forEach(i => {
-            i.resetLineWidth(1 * zoomlevel)
-          })
-          props.graph.ID_TO_PIXI_NODE_MAP.forEach(i => {
-            if (i) {
-              i.scale = {
-                x: zoomlevel,
-                y: zoomlevel
-              }
-            }
-          })
           if (zoom >= 0.6 && labelHidden) {
             props.graph.ID_TO_PIXI_NODE_MAP.forEach(i => {
               const texts = i.children.filter(i => i instanceof PIXI.Text)

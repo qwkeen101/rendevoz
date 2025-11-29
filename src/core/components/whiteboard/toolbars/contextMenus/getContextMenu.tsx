@@ -1,61 +1,60 @@
-import { IWhiteboardInstance } from '~/typings'
+import { IWhiteboardInstance, MetaObject, XYPosition } from '~/typings'
 import { TFunction } from 'i18next'
 import { IMenuLayoutItem } from '@/components/base/menu'
 import { WhiteboardDefaultKeyboardShortcut } from '@/core/components/whiteboard/hooks/keyboard/DefaultWhiteboardShortcuts'
 import Id from '@/utils/id'
-import { MetaStore, ObjectStore } from '@/api/stores'
-import { Rendevoz } from '@/core/rendevoz'
-import { Colors } from '@/consts'
+import { MetaStore } from '@/api/stores'
+import { Icons } from '@/consts'
+import { waitFor } from '@/utils'
 
-export default (instance: IWhiteboardInstance, t: TFunction<'translation', undefined, 'translation'>) => {
-  const copiedElements = instance.values.copiedElements
+export default (instance: IWhiteboardInstance, t: TFunction<'translation', undefined, 'translation'>, hasCopied?: boolean) => {
   const handleAddMetaObjectAtToolbarPoint = async (
-    metaType: string,
+    metaType: MetaObject['type'],
     opts?: {
-      fit?: boolean
       expand?: boolean
-      select?: boolean
-      showMetaModal?: boolean
     }
   ) => {
     const toolbarState = instance.toolbarOps?.getToolbarState()
     if (toolbarState && toolbarState.originX !== undefined && toolbarState.originY !== undefined) {
       instance.toolbarOps?.closeToolbar()
       const id = Id.getId()
-      const meta = (await ObjectStore(metaType).addOneWithMeta({}, { silent: true, showMetaModal: opts?.showMetaModal })).meta
-      const whiteboardObjId = instance.values.id
-      if (whiteboardObjId) {
-        const whiteboardMeta = MetaStore.getMetaObjectByObjectId(whiteboardObjId)
-        if (whiteboardMeta) {
-          MetaStore.addMetaLink({ sourceId: meta.id, targetId: whiteboardMeta.id })
-        }
-      }
-      instance.insertNode?.({
-        x: toolbarState.originX,
-        y: toolbarState.originY,
-        type: 'metaObject',
-        metaObjectId: meta.id,
-        expanded: opts?.expand ?? true,
-        id
-      })
-      opts?.fit !== false &&
-        instance.containerOps?.fitTo({
-          left: toolbarState.originX,
-          top: toolbarState.originY,
-          width: 520,
-          height: 300
+      Global.metaOps.createObjects?.(metaType, meta => {
+        instance.insertNode?.({
+          x: toolbarState.originX,
+          y: toolbarState.originY,
+          type: 'metaObject',
+          metaObjectId: meta.id,
+          expanded: opts?.expand ?? false,
+          id
         })
-      opts?.select !== false &&
-        setTimeout(() => {
-          const nodeFuncs = instance.nodeOps?.getNodeFuncs(id)
-          if (nodeFuncs) {
-            nodeFuncs.setNodeState(s => ({ ...s, selected: true, focused: true }))
-          }
-        }, 200)
+      })
     }
   }
+  const addMetaAtToolbarPoint = async (point: XYPosition, m: MetaObject | MetaObject[]) => {
+    const arr = Array.isArray(m) ? m : [m]
+    const whiteboardObjId = instance.values.id
+    if (whiteboardObjId) {
+      const whiteboardMeta = MetaStore.getMetaObjectByObjectId(whiteboardObjId)
+      if (whiteboardMeta) {
+        arr.forEach(i => {
+          MetaStore.addMetaLink({ sourceId: i.id, targetId: whiteboardMeta.id })
+        })
+      }
+    }
+    arr.forEach(i => {
+      const id = Id.getId()
+      instance.insertNode?.({
+        x: point.x,
+        y: point.y,
+        type: 'metaObject',
+        metaObjectId: i.id,
+        expanded: false,
+        id
+      })
+    })
+  }
   const items: IMenuLayoutItem[] = [
-    ...(copiedElements.length
+    ...(hasCopied
       ? [
           {
             type: 'item',
@@ -66,9 +65,14 @@ export default (instance: IWhiteboardInstance, t: TFunction<'translation', undef
             onSelect: () => {
               const toolbarState = instance.toolbarOps?.getToolbarState()
               if (toolbarState && toolbarState.originX !== undefined && toolbarState.originY !== undefined) {
-                instance.nodeOps?.paste({
+                const transformed = instance.coordOps?.transformWhiteboardPositionToWindowPosition({
                   x: toolbarState.originX,
                   y: toolbarState.originY
+                })
+                if (!transformed) return
+                instance.nodeOps?.paste({
+                  x: transformed.x,
+                  y: transformed.y
                 })
                 instance.toolbarOps?.closeToolbar()
               }
@@ -126,7 +130,7 @@ export default (instance: IWhiteboardInstance, t: TFunction<'translation', undef
     {
       type: 'item',
       key: 'card',
-      icon: Rendevoz.Utils.Object.getMetaObjectIcon('note'),
+      icon: Global.utils.getIcon('note'),
       text: t('whiteboard.Create document card'),
       onSelect: async () => {
         await handleAddMetaObjectAtToolbarPoint('note')
@@ -140,8 +144,8 @@ export default (instance: IWhiteboardInstance, t: TFunction<'translation', undef
       onSelect: async () => {
         const toolbarState = instance.toolbarOps?.getToolbarState()
         if (!toolbarState) return
-        const randomColor = Colors.getRandomColor()
         const nodeId = Id.getId()
+        const defaultColor = '#67C6E3'
         instance.insertNode?.({
           x: toolbarState.originX,
           y: toolbarState.originY,
@@ -151,103 +155,63 @@ export default (instance: IWhiteboardInstance, t: TFunction<'translation', undef
           rightChildren: [],
           leftChildren: [],
           edgeType: 'curve',
-          edgeColor: randomColor,
+          edgeColor: defaultColor,
           borderType: 'round',
-          border: randomColor,
+          border: defaultColor,
           nodeType: 'text',
-          content: [{ type: 'paragraph', children: [{ text: 'Mindmap' }], id: Id.getId() }]
+          content: [{ type: 'paragraph', children: [{ text: '' }], id: Id.getId() }]
         })
-        instance.containerOps?.fitTo({
-          left: toolbarState.originX,
-          top: toolbarState.originY,
-          width: 200,
-          height: 30
-        })
+        waitFor(
+          () => !!instance.nodeOps?.getNodeFuncs(nodeId)?.focusText,
+          () => {
+            instance.nodeOps?.getNodeFuncs(nodeId)?.focusText?.()
+          }
+        )
         instance.toolbarOps?.closeToolbar()
       }
     },
     {
       type: 'item',
-      key: 'webpage',
-      icon: Rendevoz.Utils.Object.getMetaObjectIcon('webpage'),
-      text: t('whiteboard.Create webpage card'),
+      key: 'object',
+      icon: Icons.ApplicationAll,
+      text: t('general.New file'),
       onSelect: async () => {
-        await handleAddMetaObjectAtToolbarPoint('webpage', {
-          showMetaModal: true,
-          expand: false
-        })
+        const toolbarState = instance.toolbarOps?.getToolbarState()
+        instance.toolbarOps?.closeToolbar()
+        if (toolbarState && toolbarState.originX !== undefined && toolbarState.originY !== undefined) {
+          Global.metaOps.createObjects?.(undefined, m => {
+            addMetaAtToolbarPoint(
+              {
+                x: toolbarState.originX!,
+                y: toolbarState.originY!
+              },
+              m
+            )
+          })
+        }
       }
     },
     {
       type: 'item',
-      key: 'pdf',
-      icon: Rendevoz.Utils.Object.getMetaObjectIcon('pdf'),
-      text: t('whiteboard.Create pdf card'),
+      key: 'library',
+      icon: 'custom-card-library',
+      text: t('general.Import from library'),
       onSelect: async () => {
-        await handleAddMetaObjectAtToolbarPoint('pdf', {
-          showMetaModal: true,
-          expand: false
-        })
-      }
-    },
-    {
-      type: 'item',
-      key: 'video',
-      icon: Rendevoz.Utils.Object.getMetaObjectIcon('video'),
-      text: t('whiteboard.Create video card'),
-      onSelect: async () => {
-        await handleAddMetaObjectAtToolbarPoint('video', {
-          showMetaModal: true,
-          expand: false
-        })
-      }
-    },
-    {
-      type: 'item',
-      key: 'image',
-      icon: Rendevoz.Utils.Object.getMetaObjectIcon('image'),
-      text: t('whiteboard.Create image card'),
-      onSelect: async () => {
-        await handleAddMetaObjectAtToolbarPoint('image', {
-          expand: false,
-          showMetaModal: true
-        })
+        const toolbarState = instance.toolbarOps?.getToolbarState()
+        instance.toolbarOps?.closeToolbar()
+        if (toolbarState && toolbarState.originX !== undefined && toolbarState.originY !== undefined) {
+          Global.commonOps?.importFromLibrary?.().then(res => {
+            addMetaAtToolbarPoint(
+              {
+                x: toolbarState.originX!,
+                y: toolbarState.originY!
+              },
+              res
+            )
+          })
+        }
       }
     }
-    // {
-    //   type: 'item',
-    //   key: 'upload',
-    //   icon: 'park-upload',
-    //   text: t('whiteboard.Upload file'),
-    //   onSelect: async () => {
-    //     const toolbarState = instance.toolbarOps?.getToolbarState()
-    //     if (toolbarState && toolbarState.originX !== undefined && toolbarState.originY !== undefined) {
-    //       const note = (await ObjectStore('note').addOneWithMeta({}, { silent: true })).meta
-    //       const id = Id.getId()
-    //       instance.insertNode?.({
-    //         x: toolbarState.originX,
-    //         y: toolbarState.originY,
-    //         type: 'metaObject',
-    //         metaObjectId: note.id,
-    //         expanded: true,
-    //         id
-    //       })
-    //       instance.containerOps?.fitTo({
-    //         left: toolbarState.originX,
-    //         top: toolbarState.originY,
-    //         width: 520,
-    //         height: 50
-    //       })
-    //       setTimeout(() => {
-    //         const nodeFuncs = instance.nodeOps?.getNodeFuncs(id)
-    //         if (nodeFuncs) {
-    //           nodeFuncs.setNodeState(s => ({ ...s, selected: true, focused: true }))
-    //         }
-    //       }, 200)
-    //       instance.toolbarOps?.closeToolbar()
-    //     }
-    //   }
-    // }
   ].filter(i => i) as IMenuLayoutItem[]
   return items
 }

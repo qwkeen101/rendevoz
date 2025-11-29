@@ -1,75 +1,80 @@
-import { RefObject, useEffect } from 'react'
-import { CustomEditor } from '~/typings'
+import { ReactElement, ReactPortal, RefObject, useEffect } from 'react'
+import { CustomEditor, EditorProps } from '~/typings'
 import useAutoInsertEndline from './useAutoInsertEndline'
 import useEditorDrag from './drag/useEditorDrag'
 import useEditorOverlay from '../components/overlay/useEditorOverlay'
 import useEditorSelect from './useEditorSelect'
 import useEditorInstance, { useAssignEditorInstance } from './useEditorInstance'
-import { debounce } from 'lodash'
 import { EditorStateAtom } from './useEditorState'
 import { useSetAtom } from 'jotai'
-import { ID_TO_VISIBLE_HEADING_MAP } from '../weakMaps'
 import useTypeFilterBlocks from '@/core/components/editor/hooks/useTypeFilterBlocks'
 
-const EditorPluginHooks = ({ editor, scrollElementRef }: { editor: CustomEditor; scrollElementRef: RefObject<HTMLElement> }) => {
+const EditorPluginHooks = ({
+  editor,
+  plugins,
+  scrollElementRef
+}: {
+  editor: CustomEditor
+  scrollElementRef: RefObject<HTMLDivElement>
+  plugins?: EditorProps['plugins']
+}) => {
   const instance = useEditorInstance()
-  useAutoInsertEndline(scrollElementRef, editor)
-
+  if (plugins?.addUnderLastLine !== false) {
+    useAutoInsertEndline(scrollElementRef, editor)
+  }
   useAssignEditorInstance(editor, scrollElementRef)
-
-  const { renderIndicator } = useEditorDrag(editor, scrollElementRef.current)
+  const renders: (ReactElement | ReactPortal)[] = []
+  if (plugins?.dragBlock !== false) {
+    const { renderIndicator } = useEditorDrag(editor, scrollElementRef.current)
+    renders.push(renderIndicator)
+  }
 
   const { renderOverlay, overlayManager } = useEditorOverlay(editor, scrollElementRef.current)
-  useEditorSelect(editor, scrollElementRef.current)
+  renders.push(renderOverlay())
+  if (plugins?.select !== false) {
+    const { renderSelect } = useEditorSelect(editor, scrollElementRef)
+    const portal = renderSelect()
+    if (portal) {
+      renders.push(portal)
+    }
+  }
   instance.getOverlayManager = () => overlayManager
   const setEditorState = useSetAtom(EditorStateAtom)
   useTypeFilterBlocks()
-  useEffect(() => {
-    const scrollElement = scrollElementRef.current
-    const debounceCheck = debounce(() => {
-      if (scrollElement) {
-        const allVisibleHeadings = Array.from(ID_TO_VISIBLE_HEADING_MAP.get(editor)?.entries() || [])
-        if (allVisibleHeadings.length) {
-          const withBoundingHeadings = allVisibleHeadings.map(i => [
-            i[0],
-            {
-              element: i[1],
-              pageTop: i[1].getBoundingClientRect().top,
-              offsetTop: i[1].parentElement!.offsetTop
-            }
-          ]) as [number, { element: HTMLElement; offsetTop: number; pageTop: number }][]
-          withBoundingHeadings.sort((b, a) => b[1].offsetTop - a[1].offsetTop)
-          const realScrollTop = Math.max(0, scrollElement.scrollTop - (editor.titleEle?.getBoundingClientRect().height || 0))
-          console.log(realScrollTop, withBoundingHeadings)
-          if (realScrollTop < withBoundingHeadings[0][1].offsetTop) {
-            setEditorState(s => ({
-              ...s,
-              currentActiveHeadingId: withBoundingHeadings[0][0]
-            }))
-          } else {
-            const currIdx = withBoundingHeadings.findLastIndex(i => i[1].offsetTop - 50 < realScrollTop)
-            setEditorState(s => ({
-              ...s,
-              currentActiveHeadingId: withBoundingHeadings[currIdx][0]
-            }))
-          }
+  instance.printToPDF = () => {
+    let enV = true
+    setEditorState(s => {
+      enV = s.layout?.virtualizer ?? true
+      return {
+        ...s,
+        layout: {
+          ...s.layout,
+          virtualizer: false
         }
       }
-    }, 300)
-    const scrollListener = () => debounceCheck()
-    if (scrollElement) {
-      scrollElement.addEventListener('scroll', scrollListener)
-    }
-    return () => {
-      scrollElement?.removeEventListener('scroll', scrollListener)
-    }
-  }, [])
-  return (
-    <>
-      {renderIndicator}
-      {renderOverlay()}
-    </>
-  )
+    })
+    setTimeout(() => {
+      const ele = scrollElementRef.current!
+      const p = ele.parentElement!
+      document.body.appendChild(ele)
+      const currentTitle = document.title
+      document.title = instance.getTitle?.() || ''
+      const originalTheme = document.documentElement.getAttribute('theme')
+      document.documentElement.setAttribute('theme', 'light')
+      document.documentElement.classList.add('print-editor')
+      const afterPrint = () => {
+        document.title = currentTitle
+        document.documentElement.classList.remove('print-editor')
+        document.documentElement.setAttribute('theme', originalTheme || 'light')
+        p.appendChild(ele)
+        setEditorState(s => ({ ...s, layout: { ...s.layout, virtualizer: enV } }))
+        window.removeEventListener('afterprint', afterPrint)
+      }
+      window.addEventListener('afterprint', afterPrint)
+      window.print()
+    })
+  }
+  return <>{...renders}</>
 }
 
 export default EditorPluginHooks

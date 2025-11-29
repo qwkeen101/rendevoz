@@ -192,8 +192,8 @@ const EdgeOverlay = memo(() => {
           currentEdge?.lineStyle === 'animatedDash' ? animatedEdgeClazz : currentEdge?.lineStyle === 'dash' ? dashEdgeClazz : undefined
         }
         fill="none"
-        markerEnd={`url(#${getMarkerId('end', Colors.getAdaptColor(currentEdge?.color) || MarkerColor.PRIMARY)})`}
-        stroke={Colors.getAdaptColor(currentEdge?.color) || Colors.Font.Primary}
+        markerEnd={`url(#${getMarkerId('end', Colors.getAdaptColor(currentEdge?.color || MarkerColor.PRIMARY)!)})`}
+        stroke={Colors.getAdaptColor(currentEdge?.color || MarkerColor.PRIMARY)}
         d={path}
         strokeWidth={
           currentEdge?.lineStyle === 'animatedDash' || currentEdge?.lineStyle === 'dash'

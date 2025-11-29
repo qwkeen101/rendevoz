@@ -8,6 +8,7 @@ const PixiRenderer = () => {
   const simuRestarted = useRef(false)
   const dragTimer = useRef(0)
   const appMouseMoveHandler = (e: FederatedPointerEvent) => {
+    // drag
     if (graph?.currentClickNodeId) {
       if (dragTimer.current === 0) {
         dragTimer.current = Date.now()
@@ -18,7 +19,7 @@ const PixiRenderer = () => {
       graph.isDragging = true
       if (!simuRestarted.current) {
         simuRestarted.current = true
-        graph.d3Simulation?.alphaTarget(0.1)
+        graph.d3Simulation?.alphaTarget(0.3)
         graph.d3Simulation?.restart()
       }
       const pixiNode = graph.ID_TO_PIXI_NODE_MAP.get(graph.currentClickNodeId)
@@ -30,10 +31,10 @@ const PixiRenderer = () => {
           const nextY = point.y
           pixiNode.x = nextX
           pixiNode.y = nextY
-          const originNode = graph.nodesMap?.get(graph.currentClickNodeId)
-          if (originNode) {
-            originNode.fx = nextX - bound.width / 2
-            originNode.fy = nextY - bound.height / 2
+          const d3Node = graph.d3Simulation?.nodes().find(i => i.id === graph.currentClickNodeId)
+          if (d3Node) {
+            d3Node.fx = nextX - bound.width / 2
+            d3Node.fy = nextY - bound.height / 2
           }
         }
       }
@@ -52,6 +53,11 @@ const PixiRenderer = () => {
       if (simuRestarted.current) {
         graph?.d3Simulation?.alphaTarget(0)
         simuRestarted.current = false
+        const d3Node = graph.d3Simulation?.nodes().find(i => i.id === graph.currentClickNodeId)
+        if (d3Node) {
+          d3Node.fx = null
+          d3Node.fy = null
+        }
       }
       setTimeout(() => {
         graph.isDragging = false

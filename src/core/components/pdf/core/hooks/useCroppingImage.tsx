@@ -1,12 +1,12 @@
 import { useMemoizedFn, useRafFn, useSelectAtomValue } from '@/hooks'
-import { PdfStateAtom } from '@/core/components/pdf/hooks/usePdfState'
+import { PDFStateAtom } from '@/core/components/pdf/hooks/usePDFState'
 import { RefObject, useEffect, useState } from 'react'
 import { Colors } from '@/consts'
 import { Box } from '~/typings'
 import { useSetAtom } from 'jotai'
 
 const useCroppingImage = (containerRef: RefObject<HTMLElement>, onImageCropped: (box: Box) => void) => {
-  const isCroppingImage = useSelectAtomValue(PdfStateAtom, s => s.croppingImage)
+  const isCroppingImage = useSelectAtomValue(PDFStateAtom, s => s.croppingImage)
   const [selectBoxState, setSelectBoxState] = useState<{
     start: {
       px: number

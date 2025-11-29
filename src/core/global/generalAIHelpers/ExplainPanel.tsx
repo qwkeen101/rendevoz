@@ -1,25 +1,25 @@
-import { Content, Icon, WithBorder } from '@/components'
-import { Icons, Zindexes } from '@/consts'
-import { GlobalInstance, useGlobalAtom, useShortcut } from '@/hooks'
-import { MetaStore } from '@/api/stores'
-import { atom } from 'jotai'
-import { memo, useRef } from 'react'
-import { createPortal } from 'react-dom'
+import { Content, Icon, Markdown } from '@/components'
+import { Icons } from '@/consts'
+import { useGlobalAtom } from '@/hooks'
+import { atom, Provider } from 'jotai'
+import { memo, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Rnd } from 'react-rnd'
-import { IGeneralSource, XYPosition } from '~/typings'
-import DateFormat from '@/utils/dateFormat'
-import { getPanelPosition } from '../utils'
-import ResizeAndDrag from '@/components/base/ResizeAndDrag'
+import { IGeneralSource } from '~/typings'
 import { assignProperties } from '@/utils'
 import Id from '@/utils/id'
 import { AIService } from '@/api/services'
-import Markdown from 'react-markdown'
-import GeneralPanelFooter from '@/core/global/components/GeneralPanelFooter'
-import classnames from 'classnames'
+import GeneralPanelFooter from '@/core/global/generalAIHelpers/GeneralPanelFooter'
 import toast from 'react-hot-toast'
 import trans from '@/consts/trans'
 import addSourceAsLabel from '@/core/global/common/addSourceAsLabel'
+import useGeneralPanel from '@/core/global/generalAIHelpers/useGeneralPanel'
+import GeneralPanelHeader from '@/core/global/generalAIHelpers/GeneralPanelHeader'
+import fileSystem from '@/api/fileSystem'
+import navigateToSource from '@/core/global/common/navigateToSource'
+import UserService from '@/api/services/user.service'
+import { GlobalSetting } from '@/core'
+import { CoreMessage } from 'ai'
+
 type ExplainResult = {
   id: number
   originalText: string
@@ -27,92 +27,115 @@ type ExplainResult = {
   source?: IGeneralSource
   time: number
   metaId?: number
+  prompt: string
+  image?: string
 }
 
-const getExplainPrompt = (query: string, language: string) => {
-  return `Please explain the meaning concisely of the following text. Make sure to include some necessary background information and clarify complex concepts if necessary. Output explaination in ${language}. Here is the text: ${query}`
+const getExplainPrompt = (query?: string, image?: string): string | CoreMessage['content'] | undefined => {
+  const language = AIService.getAIOutputLanguage()
+  if (image) {
+    return [
+      {
+        type: 'text',
+        text: `Analyze the following image and provide a detailed explanation of its content. I am the owner of this image and the data it contains is public. Describe what is depicted in the image. Identify any objects, scenes, or text present. If there are any charts or graphs, analyze the trends shown, highlighting significant patterns or changes. Offer conclusions and context information based on the overall content of the image. Output only explaination, and in ${language}.`
+      },
+      {
+        type: 'image',
+        image
+      }
+    ]
+  }
+  if (query) {
+    const custom = GlobalSetting.getSetting().AI.customExplainPrompt
+    if (custom) {
+      return `${custom}. Output explaination in ${language}. Here is the content: ${query}`
+    }
+    return `Please explain the meaning of the following content. Include some background information and clarify complex concepts if necessary. Output explaination in ${language}. Here is the content: ${query}`
+  }
 }
 const ExplainStateAtom = atom<{
-  visible: boolean
   allResults: ExplainResult[]
   currentResult?: ExplainResult
   loading?: boolean
-}>({
-  visible: false,
-  allResults: []
-})
+  pinned?: boolean
+}>({})
 
-const PanelStateAtom = atom<{
-  draggable: boolean
-  currentPosition?: XYPosition
-  size?: {
-    width: number
-    height: number
-  }
-  showHistory?: boolean
-  ref?: Rnd
-}>({
-  draggable: true,
-  showHistory: false
-})
-
-const PanelDefaultSize = {
-  x: window.innerWidth / 2 - 200,
-  y: window.innerHeight / 2 - 200,
-  width: 380,
-  height: 400
-}
 export default memo(() => {
-  const [explainState, setExplainState] = useGlobalAtom(ExplainStateAtom)
-  const [panelState, setPanelState] = useGlobalAtom(PanelStateAtom)
+  return (
+    <Provider>
+      <ExplainPanel />
+    </Provider>
+  )
+})
 
-  assignProperties(GlobalInstance, {
-    commonOps: {
-      ...GlobalInstance.commonOps,
-      toggleExplainer: v => {
-        setExplainState(s => ({ ...s, visible: v }))
-      },
-      explain: async ({ source, query, e, pos: outPos }) => {
-        const pos =
-          !explainState.visible &&
-          getPanelPosition({
-            e: e,
-            pos: outPos,
-            defaultSize: panelState.size || PanelDefaultSize
+const ExplainPanel = () => {
+  const abortRef = useRef<AbortController>()
+  assignProperties(Global, {
+    aiOps: {
+      ...Global.aiOps,
+      toggleExplainer: v => setVisible(v),
+      explain: async ({ source, query, e, pos: outPos, image, targetChatId, initialMessages }) => {
+        if (!query && !image) return
+        const isPro = UserService.isUserPro(true)
+        if (!isPro) {
+          toast.error(t(trans.Errors.NotProUser))
+          return
+        }
+        const prompt = getExplainPrompt(query, image)
+        if (!prompt) return
+        const chatVisible = targetChatId || Global.aiOps?.isChatOpen?.()
+        if (chatVisible) {
+          Global.aiOps?.chat?.({
+            initialMessages,
+            targetChatId,
+            source: source,
+            contextCount: 2,
+            messages: [
+              {
+                role: 'user',
+                source: source,
+                type: 'explain',
+                content: prompt
+              }
+            ],
+            getResponse: true
           })
-        setExplainState(s => ({ ...s, visible: true, loading: true }))
-        setPanelState(s => ({
-          ...s,
-          showHistory: false,
-          currentPosition: pos || s.currentPosition
-        }))
+          return
+        }
+        setTimeout(() => setVisible(true))
+        if (abortRef.current) {
+          abortRef.current.abort()
+        }
+        const controller = new AbortController()
+        abortRef.current = controller
+        handlePosChange?.({
+          e,
+          pos: outPos
+        })
+        setExplainState(s => ({ ...s, loading: true }))
         const newResult = {
           id: Id.getId(),
           originalText: query,
           source,
           result: '',
-          time: Date.now()
+          time: Date.now(),
+          prompt,
+          image
         } as ExplainResult
         try {
-          await AIService.askStream(getExplainPrompt(query, AIService.getAIOutputLanguage()), text => {
-            setExplainState(s => {
-              const target = structuredClone(s.allResults.find(i => i.id === newResult.id) || newResult) as ExplainResult
-              let first = target.result === ''
-              target.result = (target.result || '') + text
-              const newResults = [...s.allResults]
-              if (!newResults.some(i => i.id === target.id)) {
-                newResults.unshift(target)
-              } else {
-                const idx = newResults.findIndex(i => i.id === target.id)
-                newResults[idx] = target
-              }
-              return {
-                ...s,
-                currentResult: first ? target : s.currentResult?.id === target.id ? target : s.currentResult || target,
-                allResults: newResults,
-                loading: first ? false : s.loading
-              }
-            })
+          let textResult = ''
+          await AIService.chatStream(prompt, {
+            onLoad: text => {
+              textResult += text
+              setExplainState(s => {
+                return {
+                  ...s,
+                  currentResult: { ...newResult, result: textResult },
+                  loading: false
+                }
+              })
+            },
+            signal: controller.signal
           })
         } catch (e) {
           setExplainState(s => ({ ...s, loading: false }))
@@ -120,56 +143,49 @@ export default memo(() => {
       }
     }
   })
-
-  useShortcut('openTranslatePanel', () => {
-    setExplainState(s => ({ ...s, visible: !s.visible }))
-  })
-
-  return createPortal(explainState.visible && <ExplainPanel />, document.body)
-})
-
-const ExplainPanel = () => {
   const [explainState, setExplainState] = useGlobalAtom(ExplainStateAtom)
-  const [panelState, setPanelState] = useGlobalAtom(PanelStateAtom)
+  const { setVisible, handlePosChange, renderFloated, panelState } = useGeneralPanel({
+    size: {
+      width: 360,
+      height: 300
+    },
+    pinned: explainState.pinned
+  })
   const { t } = useTranslation()
   const panelRef = useRef<HTMLDivElement>(null)
-  const replaceCurrentResult = (updater: (curr: ExplainResult) => ExplainResult) => {
-    setExplainState(s => {
-      const idx = s.allResults.findIndex(i => i.id === s.currentResult?.id)
-      if (s.currentResult && idx >= 0) {
-        const sliced = s.allResults.slice()
-        sliced[idx] = updater(s.currentResult)
-        return {
-          ...s,
-          currentResult: updater(s.currentResult),
-          allResults: sliced
+  const shouldDeleteImageRef = useRef(true)
+  // delete temp image
+  useEffect(() => {
+    if (panelState.visible === false) {
+      if (shouldDeleteImageRef.current === false) {
+        shouldDeleteImageRef.current = true
+        return
+      }
+      if (explainState.currentResult?.image) {
+        let shouldDelete = false
+        const source = explainState.currentResult.source
+        if (source?.type === 'pdf') {
+          if (!source.labelId) {
+            shouldDelete = true
+          }
+        }
+        if (shouldDelete) {
+          fileSystem.fs.deleteFile(explainState.currentResult.image)
         }
       }
-      return s
+    }
+  }, [panelState.visible])
+  const replaceCurrentResult = (updater: (curr: ExplainResult) => ExplainResult) => {
+    setExplainState(s => {
+      return s.currentResult
+        ? {
+            ...s,
+            currentResult: updater(s.currentResult)
+          }
+        : s
     })
   }
-  const renderHistory = () => {
-    return (
-      <Content flex auto column className={'gap-3'} style={{ overflowY: 'auto', padding: '0px 12px 12px' }}>
-        {explainState.allResults.map(i => (
-          <Content
-            className={'not-last-not-empty-border-bottom pb-3 gap-1 cursor-pointer'}
-            column
-            flex
-            onClick={() => {
-              setExplainState(s => ({ ...s, currentResult: i }))
-              setPanelState(s => ({ ...s, showHistory: false }))
-            }}
-            key={i.id}
-          >
-            {i.source && <SourceRenderer query={i.originalText} source={i.source} />}
-            <div className={'line-clamp-1 font-size-13'}>{i.result}</div>
-            <div className={'transparent-font text-xs'}>{DateFormat.formatDistanceToNowStrict(i.time, true)}</div>
-          </Content>
-        ))}
-      </Content>
-    )
-  }
+
   const renderPanel = () => {
     if (explainState.loading) {
       return (
@@ -183,25 +199,40 @@ const ExplainPanel = () => {
     return (
       <div ref={panelRef} className={'h-0 flex-auto flex flex-col gap-2 pb-2'}>
         {explainState.currentResult?.source && (
-          <div
-            style={{
-              padding: '0px 12px'
-            }}
-          >
+          <div className={'px-3'}>
             <SourceRenderer query={explainState.currentResult.originalText} source={explainState.currentResult.source} />
           </div>
         )}
-        <div
-          style={{
-            padding: '0px 12px'
-          }}
-          className={'overflow-y-auto h-0 flex-auto'}
-        >
-          <Markdown>{explainState.currentResult?.result}</Markdown>
+        <div className={'overflow-y-auto h-0 px-3 flex-auto pb-6'}>
+          <Markdown className={'markdown font-size-13'}>{explainState.currentResult?.result}</Markdown>
         </div>
         <GeneralPanelFooter
+          showLabel={!!explainState.currentResult?.source}
+          hasLabel={!!explainState.currentResult?.metaId}
           on={async type => {
+            const current = explainState.currentResult
+            if (!current) return
             switch (type) {
+              case 'chat': {
+                shouldDeleteImageRef.current = false
+                setVisible(false)
+                Global.aiOps?.chat?.({
+                  source: current.source,
+                  messages: [
+                    {
+                      role: 'user',
+                      source: current.source,
+                      type: 'explain',
+                      content: current.prompt
+                    },
+                    {
+                      role: 'assistant',
+                      content: current.result
+                    }
+                  ]
+                })
+                break
+              }
               case 'copy': {
                 const value = explainState.currentResult?.result
                 if (value) {
@@ -210,35 +241,18 @@ const ExplainPanel = () => {
                 }
                 break
               }
-              case 'tag': {
-                const result = explainState.currentResult
-                if (result && result.source) {
-                  const metaId = result.metaId || (await addSourceAsLabel(result.originalText, result.result, result.source))
-                  if (metaId) {
-                    replaceCurrentResult(c => ({ ...c, metaId }))
-                    GlobalInstance.metaOps?.quickAdd(metaId, 'tags')
-                  }
-                }
-                break
-              }
               case 'addAsObject': {
+                shouldDeleteImageRef.current = false
                 const result = explainState.currentResult
+                if (result?.metaId) {
+                  Global.metaOps?.openDetails(result.metaId)
+                  return
+                }
                 if (result && result.source && !result.metaId) {
                   const metaId = await addSourceAsLabel(result.originalText, result.result, result.source)
                   if (metaId) {
                     replaceCurrentResult(c => ({ ...c, metaId }))
                     toast.success(t(trans.Success.AddedSuccessfully))
-                  }
-                }
-                break
-              }
-              case 'moveTo': {
-                const result = explainState.currentResult
-                if (result && result.source) {
-                  const metaId = result.metaId || (await addSourceAsLabel(result.originalText, result.result, result.source))
-                  if (metaId) {
-                    replaceCurrentResult(c => ({ ...c, metaId }))
-                    GlobalInstance.metaOps?.quickAdd(metaId)
                   }
                 }
                 break
@@ -249,110 +263,35 @@ const ExplainPanel = () => {
       </div>
     )
   }
-  return (
-    <ResizeAndDrag
-      role="global-explain-panel"
-      ref={r => {
-        r && !panelState.ref && setPanelState(s => ({ ...s, ref: r }))
-      }}
-      default={PanelDefaultSize}
+  return renderFloated(
+    <div
       style={{
-        borderRadius: 8,
-        zIndex: Zindexes.GeneralPanel
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%',
+        height: '100%'
       }}
-      position={panelState.currentPosition}
-      size={panelState.size}
-      onResizeStop={(e, dir, ele, delta, pos) => {
-        const bounding = ele.getBoundingClientRect()
-        setPanelState(s => ({
-          ...s,
-          size: {
-            width: bounding.width,
-            height: bounding.height
-          },
-          currentPosition: pos
-        }))
-      }}
-      onDragStop={(e, data) => {
-        setPanelState(s => ({
-          ...s,
-          currentPosition: {
-            x: data.x,
-            y: data.y
-          }
-        }))
-      }}
-      dragHandleClassName="drag-handle"
     >
-      <WithBorder
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          width: '100%',
-          height: '100%',
-          gap: 6
+      <GeneralPanelHeader
+        name={t(trans.Explain)}
+        pinActive={explainState.pinned}
+        on={type => {
+          if (type === 'pin') {
+            setExplainState(s => ({ ...s, pinned: !s.pinned }))
+          }
+          if (type === 'close') {
+            setVisible(false)
+          }
         }}
-      >
-        <div
-          className={'drag-handle'}
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            overflowX: 'auto',
-            cursor: 'grab',
-            flexShrink: 0,
-            overflowY: 'hidden',
-            padding: '8px 8px 0px 12px'
-          }}
-        >
-          <Content flex gap={8} alignItems={'center'}>
-            <div className={'font-size-14 normal-font'}>{t('general.Translator')}</div>
-          </Content>
-          <Content flex gap={6} alignItems="center" className={'transparent-font'}>
-            <Icon
-              className={classnames('square-button', panelState.showHistory && 'active-button')}
-              size={16}
-              name="park-history"
-              tooltip={t('translate.history')}
-              onClick={() => {
-                setPanelState(s => ({ ...s, showHistory: !s.showHistory }))
-              }}
-            />
-            <Icon
-              className={'square-button'}
-              size={16}
-              name="park-close"
-              tooltip={t('general.close')}
-              onClick={() => {
-                GlobalInstance.commonOps?.toggleExplainer?.(false)
-              }}
-            />
-          </Content>
-        </div>
-        {panelState.showHistory ? renderHistory() : renderPanel()}
-      </WithBorder>
-    </ResizeAndDrag>
+      />
+      {renderPanel()}
+    </div>
   )
 }
 const SourceRenderer = ({ source, query }: { source: IGeneralSource; query: string }) => {
-  const handleNaivgate = async () => {
-    const { objectId } = source
-    const meta = MetaStore.getMetaObjectByObjectId(objectId)
-    if (meta) {
-      if (source.type === 'pdf') {
-        const i = await GlobalInstance.layoutOps?.openObject<'pdf'>(meta.id)
-        if (i && source.page !== undefined) {
-          i.navigateOps?.jumpToPage(source.page)
-        }
-      } else {
-        meta && GlobalInstance.layoutOps?.openObject(meta.id)
-      }
-    }
-  }
-
   return (
     <div
-      onClick={handleNaivgate}
+      onClick={() => navigateToSource(source)}
       className={'transparent-font shrink-0 cursor-pointer text-xs line-clamp-1 border-l-yellow-500'}
       style={{
         borderLeftWidth: 2,

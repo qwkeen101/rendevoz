@@ -1,63 +1,45 @@
 import { MetaStore, ObjectStore } from '@/api/stores'
 import Media, { MediaProps } from '@/core/components/media'
-import { saveImageLocally } from '@/utils'
 import useMediaEventHandlerWrapper from '@/core/components/media/wrappers/eventHandler'
 import { useURLToId } from '@/api/indexData'
-import FileSystem from '@/api/fileSystem'
-import { normalizeSecondsToTime } from '@/core/components/media/utils'
+import { IMediaState } from '~/typings'
 
 export default ({ videoId, ...rest }: { videoId: number } & MediaProps) => {
   const realId = useURLToId(rest.mediaState?.url, videoId)
   const video = ObjectStore('video').useValue(realId)
   const videoMeta = MetaStore.useValue(MetaStore.useObjectToMetaValue(realId)?.id)
   const externalMediaState = rest.mediaState
-  const mediaState = {
+  const mediaState: IMediaState = {
     ...video,
     ...externalMediaState,
-    defaultActiveSidebar: video?.defaultActiveSidebar ?? (video ? 'hide' : undefined),
+    state: {
+      ytPlaylistId: video?.ytPlaylistId,
+      ytChannelId: video?.ytChannelId,
+      ytVideoId: video?.ytVideoId,
+      ...externalMediaState?.state
+    },
+    defaultSidebarVisible: video?.defaultSidebarVisible,
+    defaultActiveSidebar: video?.defaultActiveSidebar,
     url: video?.url || externalMediaState?.url,
-    description: videoMeta?.description || externalMediaState?.description,
-    name: videoMeta?.name || externalMediaState?.name || 'Unnamed video',
+    description: videoMeta?.description || externalMediaState?.description || '',
+    name: videoMeta?.name || externalMediaState?.name || '',
     labelType: 'videoLabel',
     isPinned: videoMeta?.pinned,
     metaId: videoMeta?.id
   }
-  console.log(video)
   const eventHandler = useMediaEventHandlerWrapper({
     objectId: realId,
     type: 'video',
     labelType: 'videoLabel',
     mediaState
   })
+  if (realId && !video) return null
   return (
     <Media
       {...rest}
       on={async e => {
-        console.log(e)
-        switch (e.type) {
-          case 'addScreenshot': {
-            const path = await FileSystem.saveImage(e.imageDataUrl, { compress: false })
-            ObjectStore('image').addOneWithMeta(
-              {
-                url: path
-              },
-              {
-                showMetaModal: false,
-                currentMeta: {
-                  name: videoMeta ? `${videoMeta.name} — ${normalizeSecondsToTime(e.time)}` : 'Unnamed screenshot',
-                  coverImgSrc: path,
-                  fromObject: videoMeta
-                    ? {
-                        metaId: videoMeta.id,
-                        type: 'video'
-                      }
-                    : undefined
-                }
-              }
-            )
-            return
-          }
-        }
+        const res = await rest?.on?.(e)
+        if (res === true) return
         return await eventHandler(e)
       }}
       mediaState={mediaState}

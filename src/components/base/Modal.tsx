@@ -1,15 +1,11 @@
 import { CSSProperties, FC, MouseEventHandler, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import ReactDOM from 'react-dom'
-import { css } from '@emotion/css'
 import Zindexes from '@/consts/zindex'
-import ClassName from '@/styles/classNames'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts/key'
-import Icon from './Icon'
 import { Colors } from '@/consts'
-import { GlobalInstance, useMemoizedFn } from '@/hooks'
-import { GlobalSetting } from '@/core'
+import { useMemoizedFn } from '@/hooks'
 
 interface ModalProps {
   visible: boolean
@@ -26,48 +22,11 @@ interface ModalProps {
   noStyle?: boolean
   style?: CSSProperties
   zIndex?: number
-  showClose?: boolean
   notUnmount?: boolean
   disableAnimation?: boolean
-  enableClickEvent?: boolean
   hideBackground?: boolean
 }
-const Backdrop = ({ children, onMouseDown, disableAnimation, enableClickEvent }) => {
-  const darkMode = GlobalSetting.useSelectSettingAtom('darkMode')
-  return (
-    <motion.div
-      role="backdrop"
-      className={css([
-        {
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          height: '100vh',
-          width: '100vw',
-          overflow: 'hidden'
-        },
-        ClassName.flexLayout('center', 'center')
-      ])}
-      onClick={e => {
-        if (!enableClickEvent) {
-          e.stopPropagation()
-          e.preventDefault()
-        }
-      }}
-      initial={{ background: 'rgba(15, 15, 15, 0)' }}
-      animate={{ background: darkMode ? 'rgba(15, 15, 15, 0.8)' : 'rgba(15, 15, 15, 0.4)' }}
-      exit={{ background: 'rgba(15, 15, 15, 0)' }}
-      transition={{ duration: disableAnimation ? 0 : 0.15 }}
-      onPointerDown={e => {
-        if (e.target === e.currentTarget) {
-          onMouseDown?.()
-        }
-      }}
-    >
-      {children}
-    </motion.div>
-  )
-}
+
 const Modal: FC<ModalProps> = ({
   visible,
   onClose,
@@ -81,10 +40,8 @@ const Modal: FC<ModalProps> = ({
   parentElement,
   style,
   zIndex,
-  showClose = false,
   notUnmount,
   disableAnimation,
-  enableClickEvent,
   hideBackground
 }) => {
   const keyDownHandler = useMemoizedFn((e: KeyboardEvent) => {
@@ -96,9 +53,9 @@ const Modal: FC<ModalProps> = ({
   })
   useEffect(() => {
     if (visible) {
-      GlobalInstance.values.keydownHandlers.unshift(keyDownHandler)
+      Global.values.keydownHandlers.unshift(keyDownHandler)
       return () => {
-        GlobalInstance.values.keydownHandlers = GlobalInstance.values.keydownHandlers.filter(i => i !== keyDownHandler)
+        Global.values.keydownHandlers = Global.values.keydownHandlers.filter(i => i !== keyDownHandler)
       }
     }
   }, [visible])
@@ -111,184 +68,60 @@ const Modal: FC<ModalProps> = ({
       }
     }
   }, [visible])
-  return ReactDOM.createPortal(
-    notUnmount ? (
+  const renderInner = () => {
+    if (!notUnmount) {
+      if (!visible) return null
+    }
+    return (
       <motion.div
+        initial={{ opacity: 0 }}
         animate={{
           opacity: visible ? 1 : 0
         }}
-        role="modal-container"
+        exit={{ opacity: 0 }}
+        role='modal-container'
+        className={'fixed inset-0 overflow-hidden flex items-center justify-center'}
         transition={{ duration: disableAnimation ? 0 : 0.15 }}
         style={{
-          position: 'fixed',
-          inset: 0,
           zIndex: visible ? zIndex || Zindexes.ModalBackdrop : -1,
           pointerEvents: visible ? 'auto' : 'none'
         }}
       >
-        <motion.div
-          key={2}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: visible ? 1 : 0 }}
-          exit={{ opacity: 0 }}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            backdropFilter: 'blur(4px)'
+        <div
+          onPointerDown={e => {
+            if (e.target === e.currentTarget) {
+              onClose?.()
+            }
           }}
-          transition={{ duration: disableAnimation ? 0 : 0.15 }}
-        ></motion.div>
-
-        <Backdrop onMouseDown={onClose} enableClickEvent={enableClickEvent} key={1}>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: visible ? 1 : 0 }}
-            exit={{ opacity: 0 }}
-            role={enableClickEvent ? undefined : 'modal'}
-            style={{
-              position: 'relative',
-              background: hideBackground ? undefined : Colors.Background.Popover,
-              boxShadow: hideBackground ? undefined : Colors.Background.BoxShadow,
-              minWidth,
-              minHeight,
-              maxHeight,
-              maxWidth,
-              width,
-              height,
-              zIndex: Zindexes.Modal,
-              margin: 'auto',
-              borderRadius: 8,
-              ...style
-            }}
-            onPointerDown={e => {
-              if (!enableClickEvent) {
-                e.stopPropagation()
-              }
-            }}
-            onClick={e => {
-              if (!enableClickEvent) {
-                e.stopPropagation()
-              }
-            }}
-            transition={{ stiffness: 200, damping: 20, duration: disableAnimation ? 0 : 0.15 }}
-          >
-            {showClose && (
-              <motion.div
-                key={20}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: disableAnimation ? 0 : 0.15 }}
-                style={{
-                  position: 'absolute',
-                  top: 8,
-                  right: 8,
-                  zIndex: Number.MAX_SAFE_INTEGER
-                }}
-                onPointerDown={e => {
-                  onClose()
-                  if (!enableClickEvent) {
-                    e.preventDefault()
-                    e.stopPropagation()
-                  }
-                }}
-              >
-                <Icon name="park-close" className={ClassName.circleButton()} size={18} />
-              </motion.div>
-            )}
-            {children}
-          </motion.div>
-        </Backdrop>
+          className={'absolute inset-0'}
+          style={{
+            background: 'rgba(15,15,15,0.6)'
+          }}
+        ></div>
+        <div
+          style={{
+            position: 'relative',
+            backdropFilter: hideBackground ? undefined : 'blur(10px)',
+            background: hideBackground ? undefined : Colors.Background.Popover,
+            boxShadow: hideBackground
+              ? undefined
+              : 'rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 5px 10px, rgba(15, 15, 15, 0.2) 0px 15px 40px',
+            minWidth,
+            minHeight,
+            maxHeight,
+            maxWidth,
+            width,
+            height,
+            borderRadius: 12,
+            ...style
+          }}
+        >
+          {children}
+        </div>
       </motion.div>
-    ) : (
-      <AnimatePresence>
-        {visible && (
-          <div
-            role="modal-container"
-            style={{
-              position: 'fixed',
-              inset: 0,
-              zIndex: zIndex || Zindexes.ModalBackdrop
-            }}
-          >
-            <motion.div
-              key={2}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              style={{
-                position: 'absolute',
-                inset: 0,
-                backdropFilter: 'blur(4px)'
-              }}
-            ></motion.div>
-
-            <Backdrop onMouseDown={onClose} key={1} enableClickEvent={enableClickEvent}>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                role={enableClickEvent ? undefined : 'modal'}
-                style={{
-                  position: 'relative',
-                  background: hideBackground ? undefined : Colors.Background.Popover,
-                  boxShadow: hideBackground ? undefined : Colors.Background.BoxShadow,
-                  minWidth,
-                  minHeight,
-                  maxHeight,
-                  maxWidth,
-                  width,
-                  height,
-                  borderRadius: 8,
-                  zIndex: Zindexes.Modal,
-                  margin: 'auto',
-                  ...style
-                }}
-                onPointerDown={e => {
-                  if (!enableClickEvent) {
-                    e.stopPropagation()
-                  }
-                }}
-                onClick={e => {
-                  if (!enableClickEvent) {
-                    e.stopPropagation()
-                  }
-                }}
-                transition={{ stiffness: 200, damping: 20, duration: 0.15 }}
-              >
-                {showClose && (
-                  <motion.div
-                    key={20}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    style={{
-                      position: 'absolute',
-                      top: 8,
-                      right: 8,
-                      zIndex: Number.MAX_SAFE_INTEGER
-                    }}
-                    onPointerDown={e => {
-                      onClose()
-                      if (!enableClickEvent) {
-                        e.stopPropagation()
-                        e.preventDefault()
-                      }
-                    }}
-                  >
-                    <Icon name="park-close" className={ClassName.circleButton()} size={18} />
-                  </motion.div>
-                )}
-                {children}
-              </motion.div>
-            </Backdrop>
-          </div>
-        )}
-      </AnimatePresence>
-    ),
-    parentElement || document.body
-  )
+    )
+  }
+  return ReactDOM.createPortal(<AnimatePresence>{renderInner()}</AnimatePresence>, parentElement || document.body)
 }
 
 export default Modal

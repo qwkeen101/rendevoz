@@ -1,11 +1,13 @@
-import { CustomElement, IEditorInstance } from '~/typings'
-import useIsSelecting from '@/core/components/editor/hooks/useIsSelecting'
+import { Box, CustomElement, IEditorInstance } from '~/typings'
 import { RefObject, useLayoutEffect, useRef, useState } from 'react'
 import { useMemoizedFn, useMount, useUpdateEffect } from '@/hooks'
-import { ReactEditor, SELECT_AREA_MAP } from '@/core'
-import { isRectsCollision } from '@/core/components/editor/utils/positions/collision'
-import { getDistanceBetweenElementAndScrollableElement } from '@/core/components/editor/utils/scroll'
+import { ReactEditor } from '@/core'
+import {
+  getDistanceBetweenElementAndScrollableElement,
+  getDistanceBetweenPointAndScrollableElement
+} from '@/core/components/editor/utils/scroll'
 import { Editor, Range } from 'slate'
+import { boxesIntersect } from '@/utils'
 
 /**
  * Nested blocks can't be selected
@@ -17,20 +19,12 @@ const useBlockSelect = (opts: {
   instance: IEditorInstance
   blockRef: RefObject<HTMLElement>
   scrollElementRef: RefObject<HTMLElement>
+  isSelecting?: boolean
 }) => {
-  const { element, instance, blockRef, scrollElementRef } = opts
-  const [isSelecting] = useIsSelecting()
+  const { element, instance, blockRef, scrollElementRef, isSelecting } = opts
   const [isSelected, setIsSelected] = useState(false)
-  const editor = instance.getSlateEditor?.()
-  if (isSelected) {
-    console.log(element, instance.values.selectedBlocks)
-  }
-  const distanceToScrollElementRef = useRef<{
-    left: number
-    top: number
-    right: number
-    bottom: number
-  }>()
+  const editor = instance.editor
+  const boxRef = useRef<Box>()
   const checkCanBeSelected = () => {
     const blockContainer = blockRef.current?.parentElement
     if (!blockContainer) return false
@@ -57,21 +51,18 @@ const useBlockSelect = (opts: {
     }
     return true
   }
-  const handleCollisionSelectBlock = useMemoizedFn(() => {
-    const selectArea = SELECT_AREA_MAP.get(editor)
-    if (!selectArea || !distanceToScrollElementRef.current) return
+  const handleCollisionSelectBlock = useMemoizedFn((box: Box) => {
+    if (!boxRef.current) return
     if (!checkCanBeSelected()) return
-    if (isRectsCollision(selectArea, distanceToScrollElementRef.current)) {
-      setIsSelected(true)
+    if (boxesIntersect(box, boxRef.current)) {
+      !isSelected && setIsSelected(true)
     } else {
-      setIsSelected(false)
+      isSelected && setIsSelected(false)
     }
   })
   useMount(() => {
     if (instance.values?.selectedBlocks.has(element.id)) {
       setIsSelected(true)
-    } else {
-      setIsSelected(false)
     }
   })
   useLayoutEffect(() => {
@@ -80,11 +71,24 @@ const useBlockSelect = (opts: {
       if (block && scrollElementRef?.current) {
         const selectable = block.classList.contains('selectable') ? block : block.querySelector('.selectable')
         if (selectable) {
-          distanceToScrollElementRef.current = getDistanceBetweenElementAndScrollableElement(selectable, scrollElementRef.current)
+          const bounding = selectable.getBoundingClientRect()
+          const distance = getDistanceBetweenPointAndScrollableElement(
+            {
+              x: bounding.left,
+              y: bounding.top
+            },
+            scrollElementRef.current
+          )
+          boxRef.current = {
+            left: distance.left,
+            top: distance.top,
+            width: bounding.width,
+            height: bounding.height
+          }
         }
       }
       return () => {
-        distanceToScrollElementRef.current = undefined
+        boxRef.current = undefined
       }
     }
   }, [isSelecting])
@@ -118,6 +122,9 @@ const useBlockSelect = (opts: {
   }, [isSelected, element])
   return {
     isSelected,
+    deselectBlock: () => {
+      setIsSelected(false)
+    },
     handleCollisionSelectBlock,
     selectBlock: () => {
       if (!checkCanBeSelected()) {

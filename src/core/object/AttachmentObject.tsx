@@ -1,31 +1,22 @@
-import { CheckBox, Content } from '@/components'
-import useRenderObject from './renderer/useRenderObject'
-import FontSize from '@/consts/font'
+import { CheckBox, Content, AutosizeTextarea } from '@/components'
 import { IMetaAttachment } from '~/typings'
-import ClassName from '@/styles/classNames'
-import AutosizeTextarea from '@/components/custom/input/AutoSizeTextArea'
+import { InlineObject } from '@/core'
 
 const AttachmentObject = ({
   showSelect,
   onSelect,
   selected,
   attachment,
-  renderAttOnParent,
-  renderObjectDetailsOnParent = true,
   onChange
 }: {
   showSelect?: boolean
   onSelect?: (selected: boolean) => void
   selected?: boolean
   attachment: IMetaAttachment
-  renderAttOnParent?: boolean
-  renderObjectDetailsOnParent?: boolean
   onChange: (att: IMetaAttachment) => void
 }) => {
   if (attachment.type !== 'attachmentText') {
     const metaId = attachment.id
-    const { renderInline } = useRenderObject({ metaObjectId: metaId })
-
     return (
       <Content
         flex
@@ -40,18 +31,16 @@ const AttachmentObject = ({
         }}
       >
         {showSelect && <CheckBox style={{ width: 14, height: 14, fontSize: 12, borderRadius: 2 }} checked={selected}></CheckBox>}
-
-        {renderInline({
-          ellipsisLine: 1,
-          renderAttOnParent,
-          onClick: showSelect
-            ? () => {
-                onSelect?.(!selected)
-              }
-            : undefined,
-          renderObjectDetailsOnParent,
-          containerStyle: { fontSize: FontSize['12px'] }
-        })}
+        <InlineObject
+          id={metaId}
+          onClick={
+            showSelect
+              ? () => {
+                  onSelect?.(!selected)
+                }
+              : undefined
+          }
+        />
       </Content>
     )
   } else {
@@ -61,7 +50,7 @@ const AttachmentObject = ({
         alignItems="center"
         gap={6}
         style={{ cursor: 'pointer' }}
-        className={'transparent-font font-size-12'}
+        className={'transparent-font'}
         onClick={() => {
           if (!showSelect) {
             return
@@ -78,9 +67,7 @@ const AttachmentObject = ({
           }}
           onClick={e => e.stopPropagation()}
           defaultValue={attachment.text}
-          className={ClassName.noStyleInput}
           style={{ padding: 0, width: '100%', resize: 'none' }}
-          spellCheck={'false'}
         ></AutosizeTextarea>
       </Content>
     )

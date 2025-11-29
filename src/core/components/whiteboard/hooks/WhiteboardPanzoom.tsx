@@ -1,35 +1,27 @@
-import { useFlow, WhiteboardAtom } from '@/core/components/whiteboard/StateHooks'
-import { memo, useEffect, useRef } from 'react'
-import { useWhiteboardState } from '@/core/components/whiteboard/hooks/useWhiteboardState'
+import { WhiteboardAtom } from '@/core/components/whiteboard/StateHooks'
+import { memo, useEffect } from 'react'
+import { useSelectWhiteboardState, useSetWhiteboardState } from '@/core/components/whiteboard/hooks/useWhiteboardState'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
-import { PanZoom } from 'panzoom'
-import { useDebounceFn, useSelectAtomValue } from '@/hooks'
+import { useDebounceFn } from '@/hooks'
 import { useSetAtom, useStore } from 'jotai'
 import { WhiteboardTransformAtom } from '@/core/components/whiteboard/hooks/useWhiteboardTransform'
 import { createPanZoom } from '@/core/components/whiteboard/panzoom'
-import { ObjectStore } from '@/api/stores'
 import { assignProperties } from '@/utils'
-import { getSetting } from '@/core'
+import { flushSync } from 'react-dom'
 
 const WhiteboardPanzoom = memo(({ onInitialized }: { onInitialized?: VoidFunction }) => {
-  const flow = useFlow()
-  const panzoomRef = useRef<PanZoom>()
   const store = useStore()
   const setWhiteboardTransform = useSetAtom(WhiteboardTransformAtom)
   const instance = useWhiteboardInstance()
   const debounceUpdateLastViewport = useDebounceFn(
     () => {
-      const transform = panzoomRef.current?.getTransform()
+      const transform = instance.getTransform?.()
       transform &&
-        ObjectStore('whiteboard').updateOne(
-          {
-            id: flow.whiteboardId,
-            lastViewport: transform
-          },
-          { silent: true }
-        )
+        instance.updateWhiteboard?.(w => {
+          w.lastViewport = transform
+        })
     },
     { wait: 200 }
   )
@@ -50,12 +42,13 @@ const WhiteboardPanzoom = memo(({ onInitialized }: { onInitialized?: VoidFunctio
         },
         zoomDoubleClickSpeed: 1,
         beforeMouseDown: e => {
-          console.log(e)
-          const pointerMode = flow.parentContainerEle?.getAttribute('data-pointer-mode')
-          if (pointerMode === 'pan') {
+          const state = instance.getState()
+          if (state.currentTool) {
+            return true
+          }
+          if (state.pointerMode === 'pan') {
             return false
           }
-
           if (e.target?.closest('textarea,input,[contenteditable]')) return true
           if (e.button === 1) {
             return false
@@ -73,15 +66,10 @@ const WhiteboardPanzoom = memo(({ onInitialized }: { onInitialized?: VoidFunctio
           }
         },
         beforeWheel: e => {
-          const setting = getSetting()
-          const pointerMode = flow.parentContainerEle?.getAttribute('data-pointer-mode')
           if (e.defaultPrevented) {
             return true
           }
-          if (pointerMode === 'pan') {
-            return false
-          }
-          if (setting.whiteboard.scrollModeInSelect === 'zoom') {
+          if (instance.getState().pointerMode === 'pan') {
             return false
           }
           if (e.ctrlKey || e.metaKey) {
@@ -111,21 +99,17 @@ const WhiteboardPanzoom = memo(({ onInitialized }: { onInitialized?: VoidFunctio
         disableKeyboardInteraction: true
       })
       const lastViewport = store.get(WhiteboardAtom)?.lastViewport
-      panzoomRef.current = panzoom
+      instance.panzoom = panzoom
       assignProperties(instance, {
         getTransform: () => {
-          const t = panzoomRef.current?.getTransform()
-          if (!t) throw 'Failed to get transform!'
-          return t
+          return panzoom.getTransform()
         }
       })
-      console.log(lastViewport)
       if (lastViewport) {
         const container = instance.getContainerNode?.()
         if (container) {
-          container.style.setProperty('--zoom-level', String(lastViewport.scale))
+          container.style.setProperty('--zoom-level', String(Math.sqrt(1 / lastViewport.scale)))
         }
-        flow.containerTransformScale = lastViewport.scale
         setWhiteboardTransform([lastViewport.x, lastViewport.y, lastViewport.scale])
         setWhiteboardState(s => ({ ...s, zoom: lastViewport.scale }))
         panzoom?.zoomTo(0, 0, lastViewport.scale)
@@ -134,41 +118,50 @@ const WhiteboardPanzoom = memo(({ onInitialized }: { onInitialized?: VoidFunctio
         setWhiteboardState(s => ({ ...s, zoom: 1 }))
         setWhiteboardTransform([0, 0, 1])
       }
+      panzoom.on('panstart', () => {
+        console.log('panStart')
+        setWhiteboardState(s => ({ ...s, isPanning: true }))
+      })
+      panzoom.on('panend', () => {
+        console.log('panEnd')
+        setWhiteboardState(s => ({ ...s, isPanning: false }))
+      })
       panzoom.on('pan', e => {
         instance.emit?.({ type: 'panChange' })
         const t = panzoom.getTransform()
-        setWhiteboardTransform([t.x, t.y, t.scale])
+        flushSync(() => setWhiteboardTransform([t.x, t.y, t.scale]))
         debounceUpdateLastViewport.run()
       })
       panzoom.on('zoom', e => {
         const { scale, x, y } = panzoom.getTransform()
-        flow.containerTransformScale = scale
-        setWhiteboardTransform([x, y, scale])
+        flushSync(() => setWhiteboardTransform([x, y, scale]))
         const zoomMultipler = Math.sqrt(1 / scale)
         instance.emit?.({ type: 'zoomChange' })
         setWhiteboardState(s => (s.zoom === scale ? s : { ...s, zoom: scale }))
         debounceSetZoom.run(zoomMultipler)
         debounceUpdateLastViewport.run()
       })
-      flow.panzoom = panzoom
       setTimeout(() => onInitialized?.(), 20)
       return () => {
-        flow.dispose()
         panzoom.dispose()
       }
     }
   }, [])
 
-  const [whiteboardState, setWhiteboardState] = useWhiteboardState()
-
+  const setWhiteboardState = useSetWhiteboardState()
+  const { currentTool, isPanning, pointerMode } = useSelectWhiteboardState(s => ({
+    currentTool: s.currentTool,
+    isPanning: s.isPanning,
+    pointerMode: s.pointerMode
+  }))
   let containerCursor = 'default'
-  if (whiteboardState.currentTool) {
+  if (currentTool) {
     containerCursor = 'crosshair'
   }
-  if (whiteboardState.isPanning) {
+  if (isPanning) {
     containerCursor = 'grabbing'
   } else {
-    if (whiteboardState.pointerMode === 'pan') {
+    if (pointerMode === 'pan') {
       containerCursor = 'grab'
     }
   }
@@ -188,76 +181,29 @@ const WhiteboardPanzoom = memo(({ onInitialized }: { onInitialized?: VoidFunctio
   )
 
   useEffect(() => {
-    const container = flow.parentContainerEle
-
-    // middle button can move the whiteboard whatever state it is
-    const middleButtonPressed = {
-      current: false
-    }
     const spacePressed = {
       current: false
     }
     const keyHandler = (e: KeyboardEvent) => {
+      // press space to pan
       if (e.type === 'keydown' && isHotkey(KEY.Space, e)) {
         spacePressed.current = true
         setWhiteboardState(s => ({ ...s, pointerMode: 'pan' }))
       }
       if (e.type === 'keyup') {
-        if (!middleButtonPressed.current && spacePressed.current) {
+        if (spacePressed.current) {
           setWhiteboardState(s => ({ ...s, pointerMode: s.toolbarPointerMode }))
         }
         spacePressed.current = false
       }
     }
-    const pointerDownUpHandler = (e: PointerEvent) => {
-      if (e.type === 'pointermove' && (e.buttons === 2 || e.buttons === 4)) {
-        if (middleButtonPressed.current === false) {
-          setWhiteboardState(s => ({ ...s, isPanning: true, pointerMode: 'pan', panStartTransform: instance.getTransform?.() }))
-          middleButtonPressed.current = true
-        }
-      }
-      if (e.type === 'pointerup') {
-        middleButtonPressed.current = false
-        setWhiteboardState(s => ({ ...s, isPanning: false, pointerMode: s.toolbarPointerMode }))
-      }
-    }
-    if (container) {
-      document.addEventListener('keydown', keyHandler)
-      document.addEventListener('keyup', keyHandler)
-      container.addEventListener('pointermove', pointerDownUpHandler)
-      container.addEventListener('pointerup', pointerDownUpHandler)
-      return () => {
-        document.removeEventListener('keydown', keyHandler)
-        document.removeEventListener('keyup', keyHandler)
-        container.removeEventListener('pointermove', pointerDownUpHandler)
-        container.removeEventListener('pointerup', pointerDownUpHandler)
-      }
+    document.addEventListener('keydown', keyHandler)
+    document.addEventListener('keyup', keyHandler)
+    return () => {
+      document.removeEventListener('keydown', keyHandler)
+      document.removeEventListener('keyup', keyHandler)
     }
   }, [])
-
-  useEffect(() => {
-    const container = flow.parentContainerEle
-    if (container && whiteboardState.pointerMode) {
-      container.setAttribute('data-pointer-mode', whiteboardState.pointerMode)
-    }
-    container?.setAttribute('data-is-panning', whiteboardState.isPanning ? 'true' : 'false')
-    if (whiteboardState.pointerMode === 'pan' && container) {
-      const pointerHandler = (e: PointerEvent) => {
-        if (e.type === 'pointerdown') {
-          setWhiteboardState(s => ({ ...s, isPanning: true }))
-        } else {
-          setWhiteboardState(s => ({ ...s, isPanning: false }))
-        }
-      }
-      container.addEventListener('pointerdown', pointerHandler)
-      container.addEventListener('pointerup', pointerHandler)
-      return () => {
-        container.removeEventListener('pointerdown', pointerHandler)
-        container.removeEventListener('pointerup', pointerHandler)
-      }
-    }
-  }, [whiteboardState.pointerMode, whiteboardState.isPanning])
-
   return null
 })
 

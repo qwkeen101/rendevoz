@@ -1,12 +1,11 @@
 import { KEY } from '@/consts'
 import { useMemoizedFn } from '@/hooks'
-import isHotkey, { compareHotkey } from 'is-hotkey'
+import isHotkey from 'is-hotkey'
 import { RefObject, useEffect } from 'react'
-import useMediaState from './useMediaState'
+import { useSetMediaState } from './useMediaState'
 import { getSetting } from '@/core'
 import { useMediaInstance } from '@/core/components/media/hooks/useMediaInstance'
 import { ShortCut } from '~/typings/setting'
-import useMediaSidebarState from '@/core/components/media/hooks/useMediaSidebarState'
 
 const isShortCut = (e: KeyboardEvent, shortcut?: ShortCut | null) => {
   if (
@@ -22,40 +21,25 @@ const isShortCut = (e: KeyboardEvent, shortcut?: ShortCut | null) => {
   return false
 }
 const useMediaShortcut = (containerRef: RefObject<HTMLElement>) => {
-  const [mediaState, setMediaState] = useMediaState()
-  const [sidebarState, setSidebarState] = useMediaSidebarState()
+  const setMediaState = useSetMediaState()
   const instance = useMediaInstance()
   const keydownHandler = useMemoizedFn((e: KeyboardEvent) => {
     if (!containerRef.current?.contains(e.target)) {
       return
     }
+    if (
+      e.target instanceof HTMLElement &&
+      (e.target.closest('input') || e.target.closest('textarea') || e.target.closest('[contenteditable=true]'))
+    )
+      return
     if (isHotkey(KEY.Space, e)) {
-      if (
-        !(
-          e.target instanceof HTMLElement &&
-          (e.target.closest('input') || e.target.closest('textarea') || e.target.closest('[contenteditable=true]'))
-        )
-      ) {
-        e.preventDefault()
-        setMediaState(s => ({ ...s, paused: !s.paused }))
-      }
+      e.preventDefault()
+      setMediaState(s => ({ ...s, paused: !s.paused }))
     }
     setTimeout(() => {
       if (e.defaultPrevented) return
       const setting = getSetting()
       const shortcut = setting.shortcut.makeVideoLabel
-      const timestampShortcut = setting.shortcut.copyVideoTimestamp
-      if (e.target instanceof Element && e.target.closest('input,textarea')) {
-        return
-      }
-      if (isShortCut(e, timestampShortcut)) {
-        if (mediaState.currentTime) {
-          instance.on?.({
-            type: 'copyTimestamp',
-            currentTime: mediaState.currentTime
-          })
-        }
-      }
       if (isShortCut(e, shortcut)) {
         const time = instance.getVideoState?.().currentTime
         if (time) {

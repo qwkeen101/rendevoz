@@ -1,184 +1,136 @@
-import { memo, useMemo, useState } from 'react'
-import { MetaObject } from '~/typings'
-import { MetaStore, ObjectStore } from '@/api/stores'
-import { Content, Icon, Menu } from '@/components'
-import { GlobalSetting } from '@/core'
-import { Rendevoz } from '@/core/rendevoz'
-import { ClassName } from 'rendevoz'
-import ButtonSwitch from '@/components/base/ButtonSwitch'
-import produce from 'immer'
-import { useDebounceEffect, useMemoizedFn } from '@/hooks'
-import fuzzysort from 'fuzzysort'
-import { KEY } from '@/consts'
+import { memo, useLayoutEffect, useState } from 'react'
+import { MetaFilterGroup, MetaObject } from '~/typings'
+import { MetaStore } from '@/api/stores'
+import { BetterInput, CheckBox, Content, FormFooter, Icon, IconWithPopover, WithBorder } from '@/components'
+import { useDebounceEffect } from '@/hooks'
+import { Icons, KEY } from '@/consts'
 import { useTranslation } from 'react-i18next'
-import KeyvalueStore from '@/api/stores/keyvalue.store'
-import updateMovetoCache from '@/components/form/quickAdd/updateMovetoCache'
 import isHotkey from 'is-hotkey'
-import quickAdd from '@/components/form/quickAdd/quickAdd'
-import useMoveToCache from '@/components/form/quickAdd/useMoveToCache'
+import trans from '@/consts/trans'
+import BetterFilter from '@/core/object/filter/BetterFilter'
+import classnames from 'classnames'
+import EmptyList from '@/core/components/common/EmptyList'
+import { atom } from 'jotai/index'
+import { useAtom } from 'jotai'
 
+const GroupMoveToAtom = atom<{
+  search: string
+  filter?: MetaFilterGroup
+  selected: number[]
+  expanded: Set<number>
+}>({
+  search: '',
+  selected: [],
+  expanded: new Set<number>()
+})
 export default memo(
-  ({
-    onBack,
-    metaId,
-    onClose,
-    onPickGroup
-  }: {
-    onBack: VoidFunction
-    metaId?: number[]
-    onClose: VoidFunction
-    onPickGroup?: (groupMetaId: number) => void
-  }) => {
-    const cache = useMoveToCache()?.group
-    const [setting, setSetting] = GlobalSetting.useSetting()
-    const [search, setSearch] = useState('')
-    const [displayGroups, setDisplayGroups] = useState<MetaObject[]>()
-
-    const index = MetaStore.useMetaObjectsMap()
+  ({ showHidden = false, onClose, onChange }: { onChange: (ids: number[]) => void; onClose: VoidFunction; showHidden?: boolean }) => {
+    const [{ selected, search, filter }, setCache] = useAtom(GroupMoveToAtom)
     const { t } = useTranslation()
-    const moveToShowInvisible = KeyvalueStore.useValue('moveToShowInvisible')
-    const allGroups = useMemo(() => {
-      const groups = Array.from(index.values()).filter(
-        i => (!moveToShowInvisible ? MetaStore.isVisibleMetaObject(i) : true) && i.type === 'group'
-      )
-      if (groups.length) {
-        const all = groups
-        all.sort((a, b) => b.createdAt - a.createdAt)
-        return all
+    const metas = MetaStore.useAll()
+    const [groups, setGroups] = useState<MetaObject[]>([])
+    const calculateGroups = async () => {
+      let all = MetaStore.getAll({
+        showHidden,
+        filter: o => o.type === 'group',
+        sort: 'createdAtDsc'
+      })
+      if (search) {
+        all = await Global.metaOps.search(search, all)
       }
-      return []
-    }, [index, moveToShowInvisible])
-    const [selectedGroup, setSelectedGroup] = useState<number>(
-      cache?.id ? (allGroups.some(i => i.objectId === cache.id) ? cache.id : undefined) : undefined
-    )
+      if (filter?.rules.length) {
+        all = await Global.metaOps.filter(filter, all)
+      }
+      setGroups(all)
+    }
     useDebounceEffect(
       () => {
-        if (search) {
-          const result = fuzzysort.go(search, allGroups, { key: 'name' })
-          setDisplayGroups(Array.from(result.values()).map(i => i.obj))
-        } else {
-          setDisplayGroups(undefined)
-        }
+        calculateGroups()
       },
-      [search],
+      [search, filter],
       { wait: 200 }
     )
-    const handleInsertMetaIntoGroup = useMemoizedFn(() => {
-      onClose()
-      if (selectedGroup) {
-        const groupId = selectedGroup
-        if (groupId) {
-          const groupMeta = MetaStore.getMetaObjectByObjectId(groupId)
-          if (groupMeta) {
-            onPickGroup?.(groupMeta.id)
-          }
-          if (metaId) {
-            quickAdd(metaId, 'group', selectedGroup)
-          }
-        }
-      }
-    })
+    useLayoutEffect(() => {
+      calculateGroups()
+    }, [metas])
     return (
       <Content
         flex
         column
         style={{
-          fontSize: 14,
-          padding: '12px',
           minWidth: 'min(540px, 90vw)',
-          maxWidth: 'min(800px, 90vw)',
-          minHeight: 'min(400px, 90vh)',
-          maxHeight: 'min(650px, 90vh)',
-          overflowY: 'auto'
+          maxWidth: 'min(800px, 90vw)'
         }}
       >
-        <Content flex alignItems={'center'} style={{ marginBottom: 8 }} gap={12}>
-          <Icon name={'park-left'} className={ClassName.circleButton()} onClick={onBack} />
-          <div className={ClassName.title()}>{t('general.Select a group')}</div>
-        </Content>
-        {metaId && (
-          <ButtonSwitch
-            value={setting.quickAdd.addIntoGroupAutoOpen}
-            name={t('general.Auto open')}
-            onChange={v => {
-              setSetting(s =>
-                produce(s, draft => {
-                  draft.quickAdd.addIntoGroupAutoOpen = v
-                })
-              )
+        <div className={'flex items-center bg-third gap-3 py-2 px-4'}>
+          <Icon name={Icons.Search} />
+          <BetterInput
+            placeholder={t('general.Type to search') + '...'}
+            onKeyDownCapture={e => {
+              if (isHotkey(KEY.Escape, e)) {
+                e.preventDefault()
+                e.stopPropagation()
+                e.currentTarget.blur()
+              }
             }}
+            className={'flex-1'}
+            value={search}
+            onChange={v => setCache(s => ({ ...s, search: v.target.value }))}
           />
+        </div>
+        <div className={'flex px-4 items-center py-1.5 font-size-12 gap-3 transparent-font'}>
+          <div style={{ width: 16 }}></div>
+          <div className={'flex-1'}>{t(trans.Name)}</div>
+          <div style={{ width: '30%' }}>{t(trans.CreatedAt)}</div>
+        </div>
+        {groups.length ? (
+          <div className={'overflow-y-auto min-h-64 px-2 pb-2'}>
+            {groups?.map(i => (
+              <Item
+                id={i.id}
+                key={i.id}
+                selected={selected}
+                onClick={id => {
+                  setCache(s => ({ ...s, selected: s.selected.includes(id) ? s.selected.filter(o => o !== id) : [...s.selected, id] }))
+                }}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyList className={'py-20'} />
         )}
-        <ButtonSwitch
-          name={t('general.Show hidden objects')}
-          value={!!moveToShowInvisible}
-          onChange={v => KeyvalueStore.updateOne('moveToShowInvisible', v)}
-        />
-        <input
-          placeholder={t('general.Type to search') + '...'}
-          style={{
-            padding: '3px 8px',
-            borderRadius: 4,
-            margin: '6px 8px'
+        <FormFooter
+          onCancel={onClose}
+          canConfirm={selected.length > 0}
+          className={'border-top p-4'}
+          onConfirm={() => {
+            // remove selected when confirm
+            setCache(s => ({ ...s, selected: [] }))
+            onChange(selected)
           }}
-          autoFocus
-          onKeyDownCapture={e => {
-            if (isHotkey(KEY.Escape, e)) {
-              e.preventDefault()
-              e.stopPropagation()
-              e.currentTarget.blur()
-            }
-          }}
-          className={'border-box-shadow focus-input'}
-          value={search}
-          onChange={v => setSearch(v.target.value)}
         />
-        <Content flex column style={{ overflowY: 'auto', paddingTop: 4 }}>
-          <Menu.NavigationMenu
-            reselectOnLayoutChange={search ? true : false}
-            defaultSelected={cache?.id ? [String(cache.id)] : undefined}
-            layout={[
-              search
-                ? undefined
-                : {
-                    text: t('general.Create new group'),
-                    icon: 'park-plus',
-                    type: 'item',
-                    key: 'create',
-                    onSelect: () => {
-                      ObjectStore('group').addOneWithMeta(
-                        {},
-                        {
-                          showMetaModal: true
-                        }
-                      )
-                    }
-                  },
-              // @ts-ignore
-              ...(displayGroups || allGroups).map(i => ({
-                text: i.name || i.placeholderName || 'Unnamed group',
-                key: String(i.objectId),
-                icon: i.icon || Rendevoz.Utils.Object.getMetaObjectIcon(i.type),
-                type: 'item',
-                onSelect: () => {
-                  const objId = i.objectId
-                  onClose()
-                  if (!objId) return
-                  setSelectedGroup(objId)
-
-                  setTimeout(() => {
-                    handleInsertMetaIntoGroup()
-                  }, 250)
-                  updateMovetoCache(s => {
-                    s.recently = s.recently ? [{ type: 'group', id: objId }, ...s.recently] : [{ type: 'group', id: objId }]
-                    s.group = { id: objId }
-                  })
-                }
-              }))
-            ].filter(i => i)}
-          />
-        </Content>
       </Content>
     )
   }
 )
+
+const Item = ({ id, onClick, selected }: { id: number; selected: number[]; onClick: (id: number) => void }) => {
+  const group = MetaStore.useValue(id)
+  const { t } = useTranslation()
+  if (!group || group.deleted) return null
+  const isSelected = selected.includes(id)
+  return (
+    <div onClick={() => onClick(id)} className={'flex button items-center !py-2 gap-3'}>
+      <CheckBox checked={isSelected} />
+      <div className={classnames('flex-1', !group.name ? 'super-transparent-font' : undefined)}>{group.name || t(trans.Unnamed)}</div>
+      <div
+        style={{
+          width: '30%'
+        }}
+        className={'font-size-11 whitespace-nowrap transparent-font'}
+      >
+        {DateFormat.formatTime(group.createdAt, { showMinute: true })}
+      </div>
+    </div>
+  )
+}

@@ -1,7 +1,6 @@
 import { globalStore, MetaStore, ObjectStore } from '@/api/stores'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo } from 'react'
 import { MetaGroup, MetaObject } from '~/typings'
-import { calculateFilterObjects } from '@/core/object/filter/useBetterFilter'
 import fuzzysort from 'fuzzysort'
 import { calculateSortObjects } from '@/core/object/filter/BetterSorter'
 import { atom, useAtom, useSetAtom } from 'jotai'
@@ -11,17 +10,18 @@ import { useSelectAtomValue } from '@/hooks'
 import { isEqual } from 'lodash'
 import calculateContains from '@/core/object/objectList/calculateContains'
 
+const SearchableAtom = atom<
+  {
+    name: string
+    searchable: string
+    rowId: number
+  }[]
+>([])
 const useGroupFilter = (groupData?: MetaGroup) => {
   const metaMap = MetaStore.useMetaObjectsMap()
   const setGroupState = useSetAtom(GroupStateAtom)
   const currentView = useSelectAtomValue(GroupStateAtom, s => s.currentView)
-  const [searchable, setSearchable] = useState<
-    {
-      name: string
-      searchable: string
-      rowId: number
-    }[]
-  >([])
+  const setSearchable = useSetAtom(SearchableAtom)
   const getSearchable = async () => {
     const map = metaMap
     const tagMap = globalStore.get(ObjectStore('tag').objectMapAtom)
@@ -36,41 +36,50 @@ const useGroupFilter = (groupData?: MetaGroup) => {
           const tags = meta.tags?.map(i => tagMap.get(i)?.name || '').join(',')
           search += `,${tags}`
           if (meta.properties) {
-            Object.entries(meta.properties).forEach(([k, i]) => {
-              const propDetails = MetaStore.property.getPropDetails(k)
-              if (propDetails) {
-                switch (propDetails.propType) {
-                  case 'string':
-                  case 'AI summary':
-                    if (i.value) {
-                      search += ',' + i.value
-                    }
-                    break
-                  case 'number':
-                    if (i.value !== undefined) {
-                      search += ',' + i.value
-                    }
-                    break
-                  case 'URL':
-                    if (i.value !== undefined) {
-                      search += ',' + i.value
-                    }
-                    break
-                  case 'singleSelect':
-                    if (i.value) {
-                      search += ',' + optionMap.get(i.value)?.name
-                    }
-                    break
-                  case 'multiSelect':
-                    if (i.value?.length) {
-                      i.value.forEach(id => {
-                        search += ',' + optionMap.get(id)?.name
-                      })
-                    }
-                    break
+            await Promise.allSettled(
+              Object.entries(meta.properties).map(async ([k, i]) => {
+                const propDetails = MetaStore.property.getPropDetails(k)
+                if (propDetails) {
+                  switch (propDetails.propType) {
+                    case 'string':
+                      if (i.value) {
+                        search += ',' + i.value
+                      }
+                      break
+                    case 'number':
+                      if (i.value !== undefined) {
+                        search += ',' + i.value
+                      }
+                      break
+                    case 'URL':
+                      if (i.value !== undefined) {
+                        search += ',' + i.value
+                      }
+                      break
+                    case 'singleSelect':
+                      if (i.value) {
+                        search += ',' + optionMap.get(i.value)?.name
+                      }
+                      break
+                    case 'question':
+                      if (i.value) {
+                        const question = await ObjectStore('question').fetchOneById(i.value as number)
+                        if (question?.name) {
+                          search += ',' + question.name
+                        }
+                      }
+                      break
+                    case 'multiSelect':
+                      if (i.value?.length) {
+                        i.value.forEach(id => {
+                          search += ',' + optionMap.get(id)?.name
+                        })
+                      }
+                      break
+                  }
                 }
-              }
-            })
+              })
+            )
           }
           if (showOriginalText) {
             const original = await ObjectStore(meta.type).fetchOneById(meta.objectId)
@@ -88,17 +97,16 @@ const useGroupFilter = (groupData?: MetaGroup) => {
     ).filter(i => i)
     setSearchable(result)
   }
-  useEffect(() => {
+  useLayoutEffect(() => {
     getSearchable()
   }, [groupData?.values, metaMap, currentView?.options.properties])
-  const latestSearchable = useRef(searchable)
-  latestSearchable.current = searchable
   const subAtom = useMemo(() => {
     const trackAtom = selectAtom(
       GroupStateAtom,
       s => ({
         filter: s.currentView?.filter,
         search: s.currentView?.search,
+        showCollection: s.layout?.showCollection,
         sort: s.currentView?.sort,
         valueIndex: s.currentView?.valueIndex,
         values: s.data?.values,
@@ -109,8 +117,18 @@ const useGroupFilter = (groupData?: MetaGroup) => {
       isEqual
     )
     return atom(get => {
-      const { filter, search, sort, contains, valueIndex, values, defaultShowLabels = true, showTemp: sT = true } = get(trackAtom)
-      const searchable = latestSearchable.current
+      const {
+        filter,
+        search,
+        sort,
+        contains,
+        valueIndex,
+        showCollection,
+        values,
+        defaultShowLabels = true,
+        showTemp: sT = true
+      } = get(trackAtom)
+      const searchable = get(SearchableAtom)
       const action = async () => {
         if (values && valueIndex) {
           // display by value index
@@ -144,9 +162,9 @@ const useGroupFilter = (groupData?: MetaGroup) => {
               if (m) {
                 return MetaStore.isVisibleMetaObject(m, {
                   showDeleted: true,
+                  showCollection,
                   showHidden: true,
-                  showTemp: !!(showTemp === true || filter?.rules.length || search || contains?.length),
-                  hideLabel: defaultShowLabels === false && !filter?.rules.length && !search && !contains?.length
+                  showLabel: !!(defaultShowLabels || filter?.rules.length || search || contains?.length)
                 })
               }
               return true
@@ -163,9 +181,7 @@ const useGroupFilter = (groupData?: MetaGroup) => {
           const allRows = currentValue
           const firstLayerMetaIds = allRows.filter(i => i.id).map(i => i.id) as number[]
           const afterFilterExistMetaIds = new Set([
-            ...(filter?.rules.length
-              ? (await calculateFilterObjects(filter, firstLayerMetaIds, true))?.map(i => i.id) || []
-              : firstLayerMetaIds)
+            ...(filter?.rules.length ? (await Global.metaOps.filter(filter, firstLayerMetaIds))?.map(i => i.id) || [] : firstLayerMetaIds)
           ])
           const afterFilterRows = allRows.filter(i => {
             if (i.type === 'metaObject') {

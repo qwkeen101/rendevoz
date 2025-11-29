@@ -24,7 +24,6 @@ callback('installPlugins', async (pluginPath: string) => {
         }
       })
       .filter(i => i)
-    console.log(allPluginsFolders, installablePluginsPaths)
     return installablePluginsPaths
   }
 })

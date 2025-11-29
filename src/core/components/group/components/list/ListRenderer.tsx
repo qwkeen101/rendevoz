@@ -1,8 +1,7 @@
 import { CSSProperties, memo } from 'react'
 import { MetaGroupChild } from '~/typings'
-import { useVirtualizer } from '@tanstack/react-virtual'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
-import { Button, Content } from '@/components'
+import { Button, Content, useVirtualizer } from '@/components'
 import { useSelectAtomValue } from '@/hooks'
 import { Colors } from '@/consts'
 import ListItem from '@/core/components/group/components/list/ListItem'
@@ -57,7 +56,11 @@ export default memo(
       })
       const items = virtualizer.getVirtualItems()
       return (
-        <Content flex column style={{ height: 0, flex: 1, padding: '0px 60px 0px', width: '100%' }}>
+        <Content
+          flex
+          column
+          style={{ height: 0, flex: 1, padding: '0px var(--page-padding-right) 0px var(--page-padding-right)', width: '100%' }}
+        >
           <Content role={'list-wrapper'} style={{ width: '100%', height: 'auto' }}>
             <Content
               flex
@@ -117,7 +120,7 @@ export default memo(
           flex
           role={'list-wrapper'}
           column
-          style={{ padding: '0px 60px 0px', fontSize: 14, width: '100%', height: 'auto', ...style }}
+          style={{ padding: '0px var(--page-padding-right) 0px var(--page-padding-right)', width: '100%', height: 'auto', ...style }}
         >
           {value.map(i => (
             <ListItem showDeleted={showDeleted} visibleProps={visibleProps} rowDetails={i} key={i.rowId} />

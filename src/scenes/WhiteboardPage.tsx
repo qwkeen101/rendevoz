@@ -1,7 +1,6 @@
 import TabTitle from '@/components/layout/TabTitle'
 import { Whiteboard } from '@/core'
-import { Rendevoz } from '@/core/rendevoz'
-import { memo, useState } from 'react'
+import { memo } from 'react'
 import { IWhiteboardInstance } from '~/typings'
 import { MetaStore } from '@/api/stores'
 
@@ -10,15 +9,12 @@ const WhiteboardPage = ({
   onInstanceInitialized
 }: {
   whiteboardId: number
-  onInstanceInitialized: (w: IWhiteboardInstance) => void
+  onInstanceInitialized?: (w: IWhiteboardInstance) => void
 }) => {
   const whiteboardMeta = MetaStore.useObjectToMetaValue(whiteboardId)
   return (
     <>
-      <TabTitle
-        title={whiteboardMeta?.name || whiteboardMeta?.placeholderName || 'Unnamed whiteboard'}
-        icon={Rendevoz.Utils.Object.getMetaObjectIcon('whiteboard')}
-      />
+      <TabTitle title={whiteboardMeta?.name} icon={Global.utils.getIcon('whiteboard')} />
       <Whiteboard
         name={whiteboardMeta?.name}
         onRename={s => {

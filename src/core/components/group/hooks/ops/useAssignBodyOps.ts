@@ -1,7 +1,5 @@
-import { IGroupInstance } from '~/typings'
 import { RefObject } from 'react'
 import { assignProperties } from '@/utils'
-import { Virtualizer } from '@tanstack/react-virtual'
 import { useDragScroll } from '@/hooks'
 import { InnerGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 

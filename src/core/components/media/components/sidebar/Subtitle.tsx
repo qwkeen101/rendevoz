@@ -1,9 +1,8 @@
 import { useDebounceEffect, useIsIn, useMergedRef } from '@/hooks'
 import useMediaState, { IMediaState } from '@/core/components/media/hooks/useMediaState'
-import { Button, Content, Icon, IconWithPopover, Tooltip, VirtualList, WithBorder, Virtualizer } from '@/components'
+import { Button, Icon, IconWithPopover, VirtualList, WithBorder, Virtualizer, Switch } from '@/components'
 import { useMediaInstance } from '@/core/components/media/hooks/useMediaInstance'
 import { normalizeSecondsToTime } from '@/core/components/media/utils'
-import { ClassName } from 'rendevoz'
 import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Colors from '@/consts/colors'
 import { useTranslation } from 'react-i18next'
@@ -12,14 +11,13 @@ import useSubtitleSelectAsLabel from '@/core/components/media/hooks/useSubtitleS
 import translateSubtitle from '@/core/components/media/components/sidebar/translateSubtitle'
 import produce from 'immer'
 import { IMediaSubtitle } from '~/typings'
-import ButtonSwitch from '@/components/base/ButtonSwitch'
 import fuzzysort from 'fuzzysort'
 import isHotkey from 'is-hotkey'
-import { KEY } from '@/consts'
+import { Icons, KEY } from '@/consts'
 import classnames from 'classnames'
-const SelectButton: typeof Button.IconButton = props => {
-  return <Button.IconButton {...props} style={{ padding: '3px 6px', lineHeight: 1.4, fontSize: 14 }} />
-}
+import FileSystem from '@/api/fileSystem'
+import EmptyList from '@/core/components/common/EmptyList'
+
 const MediaSubtitle = memo(() => {
   const [mediaState, setMediaState] = useMediaState()
   const [searchState, setSearchState] = useState<{
@@ -49,7 +47,7 @@ const MediaSubtitle = memo(() => {
     } else {
       setCurrentSelectedIndex(0)
     }
-  }, [currentTime, currentSubtitles, searchState.visible])
+  }, [currentTime, currentSubtitles.length, searchState.visible])
   useEffect(() => {
     if (subtitles.length) {
       console.log(subtitles, subtitleLang)
@@ -61,7 +59,7 @@ const MediaSubtitle = memo(() => {
           setMediaState(s => ({
             ...s,
             subtitleLang: targetFile.lang,
-            subtitles: targetFile.value.map(i => ({ startTime: i.start, endTime: i.end, text: i.text }))
+            subtitles: targetFile.value.map(i => ({ start: i.start, end: i.end, text: i.text }))
           }))
           return
         }
@@ -79,7 +77,6 @@ const MediaSubtitle = memo(() => {
             } catch (e) {
               const parser = new WebVTTParser()
               const tree = parser.parse(text, 'metadata')
-              console.log(tree)
               setMediaState(s => ({
                 ...s,
                 subtitles: tree.cues,
@@ -90,10 +87,12 @@ const MediaSubtitle = memo(() => {
           })
         }
       }
+    } else {
+      setMediaState(s => ({ ...s, subtitles: undefined }))
     }
   }, [subtitleLang, subtitles.length])
   useLayoutEffect(() => {
-    if (visible) return
+    if (visible || isSelecting) return
     if (!searchState.visible) {
       if (isIn || !subtitleFollow) return
     }
@@ -113,8 +112,9 @@ const MediaSubtitle = memo(() => {
       }
     }
   }, [currentSelectedIndex, subtitleMode])
+  const [showTranslation, setShowTranslation] = useState(true)
   const instance = useMediaInstance()
-  const { renderPopover, containerRef, rangeExtractor, visible } = useSubtitleSelectAsLabel(currentSubtitles)
+  const { renderPopover, containerRef, rangeExtractor, visible, isSelecting } = useSubtitleSelectAsLabel(currentSubtitles, showTranslation)
   const mergedRef = useMergedRef(containerRef, ref)
   const searchSubtitle = (q: string) => {
     const results = Array.from(
@@ -155,140 +155,139 @@ const MediaSubtitle = memo(() => {
     [searchState.q],
     { wait: 200 }
   )
-  const [showTranslation, setShowTranslation] = useState(true)
   useEffect(() => {
     if (searchState.currIdx !== undefined && searchState.currIdx >= 0) {
       setCurrentSelectedIndex(searchState.currIdx)
     }
   }, [searchState.currIdx])
   const { t } = useTranslation()
-  if (!currentSubtitles.length && !subtitles.length)
-    return (
-      <Content flex centered fullWidth fullHeight style={{ minHeight: 240 }}>
-        <div className={'bold-font transparent-font'}>No subtitle</div>
-      </Content>
-    )
+
+  if (!currentSubtitles.length && !subtitles.length) {
+    return <EmptyList className={'h-full'} />
+  }
   return (
-    <Content fullWidth style={{ height: 0, flex: 1 }} flex column>
+    <div className={'w-full h-full flex flex-col'}>
       {renderPopover()}
-      <Content flex gap={8} fullWidth style={{ padding: '6px 10px 6px 14px' }} className={'font-size-14'} alignItems={'center'}>
-        <div style={{ fontWeight: 500 }} className={'ellipsis-font-1'}>
-          {subtitleLang || 'Unselected subtitle'}
-        </div>
-        <IconWithPopover
-          className={ClassName.flatButton(4, '2px')}
-          name={'park-more'}
-          containerStyle={{
-            marginRight: 'auto'
-          }}
-          size={18}
-          renderOnParent={false}
-          content={setV => (
-            <WithBorder width={200} padding={6} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <div style={{ paddingLeft: 4 }} className={'font-size-12 transparent-font'}>
-                字幕样式
-              </div>
-              <SelectButton
-                text={'列表模式'}
-                onClick={() => {
-                  setV(false)
-                  setMediaState(s => ({ ...s, subtitleMode: 'list' }))
-                  instance.on?.({ type: 'subtitleUpdated', subtitleMode: 'list' })
-                }}
-              />
-              <SelectButton
-                text={'文章模式'}
-                onClick={() => {
-                  setV(false)
-                  setMediaState(s => ({ ...s, subtitleMode: 'article' }))
-                  instance.on?.({ type: 'subtitleUpdated', subtitleMode: 'article' })
-                }}
-              />
-              <div style={{ paddingLeft: 4 }} className={'font-size-12 transparent-font'}>
-                字幕语言
-              </div>
-              {subtitles.map((i, index) => (
-                <SelectButton
-                  onClick={() => {
-                    setV(false)
-                    setMediaState(s => ({ ...s, subtitleLang: i.lang }))
-                    instance.on?.({ type: 'subtitleUpdated', subtitleLang: i.lang })
-                  }}
-                  text={i.lang}
-                  key={index}
-                  onSuffixIconClick={e => {
-                    e.stopPropagation()
-                    const copyed = subtitles.slice(0)
-                    copyed.splice(index, 1)
-                    setMediaState(s => ({ ...s, subtitleList: [...copyed] }))
-                    instance.on?.({ type: 'subtitleUpdated', subtitleList: [...copyed] })
-                  }}
-                  suffixIcon={'park-delete-one'}
-                />
-              ))}
-              <div style={{ width: '100%', height: 1, margin: '2px 0px', background: Colors.Background.Border }}></div>
-              <SelectButton
-                text={'字幕跟随'}
-                enabled={subtitleFollow}
-                onClick={() => {
-                  setMediaState(s => ({ ...s, subtitleFollow: !mediaState.subtitleFollow }))
-                  instance.on?.({ type: 'subtitleUpdated', subtitleFollow: !mediaState.subtitleFollow })
-                }}
-              />
-            </WithBorder>
-          )}
-          placement={['bottom']}
-        />
-        <Content flex gap={4} alignItems={'center'} style={{ flexShrink: 0 }}>
+      <div className={'p-2 w-full gap-6 flex justify-between items-center transparent-font'}>
+        <div className={'line-clamp-1 pl-1 max-w-[60%] break-all font-size-13'}>{subtitleLang || 'Unselected subtitle'}</div>
+        <div className={'flex gap-1.5 items-center shrink-0'}>
           {currentSubtitles.some(i => i.translation) ? (
-            <ButtonSwitch
-              style={{
-                gap: 6,
-                marginLeft: 'auto',
-                flexShrink: 0
-              }}
-              className={'font-size-13 transparent-font'}
-              name={'Show translation'}
-              value={showTranslation}
-              onChange={v => setShowTranslation(v)}
-            ></ButtonSwitch>
+            <div className={'flex items-center gap-2.5 mr-1.5'}>
+              <Icon name={'park-translate'} />
+              <Switch small value={showTranslation} onChange={v => setShowTranslation(v)}></Switch>
+            </div>
           ) : (
             <Icon
-              name={'park-translate'}
-              className={ClassName.flatButton(4, '4px')}
+              spin={mediaState.isTranslating === subtitleLang}
+              name={mediaState.isTranslating === subtitleLang ? Icons.Loading : 'park-translate'}
+              className={'square-button'}
               onClick={() => {
-                translateSubtitle(currentSubtitles).then(texts => {
+                if (mediaState.isTranslating === subtitleLang) return
+                setMediaState(s => ({ ...s, isTranslating: subtitleLang }))
+                const currentLang = subtitleLang
+                translateSubtitle(currentSubtitles, res => {
                   setMediaState(s =>
                     produce(s, draft => {
-                      draft.subtitles?.forEach((s, idx) => {
-                        s.translation = texts[idx]
-                      })
+                      if (draft.subtitleLang === currentLang) {
+                        draft.subtitles?.forEach((s, idx) => {
+                          const idxToText = new Map(res.map(i => [i.id, i.text]))
+                          if (idxToText.has(idx)) {
+                            s.translation = idxToText.get(idx)
+                          }
+                        })
+                      }
                     })
                   )
+                }).finally(() => {
+                  setMediaState(s => ({ ...s, isTranslating: undefined }))
                 })
               }}
             ></Icon>
           )}
           {currentSubtitles.length ? (
             <Icon
-              name={'park-search'}
-              className={classnames(ClassName.flatButton(4, '4px'), searchState.visible && 'active-button')}
+              name={Icons.Search}
+              className={classnames('square-button', searchState.visible && 'active-button')}
               onClick={() => {
                 setSearchState(s => ({ ...s, visible: !s.visible }))
               }}
             />
           ) : null}
-        </Content>
-      </Content>
+          <IconWithPopover
+            className={'square-button'}
+            name={Icons.More}
+            padding={6}
+            size={14}
+            renderOnParent={false}
+            content={setV => (
+              <WithBorder className={'flex flex-col min-w-56 max-w-80 max-h-96 overflow-y-auto p-1 font-size-13'}>
+                <div className={'menu-sub-title em:mt-1 em:pl-2'}>字幕样式</div>
+                <Button.IconButton
+                  enabled={subtitleMode === 'list'}
+                  className={'button'}
+                  text={'列表模式'}
+                  onClick={() => {
+                    setV(false)
+                    setMediaState(s => ({ ...s, subtitleMode: 'list' }))
+                    instance.on?.({ type: 'subtitleUpdated', subtitleMode: 'list' })
+                  }}
+                ></Button.IconButton>
+                <Button.IconButton
+                  text={'文章模式'}
+                  className={'button'}
+                  enabled={subtitleMode === 'article'}
+                  onClick={() => {
+                    setV(false)
+                    setMediaState(s => ({ ...s, subtitleMode: 'article' }))
+                    instance.on?.({ type: 'subtitleUpdated', subtitleMode: 'article' })
+                  }}
+                ></Button.IconButton>
+                <div className={'menu-sub-title em:pl-2 mt-2'}>字幕语言</div>
+                {subtitles.map((i, index) => (
+                  <Button.IconButton
+                    onClick={() => {
+                      setV(false)
+                      setMediaState(s => ({ ...s, subtitleLang: i.lang }))
+                      instance.on?.({ type: 'subtitleUpdated', subtitleLang: i.lang })
+                    }}
+                    text={i.lang}
+                    key={index}
+                    suffixIconClassName={'hover-active-button icon-14'}
+                    onSuffixIconClick={e => {
+                      e.stopPropagation()
+                      const copyed = subtitles.slice(0)
+                      const deleted = copyed.splice(index, 1)
+                      if (deleted.length) {
+                        const first = deleted[0]
+                        if (first.url) {
+                          FileSystem.fs.deleteFile(first.url)
+                        }
+                      }
+                      setMediaState(s => {
+                        const next = {
+                          ...s,
+                          subtitleList: [...copyed],
+                          subtitleLang: i.lang === s.subtitleLang ? undefined : s.subtitleLang
+                        }
+                        instance.on?.({
+                          type: 'subtitleUpdated',
+                          subtitleList: next.subtitleList,
+                          subtitleLang: next.subtitleLang
+                        })
+                        return next
+                      })
+                    }}
+                    suffixIcon={'park-delete-one'}
+                  />
+                ))}
+              </WithBorder>
+            )}
+            placement={['bottom', 'top']}
+          />
+        </div>
+      </div>
       {searchState.visible && (
-        <Content
-          className={'font-size-14'}
-          flex
-          alignItems={'center'}
-          style={{
-            margin: '0px 10px 8px'
-          }}
-        >
+        <div className={'flex items-center transparent-font font-size-13 px-3 py-2 border-top mb-2 border-bottom'}>
           <input
             placeholder={t('general.Type to search')}
             onKeyDown={e => {
@@ -300,50 +299,31 @@ const MediaSubtitle = memo(() => {
                 setSearchState(s => ({ ...s, visible: false }))
               }
             }}
+            defaultValue={searchState.q}
             onChange={e => {
               setSearchState(s => ({ ...s, q: e.target.value }))
             }}
-            className={'focus-input border-box-shadow'}
-            style={{ borderRadius: 4, flex: 1, padding: '4px 8px' }}
+            autoFocus
+            className={'rounded-md flex-1'}
           />
           {(searchState.results?.length ?? 0) > 1 ? (
-            <Content
-              flex
-              gap={4}
-              alignItems={'center'}
-              style={{
-                marginLeft: 8
-              }}
-            >
-              <div
-                className={'font-size-12 transparent-font'}
-                style={{
-                  marginRight: 12
-                }}
-              >
+            <div className={'items-center gap-2 flex ml-3.5'}>
+              <div className={'font-size-12 mr-1'}>
                 {searchState.results?.indexOf(searchState.currIdx) + 1} / {searchState.results?.length}
               </div>
-              <Icon name={'park-up'} className={ClassName.flatButton(4, '4px')} onClick={() => handleNavigateSearch('up')} />
-              <Icon name={'park-down'} className={ClassName.flatButton(4, '4px')} onClick={() => handleNavigateSearch('down')} />
-            </Content>
+              <Icon size={14} name={'park-up'} className={'square-button-small'} onClick={() => handleNavigateSearch('up')} />
+              <Icon size={14} name={'park-down'} className={'square-button-small'} onClick={() => handleNavigateSearch('down')} />
+            </div>
           ) : null}
-        </Content>
+        </div>
       )}
-      <Content
-        flex
-        column
-        fullWidth
-        ref={mergedRef}
-        style={{ height: 0, flex: 1, minHeight: 120 }}
-        role={'subtitle-container'}
-        className={'border-top'}
-      >
+      <div ref={mergedRef} role={'subtitle-container'} className={'flex-1 w-full overflow-hidden'}>
         {subtitleMode === 'list' ? (
           currentSubtitles?.length ? (
             <VirtualList
               rangeExtractor={r => rangeExtractor(r)}
               paddingEnd={100}
-              style={{ width: '100%', height: '0', flex: 1, padding: '6px' }}
+              className={'w-full h-full px-2'}
               estimateSize={30}
               items={currentSubtitles}
               ref={virtualizerRef}
@@ -360,14 +340,14 @@ const MediaSubtitle = memo(() => {
             />
           ) : null
         ) : (
-          <Content style={{ height: 0, flex: 1, overflowY: 'auto', padding: '10px 12px 100px' }} className={'font-size-14'}>
+          <div className={'overflow-y-auto h-full px-4 pb-20'}>
             {currentSubtitles?.map((i, idx) => (
-              <ArticleSubtitleItem index={idx} scrollable={subtitleFollow && !isIn} subtitle={i} selected={idx === currentSelectedIndex} />
+              <ArticleSubtitleItem showTrans={showTranslation} index={idx} subtitle={i} selected={idx === currentSelectedIndex} />
             ))}
-          </Content>
+          </div>
         )}
-      </Content>
-    </Content>
+      </div>
+    </div>
   )
 })
 
@@ -375,13 +355,13 @@ const ArticleSubtitleItem = memo(
   ({
     subtitle,
     selected,
-    scrollable,
-    index
+    index,
+    showTrans
   }: {
     subtitle: Required<IMediaState>['subtitles'][0]
     selected: boolean
-    scrollable: boolean
     index: number
+    showTrans: boolean
   }) => {
     const ref = useRef<HTMLSpanElement>(null)
     const instance = useMediaInstance()
@@ -389,20 +369,15 @@ const ArticleSubtitleItem = memo(
     return (
       <span
         data-subtitle-index={index}
-        className={classnames(ClassName.flatButton(4, '0px'), selected && 'active-button')}
-        style={{
-          paddingLeft: 6,
-          borderRadius: 4,
-          userSelect: 'text'
-        }}
+        className={classnames('button !select-text !p-0 ml-1', selected && 'active-button')}
         ref={ref}
         onClick={() => {
           if (window.getSelection()?.isCollapsed) {
-            instance.actionOps?.jumpTo(subtitle.startTime)
+            instance.actionOps?.jumpTo(subtitle.start)
           }
         }}
       >
-        {subtitle.text}
+        {subtitle.translation && showTrans ? subtitle.translation : subtitle.text}
       </span>
     )
   }
@@ -411,59 +386,30 @@ const ArticleSubtitleItem = memo(
 const SubtitleItem = memo(
   ({ subtitle, selected, index, showTrans }: { subtitle: IMediaSubtitle; selected: boolean; index: number; showTrans?: boolean }) => {
     const instance = useMediaInstance()
-    const [hovered, setHovered] = useState(false)
     return (
-      <Content
-        flex
+      <div
         data-subtitle-index={index}
-        justifyContent="space-between"
-        className={ClassName.flatButton()}
-        onPointerLeave={() => setHovered(false)}
-        onPointerMove={() => setHovered(true)}
+        className={'button !select-auto flex justify-between items-center'}
         onClick={e => {
           setTimeout(() => {
             if (window.getSelection()?.isCollapsed) {
-              instance.actionOps?.jumpTo(subtitle.startTime)
+              instance.actionOps?.jumpTo(subtitle.start)
             }
           })
         }}
         style={{
           background: selected ? Colors.Common.SelectColorTransparent : undefined
         }}
-        alignItems="center"
       >
-        <Content flex gap={10} alignItems={'start'}>
-          <div className={'transparent-font font-size-12'} style={{ lineHeight: '22px', userSelect: 'none' }}>
-            {normalizeSecondsToTime(subtitle.startTime)}
+        <div className={'flex items-center gap-3'}>
+          <div className={'transparent-font pointer-events-none font-mono text-xs select-none'}>
+            {normalizeSecondsToTime(subtitle.start)}
           </div>
-          <div className={'font-size-14'} style={{ userSelect: 'text', whiteSpace: 'pre-wrap' }}>
-            {subtitle.text}
-            {subtitle.translation && showTrans && <div style={{ userSelect: 'none' }}>{subtitle.translation}</div>}
+          <div className={'select-text whitespace-pre-wrap'}>
+            {subtitle.translation && showTrans ? subtitle.translation : subtitle.text}
           </div>
-        </Content>
-        <Icon
-          name="park-high-light"
-          containerStyle={{ flexShrink: 0, opacity: hovered ? 1 : 0, transition: 'opacity 0.16s ease' }}
-          className={ClassName.flatButton(4, '4px')}
-          onClick={e => {
-            e.stopPropagation()
-            const parentBounding = e.currentTarget.parentElement!.getBoundingClientRect()
-            instance.insertLabel?.(
-              {
-                time: subtitle.startTime,
-                name: subtitle.text
-              },
-              {
-                shouldJumpBack: false,
-                popoverPosition: {
-                  x: parentBounding.left + parentBounding.width / 2,
-                  y: parentBounding.bottom
-                }
-              }
-            )
-          }}
-        />
-      </Content>
+        </div>
+      </div>
     )
   }
 )

@@ -20,7 +20,10 @@
          "@emotion"
      ],
     "rules": {
-        "no-restricted-imports": ["error","rendevoz/typings"],
+        "no-restricted-imports": ["error", {
+            "patterns": ["**/stores/object/custom/*","rendevoz/typings/*"]
+        }],
+        "jsx-quotes": ["error", "prefer-single"],
         "prefer-const": "off",
         "semi": ["error","never"],
         "prettier/prettier": [
@@ -30,6 +33,7 @@
                 "endOfLine": "auto",
                 "semi": false,
                 "singleQuote": true,
+                "jsxSingleQuote": true,
                 "trailingComma": "none",
                 "arrowParens": "avoid"
             }

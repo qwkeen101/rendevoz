@@ -1,32 +1,17 @@
-import { MutableRefObject, Ref } from "react";
+import { MutableRefObject, Ref } from 'react'
 
-export function assignRef<T = any>(
-  ref: React.ForwardedRef<T>,
-  value: T | null
-) {
-  if (typeof ref === "function") {
-    ref(value);
-  } else if (typeof ref === "object" && ref !== null && "current" in ref) {
+function assignRef<T = any>(ref: React.ForwardedRef<T>, value: T | null) {
+  if (typeof ref === 'function') {
+    ref(value)
+  } else if (typeof ref === 'object' && ref !== null && 'current' in ref) {
     // eslint-disable-next-line no-param-reassign
-    ref.current = value;
+    ref.current = value
   }
 }
-export function mergeRefs<T = any>(...refs: Ref<T>[]) {
+function mergeRefs<T = any>(...refs: (MutableRefObject<T> | undefined)[]) {
   return (node: T | null) => {
-    refs.forEach((ref) => assignRef(ref, node));
-  };
+    refs.forEach(ref => ref && assignRef(ref, node))
+  }
 }
 
-const useMergedRef = (...refs: (MutableRefObject<any> | undefined)[]) => {
-  return (node: any | null) => {
-    refs.forEach((ref) => {
-      if (typeof ref === "function") {
-        ref(node);
-      } else if (typeof ref === "object" && ref !== null && "current" in ref) {
-        ref.current = node;
-      }
-    });
-  };
-};
-
-export default useMergedRef;
+export default mergeRefs

@@ -7,18 +7,21 @@ export default ({ audioId, ...rest }: { audioId?: number } & MediaProps) => {
   const realId = useURLToId(rest.mediaState?.url, audioId)
   const audio = ObjectStore('audio').useValue(realId)
   const audioMeta = MetaStore.useValue(MetaStore.useObjectToMetaValue(realId)?.id)
-  console.log(audio, rest)
   const mediaState = {
     ...audio,
     url: audio?.url,
-    defaultActiveSidebar: audio?.defaultActiveSidebar ?? (audio ? 'hide' : undefined),
+    defaultActiveSidebar: audio?.defaultActiveSidebar,
+    defaultSidebarVisible: audio?.defaultSidebarVisible,
     thumbnail: audioMeta?.coverImgSrc,
-    description: audioMeta?.description || rest.mediaState?.description,
-    name: audioMeta?.name || 'Unnamed audio',
+    description: audioMeta?.description || rest.mediaState?.description || '',
+    name: audioMeta?.name || '',
     labelType: 'audioLabel',
     isPinned: audioMeta?.pinned,
     mode: 'audio',
     metaId: audioMeta?.id,
+    state: {
+      episodeId: audio?.episodeId
+    },
     onlyCore: rest.onlyCore,
     ...rest.mediaState
   }
@@ -29,6 +32,7 @@ export default ({ audioId, ...rest }: { audioId?: number } & MediaProps) => {
     labelType: 'audioLabel',
     mediaState
   })
+  if (realId && !audio) return null
   return (
     <Media
       {...rest}

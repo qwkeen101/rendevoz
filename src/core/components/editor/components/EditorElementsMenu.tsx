@@ -1,12 +1,12 @@
 import { useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Content, Menu } from '@/components'
-import { EditorTypeToElementMap } from '../maps'
 import { CustomElement, RegisteredEditorElement } from '~/typings'
 import { IMenuLayoutItem } from '@/components/base/menu'
 import { useAtomValue } from 'jotai'
 import { EditorOverlayStateAtom } from '@/core/components/editor/components/overlay/useEditorOverlay'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
+import EditorElements from '@/core/components/editor/elements/EditorElements'
 
 const EditorElementsMenu = (props: { onAddElement: (blockName: string) => void }) => {
   const { onAddElement } = props
@@ -38,7 +38,7 @@ const EditorElementsMenu = (props: { onAddElement: (blockName: string) => void }
       block: RegisteredEditorElement[] = [],
       media: RegisteredEditorElement[] = []
 
-    EditorTypeToElementMap.forEach(item => {
+    Object.values(EditorElements).forEach(item => {
       if (item.registerInMenu?.addMenu) {
         switch (item.registerInMenu.menuType) {
           case 'basic':
@@ -163,7 +163,7 @@ const EditorElementsMenu = (props: { onAddElement: (blockName: string) => void }
             padding: '3px 8px'
           }}
         >
-          {t('editor.No result')}
+          {t('general.No result')}
         </div>
       )}
     </Content>

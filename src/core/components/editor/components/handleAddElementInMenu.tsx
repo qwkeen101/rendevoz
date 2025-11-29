@@ -1,21 +1,18 @@
 import Id from '@/utils/id'
-import { BaseSelection, Editor, Element, Path, Range, Transforms } from 'slate'
+import { Editor, Path, Transforms } from 'slate'
 import { CustomEditor, CustomElement, DefaultAddElementHandler, IEditorInstance } from '~/typings'
 import { ReactEditor } from '../slate-react'
-import { Rendevoz } from '@/core/rendevoz'
 import { waitFor } from '@/utils/functions'
-import { ID_TO_ELEMENTS_MAP } from '../weakMaps'
 import FileSystem from '@/api/fileSystem'
-import { EditorTypeToElementMap } from '@/core/components/editor/maps'
+import { ObjectStore } from '@/api/stores'
+import IsInline from '@/core/components/editor/utils/isInline'
 
-export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, opts) => {
+export const defaultHandler: DefaultAddElementHandler = (type, instance) => {
   // let isCurrentElementEmpty = false
   const editor = instance.getSlateEditor?.()
   if (!editor) return
-  const addElement = editor.currentAddClickElement
   const selectionBlock = instance.blockOps?.getAboveBlock()
   if (!selectionBlock) throw new Error('No selected node!')
-  console.log(selectionBlock)
   let isCurrentBlockEmpty = false
   const searchFilterValue = '/' + (instance.overlayOps?.getState().currentFilterValue ?? '')
   if (selectionBlock[0].type === 'paragraph' && selectionBlock[0].children.length === 1) {
@@ -27,9 +24,8 @@ export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, o
       isCurrentBlockEmpty = true
     }
   }
-  console.log(isCurrentBlockEmpty, searchFilterValue)
   let addElementPath = selectionBlock[1]
-  const isInline = EditorTypeToElementMap.get(type)?.isInline
+  const isInline = IsInline(type)
   if (isCurrentBlockEmpty && !isInline) {
     Transforms.removeNodes(editor, {
       at: selectionBlock[1]
@@ -49,7 +45,7 @@ export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, o
     case 'table':
       // add two columns three rows table
       handleAddTableAtPath(addElementPath, editor)
-      break
+      return
     case 'link': {
       instance.overlayOps?.close()
       setTimeout(() => {
@@ -65,7 +61,7 @@ export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, o
     }
     case 'synced':
       instance.overlayOps?.close()
-      handleAddSyncedBlock(addElementPath, editor)
+      handleAddSyncedBlock(addElementPath, editor, instance)
       return
     case 'emoji': {
       instance.overlayOps?.close()
@@ -104,51 +100,53 @@ export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, o
       )
       return
     }
-    case 'math': {
+    case 'math':
+    case 'math-block': {
       const mathId = Id.getId()
-      console.log(editor.selection)
       Transforms.insertNodes(editor, {
         id: mathId,
-        type: 'math',
+        type: type,
         children: [{ text: '' }]
       })
       waitFor(
         () => {
-          const openMath = ID_TO_ELEMENTS_MAP.get(editor)?.get(mathId)?.openMathForm
+          const openMath = instance.blockOps?.getBlockFuncs(mathId)?.openMathForm
           if (openMath) {
             return true
           }
           return false
         },
         () => {
-          ID_TO_ELEMENTS_MAP.get(editor)?.get(mathId)?.openMathForm?.()
+          instance.blockOps?.getBlockFuncs(mathId)?.openMathForm?.()
         }
       )
       break
     }
     case 'image':
       ReactEditor.blur(editor)
-      Rendevoz.Actions.Utils.uploadFile({
-        accept: 'image/*'
-      }).then(files => {
-        const firstFile = files as File
-        if (firstFile && firstFile.type.startsWith('image')) {
-          FileSystem.saveImage(firstFile, { compress: false }).then(data => {
-            Transforms.insertNodes(
-              editor,
-              {
-                type: 'image',
-                url: data,
-                id: Id.getId(),
-                children: [{ text: '' }]
-              },
-              {
-                at: addElementPath
-              }
-            )
-          })
-        }
-      })
+      Global.commonOps
+        ?.upload({
+          accept: 'image/*'
+        })
+        .then(files => {
+          const firstFile = files as File
+          if (firstFile && firstFile.type.startsWith('image')) {
+            FileSystem.saveImage(firstFile, { compress: false }).then(data => {
+              Transforms.insertNodes(
+                editor,
+                {
+                  type: 'image',
+                  url: data,
+                  id: Id.getId(),
+                  children: [{ text: '' }]
+                },
+                {
+                  at: addElementPath
+                }
+              )
+            })
+          }
+        })
       break
     default:
       addedElement = {
@@ -168,15 +166,36 @@ export const defaultHandler: DefaultAddElementHandler = (type, instance, mode, o
   }
 }
 
-const handleAddSyncedBlock = async (path: Path, editor: CustomEditor) => {
-  const normalizedElement = await editor.on({ type: 'addNewElementFromMenu', newElementType: 'sync' })
-  if (!normalizedElement) return
-  console.log(normalizedElement, path)
-  Transforms.insertNodes(editor, normalizedElement, { at: path })
-  setTimeout(() => {
-    Transforms.select(editor, Editor.start(editor, [...path, 0]))
-    ReactEditor.focus(editor)
-  })
+const handleAddSyncedBlock = async (path: Path, editor: CustomEditor, instance: IEditorInstance) => {
+  const metaId = instance.values.metaId
+  if (metaId) {
+    const syncedBlockMeta = (
+      await ObjectStore('syncedBlock').addOneWithMeta(
+        {
+          syncVersion: 1,
+          syncedMetaIds: [metaId],
+          blockChildren: [{ type: 'paragraph', id: Id.getId(), children: [{ text: '' }] }]
+        },
+        { silent: true }
+      )
+    ).meta
+    Transforms.insertNodes(
+      editor,
+      {
+        type: 'synced',
+        children: [{ text: '' }],
+        syncVersion: 0,
+        originId: syncedBlockMeta.id,
+        id: Id.getId()
+      },
+      { at: path }
+    )
+    setTimeout(() => {
+      Transforms.select(editor, Editor.start(editor, [...path, 0]))
+      ReactEditor.focus(editor)
+    })
+    return
+  }
 }
 
 const handleAddTableAtPath = (path: Path, editor: CustomEditor) => {
@@ -200,6 +219,7 @@ const handleAddTableAtPath = (path: Path, editor: CustomEditor) => {
             {
               type: 'tableCell',
               colName: 'col1',
+              id: Id.getId(),
               children: [
                 {
                   type: 'paragraph',
@@ -236,6 +256,7 @@ const handleAddTableAtPath = (path: Path, editor: CustomEditor) => {
             {
               type: 'tableCell',
               colName: 'col1',
+              id: Id.getId(),
               children: [
                 {
                   type: 'paragraph',
@@ -251,6 +272,7 @@ const handleAddTableAtPath = (path: Path, editor: CustomEditor) => {
             {
               type: 'tableCell',
               colName: 'col2',
+              id: Id.getId(),
               children: [
                 {
                   type: 'paragraph',
@@ -271,6 +293,7 @@ const handleAddTableAtPath = (path: Path, editor: CustomEditor) => {
             {
               type: 'tableCell',
               colName: 'col1',
+              id: Id.getId(),
               children: [
                 {
                   type: 'paragraph',
@@ -286,6 +309,7 @@ const handleAddTableAtPath = (path: Path, editor: CustomEditor) => {
             {
               type: 'tableCell',
               colName: 'col2',
+              id: Id.getId(),
               children: [
                 {
                   type: 'paragraph',

@@ -1,47 +1,33 @@
-import EventEmitter from '@/events/eventEmitter'
-import { BaseEditor, Descendant, Element, Location, Operation, Path } from 'slate'
+import { BaseEditor, Descendant, Element, Location, Operation, Path, Range } from 'slate'
 import { HistoryEditor } from 'slate-history'
-import { ILabelContainerProps, INote } from '~/typings/data'
+import { IAISummary, ILabelContainerProps, ISidebarDefaultProps, ISubChat } from '~/typings/data'
 import { EditableProps, RenderElementProps, ReactEditor } from 'slate-react'
-import { CustomTypes, IEditorInstance } from '.'
+import { IEditorInstance, Box } from '.'
 import { CustomText, EmptyText } from './baseTypes'
 import { CommonElement } from './commonElements'
 import { OuterElement } from './outerElements'
-import DragManager from '@/core/editor/hooks/DragManager'
 import { EditorOverlayManager } from '@/core/editor/components/overlay/useEditorOverlay'
-import { Virtualizer } from '@tanstack/react-virtual'
+import { Virtualizer } from '@tanstack/virtual-core'
 import { CSSProperties, ReactElement, ReactNode } from 'react'
 import { IEditorEvent } from './events'
+import { IMenuLayoutItem } from '@/components/base/menu'
 
 export type CustomEditor = BaseEditor &
   ReactEditor &
-  // YjsEditor &
-  // YHistoryEditor &
   HistoryEditor & {
     currentEnterElement?: Element
     currentAddClickElement?: Element
-    currentCopyElement?: Element
-    currentCopyElements?: Element[]
     overlayManager?: EditorOverlayManager
   } & {
-    emitter?: EventEmitter
     id?: string
+    changeHandled?: boolean
     onOperationApplied?: (op: Operation) => void
-    onHighlightClick?: (highlightId: number) => void
-    initialized?: boolean
-    contentInitialized?: boolean
-    innerRef?: EditableProps['innerRef']
+    onHighlightClick?: (highlightId: number, e: MouseEvent) => void
     virtualizer?: Virtualizer
-    renderTitle?: (ref: (node: HTMLElement) => void) => ReactNode
-    goToHighlight?: (highlightId: number) => void
     titleEle?: HTMLElement | null
-    on: (event: IEditorEvent) => Promise<any>
-    editorMode?: 'note' | 'webpage' | 'syncedBlock'
     labelIds?: number[]
     instance: IEditorInstance
-    noBottomPadding?: boolean
-    onSelectionChange?: VoidFunction
-    initialScrollOffset?: number
+    nodeToDecorations: Map<CustomElement, Range[]>
   }
 
 export type CustomElement = (CommonElement | OuterElement) & {
@@ -49,6 +35,7 @@ export type CustomElement = (CommonElement | OuterElement) & {
   id: number
   color?: string
   background?: string
+  translated?: boolean
   align?: string
   cardType?: 'embeded' | 'block'
   collapsed?: boolean
@@ -68,7 +55,8 @@ declare module 'slate' {
 
 export interface ElementFunctions {
   selectBlock: VoidFunction
-  collisionSelectBlock: VoidFunction
+  deselectBlock: VoidFunction
+  collisionSelectBlock: (box: Box) => void
   getElement: () => CustomElement
   removeSelf: VoidFunction
   getPath: () => Path
@@ -108,7 +96,25 @@ export type RegisteredEditorElement = {
   type: string
   name?: string | (() => string)
 }
-
+export type IEditorAISummary = IAISummary & {
+  outlines: {
+    highlights: {
+      description: string
+      id: number
+    }[]
+    title: string
+    description: string
+    id: number
+  }[]
+  summary: {
+    summary: string
+    takeaways: {
+      description: string
+      id: number
+    }[]
+    keywords: string[]
+  }
+}
 export interface EditorProps {
   onClick?: React.MouseEventHandler
   metaId?: number
@@ -117,8 +123,12 @@ export interface EditorProps {
       editor: CustomEditor
       instance: IEditorInstance
     }
-  ) => void
+  ) => Promise<any>
+  aiSummary?: IEditorAISummary
   layout?: {
+    // for initial placeholder
+    firstLinePlaceholder?: string
+    emptyPlaceholder?: ReactElement
     virtualizer?: boolean
     showHeader?: boolean
     showTitle?: boolean
@@ -129,22 +139,18 @@ export interface EditorProps {
     showLastSave?: boolean
     showProps?: boolean
     showBottomPadding?: boolean
-    showHoverObjectDetails?: boolean
     showBlockHandleAdd?: boolean
     alwaysShowPlaceholder?: boolean
-    showPlaceholderInFirstLine?: boolean
     propsMetaId?: number
-    canScrollIntoView?: boolean
-  }
-  ai?: {
-    summary?: string
-    questions?: number[]
+    settings?: (onClose?: VoidFunction) => IMenuLayoutItem[]
+    displayMode?: boolean
   }
   title?: {
     customTitleRenderer?: (realTitle: string) => ReactElement
     titleStyle?: CSSProperties
     titleContainerStyle?: CSSProperties
     titleEditable?: boolean
+    titleClassName?: string
   }
   // title can be custom node, you should pass string title to show in header
   stringTitle?: string
@@ -164,24 +170,27 @@ export interface EditorProps {
       label?: boolean
       translate?: boolean
       title?: boolean
-      leftbar?: boolean
       more?: boolean
     }
     moreOptions?: {
       exportMD?: boolean
       exportPDF?: boolean
     }
+    leftExtra?: ReactElement
     rightExtra?: ReactElement
   }
   state?: {
+    loaded?: boolean
     pageWidth?: 'X-Small' | 'Small' | 'Medium' | 'Large' | 'X-Large' | 'Max'
     fontSize?: number
     lastSavedAt?: number
-    typeface?: 'Inter' | 'Roboto' | 'Source Serif' | 'Merriweather' | 'Open Sans' | 'Muli' | 'Lato'
     lineSpacing?: number
     saveImgLocally?: boolean
     showSyncBlockShadow?: boolean
-  } & ILabelContainerProps
+    aiChat?: ISubChat
+    exam?: number
+  } & ILabelContainerProps &
+    ISidebarDefaultProps
   labelType?: string
   labelIds?: number[]
   toolbar?: {
@@ -193,7 +202,14 @@ export interface EditorProps {
   classNames?: {
     editorContainerClassName?: string
   }
-  initialScrollOffset?: number
+  plugins?: {
+    blockHandle?: boolean
+    dragBlock?: boolean
+    dropElement?: boolean
+    select?: boolean
+    labelPopover?: boolean
+    addUnderLastLine?: boolean
+  }
   // slate can not be controlled component, but you can use instance.replaceChildren to replace its value (lose all history, no redo/undo)
   defaultValue?: Descendant[]
   id: string

@@ -2,7 +2,6 @@ import KeyvalueStore from '@/api/stores/keyvalue.store'
 import _ from 'lodash'
 import { DEFAULT_BACKGROUND_COLORS } from '@/components/picker/colorPicker'
 import { globalStore, MetaStore, ObjectStore } from '@/api/stores'
-import { tagToMetaObjectIdsMapAtom } from '@/api/stores/meta/meta.store'
 import createObjectStore from '@/api/stores/object/object.store'
 
 export default () =>
@@ -10,7 +9,6 @@ export default () =>
     afterGetAllProcess: all => {
       const currentWorkspace = KeyvalueStore.getOne('currentWorkspace')
       if (currentWorkspace) {
-        console.log(all.filter(i => !i.workspace || currentWorkspace.id === i.workspace))
         return all.filter(i => !i.workspace || currentWorkspace.id === i.workspace)
       }
       return all
@@ -39,22 +37,15 @@ export default () =>
       }
       return obj
     },
-    beforeDeleteProcess: async id => {
-      const tag = await ObjectStore('tag').getOneById(id)
-      if (tag && tag.name) {
-        globalStore
-          .get(tagToMetaObjectIdsMapAtom)
-          ?.get(tag.name)
-          ?.forEach(async metaId => {
-            const metaObject = await MetaStore.getMetaObjectById(metaId)
-            MetaStore.updateMetaObject(
-              {
-                id: metaId,
-                tags: metaObject?.tags?.filter(i => i !== tag.name)
-              },
-              { silent: true }
-            )
+    beforeDeleteProcess: async tagId => {
+      const all = MetaStore.getAll({ showAll: true })
+      all.forEach(async ({ id, tags }) => {
+        if (tags?.includes(tagId)) {
+          MetaStore.updateMetaObject({
+            id,
+            tags: tags.filter(i => i !== tagId)
           })
-      }
+        }
+      })
     }
   })

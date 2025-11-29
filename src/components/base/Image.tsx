@@ -1,7 +1,6 @@
 import { css } from '@emotion/css'
 import { CSSProperties, FC, ImgHTMLAttributes } from 'react'
 import Icon from './Icon'
-import { GlobalInstance } from '@/hooks'
 
 const Image: FC<
   ImgHTMLAttributes<HTMLImageElement> & {
@@ -36,7 +35,7 @@ const Image: FC<
               <div
                 onClick={e => {
                   e.preventDefault()
-                  GlobalInstance.commonOps?.previewImage?.(rest.src)
+                  Global.commonOps?.previewImage?.(rest.src)
                 }}
                 className={css({
                   position: 'absolute',
@@ -92,7 +91,7 @@ const Image: FC<
               <div
                 onClick={e => {
                   e.preventDefault()
-                  GlobalInstance.commonOps?.previewImage?.(rest.src)
+                  Global.commonOps?.previewImage?.(rest.src)
                 }}
                 className={css({
                   position: 'absolute',

@@ -8,7 +8,7 @@ import { EditorOverlayManager } from '../useEditorOverlay'
 
 const EditorEmojiPicker = ({ editor, manager }: { editor: CustomEditor; manager: EditorOverlayManager }) => {
   return (
-    <WithBorder style={{ width: 400, height: 400 }}>
+    <WithBorder style={{ width: 328, height: 240 }}>
       <EmojiPicker
         onPick={name => {
           Transforms.insertNodes(editor, {

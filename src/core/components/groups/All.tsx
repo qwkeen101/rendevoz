@@ -1,12 +1,11 @@
-import { MetaStore, ObjectStore } from '@/api/stores'
+import { MetaStore } from '@/api/stores'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
-import { memo, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { memo, useLayoutEffect, useMemo, useState } from 'react'
 import GroupStore from '@/api/stores/group.store'
 import { Content, Icon } from '@/components'
 import TabTitle from '@/components/layout/TabTitle'
 import MetaGroup from '@/core/components/group/MetaGroup'
 import { useTranslation } from 'react-i18next'
-import { calculateSortObjects } from '@/core/object/filter/BetterSorter'
 
 export default memo(() => {
   const { t } = useTranslation()
@@ -40,15 +39,7 @@ export default memo(() => {
   const metaMap = MetaStore.useMetaObjectsMap()
   useLayoutEffect(() => {
     const metas = Array.from(metaMap.values()).filter(i => !i.deleted)
-    const sorted = calculateSortObjects(metas, {
-      sorters: [
-        {
-          field: 'createdAt',
-          type: 'descending',
-          id: 1
-        }
-      ]
-    })
+    const sorted = Global.metaOps.sort('createdAt', 'desc', metas)
     setData(s => ({
       ...s,
       values: sorted.map(i => ({
@@ -62,34 +53,49 @@ export default memo(() => {
     <Content fullWidth fullHeight>
       <TabTitle title={t('general.Library')} icon={<Icon name={'custom-card-library'} />} />
       <MetaGroup
-        title={{
-          title: t('general.Library'),
-          titleEditable: false
-        }}
-        state={{
-          canHideGroupsInside: false,
-          canDrag: true,
-          canHideObjectsInside: false,
-          canDragInside: true,
-          defaultShowLabels: false,
-          showTemp: false,
-          addAfterCreateMeta: false
-        }}
-        layout={{
-          showDeletedMetas: false,
-          showCreate: true,
-          showDescription: false,
-          showContains: true,
-          showAddNew: false,
-          showAddObjectIntoSetting: false,
-          showTitleActions: false,
-          showIcon: false,
-          showImport: false,
-          showTitle: false
-        }}
-        styles={{
-          actionPaddingTop: 40
-        }}
+        title={useMemo(
+          () => ({
+            title: t('general.Library'),
+            titleEditable: false,
+            descriptionEditable: false
+          }),
+          []
+        )}
+        styles={useMemo(
+          () => ({
+            titleContainerStyle: {
+              paddingTop: 42
+            }
+          }),
+          []
+        )}
+        state={useMemo(
+          () => ({
+            canHideGroupsInside: false,
+            canDrag: true,
+            canHideObjectsInside: false,
+            canDragInside: true,
+            defaultShowLabels: false,
+            showTemp: false,
+            addAfterCreateMeta: false
+          }),
+          []
+        )}
+        layout={useMemo(
+          () => ({
+            showDeletedMetas: false,
+            showCreate: true,
+            showContains: true,
+            showAddNew: false,
+            showDescription: false,
+            showTitle: true,
+            showAddObjectIntoSetting: false,
+            showTitleActions: false,
+            showIcon: false,
+            showImport: false
+          }),
+          []
+        )}
         value={data}
         on={v => {
           if (v.type === 'groupDataChange') {

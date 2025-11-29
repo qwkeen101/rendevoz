@@ -1,11 +1,6 @@
-import FlowManager from './FlowManager'
-import * as d3 from 'd3'
-import { IWhiteboardInstance, MetaLink } from '~/typings/data'
-import { globalStore } from '@/api/stores'
-import { metaObjectsAtom, undeletedMetaLinksAtom } from '@/api/stores/meta/meta.store'
-import { EdgePosition, IWhiteboardEdge, IWhiteboardNode, Box } from '~/typings'
-import Id from '@/utils/id'
-import { Position } from '@/types'
+import { IWhiteboardInstance } from '~/typings/data'
+import { EdgePosition, IWhiteboardNode, Box } from '~/typings'
+import { type Position } from '@/types'
 import { trimNumber } from '@/utils'
 
 export const getEdgeData = (
@@ -19,6 +14,7 @@ export const getEdgeData = (
   const sourceXY = getHandlePosition(sourceNodeId, sourcePosition, instance, isMindmap)
   const targetXY = getHandlePosition(targetNodeId, targetPosition, instance, isMindmap)
   if (!sourceXY || !targetXY) {
+    console.error(sourceXY, targetXY)
     throw new Error('Can not get edge data!')
   }
   return {
@@ -128,153 +124,6 @@ export const transformXY = (containerRect: DOMRect, posX: number, posY: number, 
   return {
     x: trimNumber((posX - containerRect.x) / scale, 2),
     y: trimNumber((posY - containerRect.y) / scale, 2)
-  }
-}
-
-export const expandNode = (centerNodeId: number, centerNodePos: { x: number; y: number }, direction: 'left' | 'right' | 'all') => {
-  const targetToSelfLinks: MetaLink[] = []
-  const selfToTargetLinks: MetaLink[] = []
-  const stToIdMap = new Map<string, number>()
-  const undeletedLinks = globalStore.get(undeletedMetaLinksAtom)
-  const allMetaObjects = globalStore.get(metaObjectsAtom)
-  undeletedLinks.forEach(link => {
-    stToIdMap.set(`${link.sourceId}_${link.targetId}`, link.id)
-    if (link.targetId === centerNodeId) {
-      allMetaObjects.has(link.sourceId) && targetToSelfLinks.push(link)
-    }
-    if (link.sourceId === centerNodeId) {
-      allMetaObjects.has(link.targetId) && selfToTargetLinks.push(link)
-    }
-  })
-  const leftObjects = targetToSelfLinks.map(i => {
-    const obj = allMetaObjects.get(i.sourceId)
-    return {
-      id: Id.getId(),
-      metaObjectId: obj?.id
-    }
-  })
-  const centerObject = {
-    id: Id.getId(),
-    metaObjectId: centerNodeId
-  }
-  const rightObjects = selfToTargetLinks.map(i => {
-    const obj = allMetaObjects.get(i.targetId)
-    return {
-      id: Id.getId(),
-      metaObjectId: obj?.id
-    }
-  })
-  if (!leftObjects.some(i => i.metaObjectId === centerObject.metaObjectId)) leftObjects.push(centerObject)
-  if (!rightObjects.some(i => i.metaObjectId === centerObject.metaObjectId)) rightObjects.push(centerObject)
-
-  undeletedLinks.forEach(link => {
-    stToIdMap.set(`${link.sourceId}_${link.targetId}`, link.id)
-    if (link.targetId === centerNodeId) {
-      allMetaObjects.has(link.sourceId) && targetToSelfLinks.push(link)
-    }
-    if (link.sourceId === centerNodeId) {
-      allMetaObjects.has(link.targetId) && selfToTargetLinks.push(link)
-    }
-  })
-
-  const left = d3
-    .stratify()
-    .id(d => String(d.metaObjectId))
-    .parentId(d => (Number(d.metaObjectId) === centerNodeId ? '' : String(centerNodeId)))(leftObjects)
-
-  const right = d3
-    .stratify()
-    .id(d => String(d.metaObjectId))
-    .parentId(d => (Number(d.metaObjectId === centerNodeId) ? '' : String(centerNodeId)))(rightObjects)
-
-  const leftTreeData = d3.hierarchy(left)
-  const rightTreeData = d3.hierarchy(right)
-  const leftTree = d3.tree().nodeSize([100, -600])
-  const rightTree = d3.tree().nodeSize([100, 600])
-  leftTree(leftTreeData)
-  rightTree(rightTreeData)
-
-  const leftTreeLinks = leftTreeData.links()
-  const rightTreeLinks = rightTreeData.links()
-  const leftTreeNodes = leftTreeData.descendants()
-  const rightTreeNodes = rightTreeData.descendants()
-  const leftEdges = leftTreeLinks.map(link => {
-    const sourceId = Number(link.target.data.data.id)
-    const targetId = Number(link.source.data.data.id)
-    const sourceObjectId = Number(link.target.data.data.metaObjectId)
-    const targetObjectId = Number(link.source.data.data.metaObjectId)
-    const linkId = stToIdMap.get(`${sourceObjectId}_${targetObjectId}`)
-    return {
-      id: Id.getId(),
-      metaLinkId: linkId,
-      sourceId,
-      targetId
-    } as IWhiteboardEdge
-  })
-  const rightEdges = rightTreeLinks.map(link => {
-    const sourceId = Number(link.source.data.data.id)
-    const targetId = Number(link.target.data.data.id)
-    const sourceObjectId = Number(link.source.data.data.metaObjectId)
-    const targetObjectId = Number(link.target.data.data.metaObjectId)
-    const linkId = stToIdMap.get(`${sourceObjectId}_${targetObjectId}`)
-    return {
-      id: Id.getId(),
-      metaLinkId: linkId,
-      sourceId,
-      targetId
-    } as IWhiteboardEdge
-  })
-  if (direction === 'left') {
-    return {
-      nodes: leftTreeNodes.map(node => {
-        const { x, y } = node
-        const id = Number(node.data.data.id)
-        const metaObjectId = Number(node.data.data.metaObjectId)
-        return {
-          x: y + 200 + centerNodePos.x,
-          y: x + centerNodePos.y,
-          id,
-          metaObjectId,
-          type: 'metaObject'
-        } as IWhiteboardNode
-      }),
-      edges: leftEdges
-    }
-  }
-  if (direction === 'right') {
-    return {
-      nodes: rightTreeNodes.map(node => {
-        const { x, y } = node
-        const id = Number(node.data.data.id)
-        const metaObjectId = Number(node.data.data.metaObjectId)
-        return {
-          x: y + 200 + centerNodePos.x,
-          y: x + centerNodePos.y,
-          id,
-          metaObjectId,
-          type: 'metaObject'
-        } as IWhiteboardNode
-      }),
-      edges: rightEdges
-    }
-  }
-  if (direction === 'all') {
-    const aggregatedNodes = [...leftTreeNodes, ...rightTreeNodes].map(node => {
-      const { x, y } = node
-      const id = Number(node.data.data.id)
-      const metaObjectId = Number(node.data.data.metaObjectId)
-      return {
-        x: y + 200 + centerNodePos.x,
-        y: x + centerNodePos.y,
-        id,
-        metaObjectId,
-        type: 'metaObject'
-      } as IWhiteboardNode
-    })
-    return {
-      nodes: aggregatedNodes,
-      edges: [...leftEdges, ...rightEdges]
-    }
   }
 }
 

@@ -1,8 +1,7 @@
 import { MetaGroupChild } from '~/typings'
-import { Button, Content } from '@/components'
+import { Button, Content, useVirtualizer, Virtualizer } from '@/components'
 import GalleryItemWrapper from '@/core/components/group/components/gallery/GalleryItemWrapper'
 import { memo, useRef } from 'react'
-import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import { useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
@@ -76,7 +75,7 @@ export default memo(
         >
           {items.map(i => (
             <GalleryItemWrapper
-              style={{ padding: '4px 10px', fontSize: 14 }}
+              style={{ padding: '4px 10px' }}
               showCover={showCover}
               thumbnailMode={thumbnailMode}
               showOriginalText={showOriginalText}

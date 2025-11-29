@@ -1,9 +1,8 @@
 import { ObjectStore } from '@/api/stores'
-import ClassName from '@/styles/classNames'
 import { CSSProperties, MouseEventHandler, useEffect } from 'react'
 import { Content, Icon } from '@/components'
 import Colors from '@/consts/colors'
-import { Rendevoz } from '@/core/rendevoz'
+import classnames from 'classnames'
 
 const Tag = ({
   tag,
@@ -14,12 +13,14 @@ const Tag = ({
   cursor,
   style,
   square,
+  className,
   clickOpenGroup = false
 }: {
   tag: number
   hideDelete?: boolean
   onDelete?: VoidFunction
   small?: boolean
+  className?: string
   square?: boolean
   cursor?: string
   clickOpenGroup?: boolean
@@ -35,32 +36,30 @@ const Tag = ({
   }, [tagObject?.deleted])
   if (tagObject?.deleted || !tagObject) return null
   return (
-    <Content
-      flex
-      alignItems="center"
-      gap={6}
+    <div
       onClick={e => {
         onClick?.(e)
         if (clickOpenGroup) {
-          Rendevoz.Actions.Open.Group.openTagGroup(tag)
+          e.preventDefault()
+          Global.layoutOps?.openPage('tagGroup', { id: tag })
         }
       }}
+      className={classnames(
+        'flex w-fit h-fit items-center whitespace-nowrap justify-between gap-1.5',
+        className,
+        square ? 'em:rounded' : 'rounded-full'
+      )}
       style={{
         background: Colors.getAdaptColor(tagObject.color) || Colors.Background.ButtonHover,
-        borderRadius: square ? 3 : 999,
-        lineHeight: square ? '20px' : undefined,
-        height: 'fit-content',
+        lineHeight: square ? 1.4 : undefined,
         padding: square ? '0px 6px' : small ? '0px 8px 0px' : '3px 6px 3px 10px',
-        width: 'fit-content',
         color: Colors.getAdaptFontColor(tagObject.color),
-        justifyContent: 'space-between',
-        fontSize: 14,
         cursor: clickOpenGroup ? 'pointer' : cursor,
         whiteSpace: 'nowrap',
         ...style
       }}
     >
-      <span className={ClassName.ellipsisFont(1)}>{tagObject.name || 'Unnamed tag'}</span>
+      <span className={'line-clamp-1'}>{tagObject.name || 'Unnamed tag'}</span>
       {!small && !hideDelete && (
         <Content flex gap={6}>
           {!small && !hideDelete && (
@@ -70,16 +69,13 @@ const Tag = ({
                 e.stopPropagation()
                 onDelete?.()
               }}
-              className={'transparent-font'}
-              style={{
-                cursor: 'pointer'
-              }}
+              className={'transparent-font cursor-pointer'}
               name="park-close"
             />
           )}
         </Content>
       )}
-    </Content>
+    </div>
   )
 }
 

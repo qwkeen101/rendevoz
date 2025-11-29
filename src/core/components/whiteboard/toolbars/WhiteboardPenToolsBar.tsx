@@ -11,7 +11,7 @@ import UseDebounceEffect from '@/hooks/utils/useDebounceEffect'
 import { useTranslation } from 'react-i18next'
 import { useDebounceFn, useSelectAtomValue, useUpdateEffect } from '@/hooks'
 import { WhiteboardAtom } from '@/core/components/whiteboard/StateHooks'
-import useUpdateWhiteboard from '@/core/components/whiteboard/hooks/useUpdateWhiteboard'
+import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 
 const PenStyleAtom = atom({
   ballpen: {
@@ -72,7 +72,7 @@ const WhiteboardPenToolsBar = () => {
   const penType = whiteboardState.freeHandConfig.type || 'ballpen'
   const [penStyles, setPenStyles] = useAtom(PenStyleAtom)
   const [selectedPenStyle, setSelectedPenStyle] = useState('first')
-  const update = useUpdateWhiteboard()
+  const instance = useWhiteboardInstance()
   const changePenType = (type: (typeof whiteboardState)['freeHandConfig']['type']) => {
     setWhiteboardState(s =>
       produce(s, draft => {
@@ -85,7 +85,7 @@ const WhiteboardPenToolsBar = () => {
       setPenStyles(whiteboardPenStyles)
     }
   }, [])
-  const debounceUpdate = useDebounceFn(update)
+  const debounceUpdate = useDebounceFn(instance.updateWhiteboard)
   useUpdateEffect(() => {
     debounceUpdate.run(d => {
       d.penStyles = penStyles
@@ -110,21 +110,17 @@ const WhiteboardPenToolsBar = () => {
   }, [penType])
   if (whiteboardState.currentTool === 'freehand' && penStyles[penType]) {
     return (
-      <Content
-        className={'p-5 border-box-shadow bg-popover br-6'}
+      <div
+        className={'p-1.5 border-box-shadow bg-popover left-1/2 -translate-x-1/2 absolute z-10 rounded-md'}
         style={{
-          position: 'absolute',
-          bottom: 20,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 10
+          bottom: 20
         }}
       >
-        <Toolbar itemSpace={6} itemClassName={'p-5'} itemRadius={6} disableDefaultStyle={true}>
+        <Toolbar itemSize={'icon-16'}>
           <Toolbar.Item iconName={'custom-ballpen'} onClick={() => changePenType('ballpen')} isActive={penType === 'ballpen'} />
           <Toolbar.Item iconName={'custom-markerpen'} onClick={() => changePenType('marker')} isActive={penType === 'marker'} />
           <Toolbar.Item iconName={'custom-pen'} onClick={() => changePenType('pen')} isActive={penType === 'pen'} />
-          <Toolbar.Separator />
+          <Toolbar.Separator direction={'horizontal'} />
           <PenStyle
             style={penStyles[penType].first}
             selected={selectedPenStyle === 'first'}
@@ -162,7 +158,7 @@ const WhiteboardPenToolsBar = () => {
             }}
           />
         </Toolbar>
-      </Content>
+      </div>
     )
   }
   return null
@@ -238,9 +234,9 @@ const PenStyleMenu = ({ style, onChange }: { onChange: (newStyle: IPenStyle) => 
   const c = style.color === 'default' ? Colors.Font.Primary : style.color
   const { t } = useTranslation()
   return (
-    <Content flex column style={{ width: 220, height: 220, padding: 10, overflowY: 'auto', fontSize: '0.857rem' }} gap={5}>
-      <div>
-        {t('general.Brush thickness')}: {style.width}
+    <div className={'p-3 overflow-y-auto w-64 max-h-64 flex flex-col gap-2'}>
+      <div className={'menu-sub-title'}>
+        {t('whiteboard.Brush thickness')}: {style.width}
       </div>
       <Slider
         value={style.width}
@@ -268,7 +264,7 @@ const PenStyleMenu = ({ style, onChange }: { onChange: (newStyle: IPenStyle) => 
           }
         })}
       />
-      <div>{t('general.Brush opacity')}</div>
+      <div className={'menu-sub-title mt-2'}>{t('whiteboard.Brush opacity')}</div>
       <Slider
         value={style.opacity}
         max={1}
@@ -307,7 +303,7 @@ const PenStyleMenu = ({ style, onChange }: { onChange: (newStyle: IPenStyle) => 
           background: `linear-gradient(270deg,${c} 10%, rgba(255,255,255,0) 100%), url(${placeholder}) white`
         }}
       ></Slider>
-      <div>{t('general.Brush color')}</div>
+      <div className={'menu-sub-title mt-2'}>{t('whiteboard.Brush color')}</div>
       <ColorPicker
         onPick={c => {
           onChange({ ...style, color: c === defaultBgColor ? 'default' : c })
@@ -316,7 +312,7 @@ const PenStyleMenu = ({ style, onChange }: { onChange: (newStyle: IPenStyle) => 
         enableDefault={true}
         showLess={false}
       />
-    </Content>
+    </div>
   )
 }
 export default WhiteboardPenToolsBar

@@ -11,15 +11,27 @@ export type ILabelContainerProps = {
     | 'playback time in reverse'
     | 'article order'
     | 'article order in reverse'
+  labelFolders?: {
+    current?: number
+    folders: {
+      labels: number[]
+      name: string
+      id: number
+    }[]
+  }
   labelPriority?: 'note' | 'tag' | 'none'
+  labelFilter?: {
+    search?: string
+    tag?: number[]
+    image?: boolean
+    note?: boolean
+    color?: string[]
+  }
   labelScrollOffset?: number
-  defaultActiveSidebar?: string
-  defaultSidebarWidth?: number
 }
 
 export type IPDFLabel = IBase &
   ILabel & {
-    background?: string
     color?: string
     page: number
     specType: 'pdfLabel'

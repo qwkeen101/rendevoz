@@ -7,7 +7,6 @@ import { toast } from 'react-hot-toast'
 export default (editor: Editor, instance: IEditorInstance): IMenuLayoutItem[] => {
   const selectedElements = instance.getSelectedElements?.()
   if (selectedElements && selectedElements.length === 1) {
-    console.log(selectedElements)
     if (selectedElements[0].type === 'iframe' && selectedElements[0].url) {
       const url = selectedElements[0].url
       return [

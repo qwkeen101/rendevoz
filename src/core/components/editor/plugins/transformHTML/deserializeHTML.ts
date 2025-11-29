@@ -5,8 +5,7 @@ import { WrapperNodeNames } from './consts'
 import deserializeText from './deserialize/deserializeText'
 import { ELEMENT_TAGS, TEXT_TAGS } from '@/core/components/editor/plugins/transformHTML/HTMLTags'
 import deserializeLi from '@/core/components/editor/plugins/transformHTML/deserialize/deserializeLi'
-import { Descendant, Node as SlateNode, Text } from 'slate'
-import { EditorTypeToElementMap } from '@/core/components/editor/maps'
+import { Descendant, Text } from 'slate'
 import Id from '@/utils/id'
 import deserializeTable from '@/core/components/editor/plugins/transformHTML/deserialize/deserializeTable'
 import deserializeLink from '@/core/components/editor/plugins/transformHTML/deserialize/deserializeLink'
@@ -16,22 +15,6 @@ import { isInline } from '@/core/components/editor/utils'
 import wrapElementText from '@/core/components/editor/plugins/transformHTML/deserialize/wrapElementText'
 import deserializePre from '@/core/components/editor/plugins/transformHTML/deserialize/deserializePre'
 const NoNestedNodeNames = ['A', 'H1', 'H2', 'H3', 'HR', 'LI', 'H4', 'H5', 'H6', 'PRE', 'SUP', 'CITE', 'FIGCAPTION', 'BLOCKQUOTE']
-
-function removeCommonPrefix(a: string, b: string) {
-  // 确定两个字符串中较短的一个，避免索引越界
-  let minLength = Math.min(a.length, b.length)
-  let i = 0
-
-  // 比较两个字符串，找到相同前缀的结束位置
-  for (; i < minLength; i++) {
-    if (a[i] !== b[i]) {
-      break
-    }
-  }
-
-  // 截取b字符串中除去相同前缀后的部分
-  return b.slice(i)
-}
 
 export const deserializeRoot = (root: HTMLElement, opts?: deserializeOptions): Descendant[] | null => {
   // deserialize text node
@@ -59,7 +42,7 @@ export const deserializeRoot = (root: HTMLElement, opts?: deserializeOptions): D
     case 'MP-COMMON-MPAUDIO':
       return deserializeWeixinAudio(root)
     case 'BR':
-      return null
+      return jsx('text', undefined, '\n')
     case 'PRE':
       return deserializePre(root)
     case 'A':
@@ -91,15 +74,7 @@ export const deserializeRoot = (root: HTMLElement, opts?: deserializeOptions): D
   }
   return null
 }
-export const normalizeResult = (result: Descendant[], url?: string) => {
-  const inlineElementTypeSet = new Set(
-    Array.from(EditorTypeToElementMap.values())
-      .filter(i => i.isInline)
-      .map(i => i.type)
-  )
-  inlineElementTypeSet.add('link')
-  inlineElementTypeSet.add('sup')
-
+export const normalizeResult = (result: Descendant[]) => {
   // first walk, remove start whitespace and end whitespace
   let res = result.map(i => {
     i.children?.forEach((c, idx, arr) => {
@@ -117,7 +92,7 @@ export const normalizeResult = (result: Descendant[], url?: string) => {
     if (!i.type) {
       return null
     }
-    if (inlineElementTypeSet.has(i.type)) {
+    if (isInline(i)) {
       return {
         type: 'paragraph',
         id: Id.getId(),
@@ -129,38 +104,6 @@ export const normalizeResult = (result: Descendant[], url?: string) => {
       id: Id.getId()
     }
   })
-  if (url) {
-    const origin = new URL(url).origin
-    try {
-      // third walk, replace relative url to absolute url
-      // chrome will always return absolute path to document url
-      // https://github.com/angular/protractor/issues/2735
-      Array.from(SlateNode.elements({ children: res })).forEach(e => {
-        const ele = e[0]
-        // @ts-ignore
-        if (ele.url) {
-          if (ele.url.startsWith(window.location.href)) {
-            const replaced = ele.url.replace(window.location.href, '/')
-            const newU = new URL(replaced, origin)
-            ele.url = newU.toString()
-          } else if (ele.url.startsWith(window.location.origin)) {
-            const originU = new URL(ele.url)
-            if (!originU.host) {
-              const replaced = removeCommonPrefix(window.location.href, ele.url)
-              const newU = new URL(replaced, origin)
-              ele.url = newU.toString()
-            } else {
-              ele.url = ele.url.replace(window.location.origin, 'http://')
-            }
-          } else if (ele.url.startsWith('#')) {
-            ele.url = url + ele.url
-          }
-        }
-      })
-    } catch (e) {
-      console.error(e)
-    }
-  }
   return res
 }
 export const deserializeHTMLChildren = (node: HTMLElement, opts?: deserializeOptions & { wrapperType?: string; wrap?: boolean }) => {
@@ -186,7 +129,7 @@ export const wrapElements = (eles: Descendant[], wrapperType = 'paragraph', addP
   let wrapped: Descendant[] = []
   const sliced = eles.slice()
   const isEmptyWrapped = () => {
-    if (wrapped.every(i => Text.isText(i) && !i.text.replace(/\s/g, ''))) {
+    if (wrapped.every(i => Text.isText(i) && !i.text.trim())) {
       return true
     }
     return false
@@ -218,7 +161,7 @@ export const wrapElements = (eles: Descendant[], wrapperType = 'paragraph', addP
   while (sliced.length) {
     const first = sliced.shift()
     if (Text.isText(first) || isInline(first)) {
-      if (Text.isText(first) && !first.text.trim()) continue
+      if (Text.isText(first) && !first.text) continue
       wrapped.push(first)
     } else {
       if (wrapped.length && !isEmptyWrapped()) {
@@ -257,7 +200,6 @@ export type deserializeOptions = {
 export default (root: HTMLElement, opts?: deserializeOptions) => {
   const res = deserializeRoot(root, opts)
   if (res) {
-    console.log(root, wrapElements(res))
     return wrapElements(res)
   }
 }

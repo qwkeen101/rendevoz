@@ -1,22 +1,36 @@
 import { useEffect, useRef, useState } from 'react'
-import useMediaState from '@/core/components/media/hooks/useMediaState'
+import { useGetMediaState, useSelectMediaState, useSetMediaState } from '@/core/components/media/hooks/useMediaState'
 import { toast } from 'react-hot-toast'
-import requestVideo from '@/api/components/fileImporter/baidudisk/requestVideo'
+import requestVideo from '@/api/components/objectImporter/baidudisk/requestVideo'
 import videojs from 'video.js'
 import 'video.js/dist/video-js.css'
 import Player from 'video.js/dist/types/player'
 import { useMediaInstance } from '@/core/components/media/hooks/useMediaInstance'
 import { assignProperties } from '@/utils'
 import { captureVideoFrame } from '@/core/components/media/utils'
-import loginBaidudisk from '@/api/components/fileImporter/baidudisk/loginBaidudisk'
+import loginBaidudisk from '@/api/components/objectImporter/baidudisk/loginBaidudisk'
 import { useUnmount } from 'react-use'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
-import getBaidudiskSubtitles from '@/api/components/fileImporter/baidudisk/getBaidudiskSubtitles'
+import getBaidudiskSubtitles from '@/api/components/objectImporter/baidudisk/getBaidudiskSubtitles'
+import useThrottleUpdateCurrentTime from '@/core/components/media/hooks/useThrottleUpdateCurrentTime'
 
 const BaidudiskVideoPlayer = () => {
-  const [mediaState, setMediaState] = useMediaState()
+  const setMediaState = useSetMediaState()
   const [m3u8Source, setM3u8Source] = useState('')
-  const { url } = mediaState
+  const get = useGetMediaState()
+  const updateTime = useThrottleUpdateCurrentTime()
+  const { url, muted, volume, loaded, speed, autoPlay, showSubtitle, subtitleUrl, paused, jumpTime } = useSelectMediaState(s => ({
+    url: s.url,
+    volume: s.volume,
+    muted: s.muted,
+    loaded: s.loaded,
+    speed: s.speed,
+    autoPlay: s.autoPlay,
+    subtitleUrl: s.subtitleUrl,
+    showSubtitle: s.showSubtitle,
+    paused: s.paused,
+    jumpTime: s.jumpTime
+  }))
   const videoContainerRef = useRef<HTMLDivElement>(null)
   const playerRef = useRef<Player>()
   const instance = useMediaInstance()
@@ -28,7 +42,7 @@ const BaidudiskVideoPlayer = () => {
         captureCurrentImage: async () => {
           const video = videoContainerRef.current?.querySelector('video')
           if (video) {
-            const image = await captureVideoFrame(video, mediaState.currentTime || 0, { width: 1600, height: 900 }, true)
+            const image = await captureVideoFrame(video, get().currentTime || 0, { width: 1600, height: 900 }, true)
             return image
           }
         }
@@ -40,26 +54,25 @@ const BaidudiskVideoPlayer = () => {
   }
   useEffect(() => {
     if (player) {
-      player.muted(mediaState.muted)
-      player.volume(mediaState.volume)
+      player.muted(muted)
+      player.volume(volume)
     }
-  }, [mediaState.volume, mediaState.loaded, mediaState.muted])
+  }, [volume, loaded, muted])
 
   useEffect(() => {
-    if (mediaState.loaded) {
-      player?.playbackRate(mediaState.speed)
+    if (loaded) {
+      player?.playbackRate(speed)
     }
-  }, [mediaState.speed, mediaState.loaded])
+  }, [speed, loaded])
 
   useEffect(() => {
     const bda = KeyvalueStore.getOne('baiduAccessToken')
-    console.log(url)
     if (!bda) {
       loginBaidudisk()
       toast.error('身份验证已失效，请重新登录网盘后再打开')
     } else {
       const path = url.replace('baidudisk', '')
-      if (!mediaState.subtitleList?.length) {
+      if (!get().subtitleList?.length) {
         getBaidudiskSubtitles(path).then(res => {
           if (res) {
             setMediaState(s => ({ ...s, subtitleList: res, subtitleLang: res[0].lang }))
@@ -80,7 +93,7 @@ const BaidudiskVideoPlayer = () => {
       const blob = new Blob([m3u8Source], { type: 'application/x-mpegURL' })
       const url = URL.createObjectURL(blob)
       const player = videojs(videoEle, {
-        autoplay: mediaState.autoPlay,
+        autoplay: get().autoPlay,
         controls: false,
         fluid: true,
         aspectRatio: '16:9',
@@ -98,7 +111,7 @@ const BaidudiskVideoPlayer = () => {
       player.on('timeupdate', () => {
         const currentTime = player.currentTime()
         if (currentTime !== undefined && currentTime >= 0) {
-          setMediaState(s => ({ ...s, currentTime }))
+          updateTime(currentTime)
         }
       })
       player.on('durationchange', () => {
@@ -117,17 +130,17 @@ const BaidudiskVideoPlayer = () => {
   }, [m3u8Source])
 
   useEffect(() => {
-    if (mediaState.loaded) {
-      player?.autoplay(mediaState.autoPlay)
+    if (loaded) {
+      player?.autoplay(autoPlay)
     }
-  }, [mediaState.autoPlay, mediaState.loaded])
+  }, [autoPlay, loaded])
   useUnmount(() => {
     playerRef.current?.dispose()
   })
   useEffect(() => {
-    if (mediaState.loaded && mediaState.subtitleUrl && mediaState.showSubtitle) {
+    if (loaded && subtitleUrl && showSubtitle) {
       const track = document.createElement('track')
-      track.src = mediaState.subtitleUrl
+      track.src = subtitleUrl
       track.default = true
       track.kind = 'captions'
       createdTextTrackRef.current = track
@@ -137,32 +150,29 @@ const BaidudiskVideoPlayer = () => {
         createdTextTrackRef.current = undefined
       }
     }
-  }, [mediaState.subtitleUrl, mediaState.loaded, mediaState.showSubtitle])
+  }, [subtitleUrl, loaded, showSubtitle])
   useEffect(() => {
-    if (mediaState.loaded) {
-      if (mediaState.paused) {
+    if (loaded) {
+      if (paused) {
         player?.pause()
       } else {
         player?.play()
       }
     }
-  }, [mediaState.paused, mediaState.loaded])
-  console.log(mediaState.jumpTime, mediaState.currentTime)
-  useEffect(() => {
-    if (mediaState.loaded && mediaState.currentTime !== undefined && mediaState.jumpTime === undefined && player) {
-      // jump time need to be undefined, otherwise trigger go to 0s bug
-      console.log(mediaState.currentTime)
-      player.currentTime(mediaState.currentTime)
-    }
-  }, [mediaState.loaded])
+  }, [paused, loaded])
 
   useEffect(() => {
-    if (mediaState.loaded && mediaState.jumpTime !== undefined && player) {
-      if (Math.abs(mediaState.jumpTime - (mediaState.currentTime || 0)) > 1) {
-        player.currentTime(mediaState.jumpTime)
-      }
+    const current = get()
+    if (loaded && current.currentTime !== undefined && current.jumpTime === undefined && player) {
+      player.currentTime(current.currentTime)
     }
-  }, [mediaState.jumpTime, mediaState.loaded])
+  }, [loaded])
+
+  useEffect(() => {
+    if (loaded && jumpTime !== undefined && player) {
+      player.currentTime(jumpTime)
+    }
+  }, [jumpTime, loaded])
   return (
     <div
       onClick={() => {

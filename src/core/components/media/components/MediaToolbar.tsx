@@ -1,81 +1,62 @@
-import useMediaState from '@/core/components/media/hooks/useMediaState'
-import useMediaSidebarState from '@/core/components/media/hooks/useMediaSidebarState'
-import { AnimatePopover, Button, Content, Icon, IconWithPopover, Menu, Tooltip, WithBorder } from '@/components'
+import useMediaState, { useSetMediaState } from '@/core/components/media/hooks/useMediaState'
+import { Button, Content, Icon, IconWithPopover } from '@/components'
 import { useMediaInstance } from '@/core/components/media/hooks/useMediaInstance'
-import { ClassName } from 'rendevoz'
-import { Colors } from '@/consts'
+import { Colors, Icons } from '@/consts'
 import { useTranslation } from 'react-i18next'
 import MediaSubtitleImporter from '@/core/components/media/components/MediaSubtitleImporter'
-import { useState } from 'react'
-import { css } from '@emotion/css'
-import MediaMoreMenu from '@/core/components/media/components/MediaMoreMenu'
+import { CSSProperties } from 'react'
 import classnames from 'classnames'
-import { GlobalSetting } from '@/core'
+import useMediaTranscribe from '@/core/components/media/hooks/useMediaTranscribe'
+import { ObjectStore } from '@/api/stores'
+import { useAtomValue } from 'jotai'
+import trans from '@/consts/trans'
+import MediaMoreMenu from '@/core/components/media/components/MediaMoreMenu'
 
-const clazz = css({
-  borderRadius: `999px !important`,
-  border: '1px solid var(--border-background)',
-  cursor: 'pointer',
-  height: '32px'
-})
-export default ({ showDetails }: { showDetails: boolean }) => {
+const shortenClazz = '!rounded-3xl has-bg-button font-medium !h-[36px] !px-4 items-center select-none cursor-pointer'
+const clazz = '!rounded-3xl !pr-4 !pl-3.5 py-2 !h-9 items-center select-none cursor-pointer'
+export default ({ style, className }: { style?: CSSProperties; className?: string }) => {
   const [mediaState, setMediaState] = useMediaState()
-  const [sidebarState, setSidebarState] = useMediaSidebarState()
   const instance = useMediaInstance()
   const { t } = useTranslation()
-  const subtitleInSidebar = GlobalSetting.useSelectSettingAtom('subtitleInSidebar')
-  const [subtitleImporterVisible, setSubtitleImporterVisible] = useState(false)
   const canHighlight = mediaState.currentTime !== undefined && mediaState.loaded
-  const validSubtitleIcon = mediaState.subtitleList?.length || sidebarState.subtitleOpen
+  const validSubtitleIcon = mediaState.subtitleList?.length
+  const episodeMode = mediaState.layout?.episodeMode
+  const canTranscribe = useAtomValue(useMediaTranscribe.canTranscribeAtom)
+  const hasTranscript = useAtomValue(useMediaTranscribe.hasTranscriptAtom)
+  const { state, subtitleImporterVisible } = mediaState
+  const [transcribeState] = useMediaTranscribe()
+  const noSubtitleButCanTranscribe = canTranscribe && !validSubtitleIcon
+  const noSubtitleButHasTranscript = hasTranscript && !validSubtitleIcon
+  if (mediaState.toolbar?.toolbarEnabled === false) return null
   return (
-    <Content flex column gap={10} fullWidth>
-      {mediaState.mode === 'web' && showDetails && (
-        <div
-          style={{
-            width: '100%',
-            display: 'flex',
-            gap: 4,
-            alignItems: 'center'
-          }}
-          className={'transparent-font font-size-12'}
-        >
-          <Icon name={'park-link-one'} />
-          <a
-            className={css({
-              ':hover': {
-                textDecoration: 'underline'
-              },
-              color: 'inherit'
-            })}
-            target={'_blank'}
-            href={mediaState.url}
-          >
-            {mediaState.url}
-          </a>
-        </div>
-      )}
-      <Content flex fullWidth alignItems={'center'} justifyContent={'space-between'} gap={30}>
-        <MediaSubtitleImporter visible={subtitleImporterVisible} onChange={() => setSubtitleImporterVisible(false)} />
-        <Content flex gap={8} style={{ flexWrap: 'wrap' }}>
+    <Content style={style} className={classnames(className, '@container')} flex fullWidth alignItems={'center'} gap={30}>
+      <MediaSubtitleImporter
+        visible={subtitleImporterVisible === true}
+        onChange={() => setMediaState(s => ({ ...s, subtitleImporterVisible: false }))}
+      />
+      <div className={'flex-wrap items-center gap-3 flex'}>
+        {state?.ytChannelId && <ChannelRenderer id={state.ytChannelId} />}
+        {episodeMode && (
           <Button.IconButton
+            strokeWidth={6}
+            smallText={false}
+            icon={state?.isPlaying ? 'park-pause' : 'park-play-one'}
+            className={classnames(shortenClazz, 'reverse-theme-button')}
             size={18}
-            theme={mediaState.isPinned ? 'filled' : undefined}
-            className={clazz}
-            onClick={() => instance.on?.({ type: 'pin' })}
-            style={{
-              color: mediaState.isPinned ? Colors.Common.Red : undefined,
-              transition: 'all 0.2s ease',
-              padding: '4px 12px'
+            theme={'filled'}
+            onClick={() => {
+              instance.on?.({ type: 'audioPlayButtonClicked' })
             }}
-            text={mediaState.isPinned ? t('general.unpin') : t('general.pin')}
-            icon={'park-like'}
-          />
+            text={state?.isPlaying ? t('general.Pause') : t('general.Play')}
+          ></Button.IconButton>
+        )}
+        {!episodeMode && (
           <Button.IconButton
-            icon="park-high-light"
-            className={clazz}
+            smallText={false}
+            icon='park-high-light'
+            className={shortenClazz}
             size={18}
             style={{
-              padding: '4px 12px',
               color: !canHighlight ? Colors.Font.SuperTransparent : undefined,
               cursor: !canHighlight ? 'not-allowed' : 'pointer'
             }}
@@ -88,115 +69,117 @@ export default ({ showDetails }: { showDetails: boolean }) => {
             }}
             text={t('general.Media highlight')}
           ></Button.IconButton>
-          {subtitleInSidebar === false && (
-            <Button.IconButton
-              size={18}
-              text={t('general.Subtitles')}
-              icon={'custom-CC'}
-              style={{
-                padding: '4px 12px',
-                ...(validSubtitleIcon
-                  ? {}
-                  : {
-                      cursor: 'not-allowed',
-                      background: 'transparent',
-                      color: Colors.Font.SuperTransparent
-                    })
-              }}
-              className={classnames(clazz, sidebarState.subtitleOpen && 'active-button select-color-border')}
-              onClick={() =>
-                (sidebarState.subtitleOpen || mediaState.subtitleList?.length) &&
-                setSidebarState(s => ({ ...s, subtitleOpen: !s.subtitleOpen }))
-              }
-            ></Button.IconButton>
+        )}
+        <Button.IconButton
+          size={18}
+          smallText={false}
+          text={
+            noSubtitleButHasTranscript
+              ? t('media.Transcript available')
+              : noSubtitleButCanTranscribe
+                ? transcribeState.state
+                  ? t('media.Transcribing')
+                  : t('media.Transcribe')
+                : t('general.Subtitles')
+          }
+          icon={noSubtitleButCanTranscribe && transcribeState.state ? Icons.Loading : 'custom-CC'}
+          style={{
+            ...(validSubtitleIcon || noSubtitleButCanTranscribe || noSubtitleButHasTranscript
+              ? {}
+              : {
+                  color: Colors.Font.SuperTransparent
+                })
+          }}
+          spin={!!(noSubtitleButCanTranscribe && transcribeState.state)}
+          className={classnames(
+            shortenClazz,
+            noSubtitleButHasTranscript && 'select-color-border select-color-font',
+            noSubtitleButCanTranscribe && transcribeState.state && 'active-button select-color-border'
           )}
-          <AnimatePopover
-            padding={10}
-            positions={['bottom', 'top']}
-            content={setV => (
-              <WithBorder padding={'0.2rem 0 0.4rem'}>
-                <Menu.NavigationMenu
-                  onSelect={v => {
-                    setV(false)
-                    if (v && v.type === 'item') {
-                      setSidebarState(s => ({ ...s, rightBarActive: v.key }))
-                    }
-                  }}
-                  defaultSelected={sidebarState.rightBarActive ? [sidebarState.rightBarActive] : undefined}
-                  layout={[
-                    {
-                      type: 'title',
-                      name: t('general.Sidebar')
-                    },
-                    {
-                      type: 'item',
-                      key: 'hide',
-                      text: t('general.Hide sidebar')
-                    },
-                    {
-                      type: 'item',
-                      key: 'label',
-                      text: t('general.Highlights')
-                    },
-                    {
-                      type: 'item',
-                      key: 'chapter',
-                      text: t('general.Chapters')
-                    },
-                    subtitleInSidebar
-                      ? {
-                          type: 'item',
-                          key: 'subtitle',
-                          text: t('general.Subtitles')
-                        }
-                      : undefined,
-                    mediaState.metaId
-                      ? {
-                          type: 'item',
-                          key: 'attachments',
-                          text: t('general.Attachments')
-                        }
-                      : undefined
-                  ]}
-                />
-              </WithBorder>
-            )}
-          >
-            <Content flex gap={10} className={classnames(ClassName.flatButton(), clazz)} style={{ padding: '4px 12px' }}>
-              <Icon size={18} name={'custom-right-bar'} />
-              <div>{t('general.Sidebar view')}</div>
-              <Icon size={14} name={'park-down'} />
-            </Content>
-          </AnimatePopover>
-          {mediaState.isTranscribing && (
-            <Tooltip content={'Click to cancel'}>
-              <Button.IconButton
-                className={clazz}
-                text={'Transcribing'}
-                onClick={() => {
-                  instance.cancelTranscribe?.()
-                }}
-                spin={true}
-                style={{ padding: '4px 12px' }}
-                icon={'park-loading-four'}
-              />
-            </Tooltip>
-          )}
-          <IconWithPopover
-            padding={10}
-            renderOnParent={false}
-            placement={['bottom', 'top']}
-            content={setV => <MediaMoreMenu onClose={() => setV(false)} onImportSubtitle={() => setSubtitleImporterVisible(true)} />}
-            name="park-more"
-            className={classnames(ClassName.flatButton(), clazz)}
-            size={20}
-            style={{
-              height: '100%',
-              padding: '5px'
+          onClick={() => {
+            if (mediaState.subtitleList?.length) {
+              setMediaState(s => ({
+                ...s,
+                sidebarActive: 'subtitles',
+                sidebarVisible: s.sidebarActive === 'subtitles' && s.sidebarVisible ? false : true
+              }))
+            } else if (!validSubtitleIcon) {
+              setMediaState(s => ({ ...s, subtitleImporterVisible: true }))
+            }
+          }}
+        ></Button.IconButton>
+        <Button.IconButton
+          smallText={false}
+          icon='custom-stars'
+          className={shortenClazz}
+          size={18}
+          onClick={() => {
+            setMediaState(s => ({ ...s, sidebarActive: 'ai', sidebarVisible: s.sidebarActive === 'ai' && s.sidebarVisible ? false : true }))
+          }}
+          text={t('general.Chat')}
+        ></Button.IconButton>
+        {validSubtitleIcon && transcribeState.state && (
+          <Button.IconButton
+            className={clazz}
+            text={t('media.Transcribing')}
+            size={14}
+            onClick={() => {
+              setMediaState(s => ({ ...s, subtitleImporterVisible: true }))
             }}
+            spin={true}
+            icon={Icons.Loading}
           />
-        </Content>
-      </Content>
+        )}
+        <Icon
+          size={18}
+          onClick={() => {
+            setMediaState(s => ({ ...s, sidebarVisible: !s.sidebarVisible }))
+          }}
+          className={classnames('!w-[36px]', shortenClazz)}
+          name='custom-right-bar'
+        />
+        <IconWithPopover
+          name={Icons.More}
+          size={20}
+          placement={['bottom', 'top']}
+          className={classnames(shortenClazz, '!w-[36px]')}
+          content={setV => <MediaMoreMenu onClose={() => setV(false)} />}
+        ></IconWithPopover>
+      </div>
     </Content>
   )
+}
+
+const ChannelRenderer = ({ id }: { id: number }) => {
+  const channel = ObjectStore('youtubeChannel').useValue(id)
+  const { t } = useTranslation()
+  if (channel) {
+    return (
+      <div
+        onClick={() => {
+          Global.layoutOps?.openPage('youtube').then(i => {
+            i.goTo?.(id, 'channel')
+          })
+        }}
+        className={'flex gap-3 mr-4 cursor-pointer items-center'}
+      >
+        <img src={channel.thumbnail} className={'size-12 rounded-full object-cover'} />
+        <div>
+          <div style={{ maxWidth: '25cqw' }} className={'font-semibold break-all line-clamp-1 text-lg'}>
+            {channel.name}
+          </div>
+          {channel.subscriberCount ? (
+            <div className={'small-transparent'}>
+              {t('feed.SubscriberCount', {
+                count: new Intl.NumberFormat(undefined, {
+                  compactDisplay: 'short',
+                  notation: 'compact'
+                }).format(Number(channel.subscriberCount))
+              })}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    )
+  }
 }

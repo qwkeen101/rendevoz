@@ -48,8 +48,13 @@ export const getRelativeBoxSize = (parentBox: Box, childBox: Box) => {
   }
 }
 
-export const pointInBox = (point: Point, box: Box) => {
-  if (point.x >= box.left && point.y >= box.top && point.x <= box.left + box.width && point.y <= box.top + box.height) {
+export const pointInBox = (point: Point, box: Box, tolerance = 0) => {
+  if (
+    point.x >= box.left - tolerance &&
+    point.y >= box.top - tolerance &&
+    point.x <= box.left + box.width + tolerance &&
+    point.y <= box.top + box.height + tolerance
+  ) {
     return true
   }
   return false

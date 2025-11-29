@@ -207,23 +207,23 @@ function Item({ value, onStop, onVisibleChange, isDragging, bound, onDragStart }
             marginLeft: 'auto'
           }}
         >
-          {typeof value === 'object' && (
-            <Icon
-              className={'p-4 hover-active-button'}
-              name={!value.visible ? 'park-preview-close' : 'park-preview-open'}
-              onClick={e => {
-                e.stopPropagation()
-                onVisibleChange()
-              }}
-            />
-          )}
           {typeof value === 'object' && value.type === 'custom' && (
             <Icon
-              className={'hover-active-button p-4'}
+              className={'hover-active-button p-4px'}
               name={'park-delete-one'}
               onClick={e => {
                 e.stopPropagation()
                 instance.viewOps?.deleteCustomProperty(value.id)
+              }}
+            />
+          )}
+          {typeof value === 'object' && (
+            <Icon
+              className={'p-4px hover-active-button'}
+              name={!value.visible ? 'park-preview-close' : 'park-preview-open'}
+              onClick={e => {
+                e.stopPropagation()
+                onVisibleChange()
               }}
             />
           )}

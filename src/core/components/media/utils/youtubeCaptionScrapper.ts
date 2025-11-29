@@ -8,47 +8,53 @@ export type IYoutubeCaptionTrack = {
   trackName: string
   vssId: string
 }
-import he from 'he'
-import { find } from 'lodash'
-import striptags from 'striptags'
 
 export default async (videoId: string): Promise<IYoutubeCaptionTrack[]> => {
-  const website = await fetch(`https://youtube.com/watch?v=${videoId}`).then(res => res.text())
-  if (!website.includes('captionTracks')) return Promise.reject()
-  const regex = /"captionTracks":(\[.*?\])/
-  const [match] = regex.exec(website)
+  const videoDetails = await fetch(`https://www.youtube.com/youtubei/v1/player`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      videoId: videoId,
+      context: {
+        client: {
+          clientName: 'ANDROID',
+          clientVersion: '20.10.38'
+        }
+      }
+    })
+  }).then(i => i.json())
+  return videoDetails.captions.playerCaptionsTracklistRenderer.captionTracks.map(i => ({
+    ...i,
+    name: {
+      simpleText: i.name?.runs[0]?.text
+    }
+  }))
+}
 
-  const { captionTracks } = JSON.parse(`{${match}}`)
-  return captionTracks
+function parseSRT(srtText: string) {
+  const entries = []
+  const blocks = srtText.split(/\r?\n\r?\n/) // 按空行分块（每条字幕）
+
+  for (const block of blocks) {
+    const lines = block.trim().split(/\r?\n/)
+    if (lines.length >= 2) {
+      const timeMatch = lines[1].match(/(\d{2}):(\d{2}):(\d{2}),(\d{3})\s+-->\s+(\d{2}):(\d{2}):(\d{2}),(\d{3})/)
+      if (!timeMatch) continue
+
+      const start = parseInt(timeMatch[1]) * 3600 + parseInt(timeMatch[2]) * 60 + parseInt(timeMatch[3]) + parseInt(timeMatch[4]) / 1000
+
+      const end = parseInt(timeMatch[5]) * 3600 + parseInt(timeMatch[6]) * 60 + parseInt(timeMatch[7]) + parseInt(timeMatch[8]) / 1000
+
+      const text = lines.slice(2).join('\n') // 支持多行字幕
+      entries.push({ start, end, text })
+    }
+  }
+
+  return entries
 }
 
 export const YoutubeCaptionParser = (data: string) => {
-  const lines = data
-    .replace('<?xml version="1.0" encoding="utf-8" ?><transcript>', '')
-    .replace('</transcript>', '')
-    .split('</text>')
-    .filter(line => line && line.trim())
-    .map(line => {
-      const startRegex = /start="([\d.]+)"/
-      const durRegex = /dur="([\d.]+)"/
-
-      const [, start] = startRegex.exec(line)
-      const [, dur] = durRegex.exec(line)
-
-      const htmlText = line
-        .replace(/<text.+>/, '')
-        .replace(/&amp;/gi, '&')
-        .replace(/<\/?[^>]+(>|$)/g, '')
-
-      const decodedText = he.decode(htmlText)
-      const text = striptags(decodedText)
-      const nStart = Number(parseFloat(start).toFixed(2))
-      const nDur = Number(parseFloat(dur).toFixed(2))
-      return {
-        start: nStart,
-        end: Number(parseFloat(nStart + nDur).toFixed(2)),
-        text: text.replace(/(\r\n|\n|\r)/gm, ' ')
-      }
-    })
-  return lines
+  return parseSRT(data)
 }

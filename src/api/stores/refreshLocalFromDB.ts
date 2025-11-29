@@ -2,7 +2,7 @@ import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { refreshValueFromDB } from '@/api/stores/object/object.store'
 import { MetaStore, CollectionStore } from '@/api/stores/index'
 
-export default (db: 'keypairs' | 'objects' | 'metaObjects' | 'metaLinks' | 'collections', key: string | number) => {
+export default (db: 'keypairs' | 'objects' | 'metaObjects' | 'metaLinks', key: string | number) => {
   switch (db) {
     case 'keypairs': {
       KeyvalueStore.freshOne(key)
@@ -10,10 +10,6 @@ export default (db: 'keypairs' | 'objects' | 'metaObjects' | 'metaLinks' | 'coll
     }
     case 'objects': {
       refreshValueFromDB(key)
-      break
-    }
-    case 'collections': {
-      CollectionStore.refreshFromDB(key)
       break
     }
     case 'metaObjects': {

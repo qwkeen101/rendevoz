@@ -1,7 +1,6 @@
 import { useMemoizedFn } from '@/hooks'
 import { cloneElement, forwardRef, ReactElement, useCallback, useEffect, useRef } from 'react'
-import { GlobalDragOverlayInstance } from '.'
-import { IDraggableElement } from 'rendevoz'
+import { IDraggableElement } from '~/typings'
 
 const DraggableElement = forwardRef<
   HTMLElement,
@@ -10,7 +9,7 @@ const DraggableElement = forwardRef<
     draggingDetails?: IDraggableElement
     draggable?: boolean
     onDragStart?: VoidFunction
-    hoverElement?: ReactElement
+    hoverElement?: ReactElement | HTMLElement
     shouldPress?: number
     dragHandleClassName?: string
   }
@@ -22,7 +21,6 @@ const DraggableElement = forwardRef<
   const pointerHandler = useMemoizedFn((e: PointerEvent) => {
     if (draggable === false) return
     if (e.type === 'pointerdown') {
-      console.log(e)
       if (e.button !== 0) return
       ;(e.target as Element).releasePointerCapture(e.pointerId)
       isPressed.current = true
@@ -31,28 +29,26 @@ const DraggableElement = forwardRef<
       const child = childRef.current
       e.preventDefault()
 
-      if (hoverElement) {
-        draggingDetails && (GlobalDragOverlayInstance.draggingDetails = draggingDetails)
-        GlobalDragOverlayInstance.addDragElements?.(hoverElement)
+      if (hoverElement && !(hoverElement instanceof HTMLElement)) {
+        draggingDetails && (Global.values.draggingDetails = draggingDetails)
+        Global.commonOps?.setDraggingElements?.(hoverElement)
         return
       }
-      if (child) {
-        const cloned = child.cloneNode(true) as HTMLElement
-        const bound = child.getBoundingClientRect()
+      const ele = hoverElement instanceof HTMLElement ? hoverElement : child
+      if (ele) {
+        const cloned = ele.cloneNode(true) as HTMLElement
+        const bound = ele.getBoundingClientRect()
         cloned.style.width = `${bound.width}px`
         cloned.style.height = `${bound.height}px`
         cloned.style.pointerEvents = 'none'
-        // cloned.style.boxShadow = '0 0 0 2px var(--select-color)'
-        // cloned.style.borderRadius = '4px'
-        draggingDetails && (GlobalDragOverlayInstance.draggingDetails = draggingDetails)
-        GlobalDragOverlayInstance.addDragElements?.(cloned)
+        draggingDetails && (Global.values.draggingDetails = draggingDetails)
+        Global.commonOps?.setDraggingElements?.(cloned)
       }
     }
     if (e.type === 'pointermove') {
       if (isPressed.current && draggable && Date.now() - pressStartTime.current > shouldPress) {
-        console.log('yesss')
         if (dragStartTriggered.current === false) {
-          GlobalDragOverlayInstance.startDrag?.()
+          Global.commonOps?.startDrag?.()
           onDragStart?.()
         }
         e.preventDefault()

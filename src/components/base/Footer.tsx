@@ -18,12 +18,9 @@ const Footer: FC<FooterProps> = ({ onBack, onSubmit, submitText = 'submit', back
   return (
     <Content flex alignItems="center" justifyContent="space-between">
       <div
-        className={classnames(ClassName.flatButton(), 'border')}
+        className={'button border !py-1.5 !px-4 font-semibold !rounded-md'}
         style={{
-          padding: '4px 12px',
           marginRight: 30,
-          fontWeight: 500,
-          borderRadius: 4,
           ...buttonStyle
         }}
         onClick={onBack}
@@ -31,10 +28,8 @@ const Footer: FC<FooterProps> = ({ onBack, onSubmit, submitText = 'submit', back
         {t(`footer.${backText}`)}
       </div>
       <div
-        className={ClassName.selectButton()}
+        className={'select-button !py-1.5 !px-4 font-semibold !rounded-md'}
         style={{
-          padding: '4px 12px',
-          borderRadius: 4,
           ...buttonStyle
         }}
         onClick={onSubmit}

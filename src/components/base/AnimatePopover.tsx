@@ -1,20 +1,14 @@
-import React, { Dispatch, FC, forwardRef, memo, PropsWithChildren, ReactNode, RefObject, useEffect, useRef, useState } from 'react'
+import React, { Dispatch, FC, memo, PropsWithChildren, ReactNode, RefObject, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { PopoverProps } from 'react-tiny-popover'
 import { Popover } from './popover/Popover'
 import useUnmount from '@/hooks/utils/useUnmount'
-import { GlobalInstance, useMergedRef, useUpdateEffect } from '@/hooks'
+import { useMergedRef, useUpdateEffect } from '@/hooks'
 import { KEY, Zindexes } from '@/consts'
-import { LeftTopPosition, Position } from '~/typings'
+import { LeftTopPosition } from '~/typings'
 import { SetStateAction } from 'jotai'
 import { createPortal } from 'react-dom'
 import isHotkey from 'is-hotkey'
-
-interface PosHelperProps {
-  top?: number
-  left?: number
-  children?: ReactNode
-}
 
 export interface AnimatePopoverProps extends Omit<PopoverProps, 'content' | 'isOpen' | 'children'> {
   animate?: boolean
@@ -24,13 +18,12 @@ export interface AnimatePopoverProps extends Omit<PopoverProps, 'content' | 'isO
   disableIntersection?: boolean
   onVisiblityChange?: (v: boolean) => void
   innerRef?: RefObject<HTMLElement>
-  parentElement?: HTMLElement | null
+  parentElement?: HTMLElement | null | RefObject<HTMLElement>
   backdropFilter?: boolean
   position?: LeftTopPosition
   children?: ReactNode
   contentDraggable?: boolean
   closeOnClickOutside?: boolean
-  openOnClick?: boolean
   withClickCover?: boolean
   borderRadius?: number
   openOnClickCapture?: boolean
@@ -53,7 +46,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
   keepAlign = false,
   disableNudge = true,
   position,
-  openOnClick = true,
+  hoverOpen,
   openOnClickCapture = false,
   parentElement = document.body,
   boundaryElement = document.body,
@@ -104,6 +97,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
     nudgedRef.current = undefined
   })
   const contentHoverRef = useRef(false)
+
   useEffect(() => {
     // if open
     if (visible) {
@@ -137,30 +131,10 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
     }
     if (isOpen) {
       if (keyboardClose) {
-        GlobalInstance.values.keydownHandlers.unshift(keydownHandler)
+        Global.values.keydownHandlers.unshift(keydownHandler)
       }
-      const containerDockPane = intersectionRef.current?.closest(`[role='tabpane']`)
-      if (containerDockPane) {
-        const visiblityWatcher = new MutationObserver(cb => {
-          cb.forEach(record => {
-            if (record.attributeName === 'style') {
-              const style = (record.target as HTMLElement).style
-              if (style.contentVisibility === 'hidden') {
-                setIsOpen(false)
-              }
-            }
-          })
-        })
-        visiblityWatcher.observe(containerDockPane, {
-          attributes: true,
-          attributeFilter: ['style']
-        })
-        return () => {
-          GlobalInstance.values.keydownHandlers = GlobalInstance.values.keydownHandlers.filter(
-            i => i !== keydownHandler
-          )
-          visiblityWatcher.disconnect()
-        }
+      return () => {
+        Global.values.keydownHandlers = Global.values.keydownHandlers.filter(i => i !== keydownHandler)
       }
     }
     return () => {
@@ -176,18 +150,20 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
       return
     }
     if (document.querySelector('[role="click-cover"]')) return
-    setTimeout(() => {
-      if (e.type !== 'contextmenu' && e.defaultPrevented) return
-      onClickOutside?.(e)
-      if (closeOnClickOutside) {
-        timeoutRef.current = setTimeout(() => setIsOpen(false), duration * 1000)
-      }
-      if (visible === undefined) {
-        setInnerVisible(false)
-      }
-    })
+    onClickOutside?.(e)
+    if (closeOnClickOutside) {
+      timeoutRef.current = setTimeout(() => setIsOpen(false), duration * 1000)
+    }
+    if (visible === undefined) {
+      setInnerVisible(false)
+    }
   }
-  const realParent = parentElement === null || parentElement === undefined ? document.body : parentElement
+  const realParent =
+    parentElement === null || parentElement === undefined
+      ? document.body
+      : 'current' in parentElement
+        ? parentElement.current || document.body
+        : parentElement
   const getTransformOrigin = (position: 'left' | 'top' | 'right' | 'bottom' | undefined, align?: 'start' | 'end' | 'center') => {
     // top left
     const origin = {
@@ -248,6 +224,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
       left: undefined,
       top: undefined
     }
+
     return (
       <AnimatePresence onExitComplete={() => setIsOpen(false)}>
         {innerVisible && (
@@ -285,6 +262,7 @@ const AnimatePopover: FC<PropsWithChildren<AnimatePopoverProps>> = ({
                     top: 0,
                     left: 0,
                     width: '100%',
+                    appRegion: 'no-drag',
                     height: '100%',
                     zIndex: Number(containerStyle?.zIndex || '9999') - 1
                   }}

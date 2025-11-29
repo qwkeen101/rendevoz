@@ -1,10 +1,8 @@
 import { IWhiteboardInstance, XYPosition } from '~/typings'
-import { GlobalInstance } from '@/hooks'
 import cloneNodes from '@/core/components/whiteboard/hooks/ops/cloneNodes'
-import { mousePos } from '@/hooks/utils/useMousePositionRef'
 
 export default (instance: IWhiteboardInstance, position: XYPosition) => {
-  const currentCopied = GlobalInstance.values.copiedWhiteboardData
+  const currentCopied = Global.values.copiedWhiteboardData
   if (currentCopied?.length) {
     const coord = instance.coordOps?.transformWindowPositionToPosition({
       x: position.x,

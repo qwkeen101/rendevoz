@@ -4,20 +4,20 @@ import { FC, useEffect } from 'react'
 import { ReactEditor, RenderElementProps, useSlateStatic } from '../../slate-react'
 import { MetaStore } from '@/api/stores'
 import { WithBorder } from '@/components'
-import { Rendevoz } from '@/core/rendevoz'
 import { ObjectActionMenu } from '@/core'
 import classnames from 'classnames'
 import { Editor, Transforms } from 'slate'
 import { HistoryEditor } from 'slate-history'
 import ContextMenu from '@/components/contextMenu'
-import { GlobalInstance } from '@/hooks'
+import trans from '@/consts/trans'
+import { t } from 'i18next'
 
 const clazzName = classnames(
   css({
     cursor: 'pointer',
     transition: 'color 0.2s ease',
     ':hover': {
-      color: `var(--block-font-color, var(--select-color)) !important`
+      color: `var(--block-font-color, var(--font-link)) !important`
     }
   }),
   'border-bottom'
@@ -37,9 +37,8 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
   const metaObject = MetaStore.useValue(element.originId)
   const childrenText = element.children[0].text
   const editor = useSlateStatic()
-  console.log(childrenText)
   useEffect(() => {
-    const n = metaObject?.name || metaObject?.placeholderName || 'Deleted object'
+    const n = metaObject?.name || metaObject?.placeholderName || t(trans.Unnamed)
     if (n !== childrenText) {
       const path = ReactEditor.findPath(editor, element)
       if (path) {
@@ -72,7 +71,7 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
             }
           >
             <span
-              onClick={() => metaObject && GlobalInstance.layoutOps?.openObject(metaObject.id)}
+              onClick={() => metaObject && Global.layoutOps?.openObject(metaObject.id)}
               className={clazzName}
               data-meta
               style={{
@@ -91,7 +90,7 @@ const InlineMetaElement: FC<RenderElementProps> = ({ element, children, attribut
               className={inlineClassName}
               role="tag"
             >
-              {Rendevoz.Utils.Meta.getTypeName(metaObject?.type)}
+              {Global.utils.getTypeName(metaObject?.type)}
             </span>
           )}
         </>

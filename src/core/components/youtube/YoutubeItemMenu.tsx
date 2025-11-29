@@ -1,37 +1,52 @@
-import useFeedInstance from '@/core/components/feed/hooks/useFeedInstance'
 import { useTranslation } from 'react-i18next'
 import { Menu, WithBorder } from '@/components'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import trans from '@/consts/trans'
 import { Icons } from '@/consts'
 import { IMenuLayoutItem } from '@/components/base/menu'
-import { IYoutubeChannel, IYoutubePlaylist, IYoutubeVideo } from '~/typings'
-import YoutubeServices, { IYoutubeChannelItem } from '@/core/components/feed/youtube/YoutubeServices'
+import { IYoutubeChannel, IYoutubeInstance, IYoutubePlaylist, IYoutubeVideo } from '~/typings'
+import YoutubeServices from '@/core/components/youtube/YoutubeServices'
 import { useLayoutEffect, useState } from 'react'
-import getYtItem from '@/core/components/feed/youtube/getYtItem'
 import toast from 'react-hot-toast'
 import { useSetAtom } from 'jotai/react'
-import { FeedStateAtom } from '@/core/components/feed/hooks/useFeedState'
-import useYoutubeVideoToMeta from '@/core/components/feed/youtube/useYoutubeVideoToMeta'
-import { GlobalInstance } from '@/hooks'
+import useYoutubeVideoToMeta from '@/core/components/youtube/hooks/useYoutubeVideoToMeta'
+import useYoutubeInstance from '@/core/components/youtube/hooks/useYoutubeInstance'
+import { YoutubeStateAtom } from '@/core/components/youtube/hooks/useYoutubeState'
+
+const getYtItem = async (id: string, type: 'channel' | 'playlist' | 'video') => {
+  if (type === 'channel') {
+    return await ObjectStore('youtubeChannel').fetchByConditions({ channelId: id })
+  }
+  if (type === 'playlist') {
+    return await ObjectStore('youtubePlaylist').fetchByConditions({ playlistId: id })
+  }
+  return await ObjectStore('youtubeVideo').fetchByConditions({ videoId: id })
+}
 
 const YoutubeItemMenu = ({
   id,
   onClose,
   parentFolderId,
   type,
-  showMeta = true
+  showMeta = true,
+  showFollow = true
 }: {
   id: number | string
   showMeta?: boolean
   onClose: VoidFunction
   parentFolderId?: number
+  showFollow?: boolean
   type: 'video' | 'channel' | 'playlist'
 }) => {
   const itemType =
     type === 'video' ? 'youtubeVideo' : type === 'channel' ? 'youtubeChannel' : type === 'playlist' ? 'youtubePlaylist' : 'youtubeVideo'
   const { t } = useTranslation()
-  const instance = useFeedInstance()
+  const getInstance = async (): Promise<IYoutubeInstance> => {
+    return new Promise(res => {
+      Global.layoutOps?.openPage('youtube').then(res)
+    })
+  }
+  const instance = useYoutubeInstance()
   const getRealId = async () => {
     if (rId) {
       return rId
@@ -39,10 +54,10 @@ const YoutubeItemMenu = ({
     if (!item && typeof id === 'string') {
       let res =
         type === 'channel'
-          ? await instance.youtubeOps?.addChannel(id)
+          ? await instance.addChannel?.(id)
           : type === 'playlist'
-            ? await instance.youtubeOps?.addPlaylist(id)
-            : await instance.youtubeOps?.addVideo(id)
+            ? await instance.addPlaylist?.(id)
+            : await instance.addVideo?.(id)
       if (res) {
         return res.id
       }
@@ -53,10 +68,10 @@ const YoutubeItemMenu = ({
     }
     return
   }
-  const setFeedState = useSetAtom(FeedStateAtom)
+  const setYoutubeState = useSetAtom(YoutubeStateAtom)
   const [rId, setRId] = useState<number | undefined>(typeof id === 'number' ? id : undefined)
   const item = ObjectStore(itemType).useValue(rId)
-  const meta = type === 'video' && useYoutubeVideoToMeta(item?.id)
+  const meta = type === 'video' ? useYoutubeVideoToMeta(item?.id) : undefined
   const getLink = () => {
     if (!item && typeof id !== 'string') return
     const strId = typeof id === 'string' ? id : undefined
@@ -79,27 +94,17 @@ const YoutubeItemMenu = ({
     }
     if (typeof id === 'string') {
       if (type === 'video') {
-        setFeedState(s => ({ ...s, isFetching: true }))
-        try {
-          const video = await YoutubeServices.getVideo(id)
-          if (video?.items.length) {
-            const v = video.items[0].snippet.channelId
-            return v
-          }
-        } finally {
-          setFeedState(s => ({ ...s, isFetching: false }))
+        const video = await YoutubeServices.getVideo(id)
+        if (video?.items.length) {
+          const v = video.items[0].snippet.channelId
+          return v
         }
       }
       if (type === 'playlist') {
-        setFeedState(s => ({ ...s, isFetching: true }))
-        try {
-          const playlist = await YoutubeServices.getPlaylist(id)
-          if (playlist?.items.length) {
-            const v = playlist.items[0].snippet.channelId
-            return v
-          }
-        } finally {
-          setFeedState(s => ({ ...s, isFetching: false }))
+        const playlist = await YoutubeServices.getPlaylist(id)
+        if (playlist?.items.length) {
+          const v = playlist.items[0].snippet.channelId
+          return v
         }
       }
     }
@@ -113,38 +118,31 @@ const YoutubeItemMenu = ({
       })
     }
   }, [])
+
   const moveToMenu = useMoveToMenu({ parentFolderId, id: rId ?? id, type })
+  const showMetaMenu = showMeta !== false ? true : showMeta === false ? meta && !meta.temp && !meta.deleted : false
+
   return (
     <WithBorder className={'py-[0.4rem] min-w-56'} onClick={e => e.stopPropagation()}>
       <Menu.NavigationMenu
         layout={[
-          {
+          showFollow && {
             type: 'item',
             text: item?.followed ? t(trans.Unfollow) : t(trans.Follow),
             key: 'follow',
-            icon: item?.followed ? Icons.Unfollow : Icons.Follow,
+            icon: Icons.Follow,
+            iconTheme: item?.followed ? 'filled' : undefined,
+            iconClassName: item?.followed ? 'text-red-500' : '',
             onSelect: () => {
               onClose()
               setTimeout(async () => {
                 const realId = await getRealId()
                 if (realId) {
-                  instance.youtubeOps?.follow(realId, type)
+                  instance.follow?.(realId, type)
                 }
               }, 160)
             }
           },
-          (type === 'channel' || type === 'playlist') && item
-            ? {
-                type: 'item',
-                text: t(trans.History),
-                key: 'history',
-                icon: Icons.History,
-                onSelect: () => {
-                  item && instance.youtubeOps?.viewHistory(item.id, type)
-                  onClose()
-                }
-              }
-            : undefined,
           parentFolderId
             ? {
                 type: 'item',
@@ -168,7 +166,7 @@ const YoutubeItemMenu = ({
             key: 'move-to',
             text: t(trans.Save),
             subMenuStyle: { width: 200 },
-            icon: 'park-folder-close',
+            icon: Icons.Folder,
             subMenu: moveToMenu(onClose)
           },
           type === 'video' || type === 'playlist'
@@ -180,8 +178,8 @@ const YoutubeItemMenu = ({
                 onSelect: async () => {
                   const id = await getChannelId()
                   if (id) {
-                    instance.youtubeOps?.addChannel(id).then(res => {
-                      instance.youtubeOps?.goTo(res.id, 'channel')
+                    instance.addChannel?.(id).then(async res => {
+                      ;(await getInstance()).goTo?.(res.id, 'channel')
                     })
                   }
                   onClose()
@@ -194,28 +192,15 @@ const YoutubeItemMenu = ({
                 text: t(trans.Feed.ViewPlaylist),
                 key: 'view-playlist',
                 icon: Icons.Playlist,
-                onSelect: () => {
+                onSelect: async () => {
                   const playlistId = item.playlistAppId
                   if (playlistId) {
-                    instance.youtubeOps?.goTo(playlistId, 'playlist')
+                    ;(await getInstance()).goTo?.(playlistId, 'playlist')
                   }
                   onClose()
                 }
               }
             : undefined,
-          {
-            type: 'item',
-            text: t(trans.Feed.ViewOriginal),
-            key: 'view-original',
-            icon: Icons.Link,
-            onSelect: () => {
-              const link = getLink()
-              if (link) {
-                window.open(link, '_blank')
-              }
-              onClose()
-            }
-          },
           {
             type: 'item',
             text: t(trans.CopyLink),
@@ -230,12 +215,12 @@ const YoutubeItemMenu = ({
               onClose()
             }
           },
-          ...(type === 'video' && showMeta
+          ...(type === 'video' && showMetaMenu
             ? ([
                 {
                   type: 'separator'
                 },
-                {
+                showMeta && {
                   type: 'item',
                   key: 'add as object',
                   icon: meta ? Icons.Info : Icons.AddAsObject,
@@ -243,11 +228,11 @@ const YoutubeItemMenu = ({
                   onSelect: async () => {
                     onClose?.()
                     if (meta) {
-                      GlobalInstance.metaOps?.openDetails(meta.id)
+                      Global.metaOps?.openDetails(meta.id)
                     } else {
                       const realId = await getRealId()
                       if (realId) {
-                        instance.youtubeOps?.addVideoAsMeta(realId)
+                        instance.addVideoAsMeta?.(realId)
                         toast.success(t(trans.Success.AddedSuccessfully))
                       }
                     }
@@ -261,13 +246,13 @@ const YoutubeItemMenu = ({
                   onSelect: async () => {
                     onClose?.()
                     if (meta) {
-                      GlobalInstance.metaOps?.quickAdd(meta.id, 'tags')
+                      Global.metaOps?.quickAdd(meta.id, 'tags')
                     } else {
                       const realId = await getRealId()
                       if (realId) {
-                        const m = await instance.youtubeOps?.addVideoAsMeta(realId)
+                        const m = await instance.addVideoAsMeta?.(realId)
                         if (m) {
-                          GlobalInstance.metaOps?.quickAdd(m.id, 'tags')
+                          Global.metaOps?.quickAdd(m.id, 'tags')
                         }
                       }
                     }
@@ -281,18 +266,33 @@ const YoutubeItemMenu = ({
                   onSelect: async () => {
                     onClose?.()
                     if (meta) {
-                      GlobalInstance.metaOps?.quickAdd(meta.id)
+                      Global.metaOps?.quickAdd(meta.id)
                     } else {
                       const realId = await getRealId()
                       if (realId) {
-                        const m = await instance.youtubeOps?.addVideoAsMeta(realId)
+                        const m = await instance.addVideoAsMeta?.(realId)
                         if (m) {
-                          GlobalInstance.metaOps?.quickAdd(m.id)
+                          Global.metaOps?.quickAdd(m.id)
                         }
                       }
                     }
                   }
-                }
+                },
+                meta &&
+                  !meta.deleted &&
+                  !meta.temp && {
+                    type: 'item',
+                    key: 'delete-meta',
+                    icon: Icons.Delete,
+                    text: t(trans.Delete),
+                    onSelect: () => {
+                      onClose?.()
+                      setTimeout(() => {
+                        MetaStore.deleteMetaObject(meta.id)
+                        toast.success(t(trans.Success.DeleteSuccessfully))
+                      }, 200)
+                    }
+                  }
               ] as IMenuLayoutItem[])
             : [])
         ]}
@@ -304,15 +304,15 @@ const YoutubeItemMenu = ({
 const useMoveToMenu = ({ parentFolderId, id, type }: { parentFolderId?: number; id: number | string; type: string }) => {
   const allFolders = ObjectStore('youtubeFolder').useAll()
   const { t } = useTranslation()
-  const instance = useFeedInstance()
+  const instance = useYoutubeInstance()
   const getRealId = async () => {
     if (typeof id === 'string') {
       let res =
         type === 'channel'
-          ? await instance.youtubeOps?.addChannel(id)
+          ? await instance.addChannel?.(id)
           : type === 'playlist'
-            ? await instance.youtubeOps?.addPlaylist(id)
-            : await instance.youtubeOps?.addVideo(id)
+            ? await instance.addPlaylist?.(id)
+            : await instance.addVideo?.(id)
       if (res) {
         return res.id
       }
@@ -362,9 +362,9 @@ const useMoveToMenu = ({ parentFolderId, id, type }: { parentFolderId?: number; 
         key: 'create-folder',
         text: t(trans.Feed.CreateFolder),
         icon: 'park-folder-plus',
-        onSelect: async () => {
+        onSelect: () => {
           onClose?.()
-          instance.youtubeOps?.createFolder().then(async f => {
+          instance.createFolder?.().then(async f => {
             const realId = await getRealId()
             if (!realId) return
             toast.success(t(trans.Feed.SavedToFolder))

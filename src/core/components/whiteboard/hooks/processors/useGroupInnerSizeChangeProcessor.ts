@@ -1,4 +1,4 @@
-import { IWhiteboardEvents, IWhiteboardInstance, IWhiteboardNode } from '~/typings'
+import { IWhiteboardEvent, IWhiteboardInstance, IWhiteboardNode, WhiteboardEvents } from '~/typings'
 import { useEffect, useRef } from 'react'
 import { getBoxOfBoxes } from '@/core/components/whiteboard/utils'
 import { enlargeBox } from '@/core/components/whiteboard/hooks/ops/group'
@@ -7,6 +7,7 @@ import { useAtomValue } from 'jotai'
 import { WhiteboardAtom } from '@/core/components/whiteboard/StateHooks'
 import { assignProperties } from '@/utils'
 import { useDebounceFn } from '@/hooks'
+import { WhiteboardEvent } from 'rendevoz'
 
 export default () => {
   // keep track of groups initial size
@@ -20,38 +21,36 @@ export default () => {
     { wait: 50 }
   )
   useEffect(() => {
-    const l = (e: IWhiteboardEvents) => {
-      if (e.type === 'nodeSizeChange') {
-        const changedNodes = e.changed
-        const nonGroup = changedNodes.filter(i => i.type !== 'group')
-        nonGroup.forEach(n => {
-          if (n.rootId && n.x === 0 && n.y === 0) return
-          const parentGroups = instance.groupOps?.getParentGroupsOfNode(n.id, true)
-          if (parentGroups?.length) {
-            parentGroups.forEach(g => {
-              triggeredByAdapt.current[g.id] = true
-              debouceSet.run(g.id)
-              if (!initialSizeRef.current.has(g.id)) {
-                initialSizeRef.current.set(g.id, g)
-              }
-              const initial = initialSizeRef.current.get(g.id)
-              if (initial) {
-                adaptGroupSize(initial, instance)
-              }
-            })
-          }
-        })
-        changedNodes.forEach(n => {
-          if (n.type === 'group') {
-            if (triggeredByAdapt.current[n.id]) return
-            initialSizeRef.current.set(n.id, n)
-          }
-        })
-      }
+    const l = (e: WhiteboardEvents['nodeSizeChange']) => {
+      const changedNodes = e.changed
+      const nonGroup = changedNodes.filter(i => i.type !== 'group')
+      nonGroup.forEach(n => {
+        if (n.rootId && n.x === 0 && n.y === 0) return
+        const parentGroups = instance.groupOps?.getParentGroupsOfNode(n.id, true)
+        if (parentGroups?.length) {
+          parentGroups.forEach(g => {
+            triggeredByAdapt.current[g.id] = true
+            debouceSet.run(g.id)
+            if (!initialSizeRef.current.has(g.id)) {
+              initialSizeRef.current.set(g.id, g)
+            }
+            const initial = initialSizeRef.current.get(g.id)
+            if (initial) {
+              adaptGroupSize(initial, instance)
+            }
+          })
+        }
+      })
+      changedNodes.forEach(n => {
+        if (n.type === 'group') {
+          if (triggeredByAdapt.current[n.id]) return
+          initialSizeRef.current.set(n.id, n)
+        }
+      })
     }
-    instance.addEventListener?.(l)
+    instance.addEventListener('nodeSizeChange', l)
     return () => {
-      instance.removeEventListener?.(l)
+      instance.removeEventListener('nodeSizeChange', l)
     }
   }, [])
 }

@@ -5,9 +5,8 @@ import { KEY } from '@/consts'
 import { ReactEditor } from '@/core'
 
 const useEditorArrowKey = (instance: IEditorInstance) => {
-  const editor = instance.getSlateEditor?.()
-  const handleArrowKey = (e: KeyboardEvent) => {
-    if (!editor) return
+  const editor = instance.editor
+  return (e: KeyboardEvent) => {
     if (editor.selection && Range.isCollapsed(editor.selection) && ReactEditor.isFocused(editor)) {
       if (isHotkey(KEY.ArrowLeft, e)) {
         const selection = editor.selection
@@ -83,7 +82,6 @@ const useEditorArrowKey = (instance: IEditorInstance) => {
       }
     }
   }
-  return handleArrowKey
 }
 
 export default useEditorArrowKey

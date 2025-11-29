@@ -1,7 +1,8 @@
 import { Box, IWhiteboardInstance, IWhiteboardNode } from '~/typings'
 import { getBoxOfBoxes } from '@/core/components/whiteboard/utils'
+import { isEqual } from 'lodash'
 
-const defaultEnlarge = 24
+const defaultEnlarge = 36
 export default (node: IWhiteboardNode, instance: IWhiteboardInstance, availableGroups: (IWhiteboardNode & { type: 'group' })[]) => {
   let nodeBox: Box | undefined = undefined
   if (node.type === 'mindmap') {
@@ -14,31 +15,18 @@ export default (node: IWhiteboardNode, instance: IWhiteboardInstance, availableG
   if (!nodeBox) return
   const newGroups = availableGroups
     .map(g => {
-      const inGroupNodes = instance.groupOps?.getNodesInGroup(g.id, true) || []
-      const allInGroupNodesBox = inGroupNodes.map(n => instance.nodeOps?.getNodeFuncs(n.id)?.getRealtimeBox()).filter(i => i) as Box[]
-      const newGroupBox = getBoxOfBoxes([...allInGroupNodesBox, nodeBox!])
-      if (newGroupBox) {
-        if (newGroupBox.left + newGroupBox.width > g.x + g.width) {
-          newGroupBox.width += defaultEnlarge
-        }
-        if (newGroupBox.top + newGroupBox.height > g.y + g.height) {
-          newGroupBox.height += defaultEnlarge
-        }
-        if (newGroupBox.left < g.x) {
-          newGroupBox.left -= defaultEnlarge
-          newGroupBox.width += 2 * defaultEnlarge
-        }
-        if (newGroupBox.top < g.y) {
-          newGroupBox.top -= defaultEnlarge
-          newGroupBox.height += 2 * defaultEnlarge
-        }
-        return {
-          enlarged: newGroupBox,
-          id: g.id
+      const groupBox = instance.nodeOps?.getNodeFuncs(g.id)?.getRealtimeBox()
+      if (groupBox) {
+        const expanded = expandParentBox(groupBox, nodeBox, defaultEnlarge)
+        if (!isEqual(expanded, groupBox)) {
+          return {
+            ...expanded,
+            id: g.id
+          }
         }
       }
     })
-    .filter(i => i)
+    .filter(i => i) as (Box & { id: number })[]
   if (newGroups.length) {
     instance.updateWhiteboard?.(w => {
       const groupSizes: IWhiteboardNode[] = []
@@ -47,10 +35,10 @@ export default (node: IWhiteboardNode, instance: IWhiteboardInstance, availableG
         if (origin) {
           const newOrigin = {
             ...origin,
-            x: g.enlarged.left,
-            y: g.enlarged.top,
-            width: g.enlarged.width,
-            height: g.enlarged.height
+            x: g.left,
+            y: g.top,
+            width: g.width,
+            height: g.height
           }
           w.nodes?.set(g.id, newOrigin)
           groupSizes.push(newOrigin)
@@ -62,4 +50,26 @@ export default (node: IWhiteboardNode, instance: IWhiteboardInstance, availableG
       })
     }, true)
   }
+}
+
+function expandParentBox(parentBox: Box, childBox: Box, distance: number) {
+  let { left: pLeft, top: pTop, width: pWidth, height: pHeight } = parentBox
+  let { left: cLeft, top: cTop, width: cWidth, height: cHeight } = childBox
+
+  let pRight = pLeft + pWidth
+  let pBottom = pTop + pHeight
+  let cRight = cLeft + cWidth
+  let cBottom = cTop + cHeight
+
+  // 计算扩展的新边界
+  let newLeft = Math.min(pLeft, cLeft - distance)
+  let newTop = Math.min(pTop, cTop - distance)
+  let newRight = Math.max(pRight, cRight + distance)
+  let newBottom = Math.max(pBottom, cBottom + distance)
+
+  // 计算新的宽高
+  let newWidth = newRight - newLeft
+  let newHeight = newBottom - newTop
+
+  return { left: newLeft, top: newTop, width: newWidth, height: newHeight }
 }

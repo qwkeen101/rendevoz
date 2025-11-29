@@ -1,5 +1,4 @@
 import { Content } from '@/components'
-import { ClassName } from 'rendevoz'
 import SettingItem, { ISettingItem } from '@/core/setting/SettingItem'
 import { Colors } from '@/consts'
 import { ReactNode } from 'react'

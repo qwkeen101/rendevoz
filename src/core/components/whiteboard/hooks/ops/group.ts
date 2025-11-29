@@ -4,7 +4,7 @@ import { getBoxOfBoxes, getBoxOfNodes } from '@/core/components/whiteboard/utils
 import { exportWhiteboardAsImage } from '@/core/components/whiteboard/utils/exportAsImage'
 import groupStore from '@/api/stores/group.store'
 
-export const enlargeBox = (currentBox: Box, enlarge: number = 30) => {
+export const enlargeBox = (currentBox: Box, enlarge: number = 36) => {
   return {
     left: currentBox.left - enlarge,
     top: currentBox.top - enlarge,
@@ -17,38 +17,13 @@ const assignGroupOps = (instance: IWhiteboardInstance) => {
   assignProperties(instance, {
     groupOps: {
       exportGroupImage: groupId => {
-        const boxes = instance.nodeOps?.getDOMBoxOfNodes(groupId)
-        const groupBox = boxes?.[groupId]
         const group = instance.getNode?.(groupId)
-        if (groupBox && group) {
-          const allNodes = instance.getAllNode?.()
-          const container = instance.getContainerNode?.()
-          if (allNodes && container) {
-            const { width, height } = calculateImageAspectRatio(groupBox.width, groupBox.height, 8000, 8000)
-            exportWhiteboardAsImage(allNodes, container, instance, {
-              as: 'png',
-              area: 'visible',
-              box: groupBox,
-              width: width,
-              height: height,
-              padding: 0
-            }).then(i => {
-              downloadImg(i, `${group.name || 'group'}.png`)
-            })
-          }
+        const parent = instance.getContainerNode?.()
+        if (group && parent) {
+          exportWhiteboardAsImage([group], parent, instance).then(i => {
+            downloadImg(i, `${group.name || 'group'}.png`)
+          })
         }
-      },
-      renameGroup: groupNodeId => {
-        const node = instance.getNode?.(groupNodeId)
-        if (!node) throw 'Failed to find node!'
-        const headPos = {
-          left: node.x,
-          top: node.y - 30,
-          width: 1,
-          height: 20
-        }
-        instance.containerOps?.fitTo(headPos)
-        instance.nodeOps?.getNodeFuncs(groupNodeId)?.setNodeState(s => ({ ...s, isEditingName: true }))
       },
       getParentGroupsOfNode: (nodeId, mindmapChildUseRoot) => {
         const currentNode = instance.getNode?.(nodeId)
@@ -79,6 +54,7 @@ const assignGroupOps = (instance: IWhiteboardInstance) => {
         const gb = instance.nodeOps?.getNodeFuncs(group.id)?.getRealtimeBox()
         if (!gb) throw new Error('Can not get group box!')
         return allNodes.filter(i => {
+          if (includeSelf && i.id === groupNodeId) return true
           if (!includeSelf && i.id === groupNodeId) return false
           const b = {
             left: i.x,

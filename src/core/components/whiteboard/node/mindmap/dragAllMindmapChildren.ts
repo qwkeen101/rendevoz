@@ -10,7 +10,6 @@ export default (instance: IWhiteboardInstance, subIds: number[], linkIds: string
         x: node.x + dragOffset.x,
         y: node.y + dragOffset.y
       }
-      console.log(node)
       const s = `translate(${result.x}px,${result.y}px)`
       instance.nodeOps?.getNodeFuncs(id)?.setStyle({
         transform: s

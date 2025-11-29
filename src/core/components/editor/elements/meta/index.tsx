@@ -1,25 +1,37 @@
 import { FC, memo } from 'react'
 import { RenderElementProps } from 'slate-react'
-import NoteCard from '../cards/NoteCard'
-import { useRenderObject } from '@/core'
-import { Content } from '@/components'
-import { Colors } from '@/consts'
+import { ObjectActionMenu } from '@/core'
+import { IconWithPopover, WithBorder } from '@/components'
+import { Icons } from '@/consts'
 import LabelDetailsRenderer from '@/core/object/renderer/LabelDetailsRenderer'
 import UncontrolledGroup from '@/core/components/group/UncontrolledGroup'
 import Audio from '@/core/components/media/wrappers/Audio'
 import Video from '@/core/components/media/wrappers/Video'
-import { ObjectStore } from '@/api/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import { IImage } from '~/typings'
 import ResizeWrapper from '@/core/components/editor/elements/ResizeWrapper'
+import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
+import trans from '@/consts/trans'
+import classnames from 'classnames'
+import { useTranslation } from 'react-i18next'
+import { MetaObjectElement } from '~/typings/components/editor/outerElements'
 
 const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
-  const metaEle = element
+  const instance = useEditorInstance()
+  const metaEle = element as MetaObjectElement
+  const { t } = useTranslation()
   const { originId } = metaEle
-
-  const { renderWhole, metaObject } = useRenderObject({
-    metaObjectId: originId
-  })
+  const metaObject = MetaStore.useValue(originId)
   const target = ObjectStore(metaObject?.type).useValue(metaObject?.objectId)
+  if (!metaObject) return null
+  if (instance.values.displayMode) {
+    return (
+      <div>
+        <p>{metaObject?.name || metaObject?.placeholderName}</p>
+        {children}
+      </div>
+    )
+  }
   const renderExpanded = () => {
     if (!metaObject) return <div>Deleted content</div>
     if (metaObject.type === 'image') {
@@ -84,7 +96,7 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
             containerClassName: 'selectable',
             containerStyle: {
               overflow: 'auto hidden',
-              padding: 0
+              padding: 'var(--editor-scroll-padding)'
             }
           }}
           groupId={metaObject.objectId}
@@ -94,99 +106,79 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
   }
   if (element.cardType === 'embeded') {
     return (
-      <div
-        contentEditable={'false'}
-        style={{ position: 'relative', padding: metaObject?.type === 'group' ? 'var(--editor-scroll-padding)' : undefined }}
-      >
+      <div contentEditable={'false'} style={{ position: 'relative' }}>
         {renderExpanded()}
         {children}
       </div>
     )
   }
   const renderLineMain = () => (
-    <Content
-      flex
+    <div
+      onClick={() => {
+        Global.layoutOps?.openObject(originId)
+      }}
+      className={'w-full em:min-h-24 button !p-0 bg-third rounded-md items-stretch overflow-hidden flex'}
       style={{
-        flexWrap: 'wrap-reverse',
-        width: '100%',
-        borderRadius: 6,
-        alignItems: 'stretch',
-        overflow: 'hidden',
-        border: `1px solid ${Colors.Background.Border}`
+        flexWrap: 'wrap-reverse'
       }}
     >
       <div
+        className={'em:p-6 overflow-hidden relative gap-1 flex flex-col justify-center'}
         style={{
-          flex: '4 1 180px',
-          overflow: 'hidden',
-          padding: '12px 14px 14px',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center'
+          flex: '4 1 160px'
         }}
       >
-        {renderWhole({
-          optionOptions: {
-            style: {
-              top: -5,
-              right: 0
-            },
-            renderOnParent: false
-          },
-          columnGap: 4,
-          titleOptions: {
-            style: {
-              fontSize: 15
-            },
-            ellipsisLine: 0
-          },
-          descriptionOptions: {
-            style: {
-              fontSize: 12
-            }
-          },
-          renderOptions: {
-            renderFrom: true,
-            renderImage: false,
-            renderOption: true
-          }
-        })}
+        <div className={classnames('font-semibold pr-6 w-full', !metaObject.name && 'transparent-font')}>
+          {metaObject.name || t(trans.Unnamed)}
+        </div>
+        <div className={'transparent-font text-[0.85em]'}>{Global.utils.getTypeName(metaObject.type)}</div>
+        <IconWithPopover
+          className={'hover-active-button em:text-xl'}
+          size={null}
+          onClick={e => e.stopPropagation()}
+          containerClassName={'absolute right-4 top-4'}
+          name={Icons.More}
+          content={setV => (
+            <WithBorder onClick={e => e.stopPropagation()}>
+              <ObjectActionMenu metaObjectId={originId} onClose={() => setV(false)} />
+            </WithBorder>
+          )}
+          align={'start'}
+          placement={['right', 'left']}
+        />
       </div>
       {metaObject?.coverImgSrc && (
         <div
           style={{
-            flex: '1 1 180px',
+            flex: '1 1 160px',
             position: 'relative'
           }}
         >
-          <div
+          <img
+            src={metaObject.coverImgSrc}
             style={{
               position: 'absolute',
-              inset: 0
+              top: '50%',
+              borderRadius: 0,
+              objectFit: 'cover',
+              transform: 'translateY(-50%)'
             }}
-          >
-            <img
-              style={{
-                objectFit: 'cover',
-                borderRadius: 1,
-                width: '100%',
-                height: '100%'
-              }}
-              src={metaObject.coverImgSrc}
-            />
-          </div>
+          ></img>
         </div>
       )}
-    </Content>
+    </div>
   )
   if (metaObject?.type?.includes('Label')) {
     return (
       <>
         <LabelDetailsRenderer
+          showAudio
+          disableSidebar
           imageStyle={{ objectFit: 'contain' }}
           style={{
             border: '1px solid var(--border-background)',
-            borderRadius: 8
+            borderRadius: 8,
+            fontSize: '0.92em'
           }}
           metaId={metaObject.id}
         />
@@ -195,13 +187,10 @@ const MetaObject: FC<RenderElementProps> = memo(({ children, element }) => {
     )
   }
   return (
-    <NoteCard
-      pictureUrl={metaObject?.coverImgSrc}
-      // main={metaEle?.cardType === 'line' || metaEle?.cardType === undefined ? renderLineMain() : renderMain()}
-      main={renderLineMain()}
-      element={{ ...element, noteId: metaObject?.noteId }}
-      children={children}
-    />
+    <>
+      {renderLineMain()}
+      {children}
+    </>
   )
 })
 

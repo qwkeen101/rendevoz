@@ -5,47 +5,6 @@
   display: flex;
   position: relative;
 }
-.Selected {
-  position: absolute;
-  inset: 0;
-  background: rgba(39, 158, 255, 0.2);
-  border-radius: 4px;
-  user-select: none;
-  pointer-events: none;
-  z-index: 100;
-}
-.BlockCommon {
-  * span,
-  textarea {
-    &:not([data-highlight]) {
-      color: var(--block-font-color);
-    }
-  }
-  overflow: hidden;
-  pointer-events: auto;
-}
-
-.SlimCardBlock {
-  width: min(100%, 21rem);
-  border-radius: 8px;
-  > div {
-    background: var(--block-bg);
-    transition: background 0.3s ease;
-  }
-}
-.WideCardBlock {
-  border-radius: 8px;
-  > div {
-    background: var(--block-bg);
-    transition: background 0.3s ease;
-  }
-}
-.LineCardBlock {
-  > div {
-    background: var(--block-bg);
-    transition: background 0.3s ease;
-  }
-}
 
 .ColumnBlock {
   position: relative;
@@ -53,19 +12,7 @@
   flex-direction: column;
   transition: width 1s ease-out;
 }
-.SyncBlock {
-  margin-top: 8px;
-  margin-bottom: 8px;
-}
-.ColumnDivider {
-  position: relative;
-  width: 40px;
-  flex-grow: 0;
-  flex-shrink: 0;
-  &:first-child {
-    display: none;
-  }
-}
+
 body {
   * {
     &:not([role="list-item-marker"]) {

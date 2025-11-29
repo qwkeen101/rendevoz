@@ -15,12 +15,13 @@ interface Props {
   defaultOpen?: boolean
   strokeWidth?: number
   placement?: ('bottom' | 'top' | 'left' | 'right')[]
-  size?: number
+  size?: number | string
   innerRef?: MutableRefObject<any>
   parentElement?: HTMLElement
   padding?: number
   boundaryInset?: number
   style?: CSSProperties
+  theme?: string
   align?: string
   className?: string
   onClick?: MouseEventHandler
@@ -31,6 +32,7 @@ interface Props {
   iconContainerStyle?: CSSProperties
   onContentClick?: MouseEventHandler
   containerStyle?: CSSProperties
+  containerClassName?: string
   renderOnParent?: boolean
   withClickCover?: boolean
   onClickOutside?: (e: MouseEvent, setVisible: React.Dispatch<React.SetStateAction<boolean>>) => void
@@ -41,6 +43,7 @@ const IconWithPopover: FC<Props> = (
     content,
     withClickCover,
     onClickOutside,
+    containerClassName,
     color,
     align,
     size = 18,
@@ -51,19 +54,19 @@ const IconWithPopover: FC<Props> = (
     zIndex,
     innerRef,
     containerStyle,
-    padding = 10,
+    padding = 6,
     parentElement,
     contentDraggable,
     disableNudge,
     tooltip,
     boundaryInset = 10,
     disableCloseOutside,
-    disableIntersection,
     strokeWidth,
     onContentClick,
     style,
     iconContainerStyle,
     onClick,
+    theme,
     tooltipPosition = 'top',
     closeOnContentClick,
     renderOnParent = false
@@ -86,9 +89,10 @@ const IconWithPopover: FC<Props> = (
     onVisiblityChange?.(visible)
   }, [visible])
   return (
-    <Content
+    <div
       ref={mergedRef}
       style={containerStyle}
+      className={containerClassName}
       onClick={e => {
         onContentClick?.(e)
         if (visible) {
@@ -129,12 +133,12 @@ const IconWithPopover: FC<Props> = (
         reposition
         content={content}
         disableNudge={disableNudge}
-        disableIntersection={disableIntersection}
       >
         {tooltip ? (
           <Tooltip content={tooltip} position={tooltipPosition}>
             <Icon
               style={{ color, ...style }}
+              theme={theme}
               containerStyle={iconContainerStyle}
               cursor="pointer"
               size={size}
@@ -158,6 +162,7 @@ const IconWithPopover: FC<Props> = (
             role={'icon'}
             data-active={visible}
             strokeWidth={strokeWidth}
+            theme={theme}
             className={className}
             onClick={e => {
               setVisible(!visible)
@@ -167,7 +172,7 @@ const IconWithPopover: FC<Props> = (
           />
         )}
       </AnimatePopover>
-    </Content>
+    </div>
   )
 }
 

@@ -1,27 +1,23 @@
-import { MetaStore, ObjectStore } from '@/api/stores'
-import { AnimatePopover, Content, Icon, Menu, Tooltip, WithBorder } from '@/components'
-import { ClassName } from 'rendevoz'
-import usePDFBarState from '@/core/components/pdf/hooks/usePDFBarState'
+import { Icon, Tooltip } from '@/components'
 import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
-import { Colors, KEY } from '@/consts'
+import { Colors, Icons, KEY } from '@/consts'
 import { useIsIn } from '@/hooks'
 import { useEffect, useState } from 'react'
 import isHotkey from 'is-hotkey'
-import { useMeasure } from 'react-use'
-import usePdfState from '@/core/components/pdf/hooks/usePdfState'
+import usePDFState from '@/core/components/pdf/hooks/usePDFState'
 import TooltipWithCmd from '@/components/TooltipWithCmd'
 import { useTranslation } from 'react-i18next'
+import classnames from 'classnames'
+import trans from '@/consts/trans'
 
-const Header = ({ id }: { id: number }) => {
-  const pdf = ObjectStore('pdf').useValue(id)
-  const pdfMeta = MetaStore.useObjectToMetaValue(id)
-  const [barState, setBarState] = usePDFBarState()
-  const [pdfState, setPdfState] = usePdfState()
-  const totalPages = pdfState.numPages
+const Header = () => {
+  const { t } = useTranslation()
+  const [state, setState] = usePDFState()
+  const lastReadPage = state.state?.initialPage
+  const totalPages = state.numPages
   const instance = usePDFInstance()
   const [focused, setFocused] = useState(false)
-  const { t } = useTranslation()
-  const [pageValue, setPageValue] = useState((pdf?.lastReadPage || 0) + 1)
+  const [pageValue, setPageValue] = useState((lastReadPage || 0) + 1)
   const { ref: pagesRef, isIn: isInPages } = useIsIn()
   const handleJump = () => {
     if (pageValue >= 0) {
@@ -31,116 +27,30 @@ const Header = ({ id }: { id: number }) => {
       instance.navigateOps?.jumpToPage?.(0)
     }
   }
-  const [ref, { width }] = useMeasure()
   useEffect(() => {
-    setPageValue((pdf?.lastReadPage || 0) + 1)
-  }, [pdf?.lastReadPage])
-  const history = instance.navigateOps?.useHistory()
-  if (pdfMeta) {
-    return (
-      <Content
-        flex
-        justifyContent={'space-between'}
-        alignItems={'center'}
-        ref={ref}
-        gap={5}
-        style={{
-          padding: '12px',
-          position: 'absolute',
-          top: 0,
-          fontSize: '14px',
-          width: '100%',
-          zIndex: 30,
-          background: Colors.Background.Global,
-          borderBottom: `1px solid ${Colors.Background.Border}`
-        }}
-      >
-        <Content flex gap={6} alignItems={'center'} style={{ maxWidth: '40%' }}>
-          <AnimatePopover
-            boundaryInset={0}
-            padding={5}
-            positions={['bottom']}
-            align={'start'}
-            content={setV => (
-              <WithBorder padding={'0.2rem 0 0.4rem'}>
-                <Menu.NavigationMenu
-                  defaultSelected={[barState.sidebarActive]}
-                  onSelect={v => {
-                    setV(false)
-                    if (v?.type === 'item') {
-                      setBarState(s => ({ ...s, sidebarActive: v.key }))
-                    }
-                  }}
-                  layout={[
-                    {
-                      type: 'title',
-                      name: t('general.Sidebar')
-                    },
-                    {
-                      type: 'item',
-                      key: 'hide',
-                      text: t('general.Hide sidebar')
-                    },
-                    {
-                      type: 'item',
-                      key: 'label',
-                      text: t('general.Highlights')
-                    },
-                    {
-                      type: 'item',
-                      key: 'thumbnail',
-                      text: t('general.Thumbnail')
-                    },
-                    {
-                      type: 'item',
-                      key: 'outline',
-                      text: t('general.Contents')
-                    },
-                    {
-                      type: 'item',
-                      key: 'search',
-                      text: t('general.Search')
-                    },
-                    {
-                      type: 'item',
-                      key: 'attachments',
-                      text: t('general.Attachments')
-                    },
-                    {
-                      type: 'item',
-                      key: 'ai',
-                      text: t('general.AI')
-                    },
-                    {
-                      type: 'item',
-                      key: 'mindmap',
-                      text: t('general.Mindmap')
-                    }
-                  ]}
-                />
-              </WithBorder>
-            )}
-          >
-            <Content flex gap={4} className={ClassName.flatButton(4, '5px')}>
-              <Icon size={16} name={'custom-left-bar'} />
-              <Icon size={14} name={'park-down'} />
-            </Content>
-          </AnimatePopover>
-          {width > 600 && <div className={ClassName.ellipsisFont(1)}>{pdfMeta.name}</div>}
-        </Content>
-
+    const lastPage = (lastReadPage ?? 0) + 1
+    let realPageValue = Math.max(state.state?.doublePage ? lastPage - 1 : lastPage, 1)
+    if (lastPage === totalPages) {
+      realPageValue = totalPages
+    }
+    setPageValue(realPageValue)
+  }, [lastReadPage])
+  return (
+    <div className={'justify-center bg-global @container z-30 flex w-full items-center gap-1 pl-4 pr-3 py-2 sticky top-0'}>
+      <div className={'font-size-13 @3xl:flex-1'}>
+        <span className={'@3xl:line-clamp-1 break-all hidden'} style={{ maxWidth: '90%' }}>
+          {state.state?.name}
+        </span>
+      </div>
+      <div className={'flex items-center gap-3'}>
         <div
           ref={pagesRef}
+          onClick={e => {
+            e.currentTarget.querySelector('input')?.focus()
+          }}
+          className={'items-center transition-all font-size-13 shrink-0 py-1 px-2.5 rounded-md hidden @md:flex'}
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            flexShrink: 0,
-            boxShadow: focused ? `0 0 0 2px ${Colors.Common.SelectColor}` : isInPages ? `0 0 0 1px ${Colors.Background.Border}` : undefined,
-            padding: '2px 6px',
-            borderRadius: 6,
-            transition: 'all 0.2s ease',
-            fontSize: 13,
-            margin: '0px auto'
+            boxShadow: focused ? `0 0 0 2px ${Colors.Common.SelectColor}` : isInPages ? `0 0 0 1px ${Colors.Background.Border}` : undefined
           }}
         >
           <input
@@ -168,140 +78,85 @@ const Header = ({ id }: { id: number }) => {
               }
             }}
             type={'number'}
-            style={{ width: `calc(${(pageValue || 0).toString().length}ch + 6px)`, appearance: 'textfield' }}
-            className={ClassName.noStyleInput}
+            style={{
+              width: `calc(${(pageValue || 0).toString().length}ch)`,
+              appearance: 'textfield'
+            }}
             value={pageValue}
             min={1}
-            max={20}
+            max={totalPages}
+            className={'mr-2'}
           />
-          / {totalPages || 0}
-          <Content flex gap={4} style={{ opacity: isInPages || focused ? 1 : 0, transition: 'opacity 0.2s ease', marginLeft: 8 }}>
-            <Icon
-              name={'park-plus'}
-              className={ClassName.flatButton(4, '4px')}
-              onClick={() => {
-                const next = Math.min(pageValue + 1, totalPages || 1)
-                instance.navigateOps?.jumpToPage?.(next - 1)
-                setPageValue(next)
-              }}
-            />
-            <Icon
-              name={'park-minus'}
-              className={ClassName.flatButton(4, '4px')}
-              onClick={() => {
-                const next = Math.max(pageValue - 1, 1)
-                instance.navigateOps?.jumpToPage?.(next - 1)
-                setPageValue(next)
-              }}
-            />
-          </Content>
+          / <span className={'ml-2'}>{totalPages || 0}</span>
         </div>
-        <Content flex gap={8} style={{ flexShrink: 0 }}>
-          {(history?.canBack || history?.canForward) && (
-            <>
-              {history.canBack && (
-                <Tooltip content={<TooltipWithCmd name={'Navigate back'} cmd={'Alt+←'} />}>
-                  <Icon
-                    size={16}
-                    className={ClassName.flatButton(4, '5px')}
-                    name={'park-arrow-left'}
-                    onClick={() => {
-                      instance.navigateOps?.back()
-                    }}
-                  />
-                </Tooltip>
-              )}
-              {history.canForward && (
-                <Tooltip content={<TooltipWithCmd name={'Navigate forward'} cmd={'Alt+→'} />}>
-                  <Icon
-                    size={16}
-                    className={ClassName.flatButton(4, '5px')}
-                    name={'park-arrow-right'}
-                    onClick={() => {
-                      instance.navigateOps?.forward()
-                    }}
-                  />
-                </Tooltip>
-              )}
-              <div style={{ height: '20px', margin: 'auto 0', background: Colors.Background.Border, width: 1 }}></div>
-            </>
-          )}
-          <Tooltip content={<TooltipWithCmd name={'Drag mode'} cmd={'Cmd+D'} />}>
-            <Icon
-              strokeWidth={3}
-              onClick={() => {
-                setPdfState(s => ({ ...s, handDrag: !s.handDrag }))
-              }}
-              size={16}
-              style={{
-                color: pdfState.handDrag ? Colors.Common.SelectColor : undefined,
-                background: pdfState.handDrag ? Colors.Common.SelectColorTransparentLight : undefined
-              }}
-              className={ClassName.flatButton(4, '5px')}
-              name={'park-hand-drag'}
-            />
-          </Tooltip>
-          <Icon
-            onClick={() => {
-              if (pdf) {
-                instance.actionOps?.doublePage()
-              }
-            }}
-            size={16}
-            style={{
-              color: pdfState.state?.doublePage ? Colors.Common.SelectColor : undefined,
-              background: pdfState.state?.doublePage ? Colors.Common.SelectColorTransparentLight : undefined
-            }}
-            className={ClassName.flatButton(4, '5px')}
-            name={'custom-double-column'}
-          />
-          <Tooltip content={<TooltipWithCmd name={'Fit width'} cmd={'Shift+F'} />}>
-            <Icon
-              size={16}
-              className={ClassName.flatButton(4, '5px')}
-              name={'park-auto-width'}
-              onClick={() => {
-                instance.actionOps?.fitWidth()
-              }}
-            />
-          </Tooltip>
-          <Tooltip content={<TooltipWithCmd name={'Zoom in'} cmd={'Cmd+='} />}>
-            <Icon
-              size={16}
-              className={ClassName.flatButton(4, '5px')}
-              name={'park-zoom-in'}
-              onClick={() => {
-                instance.actionOps?.zoomIn()
-              }}
-            />
-          </Tooltip>
-          <Tooltip content={<TooltipWithCmd name={'Zoom out'} cmd={'Cmd+-'} />}>
-            <Icon
-              size={16}
-              className={ClassName.flatButton(4, '5px')}
-              name={'park-zoom-out'}
-              onClick={() => {
-                instance.actionOps?.zoomOut()
-              }}
-            />
-          </Tooltip>
+        <div className={'border-right h-6'}></div>
+        <div className={'flex gap-2.5 items-center'}>
           <Icon
             size={16}
-            tooltip={<TooltipWithCmd name={'Clip'} cmd={'Cmd+Alt+A'}></TooltipWithCmd>}
-            className={ClassName.flatButton(4, '5px')}
-            name={'park-screenshot'}
-            style={{
-              color: pdfState.croppingImage ? Colors.Common.SelectColor : undefined,
-              background: pdfState.croppingImage ? Colors.Common.SelectColorTransparentLight : undefined
-            }}
+            className={'square-button-small'}
             onClick={() => {
-              setPdfState(s => ({ ...s, croppingImage: !s.croppingImage }))
+              instance.actionOps?.zoomOut()
+            }}
+            name={'park-minus'}
+          />
+          <div
+            className={'cursor-pointer font-semibold font-size-12'}
+            onClick={() => {
+              instance.actionOps?.fitWidth()
+            }}
+          >
+            {((state.finalScale ?? 1) * 100).toFixed(0)}%
+          </div>
+          <Icon
+            onClick={() => {
+              instance.actionOps?.zoomIn()
+            }}
+            size={16}
+            className={'square-button-small'}
+            name={'park-plus'}
+          />
+        </div>
+      </div>
+      <div className={'flex flex-1 gap-3 justify-end shrink-0 items-center'}>
+        <Icon
+          tooltip={<TooltipWithCmd name={'Clip'} cmd={'Cmd+A'}></TooltipWithCmd>}
+          size={16}
+          className={classnames('square-button', state.croppingImage && 'active-button')}
+          name={'park-screenshot'}
+          onClick={() => {
+            setState(s => ({ ...s, croppingImage: !s.croppingImage }))
+          }}
+        />
+        <Icon
+          size={16}
+          className={classnames('square-button', state.document?.doublePage && 'active-button')}
+          name={'park-column'}
+          onClick={() => {
+            instance.actionOps?.doublePage()
+          }}
+          tooltip={'Double Page'}
+        />
+        <Tooltip content={<TooltipWithCmd name={t(trans.Search)} cmd={'Cmd+F'} />}>
+          <Icon
+            size={16}
+            className={'square-button'}
+            name={Icons.Search}
+            onClick={() => {
+              instance.actionOps?.toggleSearch()
             }}
           />
-        </Content>
-      </Content>
-    )
-  }
+        </Tooltip>
+        <Icon
+          onClick={() => {
+            setState(s => ({ ...s, sidebarVisible: !s.sidebarVisible }))
+          }}
+          className={'square-button'}
+          size={16}
+          name={'custom-right-bar'}
+        />
+      </div>
+    </div>
+  )
 }
 
 export default Header

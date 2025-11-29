@@ -2,10 +2,9 @@ import { IMenuLayoutItem } from '@/components/base/menu'
 import { t } from 'i18next'
 import { Editor, Transforms } from 'slate'
 import { IEditorInstance, MetaObject } from '~/typings'
-import { GlobalInstance } from '@/hooks'
-import { Rendevoz } from '@/core/rendevoz'
 import Id from '@/utils/id'
 import { MetaStore } from '@/api/stores'
+
 export default (editor: Editor, instance: IEditorInstance): IMenuLayoutItem[] => {
   const selectedElements = instance.getSelectedElements?.()
   const embedableTypes: MetaObject['type'][] = ['group', 'video', 'audio', 'image']
@@ -60,7 +59,7 @@ export default (editor: Editor, instance: IEditorInstance): IMenuLayoutItem[] =>
       icon: 'park-arrow-right-up',
       key: 'open-obj-in-new-tab',
       onSelect: () => {
-        Rendevoz.Actions.Open.Meta.openMetaObject(first.originId)
+        Global.layoutOps?.openObject(first.originId)
         instance.overlayOps?.close()
       }
     },
@@ -70,7 +69,7 @@ export default (editor: Editor, instance: IEditorInstance): IMenuLayoutItem[] =>
       key: 'view-obj-details',
       icon: 'park-info',
       onSelect: () => {
-        GlobalInstance.metaOps?.openDetails(first.originId)
+        Global.metaOps?.openDetails(first.originId)
         instance.overlayOps?.close()
       }
     },

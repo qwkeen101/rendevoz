@@ -3,11 +3,20 @@ import usePopoverCell from '@/core/components/group/hooks/usePopoverCell'
 import { Content } from '@/components'
 import MetaTagPicker from '@/core/object/MetaTagPicker'
 import { Colors } from '@/consts'
-import Tag from '@/core/object/ObjectTag'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 
-const TagCell = ({ value, metaId, optionStyle }: { value: number[]; metaId: number; optionStyle?: CSSProperties }) => {
+const TagCell = ({
+  value,
+  metaId,
+  optionStyle,
+  style
+}: {
+  value: number[]
+  metaId: number
+  optionStyle?: CSSProperties
+  style?: CSSProperties
+}) => {
   const tagRef = useRef<HTMLDivElement>(null)
   const { openPopover, renderPopover } = usePopoverCell({
     targetRef: tagRef
@@ -28,7 +37,7 @@ const TagCell = ({ value, metaId, optionStyle }: { value: number[]; metaId: numb
           }
         }}
         gap={4}
-        style={{ flexWrap: 'inherit', height: 'fit-content' }}
+        style={{ flexWrap: 'inherit', height: 'fit-content', ...style }}
         alignItems="flex-start"
       >
         {tags.map(i => (

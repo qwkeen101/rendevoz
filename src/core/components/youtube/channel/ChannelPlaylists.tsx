@@ -1,23 +1,19 @@
-import { RefObject, useLayoutEffect } from 'react'
-import useYoutubeState from '@/core/components/feed/youtube/useYoutubeState'
-import YoutubeServices from '@/core/components/feed/youtube/YoutubeServices'
-import { Icon } from '@/components'
-import { Icons } from '@/consts'
-import YoutubePlaylist from '@/core/components/feed/youtube/YoutubePlaylists'
+import { useLayoutEffect } from 'react'
+import useYoutubeState from '@/core/components/youtube/hooks/useYoutubeState'
+import YoutubeServices from '@/core/components/youtube/YoutubeServices'
+import { DotLoading } from '@/components'
+import YoutubePlaylist from '@/core/components/youtube/YoutubePlaylists'
+import useYoutubeInstance from '@/core/components/youtube/hooks/useYoutubeInstance'
+import { EmptyList, NoResult } from '@/core/components'
 
-export default ({
-  channelId,
-  scrollElementRef,
-  channelAppId
-}: {
-  channelId: string
-  scrollElementRef: RefObject<HTMLDivElement>
-  channelAppId: number
-}) => {
+export default ({ channelId }: { channelId: string }) => {
   const [state] = useYoutubeState()
-  const cache = state.dataCache.channel[channelId].playlistTab
-  const items = cache?.items ?? []
+  const dataCache = state.dataCache.channel[channelId]
+  const cache = dataCache?.playlistTab
+  const search = dataCache?.search
+  const items = search?.query ? search?.playlistResults?.map(i => ({ ...i, id: i.id.playlistId })) : cache?.items
   const token = cache?.token
+  const instance = useYoutubeInstance()
   const handleLoad = async () => {
     if (cache?.isLoadingMore) return
     useYoutubeState.setChannelDataState(channelId, curr => ({
@@ -53,28 +49,30 @@ export default ({
       handleLoad()
     }
   }, [])
-  if (!cache?.items) {
+  if (!items) {
     return (
       <div className={'w-full grow flex items-center justify-center'}>
-        <Icon name={Icons.Loading} spin size={40} />
+        <DotLoading />
       </div>
     )
   }
-  if (cache.items && !cache.items.length) {
-    return (
-      <div className={'w-full grow flex items-center justify-center'}>
-        <div className={'transparent-font font-semibold'}>No playlist</div>
-      </div>
-    )
+  if (items && !items.length) {
+    return <EmptyList />
   }
-  console.log(cache)
+  if (!instance.scrollElementRef) return null
   return (
     <YoutubePlaylist
-      hasMore={!!cache?.hasMore}
-      scrollKey={`youtube_channel_${channelAppId}`}
-      scrollElementRef={scrollElementRef}
+      showChannel={false}
+      hasMore={search?.query ? !!search.playlistHasMore : !!cache?.hasMore}
+      scrollElementRef={instance.scrollElementRef}
       items={items}
-      onLoadMore={handleLoad}
+      onLoadMore={() => {
+        if (search?.query) {
+          instance.search?.(undefined, channelId)
+          return
+        }
+        handleLoad()
+      }}
     />
   )
 }

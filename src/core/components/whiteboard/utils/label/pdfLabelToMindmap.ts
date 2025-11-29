@@ -2,7 +2,6 @@ import { MetaStore, ObjectStore } from '@/api/stores'
 import { IPDFLabel, IWhiteboard, IWhiteboardMindmap, IWhiteboardNode } from '~/typings'
 import usePdfjs from '@/hooks/utils/usePdfjs'
 import Id from '@/utils/id'
-import { GlobalInstance } from '@/hooks'
 
 export default async (pdfId: number, prevMindmap?: IWhiteboard) => {
   const pdf = await ObjectStore('pdf').getOneById(pdfId)
@@ -103,13 +102,12 @@ export default async (pdfId: number, prevMindmap?: IWhiteboard) => {
             const labelNodes = (
               await Promise.all(
                 labels?.map(async l => {
-                  const lMeta = await GlobalInstance.metaOps?.addDraggableAsMeta(
-                    {
-                      type: 'pdfLabel',
+                  const lMeta = (
+                    await Global.metaOps.addDraggableAsMeta({
+                      type: 'label',
                       labelId: l.id
-                    },
-                    true
-                  )
+                    })
+                  )[0]
                   if (lMeta) {
                     const prevNodeId = prevMetaIdToId[lMeta.id]
                     return prevNodeId

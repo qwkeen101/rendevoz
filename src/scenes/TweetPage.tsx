@@ -1,8 +1,6 @@
 import { MetaStore } from '@/api/stores'
-import { Content, Icon } from '@/components'
+import { Content, Icon, TabTitle } from '@/components'
 import Tweet from '@/core/components/tweet'
-import { TabTitle } from '@/core/rendevoz/components'
-import { Rendevoz } from '@/core/rendevoz'
 import { memo } from 'react'
 
 export default memo(({ id }: { id: number }) => {
@@ -10,7 +8,7 @@ export default memo(({ id }: { id: number }) => {
   if (tweetMeta) {
     return (
       <Content fullWidth fullHeight flex style={{ overflowY: 'auto', padding: '36px 24px' }}>
-        <TabTitle icon={<Icon name={Rendevoz.Utils.Object.getMetaObjectIcon('tweet')} />} title={tweetMeta.name ?? 'Unnamed tweet'} />
+        <TabTitle icon={<Icon name={Global.utils.getIcon('tweet')} />} title={tweetMeta.name} />
         <Tweet id={id} />
       </Content>
     )

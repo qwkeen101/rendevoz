@@ -1,34 +1,41 @@
-import useMediaState from '@/core/components/media/hooks/useMediaState'
-import { useEffect, useRef } from 'react'
+import { useGetMediaState, useSelectMediaState, useSetMediaState } from '@/core/components/media/hooks/useMediaState'
+import { memo, useEffect, useRef } from 'react'
 import { useMediaInstance } from '@/core/components/media/hooks/useMediaInstance'
 import { assignProperties } from '@/utils'
 import { captureVideoFrame } from '@/core/components/media/utils'
-import audioBufferToWav from '@/core/components/media/players/audioBufferToWav'
+import useThrottleUpdateCurrentTime from '@/core/components/media/hooks/useThrottleUpdateCurrentTime'
 
-const LocalVideoPlayer = () => {
-  const [mediaState, setMediaState] = useMediaState()
+const LocalVideoPlayer = memo(() => {
+  const setMediaState = useSetMediaState()
   const ref = useRef<HTMLVideoElement>(null)
   const instance = useMediaInstance()
-  const { paused, speed, loaded, volume, jumpTime, url } = mediaState
+  const get = useGetMediaState()
+  const updateTime = useThrottleUpdateCurrentTime()
+  const { paused, speed, loaded, volume, jumpTime, url, autoPlay, loop, muted, showSubtitle, subtitleUrl } = useSelectMediaState(s => ({
+    paused: s.paused,
+    speed: s.speed,
+    loaded: s.loaded,
+    volume: s.volume,
+    jumpTime: s.jumpTime,
+    url: s.url,
+    autoPlay: s.autoPlay,
+    loop: s.loop,
+    muted: s.muted,
+    subtitleUrl: s.subtitleUrl,
+    showSubtitle: s.showSubtitle
+  }))
   const v = ref.current
   useEffect(() => {
     setMediaState(s => ({ ...s, url }))
   }, [url])
 
   assignProperties(instance, {
-    getAudioFile: async () => {
-      const res = await fetch(mediaState.url).then(res => res.arrayBuffer())
-      const audioCtx = new AudioContext()
-      const audio = await audioCtx.decodeAudioData(res)
-      const blob = audioBufferToWav(audio)
-      return new Blob([blob], { type: 'audio/wav' })
-    },
     getMediaContainer: () => {
       return ref.current || undefined
     },
     imageOps: {
       captureCurrentImage: async () => {
-        return ref.current && (await captureVideoFrame(ref.current, mediaState.currentTime || 0, { width: 1600, height: 900 }, true))
+        return ref.current ? await captureVideoFrame(ref.current, get().currentTime || 0, { width: 1600, height: 900 }, true) : undefined
       }
     }
   })
@@ -48,33 +55,34 @@ const LocalVideoPlayer = () => {
     }
   }, [loaded, jumpTime])
   useEffect(() => {
-    if (loaded && v && mediaState.currentTime !== undefined) {
-      v.currentTime = mediaState.currentTime
+    const currentTime = get().currentTime
+    if (loaded && v && currentTime !== undefined) {
+      v.currentTime = currentTime
     }
   }, [loaded])
   useEffect(() => {
-    if (loaded && v) {
+    if (loaded && v && volume !== undefined) {
       v.volume = volume
     }
   }, [loaded, volume])
 
   useEffect(() => {
-    if (loaded && v) {
+    if (loaded && v && speed !== undefined) {
       v.playbackRate = speed
     }
   }, [loaded, speed])
 
   useEffect(() => {
-    if (loaded && mediaState.autoPlay && v) {
+    if (loaded && autoPlay && v) {
       v.play()
     }
-  }, [loaded, mediaState.autoPlay])
+  }, [loaded, autoPlay])
   return (
     <video
       ref={ref}
       src={url}
-      loop={mediaState.loop}
-      muted={mediaState.muted}
+      loop={loop}
+      muted={muted}
       style={{
         width: '100%',
         height: '100%',
@@ -97,23 +105,15 @@ const LocalVideoPlayer = () => {
         }
       }}
       onTimeUpdate={e => {
-        const currTime = e.currentTarget.currentTime
-        setTimeout(() => {
-          setMediaState(s => ({ ...s, currentTime: currTime }))
-        })
+        updateTime(e.currentTarget.currentTime)
       }}
       onLoad={() => {
-        console.log('load')
-        setMediaState(s => ({ ...s, loaded: true }))
-      }}
-      onLoadedData={() => {
-        console.log('load')
         setMediaState(s => ({ ...s, loaded: true }))
       }}
     >
-      {mediaState.subtitleUrl && mediaState.showSubtitle !== false && <track src={mediaState.subtitleUrl} kind="captions" default />}
+      {subtitleUrl && showSubtitle !== false && <track src={subtitleUrl} kind="captions" default />}
     </video>
   )
-}
+})
 
 export default LocalVideoPlayer

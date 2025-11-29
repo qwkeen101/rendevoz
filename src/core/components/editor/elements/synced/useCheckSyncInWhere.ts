@@ -4,9 +4,10 @@ import { fetchMetaNoteContent } from '@/api/stores/utils.store'
 import { Node } from 'slate'
 import { useSlateStatic } from '@/core'
 import { pushNumberIntoUnrepeatableArray } from '@/utils'
+import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 
 const useCheckSyncInWhere = (metaId: number) => {
-  const editor = useSlateStatic()
+  const instance = useEditorInstance()
   const check = async () => {
     const syncMeta = await MetaStore.getMetaObjectById(metaId)
     if (syncMeta?.objectId) {
@@ -57,7 +58,7 @@ const useCheckSyncInWhere = (metaId: number) => {
     }
   }
   const checkIsInThis = async () => {
-    const noteMeta = editor.note?.metaId
+    const noteMeta = instance.values.metaId
     if (noteMeta) {
       const syncMeta = await MetaStore.getMetaObjectById(metaId)
       if (syncMeta?.objectId) {

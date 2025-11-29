@@ -1,14 +1,25 @@
 import { IQuestion } from '~/typings'
-import langs from '@/consts/langs'
+import { IAvailableModels } from '@/api/services/ai/universalAIProvider'
 
 export type IGeneralSetting = {
   general: {
+    openaiApiKey?: string
+    openaiBaseUrl?: string
+    openaiModel?: string
+    openaiReasoningModel?: string
     language?: AvaliableLanguages
-    openNewTab: 'always open new tab' | 'open existing tab'
     darkMode: boolean
+    fontFamily?: 'Satoshi' | 'Inter' | 'Roboto' | 'Montserrat' | 'Poppins' | 'Noto' | 'Nunito' | 'Playfair Display'
+    importedFonts?: {
+      path: string
+      name: string
+      id: number
+      selected: boolean
+    }[]
     copyFileWhenImport: boolean
     customSearchEngineUrl?: string
     minimizeToTray?: boolean
+    translateTargetLanguage: string
     followSystemTheme?: boolean
     autoRecoverFromBackup?: boolean
     userFilePath?: string
@@ -21,56 +32,33 @@ export type IGeneralSetting = {
     globalCSS?: string
     youtubeMaxItems?: number
     dataBackup: 'whenClose' | 'every day' | 'every week' | 'every month' | 'never'
-    defaultSearchEngine:
-      | 'custom'
-      | 'baidu'
-      | 'google'
-      | 'bing'
-      | 'zhihu'
-      | 'google scholar'
-      | 'wikipedia'
-      | 'wiki summary'
-      | 'vocabulary'
-      | 'bing dictionary'
-      | 'youdao dictionary'
-      | 'semantic scholar'
-    defaultImageSearchEngine: 'bing' | 'google' | 'pinterest' | 'baidu'
   }
 }
 
 export type IAISettings = {
   AI: {
-    autoGenerateQuestionAfterSummarizing: boolean
-    questionGenerateType: IQuestion['questionType']
-    questionGenerateNum: number
-    outputLanguage: keyof typeof langs
+    customProvider?: boolean
+    provider?: IAvailableModels
+    baseUrl?: string
+    apiKey?: string
+    aiTranslator?: boolean
+    aiChatHistoryCount?: number
+    language: string
+    customExplainPrompt?: string
+    customTranslatePrompt?: string
+    chatHistoryLength?: number
+    searchEngine?: 'model' | 'exa' | 'linkup' | 'firecrawl'
+    exaApiKey?: string
+    linkupApiKey?: string
+    firecrawlApiKey?: string
   }
 }
 export type IQuickAddSettings = {
   quickAdd: {
-    addIntoNote: 'first' | 'last'
-    noteMetaType: 'block' | 'inline'
-    addIntoNoteHideObject: boolean
-    addIntoGroup: 'first' | 'last'
     addIntoGroupHideObject: boolean
-    addIntoWhiteboardHideObject: boolean
-    addIntoGroupAutoOpen: boolean
-    addIntoNoteAutoOpen: boolean
-    addIntoWhiteboardAutoOpen: boolean
   }
 }
 
-export type INotificationSetting = {
-  notification: {
-    enabled: boolean
-    pdf: boolean
-    label: boolean
-    collection: boolean
-    editor: boolean
-    object: boolean
-    link: boolean
-  }
-}
 type ShortCut = {
   ctrlKey: boolean
   shiftKey: boolean
@@ -78,13 +66,6 @@ type ShortCut = {
   key?: string
   metaKey: boolean
   displayKey?: string
-}
-export type IAppearanceSetting = {
-  background: {
-    backgroundImage?: string
-    backgroundOpacity?: number
-    backgroundBlur?: number
-  }
 }
 
 export type ISyncSetting = {
@@ -125,30 +106,15 @@ export type IShortCutSetting = {
     closeRightTabs: ShortCut | null
     closeLeftTabs: ShortCut | null
     openObjectPanel: ShortCut | null
-    openScreenShot: ShortCut | null
     quickCreateObject: ShortCut | null
-    openTranslatePanel: ShortCut | null
     openSearchPanel: ShortCut | null
     openGlobalSearch: ShortCut | null
     makeVideoLabel: ShortCut | null
-    copyVideoTimestamp: ShortCut | null
   }>
 }
 export type IObjectsAndLinkSetting = {
-  objectAndLink: {
-    enableAll: boolean
-    enableDropOnPDFLink: boolean
-    enableDropOnWhiteboardLink: boolean
-    enableDropOnEditorLink: boolean
-    enableDragFromPDFLink: boolean
-    enableDragFromEditorLink: boolean
-    enableDropAutoGenerateObject: boolean
-  }
   object: {
-    deleteFileWhenDeleteObject: boolean
-    autoHideLabelObject: boolean
     showPropertiesInComponentPage: boolean
-    linkType: 'text' | 'url' | 'markdown' | 'html'
   }
 }
 
@@ -156,30 +122,36 @@ export type IComponentSetting = {
   sidebar: {
     previewTitleMode?: boolean
     previewCollectionContent?: boolean
+    hoveredSidebar?: boolean
   }
   label: {
     showOriginalText: boolean
-    customTextBackground: boolean
+    collapseOriginalText: boolean
   }
   whiteboard: {
-    enableMinimap: boolean
-    expandToFixedSize?: boolean
     enableAddLinkBetweenObjectsWhenConnect: boolean
     snapToObject: boolean
-    imageResizeKeepRatio: boolean
-    onlyEraseFreeDraw: boolean
     dropFileAutoObject: boolean
     defaultLineType: 'straight' | 'polyline' | 'curve'
     defaultBackgroundType: 'none' | 'dot' | 'line'
-    scrollModeInSelect: 'pan' | 'zoom'
+  }
+  graph: {
+    previewContent: boolean
+    simpleMode: boolean
+    showHidden: boolean
+    showHighlight: boolean
+    nodeDistance: number
+    nodeSize: number
+    nodeColor: string
+    openIn: 'new tab' | 'side peek'
   }
   editor: {
     objectAutoBecomeInline: boolean
     addSpacingInReaderMode?: boolean
-    enableFormat?: boolean
     autoOpenHighlightEditor?: boolean
-    showHighlightText?: boolean
-    defaultExpandHighlightText?: boolean
+    pageWidth: string
+    fontSize: number
+    lineSpacing: number
   }
   translate: {
     autoGotoHoverText: boolean
@@ -187,18 +159,13 @@ export type IComponentSetting = {
   }
   webpage: {
     saveImageLocally: boolean
-    enableSearchAutoSuggestion: boolean
     autoAddHeadImage?: boolean
+    defaultCleanMode: boolean
   }
   pdf: {
-    renderMode: 'followTheme' | 'custom' | 'default'
-    customRenderBackground?: string
-    customRenderFont?: string
-    defaultLabelColor: string
-    autoWidth?: boolean
+    renderMode: 'followTheme' | 'default'
     autoOpenHighlightEditor?: boolean
-    showHighlightText?: boolean
-    defaultExpandHighlightText?: boolean
+    autoExtractText?: boolean
   }
   code: {
     defaultLanguage?: string

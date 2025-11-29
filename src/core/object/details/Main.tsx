@@ -1,11 +1,7 @@
-import { MetaStore } from '@/api/stores'
-import { AnimatePopover, Button, Content, Icon, IconWithPopover, Image, WithBorder } from '@/components'
+import { CollectionStore, MetaStore, ObjectStore } from '@/api/stores'
+import { AnimatePopover, Button, Content, IconWithPopover, TabPane, Tabs, WithBorder } from '@/components'
 import { useTranslation } from 'react-i18next'
-import { AttachmentWrapper, GlobalGraphInstance, useRenderObject } from '@/core'
-import { css } from '@emotion/css'
-import { Colors } from '@/consts'
-import { Rendevoz } from '@/core/rendevoz'
-import { GlobalInstance } from '@/hooks'
+import { AttachmentWrapper, InlineObject, ObjectActionMenu } from '@/core'
 import { RelatedPanel } from '@/core/object/details/Related'
 import MetaTagPicker from '@/core/object/MetaTagPicker'
 import Tag from '@/core/object/ObjectTag'
@@ -13,281 +9,264 @@ import LabelDetailsRenderer from '@/core/object/renderer/LabelDetailsRenderer'
 import MetaPropDisplayer from '@/core/object/renderer/properties/MetaPropDisplayer'
 import ParentItems from '@/core/object/details/ParentItems'
 import Backlinks from '@/core/object/details/Backlinks'
-import { useEffect, useState } from 'react'
-import calculateContains from '@/core/object/objectList/calculateContains'
 import classnames from 'classnames'
-import './index.less'
-
-const flatButton = classnames([
-  css({
-    padding: '4px 12px 4px 10px !important',
-    borderRadius: '6px !important'
-  }),
-  'border',
-  'light-hover'
-])
-
-const SectionMargin = '20px 0px 8px'
+import { useDebounceEffect } from '@/hooks'
+import { DateFormat } from '@/utils'
+import { Tab } from '@/components/base/tabs'
+import { Colors } from '@/consts'
+import trans from '@/consts/trans'
+import { useEffect, useLayoutEffect, useState } from 'react'
+import calculateContains from '@/core/object/objectList/calculateContains'
+import gotoContainedObject from '@/core/object/gotoContainedObject'
+import Flashcard from '@/core/object/details/Flashcard'
+import { ICollection } from '~/typings'
+import useHomeConfig from '@/scenes/home/useHomeConfig'
+const SectionClass = 'mb-2 select-none transparent-font font-size-12 flex items-center'
 const MetaMainDetails = ({ metaId, visible }: { metaId: number; visible?: boolean }) => {
   const object = MetaStore.useValue(metaId)
-  const { renderWhole, metaObject } = useRenderObject({ metaObjectId: metaId })
-  const { t } = useTranslation()
-  const [showContains, setShowContains] = useState(false)
-  useEffect(() => {
-    if (GlobalInstance.metaOps?.canViewContains(metaId)) {
-      const m = MetaStore.getCachedMetaObject(metaId)
-      if (m && !m.deleted) {
-        calculateContains(m).then(res => {
-          if (res?.length) {
-            setShowContains(true)
-            return
-          }
-          setShowContains(false)
-        })
-        return
-      }
-      setShowContains(false)
-      return
+  const metaObject = object
+  const target = ObjectStore(object?.type).useValue(object?.objectId)
+  const url = target && 'url' in target ? target.url : ''
+  const metas = MetaStore.useMetaObjectsMap()
+  const [contains, setContains] = useState<number[]>([])
+  const [related, setRelated] = useState<number>()
+  const [atts, setAtts] = useState<number>()
+  const [appearIns, setAppearIns] = useState<number>()
+  const flashcard = ObjectStore('reviewCard').useValue(object?.review)
+  const calculateContain = () => {
+    const m = MetaStore.getCachedMetaObject(metaId)
+    if (m && visible) {
+      setAtts(m.attachments?.map(i => MetaStore.getCachedMetaObject(i.id))?.filter(i => i && !i.deleted)?.length)
+      calculateContains(m).then(res => {
+        if (res) {
+          setContains(res.map(i => i.id))
+        } else {
+          setContains([])
+        }
+      })
     }
-    setShowContains(false)
+  }
+  useEffect(() => {
+    calculateContain()
   }, [metaId, visible])
-  if (!object) return null
+  useDebounceEffect(
+    () => {
+      calculateContain()
+    },
+    [metas.size],
+    { wait: 1000 }
+  )
+  const { t } = useTranslation()
+  const [active, setActive] = useState('details')
+  useLayoutEffect(() => {
+    if (active === 'flashcard' && !flashcard) {
+      setActive('details')
+    }
+  }, [flashcard])
+  if (!object)
+    return (
+      <div className={'min-h-80 w-full transparent-font font-semibold flex items-center justify-center'}>
+        <div>{t('general.Object not exist')}</div>
+      </div>
+    )
 
   return (
     <Content flex column fullHeight>
-      <Content flex gap={12}>
+      <div className={'flex items-center gap-2 relative'}>
         {object?.coverImgSrc && (
-          <Image
-            preview={true}
-            src={object.coverImgSrc}
-            width={96}
-            height={96}
-            containerStyle={{
-              borderRadius: 8
-            }}
-            style={{ objectFit: 'cover' }}
-          />
+          <>
+            <div className={'w-40 shrink-0 h-40'}>
+              <img
+                src={object.coverImgSrc}
+                onClick={() => {
+                  Global.commonOps?.previewImage?.(object!.coverImgSrc!)
+                }}
+                style={{
+                  borderColor: Colors.Background.Popover
+                }}
+                className={'rounded-full cursor-pointer z-20 absolute left-6 top-2 w-36 shadow-lg border-4 border-solid h-36 object-cover'}
+              />
+            </div>
+          </>
         )}
-        <Content flex column auto gap={5} justifyContent={'center'}>
+        <Content className={'px-6 pt-3'} flex column auto gap={5} justifyContent={'center'}>
           {metaObject?.type?.includes('Label') ? (
-            <LabelDetailsRenderer
-              showImage={false}
-              showVideo={false}
-              showAudio={false}
-              metaId={metaId}
-              style={{
-                border: '1px solid var(--border-background)',
-                borderRadius: 8,
-                fontSize: 14
-              }}
-            />
+            <div className={'w-full mb-2'}>
+              <LabelDetailsRenderer
+                disableSidebar
+                showImage={false}
+                showVideo={false}
+                showAudio={false}
+                showQuestion={false}
+                metaId={metaId}
+                style={{
+                  border: '1px solid var(--border-background)',
+                  borderRadius: 8
+                }}
+              />
+            </div>
           ) : (
-            renderWhole({
-              columnGap: 3,
-              titleOptions: {
-                style: {
-                  maxWidth: 'calc(100% - 16px)',
-                  zIndex: 30,
-                  fontSize: 15,
-                  lineHeight: 1.5
-                }
-              },
-              renderOptions: {
-                renderTags: false,
-                renderImage: false
-              }
-            })
+            <div>
+              <div className={classnames('font-semibold line-clamp-2 text-xl', !metaObject?.name && 'super-transparent-font')}>
+                {metaObject?.name || t('general.Unnamed')}
+              </div>
+              {metaObject?.description && <div className={'line-clamp-2 font-size-13 mt-1'}>{metaObject.description}</div>}
+            </div>
+          )}
+          {metaObject && (
+            <div className={'transparent-font font-size-13'}>
+              {Global.utils.getTypeName(metaObject.type)} · {t('general.Created at')}{' '}
+              {DateFormat.format(metaObject.createdAt, DateFormat.Formats.yearMonthDays)}
+            </div>
           )}
         </Content>
-      </Content>
-      <Content style={{ marginTop: 16, flexWrap: 'wrap' }} flex gap={12}>
-        <Button.IconButton
-          onClick={() => {
-            Rendevoz.Actions.Open.Meta.openEditMetaDialog(metaId)
-            GlobalInstance.metaOps?.closeDetails()
-          }}
-          text={t('general.edit')}
-          icon={'park-edit'}
-          className={flatButton}
-        ></Button.IconButton>
-        <Button.IconButton
-          onClick={() => {
-            GlobalInstance.metaOps?.quickAdd(metaId)
-          }}
-          text={t('general.Move to')}
-          icon={'park-corner-up-right'}
-          className={flatButton}
-        ></Button.IconButton>
-        {showContains && (
-          <Button.IconButton
-            icon={'park-hamburger-button'}
-            text={t('general.View included objects')}
-            onClick={() => {
-              GlobalInstance.metaOps?.viewContains(metaId)
-            }}
-            className={flatButton}
-          />
-        )}
-        <Button.IconButton
-          onClick={() => {
-            GlobalInstance.metaOps?.closeDetails()
-            GlobalInstance.metaOps?.openGraph(metaId)
-          }}
-          text={t('general.graph')}
-          icon={'park-share-one'}
-          className={flatButton}
-        ></Button.IconButton>
-        <Button.IconButton
-          text={t('general.Copy link')}
-          onClick={() => {
-            GlobalInstance.metaOps?.copyLink(metaId)
-          }}
-          icon={'park-link'}
-          className={flatButton}
-        />
-        <Button.IconButton
-          text={t('general.delete')}
-          icon={'park-delete-one'}
-          dangerous={true}
-          className={'details-hover-delete-button'}
-          onClick={() => {
-            GlobalInstance.metaOps?.closeDetails()
-            MetaStore.deleteMetaObject(metaId)
-          }}
-        ></Button.IconButton>
-      </Content>
-      <Backlinks metaId={metaId} visible={visible} />
-      <Content
-        flex
-        alignItems={'center'}
-        gap={8}
-        style={{
-          fontSize: 14,
-          margin: SectionMargin
-        }}
-      >
-        <Icon name={'park-tag-one'} size={16} />
-        {t('general.Tags')}
-      </Content>
-      <AnimatePopover
-        positions={['bottom', 'top']}
-        reposition
-        align={'start'}
-        withClickCover
-        content={
-          <WithBorder width={360}>
-            <MetaTagPicker
-              style={{
-                flexShrink: 0,
-                borderRadius: 8
-              }}
-              alreadyTags={object?.tags || []}
-              onChange={tags => {
-                MetaStore.updateMetaObject({ id: metaId, tags })
-              }}
-            />
-          </WithBorder>
-        }
-      >
-        <Content
-          flex
-          gap={6}
-          style={{
-            flexWrap: 'wrap',
-            cursor: 'pointer',
-            border: '1px solid var(--border-background)',
-            borderRadius: 8,
-            padding: '8px',
-            width: '100%'
-          }}
+      </div>
+      <div className={'w-full grow px-6'}>
+        <Tabs
+          tabNavMode={'underline'}
+          tabNavClassname={'shrink-0 !px-4 !pb-2 !pt-2'}
+          activeKey={active}
+          onTabClick={k => setActive(k)}
+          tabNavLeftClassName={'!flex-nowrap'}
+          tabNavContainerClassname={
+            'no-scrollbar w-full shrink-0 overflow-x-auto capitalize font-medium !justify-normal z-10 border-bottom mt-3'
+          }
         >
-          {object.tags?.length ? (
-            object.tags?.map(i => <Tag square hideDelete hideSize tag={i} key={i} />)
-          ) : (
-            <Button.IconButton
-              icon={'park-plus'}
-              style={{
-                fontSize: 14,
-                padding: '5px 6px',
-                color: Colors.Font.Transparent,
-                minWidth: 160
-              }}
-              text={`${t('general.Add tags')}`}
-            ></Button.IconButton>
-          )}
-        </Content>
-      </AnimatePopover>
-      <Content
-        flex
-        alignItems={'center'}
-        gap={8}
-        style={{
-          fontSize: 14,
-          margin: SectionMargin
-        }}
-      >
-        <Icon name={'custom-property'} size={18} />
-        {t('general.Properties')}
-      </Content>
-      <Content
-        style={{
-          padding: 8,
-          width: '100%',
-          borderRadius: 8,
-          border: Colors.Consts.Border
-        }}
-      >
-        <MetaPropDisplayer metaId={metaId} showAddPropPlaceholder={true} />
-      </Content>
-      <Content
-        flex
-        alignItems={'center'}
-        gap={8}
-        style={{
-          fontSize: 14,
-          margin: SectionMargin
-        }}
-      >
-        <Icon name={'park-share-one'} size={16} />
-        {t('general.Linked objects')}
-      </Content>
-      <RelatedPanel
-        style={{
-          minHeight: 140,
-          borderRadius: 8,
-          maxHeight: 400,
-          overflowY: 'auto',
-          padding: '6px',
-          border: '1px solid var(--border-background)'
-        }}
-        metaId={metaId}
-      />
-      <ParentItems metaId={metaId} />
-      <Content
-        flex
-        alignItems={'center'}
-        gap={8}
-        style={{
-          fontSize: 14,
-          margin: SectionMargin
-        }}
-      >
-        <Icon name={'park-link-three'} size={16} />
-        {t('general.Attachments')}
-      </Content>
-      <AttachmentWrapper
-        showField={false}
-        innerContainerStyle={{
-          justifyContent: 'space-between',
-          height: '100%',
-          overflowY: 'auto'
-        }}
-        visible={true}
-        maxVisibleAttachments={10}
-        metaId={metaId}
-      />
+          <TabPane className={'pt-3 pb-6 flex min-h-60 flex-col gap-4'} tab={<Tab text={t('general.Overview')} />} key={'details'}>
+            {url && (
+              <div>
+                <div className={SectionClass}>{t(trans.URL)}</div>
+                <div
+                  onClick={() => {
+                    Global.utils.openSpecificURL(url)
+                  }}
+                  className={'break-all hover:underline cursor-pointer line-clamp-1'}
+                >
+                  {Global.utils.formatURL(url)}
+                </div>
+              </div>
+            )}
+            <ParentFolder id={metaId} />
+            <ParentItems metaId={metaId} className={SectionClass} />
+            <div>
+              <div className={SectionClass}>{t('general.Tags')}</div>
+              <AnimatePopover
+                positions={['bottom', 'top']}
+                align={'start'}
+                padding={6}
+                withClickCover
+                content={
+                  <WithBorder>
+                    <MetaTagPicker
+                      style={{
+                        flexShrink: 0,
+                        borderRadius: 8
+                      }}
+                      alreadyTags={object?.tags || []}
+                      onChange={tags => {
+                        MetaStore.updateMetaObject({ id: metaId, tags })
+                      }}
+                    />
+                  </WithBorder>
+                }
+              >
+                <div className={'gap-1.5 flex flex-wrap cursor-pointer w-full'}>
+                  {object.tags?.length ? (
+                    object.tags?.map(i => <Tag square hideDelete tag={i} key={i} />)
+                  ) : (
+                    <Button.IconButton
+                      icon={'park-plus'}
+                      className={'transparent-font min-w-44'}
+                      text={`${t('general.Add tags')}`}
+                    ></Button.IconButton>
+                  )}
+                </div>
+              </AnimatePopover>
+            </div>
+            <div>
+              <div className={SectionClass}>{t('general.Properties')}</div>
+              <div className={'w-full'}>
+                <MetaPropDisplayer metaId={metaId} showAddPropPlaceholder={true} />
+              </div>
+            </div>
+          </TabPane>
+          {flashcard ? (
+            <TabPane className={'pt-3 pb-6 flex min-h-60 flex-col gap-4'} key={'flashcard'} tab={t('general.Flashcard')}>
+              <Flashcard {...flashcard} metaId={metaId} />
+            </TabPane>
+          ) : null}
+          <TabPane
+            className={'pt-3 pb-6 flex flex-col min-h-60 gap-1.5'}
+            key={'contains'}
+            tab={contains.length ? <Tab count={contains.length} text={t('general.Includes')} /> : null}
+          >
+            {contains.map(i => (
+              <InlineObject
+                id={i}
+                key={i}
+                onClick={() => {
+                  if (metaObject) {
+                    gotoContainedObject(metaObject.id, i)
+                  }
+                }}
+              />
+            ))}
+          </TabPane>
+          <TabPane
+            mount
+            className={'py-3'}
+            key={'appear in'}
+            tab={appearIns ? <Tab text={t('general.Appear in')} count={appearIns} /> : null}
+          >
+            <Backlinks onChange={v => setAppearIns(v)} className={SectionClass} metaId={metaId} visible={visible} />
+          </TabPane>
+          <TabPane mount className={'py-3'} tab={<Tab text={t('general.related')} count={related} />} key={'related'}>
+            <RelatedPanel onRelatedChange={r => setRelated(r)} metaId={metaId} />
+          </TabPane>
+          <TabPane className={'pt-3 pb-6'} tab={<Tab text={t('general.Attachments')} count={atts} />} key={'att'}>
+            <AttachmentWrapper showField={false} visible={true} maxVisibleAttachments={10} metaId={metaId} />
+          </TabPane>
+        </Tabs>
+      </div>
     </Content>
   )
 }
 
+const ParentFolder = ({ id }: { id: number }) => {
+  const parent = CollectionStore.useParentCollection(id)
+  console.log(parent)
+  const { t } = useTranslation()
+  if (parent?.size) {
+    const collections = Array.from(parent.values())
+      .map(i => CollectionStore.getCachedCollectionById(i))
+      .filter(i => i && !i.deleted) as ICollection[]
+    if (!collections.length) return null
+    return (
+      <div>
+        <div className={SectionClass}>{t('general.Location')}</div>
+        <div className={'flex flex-col gap-1.5'}>
+          {collections.map(i => {
+            const parents = CollectionStore.findParentCollections(i.id)
+            if (parents) {
+              const joined = parents.map(i => i.name || t(trans.Unnamed)).join('/')
+              return (
+                <div
+                  onClick={() => {
+                    useHomeConfig.update(c => ({ ...c, breadcrumbsFutureStack: [], breadcrumbs: parents.map(i => i.id) }))
+                    Global.layoutOps?.openPage('home')
+                  }}
+                  className={'hover:underline cursor-pointer w-fit'}
+                  key={i.id}
+                >
+                  {joined}
+                </div>
+              )
+            }
+            return null
+          })}
+        </div>
+      </div>
+    )
+  }
+}
 export default MetaMainDetails

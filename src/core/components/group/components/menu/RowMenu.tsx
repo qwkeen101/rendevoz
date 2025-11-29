@@ -2,17 +2,18 @@ import { MetaGroupChild } from '~/typings'
 import { Content, Menu } from '@/components'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import { MetaStore } from '@/api/stores'
-import { memo, useEffect } from 'react'
-import { GlobalInstance, useSelectAtomValue } from '@/hooks'
+import { memo } from 'react'
+import { useSelectAtomValue } from '@/hooks'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
 import { useTranslation } from 'react-i18next'
 import { IMetaGroupAvailableContextMenuItems } from '@/core/components/group/MetaGroup'
 import { IMenuLayoutItem } from '@/components/base/menu'
 import { DateFormat } from '@/utils'
-import isHotkey from 'is-hotkey'
 import { isEqual } from 'lodash'
 import commonActions from '@/core/components/group/actions/commonActions'
 import { actionToShortcut } from '@/core/components/group/hooks/keyboard/useGroupCommonActions'
+import trans from '@/consts/trans'
+import { Icons } from '@/consts'
 
 export default memo(
   ({ details, onClose }: { details: MetaGroupChild; onClose: VoidFunction }) => {
@@ -22,7 +23,7 @@ export default memo(
     const hasSelected = selected?.length && selected.length > 1
     const { t } = useTranslation()
     const meta = MetaStore.getMetaObjectsMap().get(details.id)
-    const canPreview = details.type === 'metaObject' && meta && GlobalInstance.metaOps?.canPreview(meta)
+    const canPreview = details.type === 'metaObject' && meta && Global.metaOps?.canPreview(meta)
     const { customLayout, hidenItems, lastUpdated } = useSelectAtomValue(
       GroupStateAtom,
       s => ({
@@ -104,8 +105,8 @@ export default memo(
         type: 'separator'
       },
       viewDetails: {
-        text: t('general.View details'),
-        icon: 'park-info',
+        text: t(trans.Meta.ViewDetails),
+        icon: Icons.Info,
         type: 'item',
         key: 'view-details',
         suffix: 'V',
@@ -114,8 +115,8 @@ export default memo(
         }
       },
       edit: {
-        text: t('general.edit'),
-        icon: 'park-edit',
+        text: t(trans.Edit),
+        icon: Icons.Edit,
         type: 'item',
         key: 'edit',
         onSelect: () => {
@@ -123,8 +124,8 @@ export default memo(
         }
       },
       moveTo: {
-        text: t('general.Move to'),
-        icon: 'park-corner-up-right',
+        text: t(trans.Meta.MoveTo),
+        icon: Icons.MoveTo,
         type: 'item',
         key: 'move-to',
         suffix: actionToShortcut['move-to'].text,
@@ -133,7 +134,7 @@ export default memo(
         }
       },
       copyLink: {
-        text: t('general.Copy link'),
+        text: t(trans.CopyLink),
         icon: 'park-link',
         type: 'item',
         key: 'copy-link',
@@ -181,18 +182,19 @@ export default memo(
       selected?.length && selected.length > 1 ? layoutItems['copyLinkToAll'] : undefined,
       layoutItems['deleteInGroup'],
       layoutItems['deleteObject'],
+
       ...(details.type === 'metaObject'
         ? [
             ...(hasSelected
               ? []
               : [
                   layoutItems['separator'],
-                  layoutItems['viewDetails'],
                   ...(onlyOpenIn
                     ? [layoutItems['open']]
                     : [layoutItems['openInNewTab'], ...(canPreview ? [layoutItems['openInSidePeek']] : [])]),
-                  layoutItems['moveTo'],
+                  layoutItems['viewDetails'],
                   layoutItems['edit'],
+                  layoutItems['moveTo'],
                   layoutItems['copyLink']
                 ])
           ]

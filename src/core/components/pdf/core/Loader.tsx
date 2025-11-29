@@ -1,7 +1,7 @@
 import Spinner from '@/components/base/Spinner'
 import usePdfjs from '@/hooks/utils/usePdfjs'
 import { PDFDocumentProxy } from 'pdfjs-dist'
-import { FC, useEffect, useRef, useState } from 'react'
+import { FC, useEffect, useState } from 'react'
 import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 import { PDFDocumentLoadingTask } from 'pdfjs-dist/types/src/display/api'
 

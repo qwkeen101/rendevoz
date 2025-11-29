@@ -1,30 +1,25 @@
 import Spinner from '@/components/base/Spinner'
-import { useDebounceFn, useMemoizedFn, usePrevious, useSelectAtomValue, useUpdateEffect } from '@/hooks'
+import { useDebounceFn, useMemoizedFn, useSelectAtomValue, useUpdateEffect } from '@/hooks'
 import { PDFDocumentProxy } from 'pdfjs-dist'
-import { FC, ReactElement, useEffect, useRef, useState } from 'react'
-import { useIsomorphicLayoutEffect, useMeasure } from 'react-use'
-import { useScrollMode } from '../hooks/useScrollMode'
+import { FC, ReactElement, useEffect, useLayoutEffect, useState } from 'react'
 import { PageSize } from '~/typings'
 import { getPage } from '../utils/pages'
-import { PdfStateAtom } from '@/core/components/pdf/hooks/usePdfState'
+import { PDFStateAtom } from '@/core/components/pdf/hooks/usePDFState'
 import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
-import { useSetAtom } from 'jotai'
+import { useSetAtom, useStore } from 'jotai'
+import { DEFAULT_PDF_PAGE_GAP } from '@/core/components/pdf/core'
 
 interface LayoutWrapperProps {
   defaultScale?: number
   doc: PDFDocumentProxy
   children: (pageSize: PageSize) => ReactElement
+  containerWidth: number
 }
 
-const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children }) => {
-  const [scrollMode] = useScrollMode()
-  const layoutWrapperRef = useRef<HTMLDivElement>(null)
-  const [ref, { width }] = useMeasure()
-  const flooredWidth = Math.floor(width)
-  const previousWidth = usePrevious(flooredWidth)
-  const maxWidth = useSelectAtomValue(PdfStateAtom, s => s.styles?.pdfMaxWidth) ?? 1200
-  const doublePage = useSelectAtomValue(PdfStateAtom, s => s.state?.doublePage)
-  const setPdfState = useSetAtom(PdfStateAtom)
+const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children, containerWidth }) => {
+  const doublePage = useSelectAtomValue(PDFStateAtom, s => s.state?.doublePage)
+  const setPdfState = useSetAtom(PDFStateAtom)
+  const store = useStore()
   const [pageSize, setPageSize] = useState<PageSize>({
     height: 0,
     width: 0,
@@ -34,91 +29,60 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ defaultScale = 1, doc, children
   useEffect(() => {
     setPdfState(s => ({ ...s, viewportFitScale: pageSize.scale }))
   }, [pageSize.scale])
-  const viewportRef = useRef<{ width: number; height: number }>({
-    width: 0,
-    height: 0
-  })
-  const parentEleRef = useRef<HTMLElement>()
-  const initializedRef = useRef(false)
   const instance = usePDFInstance()
-  const pagePadding = useSelectAtomValue(PdfStateAtom, s => s.styles?.pagePadding) ?? 30
-  const pdfScale = useSelectAtomValue(PdfStateAtom, s => s.document?.scale)
-  useIsomorphicLayoutEffect(() => {
-    initializedRef.current = false
+  const pdfScale = useSelectAtomValue(PDFStateAtom, s => s.document?.scale)
+  const calculateSize = useMemoizedFn(() => {
     const pages = doc.numPages
     getPage(doc, pages > 1 ? 1 : 0).then(page => {
       const viewport = page.getViewport({ scale: 1 })
       const vw = viewport.width,
         vh = viewport.height
-      viewportRef.current = {
-        width: vw,
-        height: vh
-      }
-      const layoutWrapperEle = layoutWrapperRef.current
-      if (!layoutWrapperEle) return
-      const parentEle = layoutWrapperEle.parentElement
-      if (parentEle) {
-        parentEleRef.current = parentEle
-        ref(parentEle)
-        const scaleOfWidth = (Math.min(parentEle.clientWidth, doublePage ? maxWidth * 2 : maxWidth) - pagePadding) / vw,
-          scaleOfHeight = (parentEle.clientHeight - pagePadding) / vh
-        let scale = defaultScale
-        scrollMode === 'vertical' && (scale = scaleOfWidth)
-        scrollMode === 'horizontal' && (scale = Math.min(scaleOfHeight, scaleOfWidth))
-        setPageSize({
-          height: vh,
-          width: vw,
-          scale: doublePage ? scale / 2 : scale,
-          containerWidth: parentEle.clientWidth
-        })
-        if (!pdfScale) {
-          instance.actionOps?.setScale(doublePage ? scale / 2 : scale)
-        }
-      } else {
-        console.error('Viewer has no parent element.This is a bug.')
-      }
-    })
-  }, [doc])
-
-  const handleResize = useMemoizedFn(() => {
-    const { width: vw, height: vh } = viewportRef.current
-    const parentEle = parentEleRef.current
-    console.log('handleResizing')
-    if (parentEle) {
-      const scaleOfWidth = (Math.min(parentEle.clientWidth, doublePage ? maxWidth * 2 : maxWidth) - pagePadding) / vw,
-        scaleOfHeight = (parentEle.clientHeight - pagePadding) / vh
-      let scale = defaultScale
-      console.log(scaleOfWidth)
-      scrollMode === 'vertical' && (scale = scaleOfWidth)
-      scrollMode === 'horizontal' && (scale = Math.min(scaleOfHeight, scaleOfWidth))
+      const maxWidth = store.get(PDFStateAtom).styles?.pdfMaxWidth ?? 1200
+      // 计算缩放，最大宽度为1200, 目前仅有垂直模式
+      // 最小padding为12
+      const containerFinalWidth =
+        Math.min(containerWidth, doublePage ? maxWidth * 2 : maxWidth) -
+        (store.get(PDFStateAtom)?.styles?.minPagePadding ?? DEFAULT_PDF_PAGE_GAP) * (doublePage ? 3 : 2)
+      const scale = containerFinalWidth / vw
+      // 获取了宽高，以及针对应用的缩放
       setPageSize({
         height: vh,
         width: vw,
         scale: doublePage ? scale / 2 : scale,
-        containerWidth: parentEle.clientWidth
+        containerWidth: containerFinalWidth
       })
-    }
+      if (!pdfScale) {
+        instance.actionOps?.setScale(doublePage ? scale / 2 : scale)
+      }
+    })
   })
-  const { run: debouncedResize } = useDebounceFn(handleResize, { wait: 100 })
+  useLayoutEffect(() => {
+    calculateSize()
+  }, [doc])
+  const { run: debouncedResize } = useDebounceFn(calculateSize, { wait: 100 })
   useUpdateEffect(() => {
-    if (!initializedRef.current) {
-      initializedRef.current = true
-      return
-    }
-    if (flooredWidth !== 0 && previousWidth !== 0) {
-      if (initializedRef.current) {
-        debouncedResize()
+    debouncedResize()
+  }, [containerWidth])
+  const [isChangingMode, setIsChangingMode] = useState(false)
+  useUpdateEffect(() => {
+    setIsChangingMode(true)
+    calculateSize()
+    if (!doublePage) {
+      const initial = store.get(PDFStateAtom).state?.initialPage
+      if (initial !== undefined) {
+        instance.on?.({
+          type: 'readProgressChange',
+          lastReadPage: Math.max(0, initial - 1)
+        })
       }
     }
-  }, [flooredWidth])
-  useUpdateEffect(() => {
-    handleResize()
     setTimeout(() => {
       instance.actionOps?.fitWidth()
-    })
+      setTimeout(() => setIsChangingMode(false), 100)
+    }, 100)
   }, [doublePage])
-  return pageSize.width === 0 ? (
-    <div aria-label="layout-wrapper" ref={layoutWrapperRef} style={{ width: '100%', height: '100%' }}>
+  return pageSize.width === 0 || isChangingMode ? (
+    <div style={{ width: '100%', height: '100%' }}>
       <Spinner size={50} />
     </div>
   ) : (

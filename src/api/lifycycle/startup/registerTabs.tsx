@@ -1,9 +1,7 @@
 import { ILayoutTab, TabData } from '~/typings'
 import Id from '@/utils/id'
-import Webpage from '@/core/components/webpage/Webpage'
 import SyncedBlockPage from '@/scenes/SyncedBlockPage'
 import { EditorPage, HomePage, PdfPage, WhiteboardPage, ImagePage, VideoPage, GraphPage, MetaGroupPage } from '@/scenes'
-import FeedViewer from '@/core/components/feed'
 import AudioPage from '@/scenes/AudioPage'
 import QuestionPage from '@/scenes/QuestionPage'
 import CodePage from '@/scenes/CodePage'
@@ -13,17 +11,29 @@ import TypeGroup from '@/core/components/groups/Type'
 import TagGroup from '@/core/components/groups/Tag'
 import TweetPage from '@/scenes/TweetPage'
 import CollectionGroup from '@/core/components/groups/CollectionGroup'
-import { GlobalInstance } from '@/hooks'
 import PropGroup from '@/core/components/groups/PropGroup'
 import All from '@/core/components/groups/All'
+import ChatPage from '@/scenes/ChatPage'
+import MessagePage from '@/scenes/MessagePage'
+import WebpagePage from '@/scenes/WebpagePage'
+import ExamPage from '@/scenes/ExamPage'
+import ExamQuestionPage from '@/scenes/ExamQuestionPage'
 
-export const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
+export const DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   {
     type: 'typeGroup',
-    content: opts => opts.metaType && <TypeGroup type={opts.metaType} />
+    content: opts => opts.objectId && <TypeGroup type={opts.objectId} />
   },
   {
-    type: 'database',
+    type: 'exam',
+    content: opts => opts.objectId && <ExamPage onInstanceInitialized={opts.onInstanceInitialized} id={opts.objectId} />
+  },
+  {
+    type: 'examQuestion',
+    content: opts => opts.objectId && <ExamQuestionPage id={opts.objectId} />
+  },
+  {
+    type: 'library',
     content: () => <All />
   },
   {
@@ -33,6 +43,10 @@ export const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   {
     type: 'tweet',
     content: opts => opts.objectId && <TweetPage id={opts.objectId} />
+  },
+  {
+    type: 'chat',
+    content: opts => opts.objectId && <ChatPage onInstanceInitialized={opts.onInstanceInitialized} id={opts.objectId} />
   },
   {
     type: 'tagGroup',
@@ -50,8 +64,12 @@ export const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
       )
   },
   {
-    type: 'recycleBin',
+    type: 'trash',
     content: () => <RecycleBin />
+  },
+  {
+    type: 'message',
+    content: opts => opts.objectId && <MessagePage id={opts.objectId} />
   },
   {
     type: 'syncedBlock',
@@ -83,7 +101,7 @@ export const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   },
   {
     type: 'webpage',
-    content: opts => opts.objectId && <Webpage initialWebpageId={opts.objectId} onInstanceInitialized={opts.onInstanceInitialized} />
+    content: opts => opts.objectId && <WebpagePage id={opts.objectId} onInstanceInitialized={opts.onInstanceInitialized} />
   },
   {
     type: 'whiteboard',
@@ -108,24 +126,20 @@ export const RENDEVOZ_DEFAULT_TABS: TabData[ILayoutTab['type']][] = [
   {
     type: 'synced',
     content: opts => <SyncedBlockPage metaId={opts.objectId} />
-  },
-  {
-    type: 'feeds',
-    content: opts => <FeedViewer />
   }
 ]
 
 const labels = ['pdfLabel', 'webpageLabel', 'noteLabel', 'videoLabel', 'audioLabel']
 
 labels.forEach(l => {
-  RENDEVOZ_DEFAULT_TABS.push({
+  DEFAULT_TABS.push({
     type: l,
     content: opts => opts.metaId && <LabelDetailsRenderer metaId={opts.metaId} />
   })
 })
 const registerTabs = () => {
-  RENDEVOZ_DEFAULT_TABS.forEach(i => {
-    GlobalInstance.layoutOps?.registerTabData(i)
+  DEFAULT_TABS.forEach(i => {
+    Global.layoutOps?.registerTabData(i)
   })
 }
 

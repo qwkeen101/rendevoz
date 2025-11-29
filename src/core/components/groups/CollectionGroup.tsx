@@ -1,6 +1,4 @@
 import { CollectionStore, MetaStore } from '@/api/stores'
-import { useSelectGlobalAtomValue } from '@/hooks'
-import { collectionsAtom } from '@/api/stores/collection.store'
 import MetaGroup from '@/core/components/group/MetaGroup'
 import { Content, Icon } from '@/components'
 import TabTitle from '@/components/layout/TabTitle'
@@ -8,65 +6,59 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import GroupStore from '../../../api/stores/group.store'
 import { MetaObject } from '~/typings'
-import { calculateSortObjects } from '@/core/object/filter/BetterSorter'
+import { Icons } from '@/consts'
 
 export default ({ id }: { id: number }) => {
-  const collection = useSelectGlobalAtomValue(collectionsAtom, s => s.get(id))
+  const collection = CollectionStore.useValue(id)
   const collectionGroup = KeyvalueStore.useValue(`collection_${id}_group`)
   const [data, setData] = useState(
     collectionGroup ?? {
       ...GroupStore.initializeGroup(),
-      hideObjectsInside: false,
-      hideGroupsInside: false,
+      hideObjectsInside: true,
+      hideGroupsInside: true,
       autoAddto: 'first'
     }
   )
   useEffect(() => {
     if (collection?.items) {
-      const metaMap = MetaStore.getMetaObjectsMap()
-      const metas = Array.from(
-        new Set(
-          collection.items
-            .filter(i => i.type === 'meta' && i.id)
-            .map(i => metaMap.get(i.id!))
-            .filter(i => i) as MetaObject[]
-        ).values()
-      )
-      const sorted = calculateSortObjects(metas, {
-        sorters: [
-          {
-            field: 'createdAt',
-            type: 'ascending',
-            id: 1
-          }
-        ]
-      })
-      setData(s => ({ ...s, values: sorted.map(i => ({ rowId: i.id, type: 'metaObject', id: i.id })) }))
+      const metas = collection.items
+        .map(i => (i.type === 'meta' ? MetaStore.getCachedMetaObject(i.id) : MetaStore.getMetaObjectByObjectId(i.id)))
+        .filter(i => i && !i.deleted) as MetaObject[]
+      setData(s => ({ ...s, values: metas.reverse().map(i => ({ rowId: i.id, type: 'metaObject', id: i.id })) }))
     }
   }, [collection?.items])
   const metaRef = useRef<number[]>([])
 
-  if (!collection || collection.deleted) return null
+  if (!collection) return null
   return (
     <Content fullHeight fullWidth>
-      <TabTitle title={collection?.name || 'Unnamed collection'} icon={<Icon name={'park-folder-close'} />} />
+      <TabTitle title={collection?.name} icon={<Icon name={Icons.Folder} />} />
       <MetaGroup
         title={{
-          title: collection?.name || 'Unnamed collection',
-          icon: collection?.icon || 'park-folder-close',
+          title: collection?.name,
           titleEditable: true
         }}
         state={{
           canHideGroupsInside: true,
           canDrag: true,
-          canHideObjectsInside: true,
-          canDragInside: true
+          canHideObjectsInside: false,
+          canDragInside: true,
+          canTurnHiddenIntoUnhidden: false
         }}
         layout={{
           showDeletedMetas: false,
           showDescription: false,
-          showTitleActions: false
+          showTitleActions: false,
+          showCollection: true
         }}
+        styles={useMemo(
+          () => ({
+            titleContainerStyle: {
+              paddingTop: 42
+            }
+          }),
+          []
+        )}
         value={{ ...data, ...collectionGroup, values: data.values }}
         on={v => {
           if (v.type === 'groupDataChange') {

@@ -1,0 +1,115 @@
+.exam-question-wrapper{
+  box-shadow: 0 0 0 1px var(--border-background);
+  transition: box-shadow 0.3s ease, background-color 0.3s ease;
+  padding: 1.25rem;
+  cursor: grab;
+  border-radius: 1rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  align-items: start;
+  &.test {
+    cursor: auto !important;
+    box-shadow: none !important;
+  }
+  &:hover{
+    box-shadow: 0 0 0 2.5px var(--select-color-transparent);
+  }
+  &.focused {
+    box-shadow: 0 0 0 2.5px var(--select-color);
+  }
+}
+
+.exam-plus-button {
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 50%;
+  background: rgba(from var(--select-color) r g b / 0.08);
+  cursor: pointer;
+  transition: background 0.12s ease;
+  color: var(--select-color);
+  &:hover{
+    background: rgba(from var(--select-color) r g b / 0.12);
+  }
+  &.rotate{
+    svg{
+      transform: rotate(-45deg);
+    }
+  }
+}
+
+.exam-add-placeholder{
+  width: 100%;
+  border-radius: 1rem;
+  background: rgba(from var(--select-color) r g b / 0.08);
+  box-shadow: 0 0 0 1px inset var(--select-color-transparent);
+}
+
+.exam-more-icon{
+  display: flex;
+  gap: .5em;
+  transition: opacity 0.3s ease, background 0.12s ease;
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+}
+
+.exam-question-desc-displayer{
+  color: var(--font-transparent);
+  .ParagraphBlock{
+    margin: 0px !important;
+  }
+}
+.exam-cloze-question{
+  cursor: text;
+  border-radius: 0.75em;
+  border: 1px solid var(--border-solid);
+  [data-slate-editor]{
+    padding: 0.75em 1em;
+    min-height: 10em;
+  }
+  .ParagraphBlock{
+    margin-bottom: 0.2em !important;
+  }
+}
+
+.exam-number-input{
+  width: 100%;
+  transition: all 0.16s ease;
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid var(--border-solid);
+  &:not(.history){
+    &:hover, &:focus{
+      border-bottom: 1px solid var(--select-color);
+    }
+  }
+}
+
+.exam-history-item{
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  background: var(--background-secondary);
+  min-height: calc(1lh + 1.5rem);
+}
+
+.exam-sidebar{
+  height: calc(100% - 44px) !important;
+}
+
+.mark-slash-one{
+  line-height: 1;
+  font-size: 1em;
+  margin-left: 0.2em;
+  margin-top: -0.3em;
+  transform-origin: center;
+  transform: rotate(50deg);
+}
+
+.mark-slash-two{
+  line-height: 1;
+  font-size: 0.8em;
+  margin-top: -0.9em;
+  margin-left: 0.3em;
+  transform-origin: center;
+  transform: rotate(45deg);
+}

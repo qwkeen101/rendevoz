@@ -6,7 +6,7 @@
  */
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
-import { Transforms } from 'slate'
+import { Range, Transforms } from 'slate'
 import { IEditorInstance } from '~/typings'
 import { ReactEditor } from '@/core'
 
@@ -33,8 +33,9 @@ const useEditorTabKey = (instance: IEditorInstance) => {
           }
         })
       } else {
+        const selection = editor.selection
         // indent or de indent current block
-        if (instance.isSelectionCollapsed?.() && ReactEditor.isFocused(editor)) {
+        if (selection && Range.isCollapsed(selection) && ReactEditor.isFocused(editor)) {
           const currentBlock = blockOps.getAboveBlock?.()
           if (currentBlock) {
             if (blockOps.isIndentableBlock?.(currentBlock[0].type)) {

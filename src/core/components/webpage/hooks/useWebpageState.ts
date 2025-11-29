@@ -1,6 +1,4 @@
-import Id from '@/utils/id'
 import { atom, useAtom } from 'jotai'
-import { IWebpage, MetaObject } from '~/typings'
 
 export type WebpageState = {
   title: string
@@ -9,26 +7,28 @@ export type WebpageState = {
   favicon?: string
   image?: string
   url?: string
+  feedCollectionId?: number
 }
 export type IWebpageState = {
-  currentWebpage?: WebpageState
-  externalState?: WebpageState & {
-    content: import('slate').Descendant[]
-    image?: string
-    link?: string
-  }
+  name: string
+  url: string
+  image?: string
+  metaId?: number
+  noteId?: number
+  feedCollectionId?: number
+  favicon?: string
+  content?: import('slate').Descendant[]
+  showOriginal?: boolean
   loaded: boolean
   isLoading: boolean
-  failLoading?: boolean
-  currentParsedContent?: import('slate').Descendant[]
-  currentWebpageId?: number
-  currentUrl?: string
-  currentWebpageNoteId?: number
+  isFailed?: boolean
 }
 
-const WebpageStateAtom = atom<IWebpageState>({
+export const WebpageStateAtom = atom<IWebpageState>({
   loaded: false,
-  isLoading: true
+  isLoading: false,
+  name: '',
+  url: ''
 })
 
 const useWebpageState = () => useAtom(WebpageStateAtom)

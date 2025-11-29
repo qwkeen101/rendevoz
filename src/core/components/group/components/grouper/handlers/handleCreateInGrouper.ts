@@ -13,40 +13,49 @@ export default (metaIds: number | number[], grouperId: number, instance: InnerGr
   const currentGroupRule = instance.getCurrentView?.()?.group
   const metaMap = MetaStore.getMetaObjectsMap()
   const updateProp = (value: any, updateArr?: boolean) => {
+    const propId = currentGroupRule?.propertyId
     if (!currentGroupRule) return
-    if (!currentGroupRule.propertyId) return
+    if (!propId) return
     if (currentGroupRule.propertyGroupType === 'custom') {
       ids.forEach(id => {
         const meta = metaMap.get(id)
         if (meta) {
           if (updateArr && value !== undefined) {
-            const currArr = meta.properties?.[currentGroupRule.propertyId]?.value as number[] | undefined
+            const currArr = meta.properties?.[propId]?.value as number[] | undefined
             if (currArr?.includes(value)) return
-            MetaStore.property.updateProperty(id, currentGroupRule.propertyId, {
-              value: [...(currArr || []), value]
-            })
+            instance.metaOps?.updateMetaProperty(
+              propId,
+              {
+                value: [...(currArr || []), value]
+              },
+              id
+            )
           } else {
-            if (meta.properties?.[currentGroupRule.propertyId]?.value !== value) {
-              MetaStore.property.updateProperty(id, currentGroupRule.propertyId, {
-                value
-              })
+            if (meta.properties?.[propId]?.value !== value) {
+              instance.metaOps?.updateMetaProperty(
+                propId,
+                {
+                  value
+                },
+                id
+              )
             }
           }
         }
       })
     } else {
-      const prop = DEFAULT_GROUP_PROPERTY_OBJ[currentGroupRule.propertyId]
+      const prop = DEFAULT_GROUP_PROPERTY_OBJ[propId]
       ids.forEach(id => {
         const meta = metaMap.get(id)
         if (meta) {
           if (updateArr && value !== undefined) {
             const currArr = meta[prop.name] as number[] | undefined
             if (!currArr?.includes(value)) {
-              MetaStore.updateMetaObject({ id: meta.id, [prop.name]: [...(currArr || []), value] })
+              instance.metaOps?.updateMeta({ id: meta.id, [prop.name]: [...(currArr || []), value] })
             }
           } else {
             if (meta[prop.name] !== value) {
-              MetaStore.updateMetaObject({ id: meta.id, [prop.name]: value })
+              instance.metaOps?.updateMeta({ id: meta.id, [prop.name]: value })
             }
           }
         }

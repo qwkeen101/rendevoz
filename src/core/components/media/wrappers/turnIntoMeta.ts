@@ -1,21 +1,25 @@
 import { MediaProps } from '@/core'
 import { ObjectStore } from '@/api/stores'
 
-export default async (mediaState: MediaProps['mediaState'], type: 'audio' | 'video') => {
+export default async (mediaState: MediaProps['mediaState'], type: 'audio' | 'video', temp?: boolean) => {
   if (!mediaState) return
-  const { description, url, lastPlayedTime, totalPlayedTime, name, thumbnail, subtitleList, subtitleLang } = mediaState
+  const { description, url, currentTime, name, thumbnail, subtitleList, subtitleLang, state } = mediaState
   const res = await ObjectStore(type).addOneWithMeta(
     {
       url,
-      lastPlayedTime,
-      totalPlayedTime,
+      currentTime,
       subtitleList,
       thumbnail,
-      subtitleLang: subtitleLang
+      subtitleLang: subtitleLang,
+      episodeId: state?.episodeId,
+      ytChannelId: state?.ytChannelId,
+      ytVideoId: state?.ytVideoId,
+      ytPlaylistId: state?.ytPlaylistId
     },
     {
       currentMeta: {
         name,
+        temp,
         description,
         coverImgSrc: thumbnail
       },

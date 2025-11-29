@@ -1,25 +1,26 @@
 // for whiteboard
 import { MetaStore, ObjectStore } from '@/api/stores'
-import { Content, Icon, Tooltip } from '@/components'
-import { CSSProperties, memo, ReactElement, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { ILabel, MetaObject } from '~/typings'
-import AutosizeTextarea from '@/components/custom/input/AutoSizeTextArea'
-import { ClassName } from 'rendevoz'
-import { Rendevoz } from '@/core/rendevoz'
+import { Icon, AutosizeTextarea, Markdown } from '@/components'
+import { CSSProperties, memo, ReactElement, useContext, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { normalizeSecondsToTime } from '@/core/components/media/utils'
-import { Colors } from '@/consts'
+import { Colors, Icons, KEY } from '@/consts'
 import { useTranslation } from 'react-i18next'
 import Video from '@/core/components/media/wrappers/Video'
 import Audio from '@/core/components/media/wrappers/Audio'
 import classnames from 'classnames'
 import { LabelDetailsContext } from '@/core/object/renderer/LabelDetailsContext'
 import { css } from '@emotion/css'
+import UseRenderLabel from '@/core/object/renderer/useRenderLabel'
+import isHotkey from 'is-hotkey'
+import VideoLabelVideoPreviewer from '@/core/object/renderer/VideoLabelVideoPreviewer'
+import { IVideoLabel } from '~/typings'
 
 const firstChildPaddingTop = css({
   ':first-child': {
     paddingTop: '6px !important'
   }
 })
+
 export default memo(
   ({
     metaId,
@@ -30,9 +31,12 @@ export default memo(
     autoPlay,
     showAudio,
     imageStyle,
+    showQuestion = true,
     sourceStyle,
     textStyle,
-    noteStyle
+    noteStyle,
+    collapseOriginalText,
+    disableSidebar
   }: {
     metaId: number
     style?: CSSProperties
@@ -40,64 +44,61 @@ export default memo(
     showAddNote?: boolean
     showVideo?: boolean
     showAudio?: boolean
+    showQuestion?: boolean
     autoPlay?: boolean
     noteStyle?: CSSProperties
     textStyle?: CSSProperties
     sourceStyle?: CSSProperties | ((hasDisplayer: boolean) => CSSProperties)
-    imageStyle?: CSSProperties | ((m?: MetaObject) => CSSProperties)
+    imageStyle?: CSSProperties
+    collapseOriginalText?: boolean
+    disableSidebar?: boolean
   }) => {
     const context = useContext(LabelDetailsContext)
+    const sidebarMode = disableSidebar ? false : context.sidebarMode
     const metaObject = MetaStore.useValue(metaId)
     const { t } = useTranslation()
-    const label = ObjectStore(metaObject?.type).useValue(metaObject?.objectId) as ILabel | undefined
+    const { label, renderQuestions } = UseRenderLabel({
+      type: metaObject?.type,
+      objectId: metaObject?.objectId
+    })
     const from = useMemo(() => {
       if (metaObject?.fromObject) {
         return {
           name: MetaStore.getMetaObjectsMap().get(metaObject.fromObject.metaId)?.name,
-          icon: Rendevoz.Utils.Object.getMetaObjectIcon(metaObject.fromObject.type)
+          icon: Global.utils.getIcon(metaObject.fromObject.type)
         }
       }
     }, [metaObject?.fromObject])
-    const normalizedTime = useMemo(() => {
-      if (label?.time !== undefined) {
-        return normalizeSecondsToTime(label.time)
-      }
-    }, [label?.time])
+
     const inputRef = useRef<HTMLDivElement>(null)
     const [showToolbar, setShowToolbar] = useState(false)
+    const noteVisible = !((showAddNote === false || context.showAddNote === false) && !metaObject?.name)
+    const [isEditing, setIsEditing] = useState(false)
+
     useLayoutEffect(() => {
       if (inputRef.current && metaObject) {
-        const v = inputRef.current.innerText
-        if (v !== metaObject.name) {
-          inputRef.current.innerText = metaObject.name || ''
+        inputRef.current.innerText = metaObject.name || ''
+        if (isEditing) {
+          inputRef.current.focus()
         }
       }
-    }, [metaObject?.name])
+    }, [metaObject?.name, noteVisible, isEditing])
     const [displayer, setDisplayer] = useState<ReactElement>()
     const renderImgOrLabel = async () => {
       if (!label) return undefined
       if (showImage === false) return null
       if (metaObject?.type === 'videoLabel' && showVideo !== false) {
-        const videoId = label.parentObjectId
-        if (videoId) {
-          const v = await ObjectStore('video').getOneById(videoId)
-          if (v) {
-            setDisplayer(
-              <Video
-                onlyCore
-                mediaState={{
-                  autoPlay,
-                  url: v.url,
-                  currentTime: label.time,
-                  styles: {
-                    videoBorderRadius: 0
-                  }
-                }}
-              />
-            )
-            return
-          }
-        }
+        setDisplayer(
+          <VideoLabelVideoPreviewer
+            style={{
+              borderRadius: sidebarMode ? '0.75rem' : imageStyle?.borderRadius,
+              ...imageStyle
+            }}
+            label={label as IVideoLabel}
+            cover={metaObject.coverImgSrc}
+          />
+        )
+        return
       }
       if (metaObject?.type === 'audioLabel' && showAudio !== false) {
         const audioId = label.parentObjectId
@@ -110,13 +111,13 @@ export default memo(
                 onlyCore
                 mediaState={{
                   toolbar: {
-                    extra: false,
-                    addLabel: false
+                    toolbarEnabled: false
                   },
                   styles: {
-                    progressHeight: 8,
+                    playerHeaderClassName: '!p-4 !pb-2 border-bottom !flex-col !items-start',
+                    playerHeaderNameContainerClassName: '!items-start',
+                    playerHeaderBottomBarClassName: '!mx-0',
                     playerStyle: {
-                      padding: '8px 12px',
                       borderBottom: Colors.Consts.Border
                     },
                     controlBarStyle: {
@@ -128,9 +129,9 @@ export default memo(
                     }
                   },
                   layout: {
-                    showProgressPins: false,
-                    showDescription: false,
-                    showAudioThumbnail: false
+                    audioHeaderMode: true,
+                    smallAudioThumbnail: true,
+                    audioPodcast: false
                   },
                   url: v.url,
                   currentTime: label.time
@@ -142,13 +143,13 @@ export default memo(
         }
       }
       if (metaObject?.coverImgSrc) {
-        const s = typeof imageStyle === 'function' ? imageStyle(metaObject) : imageStyle
         setDisplayer(
           <img
             style={{
               aspectRatio: metaObject?.type === 'videoLabel' ? '16 / 9' : undefined,
               objectFit: metaObject?.type === 'videoLabel' ? 'cover' : 'contain',
-              ...s
+              borderRadius: sidebarMode ? '0.75rem' : imageStyle?.borderRadius,
+              ...imageStyle
             }}
             src={metaObject.coverImgSrc}
             width={'100%'}
@@ -158,66 +159,63 @@ export default memo(
       }
       setDisplayer(undefined)
     }
-    useEffect(() => {
+    useMemo(() => {
       renderImgOrLabel()
-    }, [metaObject, label, showVideo, showAudio])
-    const audioLabelMode = metaObject?.type === 'audioLabel' && showAudio
-    const noteVisible = !((showAddNote === false || context.showAddNote === false) && !metaObject?.name)
+    }, [metaObject, label, showVideo, showAudio, imageStyle?.objectFit, sidebarMode])
+    const selectedTextVisible = label?.selectedText && !label.imageUrl && metaObject
+    const padding = '8px'
+    const largePadding = '8px'
     return (
-      <Content
+      <div
         contentEditable={false}
         onPointerLeave={() => setShowToolbar(false)}
         onPointerEnter={() => {
           setShowToolbar(true)
         }}
-        style={{ display: 'flex', flexDirection: 'column', gap: 6, ...style }}
-        fullWidth
-        className={'font-size-14'}
+        className={'flex flex-col w-full'}
+        style={{
+          ...style,
+          overflowY: sidebarMode ? undefined : 'auto',
+          margin: sidebarMode ? 'auto' : undefined,
+          maxHeight: sidebarMode ? undefined : '100%',
+          padding: sidebarMode ? '1.5rem' : undefined,
+          maxWidth: sidebarMode ? '720px' : style?.maxWidth
+        }}
         onPointerMove={() => !showToolbar && setShowToolbar(true)}
       >
         {displayer}
-        {!audioLabelMode && context.showSource !== false && (
-          <Content
-            flex
-            alignItems={'center'}
-            justifyContent={'space-between'}
-            className={'font-size-13'}
+        {context.showSource !== false && (
+          <div
+            className={'em:text-sm items-center flex justify-between gap-2'}
             style={{
-              padding: displayer ? '4px 12px 0px' : '6px 12px 0px',
+              padding,
               ...(typeof sourceStyle === 'function' ? sourceStyle(!!displayer) : sourceStyle)
             }}
-            gap={6}
           >
             {from && (
-              <Content
-                flex
-                gap={8}
-                style={{
-                  flex: 1
-                }}
-              >
-                <Icon size={16} name={from.icon} />
-                <div className={'ellipsis-font-1'}>{from.name || t('general.Unnamed')}</div>
-                {normalizedTime && <div style={{ flexShrink: 0 }}> - {normalizedTime}</div>}
-              </Content>
+              <div onClick={() => Global.layoutOps?.openObject(metaId)} className={'items-center cursor-pointer flex-1 gap-2 flex'}>
+                <Icon name={from.icon} />
+                <div className={'line-clamp-1'}>{from.name || t('general.Unnamed')}</div>
+              </div>
             )}
-            {showToolbar && (
-              <Content flex gap={4}>
-                <Tooltip content={'View source'}>
+            {(showToolbar || isEditing) && (
+              <>
+                {metaObject?.name && (
                   <Icon
-                    size={12}
+                    onPointerDown={e => e.preventDefault()}
+                    name={Icons.Edit}
+                    className={classnames('cursor-pointer mr-1.5', isEditing && 'select-color-font')}
                     onClick={() => {
-                      Rendevoz.Actions.Open.Meta.openMetaObject(metaId)
+                      setIsEditing(!isEditing)
+                      inputRef.current?.blur()
                     }}
-                    className={ClassName.flatButton(4, '2px')}
-                    name={'park-share'}
                   />
-                </Tooltip>
-              </Content>
+                )}
+              </>
             )}
-          </Content>
+          </div>
         )}
-        {label?.selectedText && metaObject && (
+        {selectedTextVisible && (
           <AutosizeTextarea
             value={label.selectedText}
             onBlur={e => {
@@ -230,41 +228,71 @@ export default memo(
                 placeholderName: e.target.innerText || ''
               })
             }}
+            className={classnames('transparent-font w-full shrink-0', collapseOriginalText && noteVisible && 'line-clamp-3')}
             style={{
-              width: '100%',
-              display: 'block',
-              padding: '4px 10px',
+              display: collapseOriginalText ? undefined : 'block',
+              padding: '4px 8px',
               resize: 'none',
-              lineHeight: 1.57,
               borderLeft: `3px solid ${Colors.getAdaptColor(label.color) || 'var(--emphasis)'}`,
               ...textStyle
             }}
           ></AutosizeTextarea>
         )}
         {noteVisible ? (
-          <AutosizeTextarea
-            ref={inputRef}
-            onBlur={e => {
-              metaObject &&
-                MetaStore.updateMetaObject({
-                  id: metaObject.id,
-                  name: e.target.innerText || ''
-                })
-            }}
-            style={{
-              resize: 'none',
-              display: 'block',
-              width: '100%',
-              padding: '0px 12px 8px',
-              lineHeight: 1.57,
-              ...noteStyle
-            }}
-            className={firstChildPaddingTop}
-            value={metaObject?.name}
-            placeholder={t('general.Add note')}
-          />
+          isEditing || !metaObject?.name ? (
+            <AutosizeTextarea
+              ref={inputRef}
+              onBlur={e => {
+                metaObject &&
+                  MetaStore.updateMetaObject({
+                    id: metaObject.id,
+                    name: inputRef.current?.innerText || ''
+                  })
+                setIsEditing(false)
+              }}
+              style={{
+                resize: 'none',
+                display: 'block',
+                flexShrink: 0,
+                width: '100%',
+                padding,
+                paddingBottom: sidebarMode ? '3rem' : 8,
+                ...noteStyle,
+                paddingTop: !selectedTextVisible ? 0 : 8
+              }}
+              onKeyDown={e => {
+                if (isHotkey(KEY.Escape, e)) {
+                  e.preventDefault()
+                  e.currentTarget.blur()
+                }
+              }}
+              className={firstChildPaddingTop}
+              placeholder={t('general.Add note')}
+            />
+          ) : (
+            metaObject?.name && (
+              <div
+                className={firstChildPaddingTop}
+                style={{
+                  padding,
+                  ...noteStyle,
+                  paddingTop: !selectedTextVisible ? 0 : 8,
+                  whiteSpace: 'normal'
+                }}
+              >
+                <Markdown>{metaObject?.name}</Markdown>
+              </div>
+            )
+          )
         ) : null}
-      </Content>
+        {showQuestion &&
+          renderQuestions({
+            style: {
+              padding: largePadding,
+              borderTop: '1px solid var(--border-background)'
+            }
+          })}
+      </div>
     )
   }
 )

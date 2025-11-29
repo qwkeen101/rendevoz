@@ -15,7 +15,7 @@ export default (result: {
   const { rightIds, leftIds, newNode, idx, targetId, direction, currNode } = result
   if (rightIds.has(targetId) || (targetId === currNode.id && direction === 'right')) {
     const newRightChildren = produce(currNode.rightChildren || [], draft => {
-      addToTree({ root: currNode.id, children: draft }, targetId, undefined, {
+      addToTree({ root: currNode.id, children: draft }, targetId, idx, {
         root: newNode.id,
         children: []
       })
@@ -27,7 +27,7 @@ export default (result: {
   }
   if (leftIds.has(targetId) || (targetId === currNode.id && direction === 'left')) {
     const newLeftTree = produce(currNode.leftChildren || [], draft => {
-      addToTree({ root: currNode.id, children: draft }, targetId, undefined, {
+      addToTree({ root: currNode.id, children: draft }, targetId, idx, {
         root: newNode.id,
         children: []
       })

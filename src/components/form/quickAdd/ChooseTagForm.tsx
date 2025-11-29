@@ -1,52 +1,37 @@
-import { Content, Footer, Icon } from '@/components'
 import MetaTagPicker from '@/core/object/MetaTagPicker'
+import { memo, useEffect, useState } from 'react'
+import { FormFooter } from '@/components'
 import { MetaStore } from '@/api/stores'
-import { ClassName } from 'rendevoz'
-import { useTranslation } from 'react-i18next'
-import { useMemo } from 'react'
-import updateMovetoCache from '@/components/form/quickAdd/updateMovetoCache'
 
-export default ({ metaId, onBack }: { metaId: number[]; onBack: VoidFunction }) => {
-  const obj = MetaStore.useMultipleObjects(metaId)
-  const tags = useMemo(() => {
-    const set = new Set<number>()
-    obj.forEach(i => {
-      i.tags?.forEach(t => {
-        set.add(t)
-      })
-    })
-    return Array.from(set.values())
-  }, [obj])
-  const { t } = useTranslation()
+export default memo(({ onChange, onClose, metaId }: { onChange: (ids: number[]) => void; onClose: VoidFunction; metaId?: number }) => {
+  const [tags, setTags] = useState<number[]>([])
+  useEffect(() => {
+    if (metaId) {
+      setTags(MetaStore.getCachedMetaObject(metaId)?.tags || [])
+    }
+  }, [metaId])
   return (
-    <Content
-      style={{
-        padding: 8,
-        minWidth: 'min(400px, 90vw)',
-        maxWidth: 'min(660px, 90vw)',
-        minHeight: 'min(360px, 90vh)',
-        maxHeight: '80vh'
-      }}
-    >
-      <Content flex gap={12} alignItems={'center'} className={ClassName.title()} style={{ paddingLeft: onBack ? 0 : 6 }}>
-        {onBack && <Icon name={'park-left'} className={ClassName.circleButton()} onClick={onBack} />}
-        {t('general.Select tags')}
-      </Content>
+    <>
       <MetaTagPicker
+        style={{
+          minHeight: 'min(340px, 90vh)',
+          maxHeight: '80vh',
+          width: '100%'
+        }}
+        inputClassName={'bg-third !py-2'}
         alreadyTags={tags || []}
         onChange={v => {
-          const newTags = v.filter(i => !tags.includes(i))
-          if (newTags.length) {
-            const id = newTags[0]
-            updateMovetoCache(s => {
-              s.recently = s.recently ? [{ type: 'tag', id }, ...s.recently.filter(i => i.id !== id)] : [{ type: 'tag', id }]
-            })
-          }
-          metaId.forEach(id => {
-            MetaStore.updateMetaObject({ id, tags: v })
-          })
+          setTags(v)
         }}
       />
-    </Content>
+      <FormFooter
+        onConfirm={() => {
+          onChange(tags)
+        }}
+        className={'p-4 border-top'}
+        canConfirm={metaId ? true : tags.length > 0}
+        onCancel={onClose}
+      />
+    </>
   )
-}
+})

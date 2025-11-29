@@ -61,7 +61,7 @@ export default () => {
             }}
             column
             flex
-            className={'transparent-font br-6 p-6'}
+            className={'transparent-font br-6 p-6px'}
             key={i.icon}
             style={{
               width: 75,
@@ -83,7 +83,7 @@ export default () => {
           <>
             <ButtonSwitch
               value={!!currentGroupView?.options.thumbnailMode}
-              name={t('general.Thumbnail mode')}
+              name={t('general.Compact mode')}
               onChange={v => {
                 instance.updateCurrentView?.(s => ({
                   ...s,
@@ -94,19 +94,21 @@ export default () => {
                 }))
               }}
             />
-            <ButtonSwitch
-              onChange={v => {
-                instance.updateCurrentView?.(s => ({
-                  ...s,
-                  options: {
-                    ...s.options,
-                    fitImage: v
-                  }
-                }))
-              }}
-              name={t('general.Fit image')}
-              value={!!currentGroupView?.options.fitImage}
-            ></ButtonSwitch>
+            {!thumbnailMode && (
+              <ButtonSwitch
+                onChange={v => {
+                  instance.updateCurrentView?.(s => ({
+                    ...s,
+                    options: {
+                      ...s.options,
+                      fitImage: v
+                    }
+                  }))
+                }}
+                name={t('general.Fit image')}
+                value={!!currentGroupView?.options.fitImage}
+              ></ButtonSwitch>
+            )}
             <ButtonSelect
               closeOnSelect={true}
               name={t('general.Card size')}
@@ -171,7 +173,7 @@ export default () => {
                 }
               }))
             }}
-            name={t('general.Hide cover if empty')}
+            name={t('group.Hide cover if empty')}
             value={!!currentGroupView?.options.hideCoverIfEmpty}
           ></ButtonSwitch>
         )}
@@ -186,7 +188,7 @@ export default () => {
                 }
               }))
             }}
-            name={t('general.Wrap columns')}
+            name={t('group.Wrap columns')}
             value={!!currentGroupView?.options.wrapColumns}
           ></ButtonSwitch>
         )}

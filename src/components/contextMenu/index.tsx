@@ -7,8 +7,8 @@ export type Placement = 'top' | 'left' | 'right' | 'bottom'
 
 interface ContextMenuProps {
   position?: Placement[]
-  content: React.ReactNode | ((setV: (v: boolean) => void) => React.ReactNode)
-  children: React.ReactNode
+  content?: React.ReactNode | ((setV: (v: boolean) => void) => React.ReactNode)
+  children: React.ReactNode | ((setV: (v: boolean, pos?: number[]) => void) => React.ReactNode)
   onContextMenu?: (e: MouseEvent) => void
   onClose?: Noop
   boundaryInset?: number
@@ -29,9 +29,17 @@ const ContextMenu = forwardRef<HTMLElement, ContextMenuProps>(
       }
     }
     const renderChild = () =>
-      cloneElement(children as JSX.Element, {
-        ref: handleRef
-      })
+      cloneElement(
+        typeof children === 'function'
+          ? (children((v, pos) => {
+              setContextMenuOpen(v)
+              pos && (memoizedPosition.current = pos)
+            }) as JSX.Element)
+          : (children as JSX.Element),
+        {
+          ref: handleRef
+        }
+      )
     const renderContent = setV => (typeof content === 'function' ? content(setV) : content)
     const handle = (e: MouseEvent) => {
       if (!enableContextMenu) {
@@ -49,24 +57,26 @@ const ContextMenu = forwardRef<HTMLElement, ContextMenuProps>(
     })
     return (
       <>
-        <AnimatePopover
-          align="start"
-          positions={position}
-          disableNudge={true}
-          onVisiblityChange={s => {
-            setContextMenuOpen(s)
-          }}
-          position={{
-            top: memoizedPosition.current?.[1],
-            left: memoizedPosition.current?.[0]
-          }}
-          boundaryInset={boundaryInset}
-          reposition={true}
-          visible={contextMenuOpen}
-          containerStyle={{ zIndex: '1500' }}
-          onClickOutside={() => setContextMenuOpen(false)}
-          content={setV => renderContent(setV)}
-        ></AnimatePopover>
+        {content && (
+          <AnimatePopover
+            align="start"
+            positions={position}
+            disableNudge={true}
+            onVisiblityChange={s => {
+              setContextMenuOpen(s)
+            }}
+            position={{
+              top: memoizedPosition.current?.[1],
+              left: memoizedPosition.current?.[0]
+            }}
+            boundaryInset={boundaryInset}
+            reposition={true}
+            visible={contextMenuOpen}
+            containerStyle={{ zIndex: '1500' }}
+            onClickOutside={() => setContextMenuOpen(false)}
+            content={setV => renderContent(setV)}
+          ></AnimatePopover>
+        )}
         {renderChild()}
       </>
     )

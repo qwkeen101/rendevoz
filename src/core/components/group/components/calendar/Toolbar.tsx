@@ -45,7 +45,7 @@ export default memo(({ onView, onNavigate, view, date }: ToolbarProps) => {
           }}
         ></div>
         <div
-          className={'font-size-14 bold-font'}
+          className={'bold-font'}
           style={{
             margin: '0.6em'
           }}

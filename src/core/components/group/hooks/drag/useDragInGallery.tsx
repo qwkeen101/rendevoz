@@ -98,7 +98,7 @@ const useDragInGallery = (opts: {
                 top: 0,
                 height: '100%',
                 width: 4,
-                left: pos === 'top' ? -12 : pos === 'bottom' ? 'calc(100% + 8px)' : 0
+                left: pos === 'top' ? -2 : pos === 'bottom' ? 'calc(100% - 2px)' : 0
               }}
               initial={{ opacity: 0 }}
               transition={{ damping: 0, duration: 0.15 }}
@@ -122,7 +122,7 @@ const useDragInGallery = (opts: {
                 width: '100%',
                 borderRadius: 4,
                 height: pos === 'inner' ? '100%' : 4,
-                top: pos === 'top' ? -6 : pos === 'bottom' ? 'calc(100% + 2px)' : 0
+                top: pos === 'top' ? -2 : pos === 'bottom' ? 'calc(100% - 2px)' : 0
               }}
               initial={{ opacity: 0 }}
               transition={{ damping: 0, duration: 0.15 }}

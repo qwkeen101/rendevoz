@@ -1,177 +1,344 @@
-import { assignProperties } from '@/utils'
+import { assignProperties, noRepeatArray } from '@/utils'
 import { loopProcess } from '@/utils/functions'
 import Id from '@/utils/id'
-import { useMemo, useState } from 'react'
-import { GlobalInstances } from '~/typings'
+import { memo, useMemo, useState } from 'react'
 import { CollectionStore, ObjectStore } from '@/api/stores'
 import { createPortal } from 'react-dom'
-import ClassName from '@/styles/classNames'
-import { Content, Icon, WithBorder } from '@/components'
+import { Icon, WithBorder } from '@/components'
 import { useTranslation } from 'react-i18next'
-import { Rendevoz } from '../../rendevoz'
-import Colors from '@/consts/colors'
-export const GlobalImporterInstance: GlobalInstances.NoteImporterInstance = {}
+import importBaidu from '@/api/components/objectImporter/baidudisk/importBaidu'
+import produce from 'immer'
+import classnames from 'classnames'
+import { Icons } from '@/consts'
 
-export default () => {
+export default memo(() => {
   const { t } = useTranslation()
-  const [notes, setNotes] = useState<
+  const [items, setItems] = useState<
     {
-      id: number
+      id: number | string
       name: string
-      completed: boolean
-      success?: boolean
-      objectId?: number
       metaId?: number
+      collectionId?: number
+      progress?: number
+      fail?: boolean
+      isDir?: boolean
     }[]
   >([])
-  const [importerState, setImporterState] = useState({
-    visible: false,
-    completed: true
-  })
-  assignProperties(GlobalImporterInstance, {
-    import: (files, opts) => {
-      setImporterState(s => ({ ...s, visible: true, completed: false }))
-      const arrFiles = (Array.isArray(files) ? files : [files]) as (File & {
-        id: number
-      })[]
-      arrFiles.forEach(file => Object.assign(file, { id: Id.getId() }))
-      setNotes(n => [
-        ...n,
-        ...arrFiles.map(file => ({
-          id: file.id,
-          name: file.name,
-          completed: false
-        }))
-      ])
-      const groupedDir: number[] = []
-      loopProcess(
-        arrFiles,
-        async file => {
-          try {
-            const res = await Rendevoz.Utils.Meta.normalizeLocalFileToMeta(file, { limitType: false })
-            if (res) {
-              const result = (await ObjectStore(res.meta.type).addOneWithMeta(res.object, { currentMeta: res.meta })).meta
-              if (!result) throw ''
-              opts?.onImport?.(result)
-              groupedDir.push(result.id)
-              setNotes(s => {
-                const noteIdx = s.findIndex(i => i.id === file.id)
-                const currNote = s[noteIdx]
-                s.splice(noteIdx, 1, {
-                  ...currNote,
-                  completed: true,
-                  success: true,
-                  metaId: result.id
-                })
-                return [...s]
-              })
-              return
-            }
-            throw ''
-          } catch (e) {
-            setNotes(s => {
-              const noteIdx = s.findIndex(i => i.id === file.id)
-              const currNote = s[noteIdx]
-              s.splice(noteIdx, 1, {
-                ...currNote,
-                completed: true,
-                success: false
-              })
-              return [...s]
-            })
-            return Promise.resolve()
-          }
-        },
-        {
-          onEnd: () => {
-            setImporterState(s => ({ ...s, completed: true }))
-            if (opts?.isDir) {
-              CollectionStore.addCollection({
-                name: opts?.dirName || 'Unnamed Collection',
-                parentId: opts?.parentCollectionId || 0,
-                items: groupedDir.map(i => ({ type: 'meta', id: i }))
-              }).then(id => {
+
+  const [visible, setVisible] = useState(false)
+  assignProperties(Global, {
+    commonOps: {
+      ...Global.commonOps,
+      importURLs: async (urls, opts) => {
+        setVisible(true)
+        const urlArr = noRepeatArray(Array.isArray(urls) ? urls : [urls])
+        const metas: number[] = []
+        setItems(n => [
+          ...urlArr.map(url => ({
+            id: url,
+            name: url,
+            progress: 0
+          })),
+          ...n
+        ])
+        return new Promise(res => {
+          loopProcess(
+            urlArr,
+            async url => {
+              try {
+                const res = await Global.utils.normalizeURL(url)
+                const { meta } = await ObjectStore(res.meta.type).addOneWithMeta(
+                  {
+                    ...res.object
+                  },
+                  {
+                    currentMeta: {
+                      ...res.meta
+                    }
+                  }
+                )
+                opts?.onImport?.(meta)
+                metas.push(meta.id)
+                setItems(s =>
+                  produce(s, draft => {
+                    const item = draft.find(i => i.id === url)
+                    if (item) {
+                      item.progress = 1
+                      item.metaId = meta.id
+                      item.name = meta.name || item.name
+                    }
+                  })
+                )
+              } catch (e) {
+                setItems(s =>
+                  produce(s, draft => {
+                    const item = draft.find(i => i.id === url)
+                    if (item) {
+                      item.fail = true
+                    }
+                  })
+                )
+                return Promise.resolve()
+              }
+            },
+            {
+              onEnd: () => {
+                res()
                 if (opts?.parentCollectionId) {
-                  CollectionStore.addItemToCollection({ id: id.id, type: 'collection' }, opts.parentCollectionId)
+                  CollectionStore.addItemToCollection(
+                    metas.map(m => ({ type: 'meta', id: m })),
+                    opts.parentCollectionId
+                  )
                 }
-                opts?.onEnd?.({ collectionId: id.id })
-              })
+              }
             }
+          )
+        })
+      },
+      importBaidu: (file, opts) => {
+        setVisible(true)
+        const fileArr = Array.isArray(file) ? file : [file]
+        importBaidu(fileArr.reverse(), {
+          ...opts,
+          onImport: (m, isNested) => {
+            opts?.onImport?.(m)
+            if (isNested === false) {
+              setItems(s =>
+                produce(s, draft => {
+                  draft.unshift({
+                    name: m.name || '',
+                    metaId: m.id,
+                    progress: 1,
+                    id: m.id
+                  })
+                })
+              )
+            }
+          },
+          onFolderProgress: res => {
+            setItems(s =>
+              produce(s, draft => {
+                const dir = draft.find(i => i.id === res.id)
+                if (!dir) {
+                  draft.unshift({
+                    name: res.name,
+                    progress: res.progress,
+                    collectionId: res.collectionId,
+                    id: res.id,
+                    isDir: true
+                  })
+                } else {
+                  dir.collectionId = res.collectionId
+                  dir.progress = res.progress
+                  dir.name = res.name
+                  dir.isDir = true
+                }
+              })
+            )
           }
+        })
+      },
+      importFolder: async (folder, opts) => {
+        const folders = Array.isArray(folder) ? folder : [folder]
+        await Promise.allSettled(
+          folders.map(async folder => {
+            return await new Promise(res => {
+              Global.commonOps?.importFiles?.(folder.files, {
+                isDir: true,
+                dirName: folder.name,
+                onImport: opts?.onImport,
+                parentCollectionId: opts?.parentCollectionId ?? 0,
+                onEnd: async result => {
+                  if (result?.collectionId) {
+                    await Promise.allSettled(
+                      folder.folders.map(async f => {
+                        await Global.commonOps?.importFolder?.(f, {
+                          ...opts,
+                          parentCollectionId: result.collectionId
+                        })
+                      })
+                    )
+                  }
+                  res(null)
+                }
+              })
+            })
+          })
+        )
+      },
+      importFiles: (files, opts) => {
+        setVisible(true)
+        const arrFiles = (Array.isArray(files) ? files : [files]) as (File & {
+          id: number
+        })[]
+        arrFiles.forEach(file => Object.assign(file, { id: Id.getId() }))
+        const dirId = Id.getId()
+        if (opts?.isDir) {
+          setItems(n => [
+            {
+              id: dirId,
+              isDir: true,
+              name: opts.dirName || 'Unnamed folder',
+              progress: 0
+            },
+            ...n
+          ])
+        } else {
+          setItems(n => [
+            ...arrFiles.map(file => ({
+              id: file.id,
+              name: file.name,
+              progress: 0
+            })),
+            ...n
+          ])
         }
-      )
+        const groupedDir: number[] = []
+        return new Promise(res => {
+          loopProcess(
+            arrFiles,
+            async file => {
+              try {
+                const res = await Global.utils.normalizeFile(file)
+                if (res) {
+                  const result = (await ObjectStore(res.meta.type).addOneWithMeta(res.object, { currentMeta: res.meta })).meta
+                  if (!result) throw ''
+                  opts?.onImport?.(result)
+                  groupedDir.push(result.id)
+                  if (opts?.isDir) {
+                    setItems(s =>
+                      produce(s, draft => {
+                        const dir = draft.find(i => i.id === dirId)
+                        if (dir) {
+                          dir.progress = groupedDir.length / arrFiles.length
+                        }
+                      })
+                    )
+                  } else {
+                    setItems(s =>
+                      produce(s, draft => {
+                        const item = draft.find(i => i.id === file.id)
+                        if (item) {
+                          item.progress = 1
+                          item.metaId = result.id
+                        }
+                      })
+                    )
+                  }
+                  return
+                }
+                throw ''
+              } catch (e) {
+                if (!opts?.isDir) {
+                  setItems(s =>
+                    produce(s, draft => {
+                      const item = draft.find(i => i.id === file.id)
+                      if (item) {
+                        item.fail = true
+                      }
+                    })
+                  )
+                }
+                return Promise.resolve()
+              }
+            },
+            {
+              onEnd: () => {
+                res()
+                if (opts?.isDir) {
+                  CollectionStore.addCollection({
+                    name: opts?.dirName,
+                    parentId: opts?.parentCollectionId || 0,
+                    items: groupedDir.map(i => ({ type: 'meta', id: i }))
+                  }).then(id => {
+                    setItems(s =>
+                      produce(s, draft => {
+                        const dir = draft.find(i => i.id === dirId)
+                        if (dir) {
+                          dir.collectionId = id.id
+                        }
+                      })
+                    )
+                    if (opts?.parentCollectionId) {
+                      CollectionStore.addItemToCollection({ id: id.id, type: 'collection' }, opts.parentCollectionId)
+                    }
+                    opts?.onEnd?.({ collectionId: id.id })
+                  })
+                }
+              }
+            }
+          )
+        })
+      }
     }
   })
-  const { visible, completed } = importerState
+
   const { success, fail } = useMemo(() => {
-    const success = notes.filter(i => i.success).length
-    const fail = notes.length - success
+    const success = items.filter(i => i.progress === 1).length
+    const fail = items.filter(i => i.fail).length
     return { success, fail }
-  }, [notes])
+  }, [items])
+  const completed = success + fail === items.length
   return createPortal(
-    visible && (
+    visible ? (
       <WithBorder
+        className={'fixed'}
         style={{
-          position: 'fixed',
           zIndex: 100,
-          bottom: 30,
-          right: 30,
-          padding: 4,
-          borderRadius: 8,
-          minWidth: 300,
-          maxWidth: 400
+          bottom: 24,
+          right: 24,
+          width: 400
         }}
       >
-        <Content flex alignItems="center" fullWidth gap={12} style={{ padding: '6px 8px' }} className={'font-size-15 normal-font'}>
-          {completed ? <Icon name="park-check" /> : <Icon name="park-loading-four" spin />}
-          <div>{completed ? t('general.import completed') : t('general.importing')}</div>
-          <Icon
-            name="park-close"
-            className={ClassName.circleButton()}
-            containerStyle={{ marginLeft: 'auto' }}
-            onClick={() => setImporterState(s => ({ ...s, visible: false }))}
-          />
-        </Content>
-        {notes.length && completed ? (
-          <div style={{ margin: '0px 8px 6px' }} className={'font-size-12 transparent-font'}>
-            {t('general.import details', {
-              total: notes.length,
-              success,
-              fail
-            })}
+        <div className={'p-3 border-bottom flex flex-col gap-1'}>
+          <div className={'items-center flex justify-between'}>
+            <div className={'font-semibold'}>{completed ? t('general.import completed') : t('general.importing')}</div>
+            <Icon name={Icons.Close} size={16} className={'hover-active-button'} strokeWidth={4} onClick={() => setVisible(false)} />
           </div>
-        ) : null}
-        <Content style={{ height: '100%', overflowY: 'auto', maxHeight: 240 }}>
-          {notes.map(i => {
-            const loading = !i.success && !i.completed
+          {items.length ? (
+            <div className={'font-size-12 transparent-font'}>
+              {t('general.import details', {
+                total: items.length,
+                success,
+                fail
+              })}
+            </div>
+          ) : null}
+        </div>
+        <div className={'max-h-80 overflow-y-auto p-1'}>
+          {items.map(i => {
+            const loading = i.progress !== 1 && !i.fail
+            const finished = i.progress === 1 && !i.fail
             return (
-              <Content
+              <div
                 key={i.id}
                 onClick={() => {
-                  if (i.success && i.metaId) {
-                    Rendevoz.Actions.Open.Meta.openMetaObject(i.metaId)
+                  console.log(i)
+                  if (i.isDir) {
+                    if (i.collectionId) {
+                      Global.layoutOps?.openPage('collectionGroup', { id: i.collectionId })
+                    }
+                  } else {
+                    if (i.metaId) {
+                      Global.layoutOps?.openObject(i.metaId)
+                    }
                   }
                 }}
-                flex
-                alignItems="center"
-                gap={20}
-                className={ClassName.flatButton()}
+                className={'button items-center flex gap-3'}
               >
-                <div className={'ellipsis-font-1'}>{i.name}</div>
-                <div
-                  style={{
-                    marginLeft: 'auto',
-                    color: i.success ? Colors.Common.Green : loading ? undefined : Colors.Common.Red
-                  }}
-                >
-                  <Icon spin={loading} name={i.success ? 'park-check' : i.completed ? 'park-close' : 'park-loading-four'} />
-                </div>
-              </Content>
+                {i.isDir && <Icon name={Icons.Folder} />}
+                <div className={'line-clamp-1 break-all font-size-13'}>{i.name}</div>
+                <Icon
+                  className={classnames('ml-auto', i.fail ? 'text-red-500' : loading ? undefined : 'text-green-500')}
+                  spin={loading}
+                  name={finished ? 'park-check' : i.fail ? 'park-close' : Icons.Loading}
+                />
+              </div>
             )
           })}
-        </Content>
+        </div>
       </WithBorder>
-    ),
+    ) : null,
     document.body
   )
-}
+})

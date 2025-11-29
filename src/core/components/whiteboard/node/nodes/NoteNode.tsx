@@ -1,7 +1,6 @@
 import { FC, memo, useMemo, useRef } from 'react'
 import { IWhiteboardNode } from '~/typings/data'
 import { InnerNodeProps } from '../WrapperNode'
-import { css } from '@emotion/css'
 import NoteEditor from '@/core/components/editor/noteEditor/NoteEditor'
 import { IEditorInstance } from '~/typings'
 
@@ -18,23 +17,22 @@ const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange, metaId }) => {
           onNameChange?.(event.value)
         }
       }}
-      initialHeight={useMemo(() => node.height, [])}
+      initialHeight={useMemo(() => n.height, [])}
       layout={{
         virtualizer: true,
         showHeader: false,
         showBottomPadding: true,
         disableOverscanInReadOnly: false,
-        showBlockHandleAdd: false,
-        canScrollIntoView: false
+        showBlockHandleAdd: false
       }}
       title={{
         titleContainerStyle: {
-          padding: '30px 0px 5px',
+          padding: '24px 0px 5px',
           maxWidth: '100%',
           width: '100%'
         },
         titleStyle: {
-          fontSize: '2rem'
+          fontSize: '2.4rem'
         }
       }}
       styles={{
@@ -52,12 +50,6 @@ const NoteNode: FC<InnerNodeProps> = ({ node: n, onNameChange, metaId }) => {
       state={{
         fontSize: 17,
         pageWidth: 'Max'
-      }}
-      classNames={{
-        editorContainerClassName: css({
-          fontSize: '1em',
-          width: '100% !important'
-        })
       }}
       noteId={node.noteId}
     />

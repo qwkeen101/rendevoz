@@ -24,17 +24,21 @@ export default memo(() => {
     },
     onClose: () => {
       if (labelDetails?.page !== undefined) {
-        instance.values.INDEX_TO_TEXT_LAYER[labelDetails.page]?.clear()
-        instance.values.INDEX_TO_PAGE_LAYER[labelDetails.page]?.clearCrop()
+        const pageFuncs = instance.getPageFuncs(labelDetails.page)
+        if (pageFuncs) {
+          pageFuncs.clearCrop()
+          pageFuncs.clearTextSelect?.()
+        }
       }
     }
   })
   const handleInsertNote = useMemoizedFn(async (details = labelDetails, name?: string, tags?: number[]) => {
     const id = details?.id ?? Id.getId()
+    const imagePath = details?.imageUrl?.includes('base64') ? await FileSystem.saveImage(details?.imageUrl) : undefined
     if (details) {
       if (details.id) {
         if (!(await ObjectStore('pdfLabel').getOneById(details.id))) {
-          instance.insertLabel?.({ ...details, name, id })
+          instance.insertLabel?.({ ...details, imageUrl: imagePath ?? details.imageUrl, name, id })
           if (tags) {
             attachTags(id, tags)
           }
@@ -45,15 +49,18 @@ export default memo(() => {
           }
         }
       } else {
-        instance.insertLabel?.({ ...details, name, id })
+        instance.insertLabel?.({ ...details, imageUrl: imagePath ?? details.imageUrl, name, id })
         if (tags) {
           attachTags(id, tags)
         }
       }
 
       if (details.page !== undefined) {
-        instance.values.INDEX_TO_TEXT_LAYER[details.page]?.clear()
-        instance.values.INDEX_TO_PAGE_LAYER[details.page]?.clearCrop()
+        const pageFuncs = instance.getPageFuncs(details.page)
+        if (pageFuncs) {
+          pageFuncs.clearCrop()
+          pageFuncs.clearTextSelect?.()
+        }
       }
     }
   })
@@ -63,7 +70,7 @@ export default memo(() => {
       openEditLabelPopover: async (l, pageBounding, direction) => {
         const setting = getSetting()
         if (setting.pdf.autoOpenHighlightEditor === false && !l.id) {
-          setTimeout(() => handleInsertNote(labelDetails))
+          setTimeout(() => handleInsertNote(l))
           return
         }
         open(l, pageBounding, direction)

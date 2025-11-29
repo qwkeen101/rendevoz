@@ -1,12 +1,13 @@
 import Id from '@/utils/id'
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 
 const useFileUpload = (
-  onUpload?: (file: File) => void,
+  onUpload?: (file: File | undefined) => void,
   accept?: string,
   options?: {
     multiple?: boolean
     dir?: boolean
+    onCancel?: VoidFunction
   }
 ) => {
   const id = Id.getStrId()
@@ -18,6 +19,14 @@ const useFileUpload = (
   const removeFile = () => {
     inputRef.current && (inputRef.current.value = '')
   }
+  useEffect(() => {
+    if (options?.onCancel && inputRef.current) {
+      inputRef.current.addEventListener('cancel', options?.onCancel)
+      return () => {
+        inputRef.current?.removeEventListener('cancel', options?.onCancel)
+      }
+    }
+  })
   const renderUploader = () => {
     return (
       <>
@@ -41,6 +50,8 @@ const useFileUpload = (
               const file = e.target.files?.[0]
               if (file) {
                 onUpload?.(file)
+              } else {
+                options?.onCancel?.()
               }
             }
           }}

@@ -1,20 +1,18 @@
 import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Helmet } from 'react-helmet'
-import { Container, Icon } from '../base'
+import { Icon } from '../base'
 import DockLayout, { LayoutData, TabData } from '../base/dock'
 import { getSetting } from '@/core'
-import { Sidebar } from './sidebar'
 import ClassName from '@/styles/classNames'
 import { ILayoutTab } from '~/typings'
-import { Rendevoz } from '@/core/rendevoz'
 import { getOS } from '@/App'
 import TitleBar from '@/components/titlebar'
 import * as Serializer from '../base/dock/Serializer'
-import { GlobalInstance, useGlobalAtom } from '@/hooks'
+import { useGlobalAtom } from '@/hooks'
 import { atom } from 'jotai'
 import assignGlobalLayoutOps from '@/components/layout/assignLayoutOps'
 import registerTabs from '@/api/lifycycle/startup/registerTabs'
 import GlobalStates from '@/api/global/states'
+import SidebarPanel from '@/components/layout/sidebar/SidebarPanel'
 
 const initialLayout: LayoutData = {
   global: {
@@ -35,42 +33,15 @@ export const LayoutIdToTabMap = new Map<string, ILayoutTab>()
 export const defaultLayout = {
   ...initialLayout,
   global: {
-    currentFocusedPanelId: 'panel1',
-    globalPanelExtra: () => (
-      <div
-        className={'transparent-font'}
-        style={{
-          height: '100%',
-          padding: '0px 4px',
-          display: 'flex',
-          alignItems: 'center',
-          zIndex: 10,
-          pointerEvents: 'auto'
-        }}
-        draggable={false}
-      >
-        <Icon
-          className={ClassName.circleButton()}
-          name="park-plus"
-          onClick={e => {
-            e.stopPropagation()
-            GlobalInstance.metaOps?.createObject().then(meta => {
-              setTimeout(() => {
-                Rendevoz.Actions.Open.Meta.openMetaObject(meta.id)
-              }, 300)
-            })
-          }}
-        />
-      </div>
-    )
+    currentFocusedPanelId: 'panel1'
   }
 }
 
-const restoreSavedTab = (tab: { type: string; objectId?: number; id: string; metaType?: string }) => {
-  const { type, objectId, id, metaType } = tab
-  const tabData = GlobalInstance.layoutOps?.getRegisteredTabData(type)
+const restoreSavedTab = (tab: { type: string; objectId?: number; id: string }) => {
+  const { type, objectId, id } = tab
+  const tabData = Global.layoutOps?.getRegisteredTabData(type)
   if (!tabData) return
-  const layoutTab = GlobalInstance.layoutOps?.initializeOneTab(tabData, { type, objectId, metaType })
+  const layoutTab = Global.layoutOps?.initializeOneTab(tabData, { type, objectId })
   if (layoutTab) {
     LayoutIdToTabMap.set(id, layoutTab)
     return {
@@ -118,7 +89,7 @@ const Layout = () => {
       }
     }
     setTimeout(() => {
-      Rendevoz.Actions.Open.openHome()
+      Global.layoutOps?.openPage('home')
     })
   }, [initialized])
   const handleLayoutChange = (layout: LayoutData) => {
@@ -130,11 +101,11 @@ const Layout = () => {
   const [currentActiveName, setCurrentActiveName] = useState('Rendevoz')
   useLayoutEffect(() => {
     if (layout.dockbox.children.length === 1 && layout.dockbox.children[0].tabs.length === 0) {
-      Rendevoz.Actions.Open.openHome()
+      Global.layoutOps?.openPage('home')
       return
     }
     setTimeout(() => {
-      const currentActiveTab = GlobalInstance.layoutOps?.getCurrentFocusedTab()
+      const currentActiveTab = Global.layoutOps?.getCurrentFocusedTab()
       if (currentActiveTab) {
         const tabInfo = layoutRef.current?.find(currentActiveTab) as TabData | undefined
         if (tabInfo) {
@@ -148,32 +119,31 @@ const Layout = () => {
     })
   }, [layout])
   const os = getOS()
+  useLayoutEffect(() => {
+    document.title = currentActiveName
+  }, [currentActiveName])
+  const hasExtraPage = Global.layoutOps?.useExtraPage()
+  console.log(hasExtraPage)
   return (
-    <Container auto column style={{ height: '100vh', overflow: 'hidden' }}>
-      <Helmet>
-        <title>{currentActiveName}</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      </Helmet>
+    <>
       {os === 'windows' && <TitleBar />}
-      <Container role={'body-container'} auto style={{ height: 0, overflow: 'clip' }}>
-        <Sidebar direction={'right'} />
-        <Container auto>
-          {layout && (
-            <DockLayout
-              ref={layoutRef}
-              style={{
-                width: '100%',
-                height: '100%'
-              }}
-              dropMode="edge"
-              onLayoutChange={handleLayoutChange}
-              layout={layout}
-            ></DockLayout>
-          )}
-        </Container>
-      </Container>
-    </Container>
+      <SidebarPanel visible={!hasExtraPage} />
+      {layout && (
+        <DockLayout
+          ref={layoutRef}
+          style={{
+            width: '100%',
+            height: '100%',
+            display: hasExtraPage ? 'none' : undefined
+          }}
+          dropMode="edge"
+          onLayoutChange={handleLayoutChange}
+          layout={layout}
+        ></DockLayout>
+      )}
+    </>
   )
 }
 
 export default memo(Layout)
+export { default as TabTitle } from './TabTitle'

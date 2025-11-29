@@ -1,13 +1,11 @@
 import { CustomEditor, CustomElement, IEditorInstance } from '~/typings'
 import moveMultiElements from '@/core/components/editor/utils/moveMultiElements'
 import { Path } from 'slate'
-import { ID_TO_PATH_MAP } from '@/core'
 
 const useMoveElements = (instance: IEditorInstance, editor: CustomEditor) => {
   const toggleOps = instance.toggleOps
   const moveElements = (elements: CustomElement[]) => {
     const indicator = instance.values.indicator
-    console.log(indicator)
     if (!indicator) return
     const { direction, isNested, element, path } = indicator
     if (direction === 'bottom') {
@@ -44,11 +42,8 @@ const useMoveElements = (instance: IEditorInstance, editor: CustomEditor) => {
     })
   }
   const getElementPath = (element: CustomElement): Path => {
-    if (!element.id) {
-      throw new Error("Can't find element's id")
-    }
-    const path = ID_TO_PATH_MAP.get(editor)?.get(element.id)
-    if (!path) throw new Error("Can't find element's path")
+    const path = instance.getElementPathById(element.id)
+    if (!path) throw 'Can not find path'
     return path
   }
   return moveElements

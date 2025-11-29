@@ -1,39 +1,34 @@
 import getLocalTable from '@/api/stores/getLocalTable'
-import { atom } from 'jotai/vanilla'
+import { atom } from 'jotai'
 import { toast } from 'react-hot-toast'
-import { IMetaProp, IStore, MetaLink, MetaObject, ReviewStateType } from '~/typings'
+import { IStore, MetaLink, MetaObject, IIndexedMetaLinks, IIndexedMetaObjects } from '~/typings'
 import BaseStore, { initializeLocalStore } from '../base.store'
-import { findChangedProperties, globalStore, MetaStore, ObjectStore } from '../index'
-import getSetting from '@/core/setting/getSetting'
+import { CollectionStore, globalStore, MetaStore, ObjectStore } from '../index'
 import produce from 'immer'
 import { debounce } from 'lodash'
-import { useMemo } from 'react'
-import { selectAtom } from 'jotai/utils'
-import { GlobalInstance, useGlobalAtomValue, usePrevious, useSelectGlobalAtomValue } from '@/hooks'
-import { getUser } from '@/api/services/login.service'
+import { useGlobalAtomValue } from '@/hooks'
 import { RegisteredMetaObject } from 'rendevoz'
 import SearchHelper from '@/api/textSearch/SearchHelper'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { t } from 'i18next'
 import { intersectionOfMultipleSets } from '@/core'
-import { calculateSortObjects } from '@/core/object/filter/BetterSorter'
-import { Rendevoz } from '@/core/rendevoz'
 import metaObjectChangeHandler from '@/api/stores/meta/metaObjectChangeHandler'
-import { initializeReviewCard, reviewCard } from '@/core/review/fsrs'
-import { AGAIN_OPTION_ID, EASY_OPTION_ID, GOOD_OPTION_ID, HARD_OPTION_ID } from '@/api/stores/object/custom/ReviewCardStore'
 import MetaPropertyStore from '@/api/stores/meta/metaProperty.store'
+import UserService from '@/api/services/user.service'
+import metaLinkMethods from '@/api/stores/meta/metaLinkMethods'
+import metaObjectMethods from '@/api/stores/meta/metaObjectMethods'
+import { slateToMarkdown } from '@/core/components/editor/plugins/slateToMarkdown'
 
 export const AI_SUMMARY_PROP_ID = 1001
 export const AI_QUESTION_PROP_ID = 1002
 export const REVIEW_STATE_PROP_ID = 1003
+export const REVIEW_STATUS_PROP_ID = 1004
 
 export const deletedMetaObjectsAtom = atom<Set<number>>(new Set<number>())
 
 export const metaObjectsAtom = atom<Map<number, MetaObject>>(new Map())
 
 export const metaLinksAtom = atom<Map<number, MetaLink>>(new Map())
-
-const { orderedArray } = BaseStore
 
 let lastWarned = Date.now()
 
@@ -61,66 +56,74 @@ export const handleMetaOptionChange = () => {
   MetaStore.property.calculatePropertyOptionCache()
 }
 
-export const indexedMetaObjectsAtom = atom<
-  | {
-      undeletedMetaObjectsSet: Set<MetaObject>
-      pinnedMetaObjectsSet: Set<MetaObject>
-      deletedMetaObjectsSet: Set<MetaObject>
-      objectIdToMetaObjectMap: Map<number, number>
-      tagToMetaObjectIdsMap: Map<number, Set<number>>
-      typeToMetaObjectIdsMap: Map<string, Set<number>>
-      propToMetaObjectIdsMap: Map<number, Set<number>>
-      metaAttachmentIdToMetaIdsMap: Map<number, Set<number>>
-      oldMetaObjects: Map<number, MetaObject>
-    }
-  | undefined
->(undefined)
+const createEmptyObjectIndex = () =>
+  ({
+    undeletedMetaObjectsSet: new Set(),
+    pinnedMetaObjectsSet: new Set(),
+    deletedMetaObjectsSet: new Set(),
+    objectIdToMetaObjectMap: new Map(),
+    tagToMetaObjectIdsMap: new Map(),
+    typeToMetaObjectIdsMap: new Map(),
+    propToMetaObjectIdsMap: new Map(),
+    metaAttachmentIdToMetaIdsMap: new Map(),
+    oldMetaObjects: new Map()
+  }) as IIndexedMetaObjects
+export const indexedMetaObjectsAtom = atom<IIndexedMetaObjects>(createEmptyObjectIndex())
 
-export const indexedMetaLinksAtom = atom<
-  | {
-      sourceIdToLinkIdsMap: Map<number, Set<number>>
-      targetIdToLinkIdMap: Map<number, Set<number>>
-      relatedIdsMap: Map<number, Set<number>>
-      oldLinks: Map<number, MetaLink>
-      undeletedLinksSet: Set<MetaLink>
-      sourceIdToTargetIdsMap: Map<number, Set<number>>
-      targetIdToSourceIdsMap: Map<number, Set<number>>
-    }
-  | undefined
->(undefined)
+export const indexedMetaLinksAtom = atom<IIndexedMetaLinks>({
+  sourceIdToLinkIdsMap: new Map(),
+  targetIdToLinkIdMap: new Map(),
+  relatedIdsMap: new Map(),
+  oldLinks: new Map(),
+  undeletedLinksSet: new Set(),
+  sourceIdToTargetIdsMap: new Map(),
+  targetIdToSourceIdsMap: new Map()
+} as IIndexedMetaLinks)
 
-export const propNameToOptionsAtom = atom<Record<string, Set<number>>>({})
+const MAX_META_NUMBER = 100
 
-export const undeletedMetaObjectsAtom = atom(get => orderedArray(Array.from(get(indexedMetaObjectsAtom)?.undeletedMetaObjectsSet || [])))
+export type IMetaVisibleConditions = {
+  showCollection?: boolean
+  showAll?: true
+  showHidden?: boolean
+  showDeleted?: boolean
+  showLabel?: boolean
+  showInsideCollection?: boolean
+  filter?: (o: Partial<MetaObject>) => boolean
+  showTemp?: boolean
+  sort?: 'viewAtAsc' | 'viewAtDsc' | 'createdAtAsc' | 'createdAtDsc' | 'nameDsc' | 'nameAsc'
+}
 
-export const pinnedMetaObjectsAtom = atom(get => Array.from(get(indexedMetaObjectsAtom)?.pinnedMetaObjectsSet || []).reverse())
-
-export const undeletedMetaLinksAtom = atom(get => orderedArray(Array.from(get(indexedMetaLinksAtom)?.undeletedLinksSet || [])))
-
-export const relatedMetaObjectsMapAtom = atom(get => get(indexedMetaLinksAtom)?.relatedIdsMap || new Map<number, Set<number>>())
-
-export const objectIdToMetaObjectIdMapAtom = atom(get => get(indexedMetaObjectsAtom)?.objectIdToMetaObjectMap)
-
-export const tagToMetaObjectIdsMapAtom = atom(get => get(indexedMetaObjectsAtom)?.tagToMetaObjectIdsMap)
-
-export const MAX_META_NUMBER = 100
-
-const createMetaStore = () => {
-  const { get, initBaseObject, dispatch } = BaseStore
+// @ts-ignore
+export default (() => {
+  const { get, initBaseObject } = BaseStore
   const metaObjectDb = getLocalTable('metaObjects')
   const metaLinkDb = getLocalTable('metaLinks')
-
+  let metaNum = 0
+  const debounceGetMetaNum = debounce(async () => {
+    metaNum = await metaObjectDb.count()
+  }, 1000)
   const initializeObjectStore = initializeLocalStore(metaObjectsAtom, metaObjectDb)
 
   const localObjectStore: Pick<IStore<MetaObject>, 'addOne' | 'updateOne' | 'deleteOneById' | 'getAll'> = {
     updateOne: (one, options) => {
       const currentOne = globalStore.get(metaObjectsAtom).get(one.id)
+      const copiedOne = { ...one }
+      if (currentOne?.temp && one.temp === false) {
+        copiedOne.createdAt = Date.now()
+        copiedOne.updatedAt = Date.now()
+      }
+      if (currentOne?.deleted && !copiedOne.deleted) {
+        if (currentOne.type === 'collection' && currentOne.objectId) {
+          CollectionStore.recoverCollection(currentOne.objectId)
+        }
+      }
       return initializeObjectStore.updateOne(async obj => {
         if (obj.objectId && ('name' in one || 'description' in one)) {
           const targetObject = await ObjectStore(obj.type).getOneById(obj.objectId)
           if (targetObject) {
             ObjectStore(obj.type).updateOne(
-              { id: obj.objectId, name: obj.name, description: obj.description },
+              { id: obj.objectId, name: obj.name, description: normalizeDescription(obj.description) },
               {
                 silent: true
               }
@@ -128,41 +131,27 @@ const createMetaStore = () => {
           }
         }
         SearchHelper.insertDocument({
-          docType: 'metaObject',
           name: obj.name || obj.placeholderName,
-          description: obj.description,
+          description: normalizeDescription(obj.description),
           metaType: obj.type,
           placeholderName: obj.placeholderName,
           metaId: obj.id,
           id: obj.id
         })
-        const changed = currentOne ? findChangedProperties(currentOne, obj) : undefined
-        TypeToRegisteredMetaObject.get(obj.type)?.onUpdate?.(obj, currentOne, changed)
-      })(one, options)
+      })(copiedOne, options)
     },
     addOne: async (one, options) => {
       if (!one.type) return Promise.reject()
-      const user = getUser()
-      const setting = getSetting()
-
-      const allMetaNum = await metaObjectDb.count()
-      if ((!user || !user.premiumEndDate || user.premiumEndDate < Date.now()) && !user?.lifetimePro && allMetaNum > MAX_META_NUMBER) {
+      debounceGetMetaNum()
+      if (!UserService.isUserPro(true) && metaNum > MAX_META_NUMBER) {
         if (Date.now() - lastWarned > 1000) {
           toast.error(t('general.Over max objects limit'))
           lastWarned = Date.now()
         }
         return Promise.reject()
       }
-      if (user?.disabled) {
-        if (Date.now() - lastWarned > 1000) {
-          toast.error('Your account has been disabled!')
-          lastWarned = Date.now()
-        }
-        return Promise.reject()
-      }
-
       if (one.objectId) {
-        const checkAlreadyHasMeta = await getMetaObjectByObjectId(one.objectId)
+        const checkAlreadyHasMeta = getMetaObjectByObjectId(one.objectId)
         if (checkAlreadyHasMeta !== undefined) {
           return Promise.resolve(checkAlreadyHasMeta)
         }
@@ -172,59 +161,45 @@ const createMetaStore = () => {
       if (!initedMetaObject.type) {
         return Promise.reject()
       }
-      if (one.fromObject) {
-        const link: Partial<MetaLink> = {
-          sourceId: one.fromObject.metaId,
-          targetId: initedMetaObject.id
-        }
-        MetaStore.addMetaLink(link, true)
+      if (!initedMetaObject.workspace) {
+        initedMetaObject.workspace = KeyvalueStore.getOne('currentWorkspace')?.id
       }
-      initedMetaObject.workspace = KeyvalueStore.getOne('currentWorkspace')?.id
       if (!initedMetaObject.name) {
         let initedName = ''
-        const registeredDefaultName = TypeToRegisteredMetaObject.get(initedMetaObject.type)?.defaultName
-
-        if (registeredDefaultName) {
-          initedName = registeredDefaultName
-        }
         initedMetaObject.name = initedName
       }
       return initializeObjectStore.addOne(obj => {
         SearchHelper.insertDocument({
-          docType: 'metaObject',
           name: obj.name || obj.placeholderName,
-          description: obj.description,
+          description: normalizeDescription(obj.description),
           placeholderName: obj.placeholderName,
           metaType: obj.type,
           metaId: obj.id,
           id: obj.id
         })
-        TypeToRegisteredMetaObject.get(obj.type)?.onAdd?.(obj)
       })(initedMetaObject, options)
     },
     deleteOneById: (id, options) => {
-      GlobalInstance.layoutOps?.closeObjectTab(id)
+      Global.layoutOps?.closeObjectTab(id)
+      const one = MetaStore.getCachedMetaObject(id)
+      if (one?.type === 'collection' && one.objectId) {
+        CollectionStore.deleteCollection(one.objectId, options?.force)
+      }
       if (options?.force) {
-        const allMetaLinks = globalStore.get(undeletedMetaLinksAtom)
-        const one = globalStore.get(metaObjectsAtom).get(id)
-        const relatedLink = allMetaLinks.filter(l => l.sourceId === id || l.targetId === id)
-        relatedLink.forEach(i =>
-          dispatch({
-            type: 'remove',
-            data: { id: i.id },
-            database: metaLinkDb,
-            atom: metaLinksAtom,
-            clearCache: true
-          })
-        )
+        debounceGetMetaNum()
+        const relatedLink = getIndexedMetaLinks().relatedIdsMap.get(id)
+        relatedLink?.forEach(i => localLinkStore.deleteOneById(i, { force: true }))
         return initializeObjectStore.deleteOneById(() => {
           SearchHelper.deleteDocuments(id)
           if (one) {
-            TypeToRegisteredMetaObject.get(one.type)?.onDelete?.(one)
-            const objId = one.objectId
-            if (objId) {
-              ObjectStore(one.type).deleteOneById(objId, { force: true })
+            const disableDeleteOriginal = ['message']
+            if (!disableDeleteOriginal.includes(one.type)) {
+              const objId = one.objectId
+              if (objId) {
+                ObjectStore(one.type).deleteOneById(objId, { force: true })
+              }
             }
+
             globalStore.set(
               deletedMetaObjectsAtom,
               produce(globalStore.get(deletedMetaObjectsAtom), draft => {
@@ -287,6 +262,11 @@ const createMetaStore = () => {
     updateMetaLink: localLinkStore.updateOne
   }
 
+  const { getMetaObjectsMap, getAll, isVisibleMetaObject, useValue, useMultiple, useAll, useUndeleted } = metaObjectMethods(
+    metaObjectsAtom,
+    indexedMetaObjectsAtom
+  )
+
   const getMetaObjectById = (id: number): Promise<MetaObject | undefined> => {
     const obj = get(id, globalStore.get(metaObjectsAtom))
     if (obj) return Promise.resolve(obj)
@@ -301,41 +281,18 @@ const createMetaStore = () => {
     })
   }
   const getMetaObjectByObjectId = (objId: number, filterAll = true): MetaObject | undefined => {
-    const metaObjectId = globalStore.get(objectIdToMetaObjectIdMapAtom)?.get(objId)
-    if (metaObjectId) {
-      const one = globalStore.get(metaObjectsAtom).get(metaObjectId)
-      return one
+    const id = MetaStore.getIndexedMetaObjects()?.objectIdToMetaObjectMap.get(objId)
+    if (id) {
+      return MetaStore.getCachedMetaObject(id)
     }
     if (filterAll) {
-      const allMetas = Array.from(globalStore.get(metaObjectsAtom).values())
-      const one = allMetas.find(i => i.objectId === objId)
-      return one
+      return getAll({ showAll: true, showTemp: true, showDeleted: true }).find(i => i.objectId === objId)
     }
   }
   const useObjectToMetaValue = (objectId?: number) => {
-    const objectIdToMetaObjectIdAtom = useMemo(() => selectAtom(objectIdToMetaObjectIdMapAtom, m => m?.get(objectId || 0)), [objectId])
-    const metaId = useGlobalAtomValue(objectIdToMetaObjectIdAtom)
-    const metaAtom = useMemo(() => (metaId ? selectAtom(metaObjectsAtom, m => m.get(metaId)) : atom(undefined)), [metaId])
-    return useGlobalAtomValue(metaAtom)
-  }
-
-  const useMultipleObjects = (ids: number[]) => {
-    const prevIds = usePrevious(ids)
-    const a = useMemo(() => {
-      if (!ids) return atom([])
-      const idArr = Array.from(ids)
-      const selected = selectAtom(
-        metaObjectsAtom,
-        map => idArr.map(id => map.get(id)).filter(i => i) as MetaObject[],
-        (prev, curr) => prev.every((i, idx) => curr[idx] === i)
-      )
-      return selected
-    }, [prevIds?.length === ids.length && prevIds.every((i, idx) => ids[idx] === i)])
-    return useGlobalAtomValue(a)
-  }
-  const useValue = (id?: number) => {
-    const ato = useMemo(() => (id ? selectAtom(metaObjectsAtom, m => m.get(id)) : atom(undefined)), [id])
-    return useGlobalAtomValue(ato)
+    const index = useIndexedMetaObjects()
+    const metaId = objectId ? index?.objectIdToMetaObjectMap.get(objectId) : undefined
+    return useValue(metaId)
   }
   const addObjectAsMeta = async (opts: { objectId: number; type: MetaObject['type']; name?: string }) => {
     await MetaStore.addMetaObject({
@@ -345,40 +302,11 @@ const createMetaStore = () => {
       name: opts.name
     })
   }
-
-  const getMetaObjectsMap = () => {
-    return globalStore.get(metaObjectsAtom)
-  }
   const getMetaLinksMap = () => {
     return globalStore.get(metaLinksAtom)
   }
   const useMetaObjectsMap = () => {
     return useGlobalAtomValue(metaObjectsAtom)
-  }
-
-  function isVisibleMetaObject(
-    o?: Partial<MetaObject>,
-    opts?: {
-      showTemp?: boolean
-      showDeleted?: boolean
-      showHidden?: boolean
-      hideLabel?: boolean
-    }
-  ): o is MetaObject {
-    if (!o) return false
-    if (o.temp && opts?.showTemp !== true) {
-      return false
-    }
-    if (o.deleted && opts?.showDeleted !== true) {
-      return false
-    }
-    if (opts?.hideLabel && o.type?.includes('Label')) {
-      return false
-    }
-    if (o.hidden && opts?.showHidden !== true) {
-      return false
-    }
-    return true
   }
   const useMetaLinksMap = () => {
     return useGlobalAtomValue(metaLinksAtom)
@@ -397,10 +325,9 @@ const createMetaStore = () => {
   const useIndexedMetaLinks = () => {
     return useGlobalAtomValue(indexedMetaLinksAtom)
   }
-
   const switchWorkspace = async () => {
     globalStore.set(metaObjectsAtom, new Map())
-    globalStore.set(indexedMetaObjectsAtom, undefined)
+    globalStore.set(indexedMetaObjectsAtom, createEmptyObjectIndex())
     await realStore.getAllMetaObjects()
     triggerObjectIndex()
   }
@@ -415,29 +342,14 @@ const createMetaStore = () => {
     if (!sumProp) {
       await ObjectStore('metaProp').addOne({
         id: AI_SUMMARY_PROP_ID,
-        propType: 'AI summary',
+        propType: 'string',
         icon: 'custom-magic',
         name: t('general.AI summary')
-      })
-    }
-    const quesProp = MetaStore.property.getPropDetails(AI_QUESTION_PROP_ID)
-    if (!quesProp) {
-      await ObjectStore('metaProp').addOne({
-        id: AI_QUESTION_PROP_ID,
-        propType: 'AI questions',
-        name: t('general.AI questions'),
-        icon: Rendevoz.Utils.Object.getMetaObjectIcon('question')
       })
     }
     const currMeta = await MetaStore.getMetaObjectById(metaId)
     if (currMeta) {
       const nextProp = produce(currMeta.properties || {}, draft => {
-        if (details.questions) {
-          draft[AI_QUESTION_PROP_ID] = {
-            ...draft[AI_QUESTION_PROP_ID],
-            value: details.questions
-          }
-        }
         if (details.summary) {
           draft[AI_SUMMARY_PROP_ID] = {
             ...draft[AI_SUMMARY_PROP_ID],
@@ -458,47 +370,18 @@ const createMetaStore = () => {
       }
     }
   }
-  const getMetaObjects = (sort: 'view' | 'create') => {
-    const all = Array.from(MetaStore.getMetaObjectsMap().values())
-    if (sort === 'view') {
-      return calculateSortObjects(all, {
-        sorters: [
-          {
-            type: 'descending',
-            field: 'viewAt',
-            id: 1
-          }
-        ]
-      })
-    }
-    if (sort === 'create') {
-      return calculateSortObjects(all, {
-        sorters: [
-          {
-            type: 'descending',
-            field: 'createdAt',
-            id: 1
-          }
-        ]
-      })
-    }
-    return all
-  }
-
   const useDeletedObjectsSet = () => {
     return useGlobalAtomValue(deletedMetaObjectsAtom)
   }
-
-  const getVisibleMetaTypes = (showTemp = true, showLabel = true): MetaObject['type'][] => {
-    const allMetas = Array.from(MetaStore.getMetaObjectsMap().values())
+  const getVisibleMetaTypes = (opts?: { showLabel?: boolean; showHidden?: boolean; metas?: MetaObject[] }): MetaObject['type'][] => {
+    const allMetas = opts?.metas || Array.from(MetaStore.getMetaObjectsMap().values())
     const typeSet = new Set<MetaObject['type']>()
     allMetas.forEach(i => {
       if (
         MetaStore.isVisibleMetaObject(i, {
-          showTemp,
-          showHidden: false,
+          showHidden: opts?.showHidden,
           showDeleted: false,
-          hideLabel: !showLabel
+          showLabel: opts?.showLabel
         })
       ) {
         typeSet.add(i.type)
@@ -506,22 +389,35 @@ const createMetaStore = () => {
     })
     return Array.from(typeSet.values())
   }
-
   const triggerObjectIndex = () => {
     metaObjectChangeHandler()
   }
-  const addMetaAsAttachment = async (sourceMetaId: number, targetMetaId: number) => {
+  const addMetaAsAttachment = async (sourceMetaId: number | number[], targetMetaId: number) => {
     const targetMeta = await MetaStore.getMetaObjectById(targetMetaId)
     if (targetMeta) {
-      const alreadyHave = targetMeta.attachments?.some(i => i.id === sourceMetaId)
-      if (!alreadyHave) {
-        const source = await MetaStore.getMetaObjectById(sourceMetaId)
-        if (source) {
-          await MetaStore.updateMetaObject({
-            id: targetMetaId,
-            attachments: [...(targetMeta.attachments || []), { type: source.type, id: sourceMetaId, createdAt: Date.now() }]
-          })
-        }
+      const sourceIdArr = (Array.isArray(sourceMetaId) ? sourceMetaId : [sourceMetaId]).filter(
+        i => !targetMeta.attachments?.some(o => o.id === i)
+      )
+      if (sourceIdArr.length) {
+        const shouldAddLink = false
+        const source = sourceIdArr.map(i => MetaStore.getCachedMetaObject(i)).filter(i => i) as MetaObject[]
+        source.forEach(i => {
+          MetaStore.updateMetaObject({ id: i.id, hidden: true })
+          if (shouldAddLink) {
+            MetaStore.addMetaLink({ sourceId: i.id, targetId: targetMetaId })
+          }
+        })
+        await MetaStore.updateMetaObject({
+          id: targetMetaId,
+          attachments: [
+            ...source.map(i => ({
+              id: i.id,
+              type: i.type,
+              createdAt: Date.now()
+            })),
+            ...(targetMeta.attachments || [])
+          ]
+        })
       }
     }
   }
@@ -530,9 +426,8 @@ const createMetaStore = () => {
       const value = await metaObjectDb.get(key)
       if (value) {
         SearchHelper.insertDocument({
-          docType: 'metaObject',
           name: value.name || value.placeholderName,
-          description: value.description,
+          description: normalizeDescription(value.description),
           metaType: value.type,
           placeholderName: value.placeholderName,
           metaId: value.id,
@@ -571,7 +466,6 @@ const createMetaStore = () => {
     getVisibleMetaTypes,
     getMetaObjectByObjectId,
     triggerObjectIndex,
-    useMultipleObjects,
     useValue,
     addAIForMeta,
     useObjectToMetaValue,
@@ -587,14 +481,22 @@ const createMetaStore = () => {
     getIndexedMetaLinks,
     useIndexedMetaLinks,
     switchWorkspace,
-    getMetaObjects,
     getMetaLinkBySourceAndTarget,
-    ...realStore
+    getAll,
+    useMultiple,
+    useAll,
+    useUndeleted,
+    ...realStore,
+    ...metaLinkMethods
   }
+})()
+
+const normalizeDescription = (desc?: string | any[]) => {
+  if (desc === undefined) return undefined
+  if (typeof desc === 'string') {
+    return desc
+  }
+  return slateToMarkdown(desc)
 }
 
-export const metaStore = createMetaStore()
-
 export const TypeToRegisteredMetaObject = new Map<string, RegisteredMetaObject>()
-
-export default createMetaStore

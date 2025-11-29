@@ -28,7 +28,7 @@ const useMediaLabelChapter = (
           newChapters.unshift({
             startTime: 0,
             id: Id.getId(),
-            name: 'Unnamed chapter',
+            name: '',
             endTime: currChapters[0].startTime
           })
         }
@@ -46,8 +46,9 @@ const useMediaLabelChapter = (
         return newLabel
       }
       case 'deleteLabel': {
-        await updater({ id: id, labels: labels.filter(i => i !== e.labelId) })
-        ObjectStore(labelType).deleteOneById(e.labelId, { force: true })
+        const ids = Array.isArray(e.labelId) ? e.labelId : [e.labelId]
+        await updater({ id: id, labels: labels.filter(i => !ids.includes(i)) })
+        ids.forEach(id => ObjectStore(labelType).deleteOneById(id, { force: true }))
         return
       }
       case 'deleteChapter': {

@@ -1,18 +1,9 @@
-import { Box, IWhiteboardInstance } from '~/typings'
-import { useRafFn } from '@/hooks'
+import { IWhiteboardInstance } from '~/typings'
 import { Position } from '@/types'
 import { useRef } from 'react'
 import { DraggableData } from 'react-rnd'
 import { IWhiteboardNode } from '~/typings/data'
 
-const boxContain = (parentBox: Box, childBox: Box) => {
-  return (
-    parentBox.left < childBox.left &&
-    parentBox.top < childBox.top &&
-    parentBox.left + parentBox.width > childBox.left + childBox.width &&
-    parentBox.top + parentBox.height > childBox.top + childBox.height
-  )
-}
 const useGroupDrag = (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
   const inGroupNodeIdsRef = useRef<number[]>([])
   const { x, y } = node
@@ -62,8 +53,7 @@ const useGroupDrag = (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
       }
     })
   }
-  const rafGroupMove = useRafFn(handleGroupMove)
-  const handleGroupMoveEnd = (data: DraggableData) => {
+  const handleGroupMoveEnd = (data: { node: HTMLElement; x: number; y: number; deltaX: number; deltaY: number }) => {
     const map = inGroupNodesOffsetMapRef.current
     instance.updateWhiteboard?.(w => {
       inGroupNodeIdsRef.current.forEach(id => {
@@ -91,7 +81,7 @@ const useGroupDrag = (node: IWhiteboardNode, instance: IWhiteboardInstance) => {
   }
   return {
     handleGroupMoveStart,
-    handleGroupMove: rafGroupMove,
+    handleGroupMove,
     handleGroupMoveEnd
   }
 }

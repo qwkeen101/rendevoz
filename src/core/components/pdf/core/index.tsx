@@ -1,50 +1,38 @@
-import { Range } from '@tanstack/react-virtual'
 import { PDFDocumentProxy } from 'pdfjs-dist'
-import { FC, ReactElement } from 'react'
+import { FC } from 'react'
 import Layout from './layouts/Layout'
 import LayoutWrapper from './layouts/LayoutWrapper'
 import Loader from './Loader'
-import { IAnnotation, ScrollMode, RenderPageProps } from '~/typings'
+import { ScrollMode } from '~/typings'
 
 interface ViewerProps {
   fileUrl: string | Uint8Array
   initialPage?: number
   scrollMode?: ScrollMode
-  renderPage?: (props: RenderPageProps) => ReactElement
-  renderAnnotation?: (annotation: IAnnotation) => ReactElement
   layoutClassName?: string
-  innerRef: any
   onDocumentLoaded?: (doc: PDFDocumentProxy) => void
-  onRangeChange?: (range: Range) => void
   transformScale?: number
   thumbnailWorker?: boolean
+  containerWidth: number
 }
 
 export const Viewer: FC<ViewerProps> = ({
   fileUrl,
   initialPage = 0,
-  scrollMode = 'vertical',
-  renderPage,
-  renderAnnotation,
-  innerRef,
   thumbnailWorker,
   layoutClassName,
   onDocumentLoaded,
-  onRangeChange,
-  transformScale
+  transformScale,
+  containerWidth
 }) => {
   return (
     <Loader thumbnailWorker={thumbnailWorker} onDocumentLoaded={onDocumentLoaded} file={fileUrl}>
       {doc => (
-        <LayoutWrapper doc={doc}>
+        <LayoutWrapper containerWidth={containerWidth} doc={doc}>
           {pageSize => (
             <Layout
               transformScale={transformScale}
               className={layoutClassName}
-              renderPage={renderPage}
-              innerRef={innerRef}
-              onRangeChange={onRangeChange}
-              renderAnnotation={renderAnnotation}
               initialPage={initialPage}
               doc={doc}
               pageSize={pageSize}
@@ -55,5 +43,5 @@ export const Viewer: FC<ViewerProps> = ({
     </Loader>
   )
 }
-
+export const DEFAULT_PDF_PAGE_GAP = 12
 export { default as Loader } from './Loader'

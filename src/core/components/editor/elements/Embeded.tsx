@@ -5,8 +5,7 @@ import { AnimatePopover, Icon, WithBorder } from '@/components'
 import { ClassName } from 'rendevoz'
 import FileUploader from '@/core/components/group/components/popupRenderer/FileUploader'
 import { Transforms } from 'slate'
-import { EmbededElement, IFrameElement } from '~/typings'
-import { Resizable } from 're-resizable'
+import { IFrameElement } from '~/typings'
 import useIsSelecting from '@/core/components/editor/hooks/useIsSelecting'
 import { useIsIn } from '@/hooks'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
@@ -29,7 +28,6 @@ export default memo(({ children, element }: RenderElementProps) => {
       }
     })
   }, [])
-  console.log(isIn)
   if (embededEle.url) {
     let url = embededEle.url
     if (url.includes('www.youtube.com/watch?v')) {
@@ -102,9 +100,10 @@ export default memo(({ children, element }: RenderElementProps) => {
   }
   return (
     <div
-      className={'transparent-font selectable bg-secondary br-4 pointer'}
+      className={'transparent-font selectable bg-third'}
       style={{
-        width: '100%'
+        width: '100%',
+        borderRadius: '0.5em'
       }}
       contentEditable={'false'}
     >
@@ -136,13 +135,10 @@ export default memo(({ children, element }: RenderElementProps) => {
       >
         <div
           onClick={() => setFormVisible(true)}
-          className={'button font-size-14'}
+          className={'button w-full flex items-center'}
           style={{
-            padding: '12px 36px 12px 12px',
-            width: '100%',
-            gap: 12,
-            display: 'flex',
-            alignItems: 'center'
+            padding: '1em 2.5em 1em 1em',
+            gap: '1em'
           }}
         >
           <Icon size={20} name={'park-link-one'} />

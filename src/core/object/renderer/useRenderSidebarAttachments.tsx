@@ -1,62 +1,121 @@
 import { MetaStore } from '@/api/stores'
-import { Fragment, memo, useState } from 'react'
-import { AnimatePopover, Content, Icon, WithBorder } from '@/components'
-import { ClassName } from 'rendevoz'
-import { GlobalInstance } from '@/hooks'
-import { DockTabPaneContext } from '@/components/base/dock/DockTabPane'
-import PageConfigContext from '@/core/components/PageConfigContext'
+import { memo, useMemo, useRef, useState } from 'react'
+import { Button, WithBorder } from '@/components'
 import { groupBy } from 'lodash'
-import { Rendevoz } from '@/core/rendevoz'
-import MetaFilterer from '@/core/object/filter/MetaFilterer'
-import classnames from 'classnames'
 import ContextMenu from '@/components/contextMenu'
-import { ObjectActionMenu } from '@/core'
+import { ObjectActionMenu, useDropObjectArea } from '@/core'
 import { useTranslation } from 'react-i18next'
+import usePasteMetaObject from '@/core/object/usePasteMetaObject'
+import trans from '@/consts/trans'
+import { Icons } from '@/consts'
+import { Queue } from 'async-await-queue'
+import queueTurnUnhidden from '@/api/stores/meta/queueTurnUnhidden'
+import classnames from 'classnames'
+import SidebarObjectViewer from '@/core/components/SidebarObjectViewer'
 
 export default (metaId: number) => {
   const meta = MetaStore.useValue(metaId)
-  const [containerState, setContainerState] = useState<{
-    selectedAtt?: number
-  }>({})
-  const { selectedAtt } = containerState
-  const selectedMeta = MetaStore.useValue(selectedAtt)
+  const [selected, setSelected] = useState<number>()
+  const selectedMeta = MetaStore.useValue(selected)
+  const pasteContainerRef = useRef<HTMLDivElement>(null)
+  const handleAddAtts = (ids: number[]) => {
+    if (meta) {
+      MetaStore.addMetaAsAttachment(ids, meta.id)
+    }
+  }
+  const attMetas = useMemo(() => {
+    return meta?.attachments
+      ?.filter(i =>
+        MetaStore.isVisibleMetaObject(i.id, {
+          showHidden: true
+        })
+      )
+      .map(i => MetaStore.getCachedMetaObject(i.id)!)
+  }, [meta?.attachments])
+  usePasteMetaObject(pasteContainerRef, m => {
+    handleAddAtts(m.map(i => i.id))
+  })
+  useDropObjectArea(pasteContainerRef, {
+    onDrop: e => {
+      let m: number[] = []
+      if (e.type === 'metaObjects') {
+        m = e.ids
+      }
+      if (m.length) {
+        handleAddAtts(m)
+      }
+    }
+  })
   const { t } = useTranslation()
   const renderAttachments = () => {
     if (!meta) {
       return null
     }
-    if (!meta.attachments?.filter(i => i.type !== 'attachmentText').length) {
+    if (!attMetas?.length) {
       return (
-        <Content flex fullHeight fullWidth centered className={'font-size-14 bold-font transparent-font'}>
-          No attachment
-        </Content>
+        <div ref={pasteContainerRef} className={'flex flex-col p-6 transparent-font w-full flex-1 items-center justify-center'}>
+          <div className={'mb-3'}>{t('general.Drop object to add attachment')}</div>
+          <Button.IconButton
+            className={'font-size-13'}
+            onClick={() => {
+              if (meta) {
+                const queue = new Queue()
+                const symbol = 1
+                Global.metaOps.createObjects?.(undefined, async m => {
+                  await queue.wait(symbol)
+                  await MetaStore.addMetaAsAttachment(m.id, meta.id)
+                  queue.end(symbol)
+                })
+              }
+            }}
+            text={t(trans.New)}
+            icon={Icons.Create}
+          ></Button.IconButton>
+        </div>
       )
     }
     const grouped = groupBy(meta.attachments, a => a.type)
     return (
-      <Content flex column gap={12} className={'font-size-14'} style={{ padding: '12px 8px' }}>
+      <div ref={pasteContainerRef} className={'flex flex-col flex-1 overflow-y-auto gap-2 pt-2 px-2.5 pb-10'}>
         {Object.entries(grouped).map(g => (
-          <Content flex column key={g[0]}>
-            <div style={{ paddingLeft: '8px' }} className={'font-size-12 transparent-font'}>
-              {Rendevoz.Utils.Meta.getTypeName(g[0])}
-            </div>
+          <div className={'flex flex-col'} key={g[0]}>
+            <div className={'font-size-12 pl-2 transparent-font'}>{Global.utils.getTypeName(g[0])}</div>
             {g[1].map(i => (
               <AttItem
                 onClick={() => {
-                  setContainerState({
-                    selectedAtt: i.id
-                  })
+                  setSelected(i.id)
                 }}
                 onRemove={() => {
+                  queueTurnUnhidden({
+                    metaId: i.id,
+                    type: 'object'
+                  })
+                  MetaStore.deleteMetaObject(i.id)
                   MetaStore.updateMetaObject({ id: meta.id, attachments: meta?.attachments?.filter(o => o.id !== i.id) })
                 }}
                 id={i.id}
                 key={i.id}
               />
             ))}
-          </Content>
+          </div>
         ))}
-      </Content>
+        <Button.IconButton
+          onClick={() => {
+            if (meta) {
+              const queue = new Queue()
+              const symbol = 1
+              Global.metaOps.createObjects?.(undefined, async m => {
+                await queue.wait(symbol)
+                await MetaStore.addMetaAsAttachment(m.id, meta.id)
+                queue.end(symbol)
+              })
+            }
+          }}
+          text={t(trans.New)}
+          icon={Icons.Create}
+          className={'transparent-font'}
+        ></Button.IconButton>
+      </div>
     )
   }
   const renderContainer = () => {
@@ -65,118 +124,38 @@ export default (metaId: number) => {
     }
     return renderAttachments()
   }
-  const renderTitle = () => {
-    if (selectedMeta) {
-      return (
-        <Content style={{ flexShrink: 0, padding: '6px', height: 38 }} className={'border-bottom'} flex gap={12} alignItems={'center'}>
-          <Icon
-            className={ClassName.flatButton(4, '4px')}
-            onClick={() => {
-              setContainerState(s => ({ selectedAtt: undefined }))
-            }}
-            size={16}
-            name={'park-left'}
-          />
-          <div className={'font-size-15 normal-font ellipsis-font-1'} style={{ flexShrink: 1 }}>
-            {selectedMeta.name || selectedMeta.placeholderName}
-          </div>
-        </Content>
-      )
-    }
-    return (
-      <Content
-        style={{ flexShrink: 0, padding: 6, height: 38 }}
-        className={'font-size-15 normal-font border-bottom'}
-        flex
-        alignItems={'center'}
-        justifyContent={'flex-end'}
-      >
-        <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>{t('general.Attachments')}</div>
-        <Content flex alignItems={'center'} className={'font-size-15'} gap={8}>
-          <Icon
-            name={'park-plus'}
-            className={ClassName.flatButton(4, '4px')}
-            onClick={() => {
-              GlobalInstance.metaOps?.createObject().then(o => {
-                console.log(o)
-                MetaStore.updateMetaObject({
-                  id: meta.id,
-                  attachments: [
-                    ...(meta?.attachments || []),
-                    {
-                      id: o.id,
-                      type: o.type,
-                      createdAt: Date.now()
-                    }
-                  ]
-                })
-              })
-            }}
-          ></Icon>
-          <AnimatePopover
-            positions={['bottom', 'top']}
-            padding={10}
-            disableNudge
-            content={setV => (
-              <WithBorder>
-                <MetaFilterer
-                  onChange={m => {
-                    setV(false)
-                    const o = MetaStore.getCachedMetaObject(m)
-                    if (o) {
-                      if (!meta || meta?.attachments?.some(i => i.id === o.id)) return
-                      MetaStore.updateMetaObject({
-                        id: meta.id,
-                        attachments: [
-                          ...(meta?.attachments || []),
-                          {
-                            id: o.id,
-                            type: o.type,
-                            createdAt: Date.now()
-                          }
-                        ]
-                      })
-                    }
-                  }}
-                />
-              </WithBorder>
-            )}
-          >
-            <Icon name={'park-filter'} className={ClassName.flatButton(4, '4px')}></Icon>
-          </AnimatePopover>
-        </Content>
-      </Content>
-    )
-  }
   const renderContent = () => {
     if (selectedMeta) {
-      const page = GlobalInstance.layoutOps?.getRegisteredTabData(selectedMeta.type)
-      if (page) {
-        return (
-          <div style={{ height: '100%', position: 'relative' }}>
-            <DockTabPaneContext.Provider key={selectedMeta.id} value={{ currentTabId: '' }}>
-              <PageConfigContext.Provider
-                value={{
-                  editorHeader: false,
-                  pdfHeader: false
-                }}
-              >
-                {page.content?.({ objectId: selectedMeta.objectId, metaId: selectedMeta.id })}
-              </PageConfigContext.Provider>
-            </DockTabPaneContext.Provider>
-          </div>
-        )
-      }
+      return (
+        <div style={{ flex: 1, width: '100%', position: 'relative', overflow: 'hidden' }}>
+          <SidebarObjectViewer
+            id={selectedMeta.id}
+            pageConfig={{
+              editorHeader: false,
+              pdfHeader: false,
+              editorAdd: false,
+              messageTitle: false,
+              whiteboardHeader: false,
+              defaultOpenSidebar: false,
+              chatHeader: false
+            }}
+          />
+        </div>
+      )
     }
   }
   return {
-    renderTitle,
-    renderContainer
+    renderContainer,
+    attMetas,
+    selected,
+    setSelected,
+    selectedMeta
   }
 }
 
 const AttItem = memo(({ id, onClick, onRemove }: { id: number; onClick?: VoidFunction; onRemove?: VoidFunction }) => {
   const meta = MetaStore.useValue(id)
+  const { t } = useTranslation()
   if (!meta || meta.deleted) {
     return null
   }
@@ -197,8 +176,8 @@ const AttItem = memo(({ id, onClick, onRemove }: { id: number; onClick?: VoidFun
         </WithBorder>
       )}
     >
-      <div className={classnames(ClassName.flatButton(), 'ellipsis-font-2')} onClick={onClick}>
-        {meta.name || meta.placeholderName}
+      <div className={classnames('button line-clamp-1', !meta.name && 'super-transparent-font')} onClick={onClick}>
+        {meta.name || t(trans.Unnamed)}
       </div>
     </ContextMenu>
   )

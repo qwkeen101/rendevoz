@@ -1,50 +1,27 @@
 import { FC, useEffect, useRef, useState } from 'react'
-import { GlobalInstance } from '@/hooks'
-import { Content, Menu } from '@/components'
-import { MetaStore } from '@/api/stores'
+import { Menu } from '@/components'
+import { CollectionStore, MetaStore } from '@/api/stores'
 import { useTranslation } from 'react-i18next'
-import { Rendevoz } from '@/core/rendevoz'
 import isHotkey from 'is-hotkey'
 import calculateContains from '@/core/object/objectList/calculateContains'
 import useSidebarDatabaseState from '@/components/layout/sidebar/useSidebarDatabaseState'
+import { Icons, Shortcuts } from '@/consts'
+import trans from '@/consts/trans'
 
 const ObjectActionMenu: FC<
   Partial<{
     onClose: VoidFunction
-    onJump: VoidFunction
-    onGraphPin: VoidFunction
-    onShowRelated: VoidFunction
-    onShowGraph: VoidFunction
-    onRemoveFromCollection: VoidFunction
-    onEditLink: VoidFunction
-    onDeleteLink: VoidFunction
+    parentCollectionId?: number
     onRemoveFromAttachment: VoidFunction
     visibility: {
       removeFromAttachment?: boolean
       showContainsInSidebar?: boolean
-      editLink?: boolean
       deleteFromCollection?: boolean
-      deleteLink?: boolean
-      jumpToVisible?: boolean
-      graphPinVisible?: boolean
-      showRelatedVisible?: boolean
-      graphPinned?: boolean
       relatedNum?: number
       showGraph?: boolean
     }
   }> & { metaObjectId: number }
-> = ({
-  onClose,
-  metaObjectId,
-  onRemoveFromAttachment,
-  visibility,
-  onJump,
-  onRemoveFromCollection,
-  onEditLink,
-  onDeleteLink,
-  onGraphPin,
-  onShowGraph
-}) => {
+> = ({ onClose, metaObjectId, onRemoveFromAttachment, parentCollectionId, visibility }) => {
   const { updateMetaObject, deleteMetaObject } = MetaStore
   const { t } = useTranslation()
   const metaObject = MetaStore.useValue(metaObjectId)
@@ -54,29 +31,29 @@ const ObjectActionMenu: FC<
       const keydownHandler = (e: KeyboardEvent) => {
         if (isHotkey('m', e)) {
           e.preventDefault()
-          GlobalInstance.metaOps?.quickAdd(metaObjectId)
+          Global.metaOps.quickAdd?.(metaObjectId)
           onClose?.()
         }
         if (isHotkey('v', e)) {
           e.preventDefault()
-          GlobalInstance.metaOps?.openDetails(metaObjectId)
+          Global.metaOps.openDetails?.(metaObjectId)
           onClose?.()
         }
         if (isHotkey('e', e)) {
           e.preventDefault()
-          Rendevoz.Actions.Open.Meta.openEditMetaDialog(metaObjectId)
+          Global.metaOps.edit?.(metaObjectId)
           onClose?.()
         }
         if (isHotkey('mod+c', e)) {
           e.preventDefault()
-          GlobalInstance.metaOps?.copyLink(metaObjectId)
+          Global.metaOps.copyLink(metaObjectId)
           onClose?.()
         }
-        if (isHotkey('shift+enter', e)) {
+        if (isHotkey('enter', e)) {
           onClose?.()
           e.preventDefault()
-          GlobalInstance.metaOps?.closeDetails()
-          Rendevoz.Actions.Open.Meta.openMetaObject(metaObjectId)
+          Global.metaOps.closeDetails?.()
+          Global.layoutOps?.openObject(metaObjectId)
         }
       }
       document.addEventListener('keydown', keydownHandler)
@@ -98,9 +75,21 @@ const ObjectActionMenu: FC<
   }, [metaObject])
   if (!metaObject) return null
   return (
-    <Content style={{ padding: '0.4rem 0', minWidth: 250, fontSize: 14 }} ref={containerRef}>
+    <div className={'py-1 min-w-60'} ref={containerRef}>
       <Menu.NavigationMenu
         layout={[
+          parentCollectionId
+            ? {
+                type: 'item',
+                text: t('general.Remove from folder'),
+                icon: 'park-delete-two',
+                onSelect: () => {
+                  CollectionStore.removeItems(metaObjectId, parentCollectionId)
+                  onClose?.()
+                },
+                key: 'remove-from-collection'
+              }
+            : undefined,
           visibility?.removeFromAttachment
             ? {
                 type: 'item',
@@ -119,34 +108,10 @@ const ObjectActionMenu: FC<
                 key: 'show-contains-in-sidebar',
                 onSelect: async () => {
                   onClose?.()
-                  GlobalInstance.metaOps?.viewContains(metaObjectId)
+                  Global.metaOps?.viewContains(metaObjectId)
                 },
                 text: t('general.View included objects'),
                 icon: 'park-hamburger-button'
-              }
-            : undefined,
-          visibility?.editLink
-            ? {
-                type: 'item',
-                key: 'edit-link',
-                onSelect: () => {
-                  onEditLink?.()
-                  onClose?.()
-                },
-                text: t('general.Edit link'),
-                icon: 'park-link'
-              }
-            : undefined,
-          visibility?.deleteLink
-            ? {
-                type: 'item',
-                key: 'delete-link',
-                onSelect: () => {
-                  onDeleteLink?.()
-                  onClose?.()
-                },
-                text: t('general.Delete link'),
-                icon: 'park-unlink'
               }
             : undefined,
           visibility?.showGraph
@@ -154,108 +119,58 @@ const ObjectActionMenu: FC<
                 type: 'item',
                 key: 'show-graph',
                 onSelect: () => {
-                  onShowGraph?.()
+                  Global.metaOps.openGraph?.(metaObjectId)
                   onClose?.()
                 },
                 text: t('general.View graph'),
                 icon: 'park-share-one'
               }
             : undefined,
-          visibility?.jumpToVisible
-            ? {
-                type: 'item',
-                key: 'jump',
-                onSelect: () => {
-                  onJump?.()
-                  onClose?.()
-                },
-                text: 'Focus',
-                icon: 'park-share-two'
-              }
-            : undefined,
-          visibility?.graphPinVisible
-            ? {
-                icon: 'park-pin',
-                text: visibility.graphPinned ? t('graph.unpin') : t('graph.pin on graph'),
-                onSelect: () => {
-                  onGraphPin?.()
-                  onClose?.()
-                },
-                key: 'graph-pin',
-                type: 'item'
-              }
-            : undefined,
-          visibility?.showRelatedVisible
-            ? {
-                icon: 'park-circle-four',
-                text: t(`graph.show more related nodes`, {
-                  num: visibility.relatedNum
-                }),
-                onSelect: () => {
-                  onGraphPin?.()
-                  onClose?.()
-                },
-                key: 'graph-show-related',
-                type: 'item'
-              }
-            : undefined,
           {
             type: 'item',
             text: t('general.Open'),
-            icon: 'park-share',
-            suffix: 'Shift+↵',
+            icon: Icons.Efferent,
+            suffix: '↵',
             onSelect: () => {
               onClose?.()
-              GlobalInstance.metaOps?.closeDetails()
-              Rendevoz.Actions.Open.Meta.openMetaObject(metaObjectId)
+              Global.metaOps.closeDetails?.()
+              Global.layoutOps?.openObject(metaObjectId)
             },
             key: 'open'
           },
           {
             type: 'item',
-            text: t('general.View details'),
-            icon: 'park-info',
+            text: t(trans.Meta.ViewDetails),
+            icon: Icons.Info,
             suffix: 'V',
             onSelect: () => {
               onClose?.()
-              GlobalInstance.metaOps?.openDetails(metaObjectId)
+              Global.metaOps.openDetails?.(metaObjectId)
             },
             key: 'view-details'
           },
           {
             type: 'item',
-            text: t('general.Move to'),
-            icon: 'park-corner-up-right',
+            text: t(trans.Edit),
+            icon: Icons.Edit,
+            suffix: 'E',
+            onSelect: () => {
+              onClose?.()
+              Global.metaOps.edit?.(metaObjectId)
+            },
+            key: 'edit'
+          },
+          {
+            type: 'item',
+            text: t(trans.Meta.MoveTo),
+            icon: Icons.MoveTo,
             suffix: 'M',
             onSelect: () => {
-              GlobalInstance.metaOps?.quickAdd(metaObjectId)
+              Global.metaOps.quickAdd?.(metaObjectId)
               onClose?.()
             },
             key: 'move-to'
           },
-          {
-            type: 'item',
-            text: t('general.edit'),
-            icon: 'park-edit',
-            suffix: 'E',
-            onSelect: () => {
-              onClose?.()
-              Rendevoz.Actions.Open.Meta.openEditMetaDialog(metaObjectId)
-            },
-            key: 'edit'
-          },
-          GlobalInstance.metaOps?.canPreview(metaObject)
-            ? {
-                icon: 'park-preview-open',
-                text: t('general.Preview'),
-                onSelect: () => {
-                  onClose?.()
-                  GlobalInstance.metaOps?.preview(metaObjectId)
-                },
-                key: 'preview',
-                type: 'item'
-              }
-            : undefined,
           {
             type: 'separator'
           },
@@ -271,40 +186,28 @@ const ObjectActionMenu: FC<
           },
           {
             type: 'item',
-            text: t('general.generate link'),
-            icon: 'park-link-two',
-            suffix: 'Cmd+C',
+            text: t(trans.CopyLink),
+            icon: Icons.Link,
+            suffix: Shortcuts.Copy[1],
             onSelect: () => {
-              GlobalInstance.metaOps?.copyLink(metaObjectId)
+              Global.metaOps?.copyLink(metaObjectId)
               onClose?.()
             },
             key: 'copy-link'
           },
           {
             type: 'item',
-            text: t('general.delete'),
-            icon: 'park-delete-one',
+            text: t(trans.Delete),
+            icon: Icons.Delete,
             onSelect: () => {
               deleteMetaObject(metaObject.id)
               onClose?.()
             },
             key: 'delete'
-          },
-          visibility?.deleteFromCollection
-            ? {
-                type: 'item',
-                text: t('general.remove from collection'),
-                icon: 'park-delete-two',
-                onSelect: () => {
-                  onRemoveFromCollection?.()
-                  onClose?.()
-                },
-                key: 'remove-from-collection'
-              }
-            : undefined
+          }
         ]}
       />
-    </Content>
+    </div>
   )
 }
 

@@ -3,7 +3,13 @@ import { jsx } from 'slate-hyperscript'
 import normalizeText from './normalizeText'
 import Id from '@/utils/id'
 
-export default (node: HTMLElement, canContainLink = true) => {
+export default (
+  node: HTMLElement,
+  canContainLink = true,
+  opts?: {
+    ignoreAttributes?: Set<string>
+  }
+) => {
   const text = TEXT_TAGS[node.nodeName]?.()
   const textContent = normalizeText(node)
   if (textContent?.length) {
@@ -26,6 +32,11 @@ export default (node: HTMLElement, canContainLink = true) => {
           }
         }
       }
+    }
+    if (opts?.ignoreAttributes?.size) {
+      opts.ignoreAttributes.forEach(att => {
+        delete attributes[att]
+      })
     }
     if (node.nodeType === Node.ELEMENT_NODE) {
       const containLink = node.nodeName === 'A' ? node : node.querySelector('a')

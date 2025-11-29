@@ -1,5 +1,6 @@
 import Dexie from 'dexie'
 import { exportDB, importInto, peakImportFile } from 'dexie-export-import'
+import { throttle } from 'lodash'
 export const db = new Dexie('rendevozDb')
 export const syncDB = new Dexie('sync')
 let SyncAPI: undefined | (typeof import('@/api/sync'))['default'] = undefined
@@ -171,8 +172,22 @@ db.use({
 Dexie.on('storagemutated', () => {
   if (typeof localStorage !== 'undefined') {
     localStorage.setItem('DB_LAST_UPDATE', `${Date.now()}`)
+    throttleExportToLocal()
   }
 })
+const throttleExportToLocal = throttle(
+  () => {
+    import('@/api/common/exportData').then(res => {
+      res.default().then(file => {
+        import('@/api/fileSystem').then(system => {
+          system.default.fs.writeFile(file, '/latest-data.zip')
+        })
+      })
+    })
+  },
+  1000 * 5 * 60
+)
+
 export const exportRendevozDb = async () => {
   const blob = (await exportDB(db)) as Blob
   return blob

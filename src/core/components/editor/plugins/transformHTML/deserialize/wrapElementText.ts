@@ -14,7 +14,12 @@ const recurApplyAttribute = (root: CustomElement | Text, attributes: any) => {
 }
 
 // wrap element text with styles
-export default (node: HTMLElement) => {
+export default (
+  node: HTMLElement,
+  opts?: {
+    ignoreAttributes?: Set<string>
+  }
+) => {
   const children = Array.from(node.childNodes)
   const style = node.style
 
@@ -37,6 +42,11 @@ export default (node: HTMLElement) => {
       }
     }
   }
+  if (opts?.ignoreAttributes?.size) {
+    opts.ignoreAttributes.forEach(att => {
+      delete attributes[att]
+    })
+  }
   return children
     .map(c => {
       if (c.nodeType === Node.TEXT_NODE) {
@@ -46,7 +56,7 @@ export default (node: HTMLElement) => {
         }
         return null
       }
-      const res = deserializeText(c, node.nodeName !== 'A')
+      const res = deserializeText(c, node.nodeName !== 'A', opts)
       if (res) {
         return recurApplyAttribute(res, attributes)
       }

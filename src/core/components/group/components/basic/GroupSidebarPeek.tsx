@@ -1,24 +1,16 @@
 import useGroupState from '@/core/components/group/hooks/useGroupState'
 import { Resizable } from 're-resizable'
-import MediaLabelController from '@/core/components/media/components/sidebar/MediaLabelController'
-import { memo, useEffect, useRef, useState } from 'react'
-import { MetaStore, ObjectStore } from '@/api/stores'
-import EditorLabelController from '@/core/components/editor/components/sidebar/Label'
-import Label from '@/core/components/pdf/components/sidebar/Label'
+import { memo, useEffect, useRef } from 'react'
 import { Colors, KEY } from '@/consts'
 import { Icon } from '@/components'
-import { ClassName } from 'rendevoz'
-import { DockTabPaneContext } from '@/components/base/dock/DockTabPane'
-import { Rendevoz } from '@/core/rendevoz'
 import { useMemoizedFn } from '@/hooks'
 import isHotkey from 'is-hotkey'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
+import SidebarObjectViewer from '@/core/components/SidebarObjectViewer'
 
 export default memo(() => {
   const [groupState, setGroupState] = useGroupState()
-  const [labelIds, setLabelIds] = useState([])
-  const [labelType, setLabelType] = useState('')
-  const peekMeta = MetaStore.useValue(groupState.sidebarState?.metaId)
+
   useEffect(() => {
     if (groupState.sidebarVisible) {
       const groupContainer = instance.getOuterContainer?.()
@@ -61,19 +53,7 @@ export default memo(() => {
       }
     }
   }, [groupState.sidebarVisible])
-  useEffect(() => {
-    if (groupState.sidebarState?.type === 'labels') {
-      const { objectType, objectId } = groupState.sidebarState
-      ObjectStore(objectType)
-        .getOneById(objectId)
-        .then(res => {
-          if (res && res.labels) {
-            setLabelIds(res.labels)
-            setLabelType(`${objectType}Label`)
-          }
-        })
-    }
-  }, [groupState.sidebarState?.type, groupState.sidebarState?.objectType, groupState.sidebarState?.objectId])
+
   const sidebarState = groupState.sidebarState
   const instance = useGroupInstance()
   const handleNavigateLeft = () => {
@@ -123,27 +103,21 @@ export default memo(() => {
   const renderer = () => {
     if (groupState.sidebarVisible) {
       if (groupState.sidebarState?.type === 'preview') {
-        if (groupState.sidebarState.metaId && peekMeta) {
-          const page = Rendevoz.Actions.Layout.getRegisteredTabContent(peekMeta.type)
-          if (page) {
-            return (
-              <DockTabPaneContext.Provider key={peekMeta.id} value={{ currentTabId: '' }}>
-                {page({ objectId: peekMeta.objectId, metaId: peekMeta.id })}
-              </DockTabPaneContext.Provider>
-            )
-          }
-        }
-      }
-      if (groupState.sidebarState?.type === 'labels' && labelIds && labelType) {
-        switch (groupState.sidebarState.objectType) {
-          case 'video':
-          case 'audio':
-            return <MediaLabelController labelType={labelType} labelIds={labelIds} />
-          case 'note':
-          case 'webpage':
-            return <EditorLabelController labelType={labelType} labelIds={labelIds} />
-          case 'pdf':
-            return <Label labelIds={labelIds} />
+        const id = groupState.sidebarState.metaId
+        if (id) {
+          return (
+            <SidebarObjectViewer
+              id={id}
+              key={id}
+              pageConfig={{
+                defaultOpenSidebar: false,
+                editorHeader: true,
+                pdfHeader: true,
+                editorAdd: false,
+                whiteboardHeader: true
+              }}
+            />
+          )
         }
       }
     }
@@ -151,13 +125,13 @@ export default memo(() => {
   return (
     <Resizable
       defaultSize={{
-        width: '40vw',
+        width: Math.min(Math.max(window.innerWidth * 0.5, 300), 600),
         height: '100%'
       }}
       style={{
         position: 'absolute',
         zIndex: 50,
-        background: Colors.Background.Popover,
+        background: Colors.Background.Global,
         right: 0,
         boxShadow: Colors.Background.BoxShadow,
         opacity: groupState.sidebarVisible ? 1 : 0,
@@ -166,10 +140,11 @@ export default memo(() => {
         transform: groupState.sidebarVisible ? undefined : 'translateX(100%)'
       }}
       enable={{ left: true }}
+      role={'group-side-peek'}
     >
       <Icon
         name={'park-double-right'}
-        className={ClassName.flatButton(4, '5px')}
+        className={'square-button'}
         size={18}
         onClick={() => {
           setGroupState(s => ({ ...s, sidebarVisible: false }))
@@ -179,7 +154,7 @@ export default memo(() => {
           position: 'absolute',
           left: -36,
           color: Colors.Font.Transparent,
-          top: '20px',
+          top: '24px',
           boxShadow: Colors.Background.BorderBoxShadow,
           transform: 'translateY(-50%)'
         }}

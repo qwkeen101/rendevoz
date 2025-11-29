@@ -1,19 +1,6 @@
-export type DragType = 'left' | 'right' | 'touch'
-
-interface DragDropComponent {
-  element: HTMLElement
-  ownerDocument: Document
-  dragType: DragType
-  baseX: number
-  baseY: number
-  scaleX: number
-  scaleY: number
-}
-
 export class DragState {
   _init: boolean
   event: MouseEvent | TouchEvent
-  component: DragDropComponent
   pageX = 0
   pageY = 0
   clientX = 0
@@ -21,31 +8,25 @@ export class DragState {
   dx = 0
   dy = 0
 
-  constructor(event: MouseEvent | TouchEvent, component: DragDropComponent, init = false) {
+  constructor(
+    event: PointerEvent,
+    pos: {
+      x: number
+      y: number
+    },
+    init = false
+  ) {
     this.event = event
-    this.component = component
     this._init = init
     if (event) {
-      if (event.type.startsWith('touch')) {
-        let touch: Touch
-        if (event.type === 'touchend') {
-          touch = (event as TouchEvent).changedTouches[0]
-        } else {
-          touch = (event as TouchEvent).touches[0]
-        }
-
-        this.pageX = touch.pageX
-        this.pageY = touch.pageY
-        this.clientX = touch.clientX
-        this.clientY = touch.clientY
-      } else if ('pageX' in event) {
+      if ('pageX' in event) {
         this.pageX = event.pageX
         this.pageY = event.pageY
         this.clientX = event.clientX
         this.clientY = event.clientY
       }
-      this.dx = (this.pageX - component.baseX) * component.scaleX
-      this.dy = (this.pageY - component.baseY) * component.scaleY
+      this.dx = this.pageX - pos.x
+      this.dy = this.pageY - pos.y
     }
   }
 
@@ -58,15 +39,11 @@ export class DragState {
    * @param draggingHtml, the element show in the dragging layer
    */
   startDrag(refElement?: HTMLElement, draggingHtml?: HTMLElement | string) {
-    if (!this._init) {
+    if (!this._init || !refElement) {
       throw new Error('startDrag can only be used in onDragStart callback')
     }
-    if (refElement === undefined) {
-      refElement = this.component.element
-    }
-
     createDraggingElement(this, refElement, draggingHtml)
-    this.component.ownerDocument.body.classList.add('dock-dragging')
+    document.body.classList.add('dock-dragging')
   }
 
   setData(data?: { [key: string]: any }, scope?: any) {
@@ -84,10 +61,6 @@ export class DragState {
     return null
   }
 
-  get dragType(): DragType {
-    return this.component.dragType
-  }
-
   acceptMessage: string
   rejected: boolean
 
@@ -103,10 +76,9 @@ export class DragState {
   _onMove() {
     if (_data) {
       dragListeners.forEach(f => f(this))
-      const ownerDocument = this.component.ownerDocument
-      let searchElement = ownerDocument.elementFromPoint(this.clientX, this.clientY) as HTMLElement
+      let searchElement = document.elementFromPoint(this.clientX, this.clientY) as HTMLElement
       let droppingHandlers: DragHandlers
-      while (searchElement && searchElement !== ownerDocument.body) {
+      while (searchElement && searchElement !== document.body) {
         if (_dragListeners.has(searchElement)) {
           const handlers = _dragListeners.get(searchElement)
           if (handlers.onDragOverT) {
@@ -126,24 +98,11 @@ export class DragState {
   _onDragEnd(canceled = false) {
     if (_droppingHandlers && _droppingHandlers.onDropT && !canceled) {
       _droppingHandlers.onDropT(this)
-
-      if (this.component.dragType === 'right') {
-        // prevent the next menu event if drop handler is called on right mouse button
-        this.component.ownerDocument.addEventListener('contextmenu', preventDefault, true)
-        setTimeout(() => {
-          this.component.ownerDocument.removeEventListener('contextmenu', preventDefault, true)
-        }, 0)
-      }
     }
 
     destroyDraggingElement(this)
-    this.component.ownerDocument.body.classList.remove('dock-dragging')
+    document.body.classList.remove('dock-dragging')
   }
-}
-
-function preventDefault(e: Event) {
-  e.preventDefault()
-  e.stopPropagation()
 }
 
 export type DragHandler = (state: DragState) => void
@@ -239,17 +198,4 @@ export function addDragStateListener(callback: (scope: any) => void) {
 
 export function removeDragStateListener(callback: (scope: any) => void) {
   _dragStateListener.delete(callback)
-}
-
-// work around for drag scroll issue on IOS
-if (typeof window !== 'undefined' && window.navigator && window.navigator.platform && /iP(ad|hone|od)/.test(window.navigator.platform)) {
-  document.addEventListener(
-    'touchmove',
-    (e: TouchEvent) => {
-      if (e.touches.length === 1 && document.body.classList.contains('dock-dragging')) {
-        e.preventDefault()
-      }
-    },
-    { passive: false }
-  )
 }

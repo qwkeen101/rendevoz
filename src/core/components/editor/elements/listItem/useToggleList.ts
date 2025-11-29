@@ -1,14 +1,11 @@
 import { CustomElement } from '~/typings'
 import { useEffect, useRef, useState } from 'react'
-import { Rendevoz } from '@/core/rendevoz'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import { useDebounceFn } from '@/hooks'
 import { ReactEditor } from '@/core'
 
 const useToggleList = (element: CustomElement) => {
-  const emitter = Rendevoz.Events.Emit.useScopedEventEmitter()
   const containerRef = useRef<HTMLElement>(null)
-  const handler = Rendevoz.Events.Emit.useEventHandler('editor')
   const instance = useEditorInstance()
   const [toggleState, setToggleState] = useState({
     canToggle: false,
@@ -35,7 +32,9 @@ const useToggleList = (element: CustomElement) => {
   }
   const debounceCheckToggle = useDebounceFn(checkToggle, { wait: 500 })
 
-  handler.on('valueChange', () => debounceCheckToggle.run())
+  const handler = () => {
+    debounceCheckToggle.run()
+  }
   useEffect(() => {
     checkToggle()
   }, [])
@@ -69,9 +68,9 @@ const useToggleList = (element: CustomElement) => {
       }
       container.addEventListener('pointerenter', pointerHandler)
       container.addEventListener('pointerleave', pointerHandler)
-      emitter.addListener('editor', handler)
+      instance.addEventListener?.('valueChange', handler)
       return () => {
-        emitter.removeListener('editor', handler)
+        instance.removeEventListener?.('valueChange', handler)
         container.removeEventListener('pointerenter', pointerHandler)
         container.removeEventListener('pointerleave', pointerHandler)
       }

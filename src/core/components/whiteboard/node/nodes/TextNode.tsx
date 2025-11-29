@@ -3,17 +3,13 @@ import { IEditorInstance, IWhiteboardNode } from '~/typings'
 import SimpleEditor from '@/core/components/editor/SimpleEditor'
 import { useRef, memo, useMemo, useLayoutEffect } from 'react'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
-import { Descendant, Node } from 'slate'
+import { BaseSelection, Descendant, Editor, Node, Transforms } from 'slate'
 import { ReactEditor } from '@/core'
-const fontSizeToNumber: Record<(IWhiteboardNode & { type: 'text' })['fontSize'], number> = {
-  small: 14,
-  middle: 16,
-  large: 20,
-  'super large': 24
-}
-const TextNode = ({ node, onClick }: InnerNodeProps & { onClick: VoidFunction }) => {
+
+const TextNode = ({ node, onClick, nodeState, setNodeState }: InnerNodeProps & { onClick: VoidFunction }) => {
   const textNode = node as IWhiteboardNode & { type: 'text' }
   const instance = useWhiteboardInstance()
+  const selectionRef = useRef<BaseSelection>()
   const i = useRef<IEditorInstance>()
   useLayoutEffect(() => {
     const currC = i.current?.getSlateEditor?.().children
@@ -21,6 +17,14 @@ const TextNode = ({ node, onClick }: InnerNodeProps & { onClick: VoidFunction })
       i.current?.replaceChildren?.(textNode.content)
     }
   }, [textNode.content])
+  useLayoutEffect(() => {
+    if (nodeState?.focused) {
+      return () => {
+        selectionRef.current = i.current?.getSlateEditor?.().selection
+        i.current?.getSlateEditor?.().deselect()
+      }
+    }
+  }, [nodeState?.focused])
   const handleChangeValue = (newValue: Descendant[]) => {
     if (newValue !== textNode.content) {
       instance.updateNode?.(textNode.id, n => ({ ...n, content: newValue }), false)
@@ -31,6 +35,52 @@ const TextNode = ({ node, onClick }: InnerNodeProps & { onClick: VoidFunction })
     instance.deleteNode?.(node.id!)
     return null
   }
+  const assignFocus = (i: IEditorInstance) => {
+    const funcs = instance.nodeOps?.getNodeFuncs?.(node.id!)
+    if (funcs) {
+      funcs.focusText = () => {
+        const e = i.getSlateEditor?.()
+        setNodeState?.(s => ({ ...s, focused: true, selected: true }))
+        if (e) {
+          if (!ReactEditor.isFocused(e)) {
+            ReactEditor.focus(e)
+            Transforms.select(e, selectionRef.current || e.selection || Editor.end(e, []))
+          }
+        }
+      }
+    }
+  }
+  const padding = node.type === 'mindmap' ? '6px 12px' : '3px 8px'
+  const renderEditor = () => (
+    <SimpleEditor
+      textareaMode={true}
+      placeholder={node.type === 'mindmap' || node.rootId ? '' : undefined}
+      virtualizer={false}
+      onInstanceInitialized={ins => {
+        i.current = ins
+        assignFocus(ins)
+      }}
+      value={textNode.content}
+      onClick={onClick}
+      containerStyle={{
+        width: node.resized ? undefined : node.type === 'mindmap' || node.rootId ? undefined : '200px',
+        height: '100%',
+        position: 'relative',
+        background: 'transparent',
+        minWidth: '100%',
+        maxWidth: '100%',
+        minHeight: '100%',
+        maxHeight: '100%',
+        pointerEvents: 'auto',
+        padding: node.resized ? undefined : padding,
+        fontWeight: node.type === 'mindmap' ? 600 : undefined
+      }}
+      fontSize={node.type === 'mindmap' ? 24 : undefined}
+      onChange={v => {
+        handleChangeValue(v)
+      }}
+    />
+  )
   if (node.resized) {
     // extra div wrapper, prevent lose padding
     return (
@@ -43,82 +93,15 @@ const TextNode = ({ node, onClick }: InnerNodeProps & { onClick: VoidFunction })
           maxWidth: '100%',
           minHeight: '100%',
           maxHeight: '100%',
-          padding: '3px 8px',
+          padding,
           pointerEvents: 'auto'
         }}
       >
-        <SimpleEditor
-          disableScrollIntoView
-          textareaMode={true}
-          placeholder={node.type === 'mindmap' || node.rootId ? '' : undefined}
-          virtualizer={node.resized}
-          onInstanceInitialized={ins => {
-            i.current = ins
-            const funcs = instance.nodeOps?.getNodeFuncs?.(node.id!)
-            if (funcs) {
-              funcs.focusText = () => {
-                const e = ins.getSlateEditor?.()
-                console.log('focusing')
-                e && ReactEditor.focus(e)
-              }
-            }
-          }}
-          value={textNode.content}
-          onClick={onClick}
-          containerStyle={{
-            height: '100%',
-            position: 'relative',
-            background: 'transparent',
-            minWidth: '100%',
-            maxWidth: '100%',
-            minHeight: '100%',
-            maxHeight: '100%',
-            pointerEvents: 'auto'
-          }}
-          fontSize={node.type === 'mindmap' ? 30 : textNode.fontSize ? fontSizeToNumber[textNode.fontSize] : undefined}
-          onChange={v => {
-            handleChangeValue(v)
-          }}
-        />
+        {renderEditor()}
       </div>
     )
   }
-  return (
-    <SimpleEditor
-      disableScrollIntoView
-      textareaMode={true}
-      placeholder={node.type === 'mindmap' || node.rootId ? '' : undefined}
-      virtualizer={node.resized}
-      onInstanceInitialized={ins => {
-        i.current = ins
-        const funcs = instance.nodeOps?.getNodeFuncs?.(node.id!)
-        if (funcs) {
-          funcs.focusText = () => {
-            const e = ins.getSlateEditor?.()
-            console.log('focusing')
-            e && ReactEditor.focus(e)
-          }
-        }
-      }}
-      value={textNode.content}
-      onClick={onClick}
-      containerStyle={{
-        height: '100%',
-        background: 'transparent',
-        width: node.type === 'mindmap' || node.rootId ? undefined : '200px',
-        minWidth: '100%',
-        maxWidth: '100%',
-        minHeight: '100%',
-        maxHeight: '100%',
-        padding: '3px 8px',
-        pointerEvents: 'auto'
-      }}
-      fontSize={node.type === 'mindmap' ? 30 : textNode.fontSize ? fontSizeToNumber[textNode.fontSize] : undefined}
-      onChange={v => {
-        handleChangeValue(v)
-      }}
-    />
-  )
+  return renderEditor()
 }
 
 export default memo(

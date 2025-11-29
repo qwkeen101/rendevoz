@@ -2,13 +2,13 @@ import { atom, useAtom } from 'jotai'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import { assignProperties } from '@/utils'
 import { AnimatePopover, Menu, WithBorder } from '@/components'
-import { memo, useEffect } from 'react'
+import { memo, useEffect, useState } from 'react'
 import { IWhiteboardToolbarState } from '~/typings'
 import getContextMenu from '@/core/components/whiteboard/toolbars/contextMenus/getContextMenu'
 import { useTranslation } from 'react-i18next'
 import getNodeMenu from '@/core/components/whiteboard/toolbars/contextMenus/getNodeMenu'
 import WhiteboardEdgeToolbar from '@/core/components/whiteboard/toolbars/WhiteboardEdgeToolbar'
-import { useFlow } from '@/core/components/whiteboard/StateHooks'
+import { useUpdateEffect } from '@/hooks'
 
 export const WhiteboardToolbarAtom = atom<IWhiteboardToolbarState>({
   visible: false
@@ -16,6 +16,7 @@ export const WhiteboardToolbarAtom = atom<IWhiteboardToolbarState>({
 export default memo(() => {
   const { t } = useTranslation()
   const [toolbarState, setToolbarState] = useAtom(WhiteboardToolbarAtom)
+  const [hasCopied, setHasCopied] = useState(false)
   const instance = useWhiteboardInstance()
   const transformedWindowPosition =
     toolbarState.originX !== undefined &&
@@ -69,12 +70,16 @@ export default memo(() => {
       }
     }
   })
-  const flow = useFlow()
-
-  useEffect(() => {
+  useUpdateEffect(() => {
     if (toolbarState.visible === false) {
-      setTimeout(() => {
-        flow.focused = true
+      instance.setFocused(true)
+    } else {
+      Global.metaOps.getCopiedMetaObjects().then(res => {
+        if (res?.length || Global.values.copiedWhiteboardData) {
+          setHasCopied(true)
+        } else {
+          setHasCopied(false)
+        }
       })
     }
   }, [toolbarState.visible])
@@ -83,10 +88,10 @@ export default memo(() => {
     const getLayout = () => {
       switch (toolbarState.type) {
         case 'contextMenu':
-          return getContextMenu(instance, t)
+          return getContextMenu(instance, t, hasCopied)
         case 'node':
         case 'select':
-          return getNodeMenu(instance, t, toolbarState.openBy)
+          return getNodeMenu(instance, t, undefined, hasCopied)
       }
     }
     const l = getLayout()
@@ -114,6 +119,7 @@ export default memo(() => {
       onClickOutside={e => {
         setToolbarState(s => ({ ...s, visible: false }))
       }}
+      padding={toolbarState.type === 'edge' ? 6 : 0}
       borderRadius={4}
       align={align()}
       position={
@@ -126,11 +132,7 @@ export default memo(() => {
       }
       positions={toolbarState.type === 'edge' ? ['top', 'bottom'] : ['right', 'left']}
       content={
-        <WithBorder
-          padding={toolbarState.type === 'edge' ? 0 : '0.4rem 0'}
-          width={toolbarState.type === 'edge' ? undefined : 250}
-          borderRadius={4}
-        >
+        <WithBorder padding={toolbarState.type === 'edge' ? 0 : '0.4rem 0'} width={toolbarState.type === 'edge' ? undefined : 250}>
           {renderContent()}
         </WithBorder>
       }

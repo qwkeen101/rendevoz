@@ -3,16 +3,14 @@ import { Content, Icon, Modal, VirtualList } from '@/components'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import { assignProperties } from '@/utils'
 import { useTranslation } from 'react-i18next'
-import { Node } from 'slate'
 import { useDebounceEffect, useMemoizedFn } from '@/hooks'
 import fuzzysort from 'fuzzysort'
 import { ClassName } from 'rendevoz'
 import SearchHelper from '@/api/textSearch/SearchHelper'
 import { IWhiteboardNode } from '~/typings'
 import { MetaStore } from '@/api/stores'
-import { Rendevoz } from '@/core/rendevoz'
 import { Colors } from '@/consts'
-import normalizeChildrenToText from '@/core/components/editor/utils/normalize/normalizeChildrenToText'
+import { slateToMarkdown } from '@/core/components/editor/plugins/slateToMarkdown'
 
 type WhiteboardSearchable = {
   nodeId: number
@@ -40,7 +38,7 @@ export default memo(() => {
         const result: typeof searchable = []
         allNodes.forEach(node => {
           if (node.type === 'text') {
-            const str = normalizeChildrenToText(node.content)
+            const str = slateToMarkdown(node.content)
             result.push({
               nodeId: node.id,
               search: str,
@@ -58,7 +56,7 @@ export default memo(() => {
           }
           if (node.type === 'mindmap') {
             if (node.nodeType === 'text') {
-              const str = normalizeChildrenToText(node.content)
+              const str = slateToMarkdown(node.content)
               result.push({
                 nodeId: node.id,
                 search: str,
@@ -165,7 +163,6 @@ export default memo(() => {
             onCompositionStart={() => setComposing(true)}
             onCompositionEnd={() => setComposing(false)}
             value={input}
-            spellCheck={'false'}
             onChange={e => setInput(e.target.value)}
             placeholder={t('general.Type to search') + '...'}
             style={{ flex: 1 }}
@@ -184,7 +181,7 @@ export default memo(() => {
               height: '100%'
             }}
             overscan={10}
-            withKeyboardNavigation
+            withKeyboardNavigation={visible}
             onSelect={item => {
               instance.searchOps?.toggleSearchPanel(false)
               instance.containerOps?.fitToNode(item.obj.nodeId)
@@ -220,7 +217,7 @@ export default memo(() => {
 const ResultItem = memo(({ res, selected }: { res: Fuzzysort.KeyResult<WhiteboardSearchable>; selected?: boolean }) => {
   const instance = useWhiteboardInstance()
   const [name, setName] = useState<string>('')
-  const metaIcon = res.obj.metaId ? Rendevoz.Utils.Object.getMetaObjectIcon(MetaStore.getCachedMetaObject(res.obj.metaId)?.type) : undefined
+  const metaIcon = res.obj.metaId ? Global.utils.getIcon(MetaStore.getCachedMetaObject(res.obj.metaId)?.type) : undefined
   const typeToIcon: Record<WhiteboardSearchable['type'], string> = {
     group: 'custom-group',
     text: 'park-text',

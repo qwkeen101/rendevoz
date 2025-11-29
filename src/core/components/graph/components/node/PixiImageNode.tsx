@@ -1,11 +1,10 @@
 import { GraphNode } from '@/core/components/graph/types/node'
-import { Graphics as RGrahpics, Sprite, Text } from '@pixi/react'
+import { Graphics as RGrahpics, Sprite } from '@pixi/react'
 import { Graphics } from 'pixi.js'
 import { useCallback, useEffect, useState } from 'react'
 import { Queue } from 'async-await-queue'
-import { Rendevoz } from '@/core/rendevoz'
+import { Colors } from '@/consts'
 
-const getRadius = t => Rendevoz.Utils.Meta.getTypeRadius(t)
 function getObjectFitSize(width: number, height: number) {
   const scaledSize = width > height ? height : width
   const x = width / 2 - scaledSize / 2
@@ -18,11 +17,11 @@ function getObjectFitSize(width: number, height: number) {
 }
 const cropCanvas = document.createElement('canvas')
 const ctx = cropCanvas.getContext('2d')!
-const radius = 10
+const radius = 8
 const x = 0,
   y = 0,
-  width = 60,
-  height = 60
+  width = 100,
+  height = 100
 
 const transformCtx = ctx => {
   ctx.beginPath()
@@ -39,25 +38,17 @@ const transformCtx = ctx => {
   ctx.clip()
 }
 
-cropCanvas.width = 60
-cropCanvas.height = 60
+cropCanvas.width = width
+cropCanvas.height = height
 transformCtx(ctx)
 
-const queue = new Queue(1, 0)
+const queue = new Queue(2, 0)
 const prior = -1
-const PixiImageNode = ({ node, imageUrl, label }: { node: GraphNode; imageUrl?: string; label?: string }) => {
+const PixiImageNode = ({ node, imageUrl, size, color }: { node: GraphNode; imageUrl?: string; size: number; color: string }) => {
   const realImageUrl = imageUrl || node.coverImgSrc
-  const radius = getRadius(node.type)
-  const d = radius * 2
+  const d = size * 2
   const [image, setImage] = useState<string>()
-  const drawMask = useCallback(
-    (g: Graphics) => {
-      g.beginFill('#F3EFE0', 1)
-      g.drawRoundedRect(0, 0, d, d, 4)
-      g.endFill()
-    },
-    [radius]
-  )
+
   useEffect(() => {
     const id = Symbol()
     queue
@@ -70,10 +61,9 @@ const PixiImageNode = ({ node, imageUrl, label }: { node: GraphNode; imageUrl?: 
             const ctx = cropCanvas.getContext('2d')
             if (ctx) {
               const { y, x, scaledSize } = getObjectFitSize(img.naturalWidth, img.naturalHeight)
-              ctx.drawImage(img, x, y, scaledSize, scaledSize, 0, 0, 60, 60)
+              ctx.drawImage(img, x, y, scaledSize, scaledSize, 0, 0, width, height)
               const data = cropCanvas.toDataURL('image/webp', 0.2)
               setImage(data)
-              // ctx.clearRect(0, 0, cropCanvas.width, cropCanvas.height)
             }
           }
         }
@@ -85,27 +75,17 @@ const PixiImageNode = ({ node, imageUrl, label }: { node: GraphNode; imageUrl?: 
   const drawCircle = useCallback(
     (g: Graphics) => {
       g.clear()
-      g.beginFill('#8590ae')
-      g.drawCircle(radius, radius, radius)
+      g.beginFill(Colors.getAdaptColor(color))
+      g.drawCircle(size, size, size)
       g.endFill()
     },
-    [radius]
+    [size, color]
   )
 
-  useEffect(() => {
-    return () => {
-      if (image) {
-        URL.revokeObjectURL(image)
-      }
-    }
-  }, [])
   return (
     <>
-      {realImageUrl ? (
-        <>
-          <RGrahpics x={0} y={0} anchor={0} draw={drawMask} />
-          {image && <Sprite image={image} x={0} y={0} anchor={0} width={d} height={d} />}
-        </>
+      {image ? (
+        <Sprite image={image} x={0} y={0} anchor={0} width={d} height={d} />
       ) : (
         <RGrahpics x={0} y={0} anchor={0} draw={drawCircle} />
       )}

@@ -1,10 +1,9 @@
 import { IWhiteboardNode } from '~/typings/data'
 import { Content } from '@/components/base'
-import { FC, memo, RefObject, useEffect, useRef } from 'react'
+import { FC, memo, useEffect, useRef } from 'react'
 import { InnerNodeProps } from '../WrapperNode'
 import PdfNode from './PdfNode'
 import NoteNode from './NoteNode'
-import { useRenderObject } from '@/core'
 import WebpageNode from '@/core/components/whiteboard/node/nodes/WebpageNode'
 import SyncedBlockNode from '@/core/components/whiteboard/node/nodes/SyncedBlockNode'
 import Video from '@/core/components/media/wrappers/Video'
@@ -14,106 +13,70 @@ import { DockTabPaneContext } from '@/components/base/dock/DockTabPane'
 import Code from '@/core/components/code'
 import LabelDetailsRenderer from '@/core/object/renderer/LabelDetailsRenderer'
 import WhiteboardNode from '@/core/components/whiteboard/node/nodes/WhiteboardNode'
-import { Rendevoz } from '@/core/rendevoz'
-import { ClassName } from 'rendevoz'
 import { Icon } from '@/components'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import QuestionCard from '@/core/ai/components/question/QuestionCard'
 import Tweet from '@/core/components/tweet'
-import { Colors } from '@/consts'
-import { createPortal } from 'react-dom'
+import ChatDialog from '@/core/ai/chat/ChatDialog'
+import MessagePage from '@/scenes/MessagePage'
+import { MetaStore } from '@/api/stores'
+import trans from '@/consts/trans'
+import { useTranslation } from 'react-i18next'
+import classnames from 'classnames'
+import ExamNode from '@/core/components/whiteboard/node/nodes/ExamNode'
+import ExamQuestionNode from '@/core/components/whiteboard/node/nodes/ExamQuestionNode'
 
-const MetaObjectNode: FC<InnerNodeProps & { containerRef: RefObject<HTMLElement> }> = ({
-  node: n,
-  containerRef,
-  setNodeState,
-  nodeState
-}) => {
+const MetaObjectNode: FC<InnerNodeProps> = ({ node: n, nodeState, setNodeState }) => {
   const node = n as IWhiteboardNode & { type: 'metaObject' }
   const { expanded } = node
   const { metaObjectId } = node
 
-  const { metaObject } = useRenderObject({
-    metaObjectId: metaObjectId!
-  })
-
+  const metaObject = MetaStore.useValue(metaObjectId)
+  const { t } = useTranslation()
   const imageRef = useRef<HTMLImageElement>(null)
   const hasImage = !!metaObject?.coverImgSrc
-
-  useEffect(() => {
-    if (hasImage) {
-      setNodeState?.(s => ({ ...s, keepRatioResize: true }))
-    } else {
-      setNodeState?.(s => ({ ...s, keepRatioResize: false }))
+  let renderFloatName = false
+  if (expanded) {
+    switch (metaObject?.type) {
+      case 'image':
+      case 'chat':
+      case 'message':
+        renderFloatName = true
+        break
     }
-  }, [hasImage])
-
-  const hasImageRenderer = () =>
-    metaObject &&
-    containerRef.current && (
-      <Content fullWidth flex column style={{ width: 500, minHeight: '100%', maxHeight: '100%', minWidth: '100%', maxWidth: '100%' }}>
-        <img
-          draggable={'false'}
-          ref={imageRef}
-          src={metaObject?.coverImgSrc}
-          style={{
-            position: 'relative',
-            width: '100%',
-            objectFit: 'cover',
-            flex: 1,
-            overflow: 'hidden',
-            borderRadius: 4
-          }}
-        />
-        {metaObject?.name &&
-          createPortal(
-            <div
-              className={'ellipsis-font-1 transparent-font'}
-              style={{
-                borderRadius: 4,
-                fontSize: 'calc(12px * var(--zoom-level))',
-                position: 'absolute',
-                top: -4,
-                transform: 'translateY(-100%)'
-              }}
-            >
-              {metaObject?.name}
-            </div>,
-            containerRef.current
-          )}
-      </Content>
-    )
+  } else if (hasImage) {
+    renderFloatName = true
+  }
+  useEffect(() => {
+    setNodeState?.(s => ({ ...s, name: renderFloatName ? metaObject?.name : undefined }))
+  }, [renderFloatName, metaObject?.name])
+  const hasImageRenderer = () => (
+    <img
+      draggable={'false'}
+      ref={imageRef}
+      src={metaObject?.coverImgSrc}
+      style={{
+        position: 'relative',
+        width: '100%',
+        objectFit: 'cover',
+        flex: 1,
+        overflow: 'hidden',
+        borderRadius: 'inherit'
+      }}
+    />
+  )
 
   const renderExpanded = () => {
     if (metaObject?.objectId) {
       switch (metaObject?.type) {
         case 'pdf':
-          return (
-            <PdfNode
-              node={{
-                documentId: metaObject.objectId
-              }}
-            />
-          )
+          return <PdfNode id={metaObject.objectId} />
         case 'group': {
-          return (
-            <div style={{ width: '1000px', maxWidth: '100%', minWidth: '100%', minHeight: '100%', maxHeight: '100%' }}>
-              <MetaGroupPage groupId={metaObject.objectId} />
-            </div>
-          )
+          return <MetaGroupPage groupId={metaObject.objectId} />
         }
         case 'audio': {
           return (
-            <div
-              style={{
-                width: '1000px',
-                maxWidth: '100%',
-                minWidth: '100%',
-                padding: 30,
-                minHeight: '100%',
-                maxHeight: '100%'
-              }}
-            >
+            <div className={'px-6 pb-3 pt-8'}>
               <Audio onlyCore={true} audioId={metaObject.objectId} />
             </div>
           )
@@ -121,11 +84,7 @@ const MetaObjectNode: FC<InnerNodeProps & { containerRef: RefObject<HTMLElement>
         case 'webpage':
           return <WebpageNode node={node} webpageId={metaObject.objectId} />
         case 'video':
-          return (
-            <div style={{ width: '800px', maxWidth: '100%', minWidth: '100%', minHeight: '100%', maxHeight: '100%' }}>
-              <Video onlyCore={true} videoId={metaObject.objectId} />
-            </div>
-          )
+          return <Video onlyCore={true} videoId={metaObject.objectId} />
         case 'note': {
           return (
             <NoteNode
@@ -139,11 +98,11 @@ const MetaObjectNode: FC<InnerNodeProps & { containerRef: RefObject<HTMLElement>
           )
         }
         case 'code':
-          return (
-            <div style={{ width: '800px', maxWidth: '100%', minWidth: '100%', minHeight: '100%', maxHeight: '100%' }}>
-              <Code id={metaObject.objectId} />
-            </div>
-          )
+          return <Code id={metaObject.objectId} />
+        case 'chat':
+          return <ChatDialog paddingStart={7} containerClassName={'!h-auto min-h-full max-h-[inherit]'} id={metaObject.objectId} />
+        case 'message':
+          return <MessagePage title={false} titleRenderer={false} id={metaObject.objectId} />
         case 'tweet':
           return <Tweet id={metaObject.objectId} layout={{ showBorder: false }} />
         case 'question':
@@ -163,6 +122,10 @@ const MetaObjectNode: FC<InnerNodeProps & { containerRef: RefObject<HTMLElement>
               }}
             />
           )
+        case 'exam':
+          return <ExamNode id={metaObject.objectId} />
+        case 'examQuestion':
+          return <ExamQuestionNode id={metaObject.objectId} />
         case 'whiteboard':
           return <WhiteboardNode metaId={metaObjectId} />
         case 'syncedBlock':
@@ -175,27 +138,19 @@ const MetaObjectNode: FC<InnerNodeProps & { containerRef: RefObject<HTMLElement>
   }
   const instance = useWhiteboardInstance()
   if (metaObject?.type.includes('Label')) {
-    return (
-      <LabelDetailsRenderer
-        style={{
-          fontSize: 14
-        }}
-        showAudio
-        showVideo={nodeState?.focused}
-        metaId={metaObjectId}
-      />
-    )
+    return <LabelDetailsRenderer disableSidebar showAudio showVideo metaId={metaObjectId} />
   }
 
   const titleRenderer = () => {
     if (!metaObject) return null
+    const name = Global.metaOps.getMetaName(metaObject)
     return (
       <Content alignItems={'center'} flex gap={12} style={{ width: '100%', padding: '14px' }}>
         {instance.nodeOps?.canExpand(node) && (
           <Icon
             size={18}
             name={'park-right'}
-            className={ClassName.flatButton(4, '3px')}
+            className={'square-button'}
             onClick={() => {
               instance.nodeOps?.expand(node.id)
             }}
@@ -205,27 +160,31 @@ const MetaObjectNode: FC<InnerNodeProps & { containerRef: RefObject<HTMLElement>
           />
         )}
         <Content alignItems={'center'} flex gap={16} justifyContent={'center'} style={{ width: '100%', fontSize: 17 }}>
-          <Icon name={Rendevoz.Utils.Object.getMetaObjectIcon(metaObject.type)} />
-          <div
-            style={{
-              fontWeight: 600
-            }}
-            className={ClassName.ellipsisFont(1)}
-          >
-            {metaObject.name || metaObject.placeholderName}
-          </div>
+          <Icon name={Global.utils.getIcon(metaObject.type)} />
+          <div className={classnames('line-clamp-1 font-bold', !name && 'super-transparent-font')}>{name || t(trans.Unnamed)}</div>
         </Content>
-        <Icon
-          onClick={() => {
-            instance.nodeOps?.open(node.id, 'sidePeek')
-          }}
-          size={18}
-          name={'custom-right-bar'}
-          className={ClassName.flatButton(4, '3px')}
-          style={{
-            opacity: nodeState?.focused ? 1 : 0
-          }}
-        />
+        {metaObject.type === 'localFile' ? (
+          <Icon
+            onClick={() => {
+              instance.nodeOps?.open(node.id, 'newTab')
+            }}
+            size={18}
+            name={'park-arrow-right-up'}
+            className={'square-button'}
+          />
+        ) : (
+          <Icon
+            onClick={() => {
+              instance.nodeOps?.open(node.id, 'sidePeek')
+            }}
+            size={18}
+            name={'custom-right-bar'}
+            className={'square-button'}
+            style={{
+              opacity: nodeState?.focused ? 1 : 0
+            }}
+          />
+        )}
       </Content>
     )
   }
@@ -236,8 +195,6 @@ const MetaObjectNode: FC<InnerNodeProps & { containerRef: RefObject<HTMLElement>
         style={{
           width: node.width,
           height: node.height,
-          border: Colors.Consts.Border,
-          borderRadius: 4,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center'

@@ -1,38 +1,20 @@
 import { useMemo } from 'react'
-import tinycolor from 'tinycolor2'
-import { getSetting } from '@/core'
-import { IWhiteboardNode } from '~/typings'
+import { GlobalSetting } from '@/core'
+import { Colors } from '@/consts'
 
-const useNodeColor = (colorz?: string, type: IWhiteboardNode['type']) => {
+const useNodeColor = (color: string | undefined, isGroup?: boolean) => {
+  const isDark = GlobalSetting.useSelectSettingAtom('darkMode')
   return useMemo(() => {
-    const setting = getSetting()
-
-    const isDarkMode = setting.general.darkMode
-    const defaultC = isDarkMode ? '#919191' : '#c9c9c9'
-    const defaultColor = tinycolor(defaultC)
-    const stringDefaultColor = defaultColor.toString('rgb')
-    const lightenDefaultColor = defaultColor.lighten(5).toString('rgb')
-
-    const color = colorz ? tinycolor(colorz) : tinycolor(defaultC)
-    const stringColor = color.toString('rgb')
-    const darkenBackground = color
-      .clone()
-      .darken(isDarkMode ? 25 : 0)
-      .toString('rgb')
-    const lightenBackground = color.clone().lighten(15).toString('rgb')
-    const opacityBackground = color
-      .clone()
-      .setAlpha(type === 'group' ? (isDarkMode ? 0.2 : 0.3) : 1)
-      .toRgbString()
     return {
-      stringColor,
-      darkenBackground,
-      lightenBackground,
-      stringDefaultColor,
-      lightenDefaultColor,
-      opacityBackground
+      opacityBackground: color
+        ? `rgb(from ${Colors.getAdaptColor(color)} r g b / ${isGroup ? 0.16 : 0.75})`
+        : isGroup
+          ? isDark
+            ? 'rgba(255, 255, 255, 0.02)'
+            : 'rgba(213, 213, 213, 0.1)'
+          : 'rgb(from var(--background-secondary) r g b / 0.75)'
     }
-  }, [colorz])
+  }, [color, isDark])
 }
 
 export default useNodeColor

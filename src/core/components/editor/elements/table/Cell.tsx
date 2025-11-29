@@ -1,4 +1,3 @@
-import useScopedEventEmitter from '@/events/useEventEmitter'
 import { useMemoizedFn, useMergedRef, useRafFn, useSelectAtomValue, useToggle } from '@/hooks'
 import { css } from '@emotion/css'
 import produce from 'immer'
@@ -6,9 +5,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { Path, Transforms } from 'slate'
 import { ReactEditor, RenderElementProps, useSlate } from '../../slate-react'
 import { NODE_TO_INDEX, NODE_TO_PARENT } from '../../slate-react/utils/weak-maps'
-import { CustomElement, TableCellElement, TableElement, TableRowElement } from '~/typings'
-import { ID_TO_PATH_MAP } from '../../weakMaps'
-import { useEventHandler } from '@/events/eventHandler'
+import { CustomElement, IEditorInnerEvents, TableCellElement, TableElement, TableRowElement } from '~/typings'
 import ClassName from '@/styles/classNames'
 import Colors from '@/consts/colors'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
@@ -68,7 +65,6 @@ const TableCell = ({
   const hoveredCellPath = useAtomValue(hoverPathAtom)
   const editor = useSlate()
   const isTableResizing = useAtomValue(tableResizingAtom)
-  const scopedEmitter = useScopedEventEmitter()
   const row = NODE_TO_PARENT.get(element) as TableRowElement | undefined
   const readOnly = useAtomValue(readOnlyAtom, { store: instance.values.editorLevelStore })
   const table = (row ? NODE_TO_PARENT.get(row) : undefined) as (CustomElement & TableElement) | undefined
@@ -104,10 +100,9 @@ const TableCell = ({
   const [selected, toggleSelected] = useToggle(false)
   const columnInitialWidth = useRef<number>()
   const initialClientX = useRef<number>()
-  const handler = useEventHandler('editor')
   const tdRef = useRef<HTMLTableCellElement>(null)
   const mergedRef = useMergedRef(attributes.ref, tdRef)
-  handler.on('tableCellOp', ({ colName, type, tableId }) => {
+  const handler = ({ colName, type, tableId }: IEditorInnerEvents['tableCellOps']) => {
     if (table?.id !== tableId) return
     if (type === 'selectCol') {
       if (colName === element.colName) {
@@ -124,7 +119,7 @@ const TableCell = ({
         toggleResizerVisible(false)
       }
     }
-  })
+  }
 
   const getRowIndex = () => {
     const path = ReactEditor.findPath(editor, element)
@@ -139,11 +134,11 @@ const TableCell = ({
   const isHeaderRowCell = row && NODE_TO_INDEX.get(row) === 0 && table?.headerRow
   const isHeader = isHeaderColumnCell || isHeaderRowCell
   useEffect(() => {
-    scopedEmitter.addListener('editor', handler)
+    instance.addEventListener?.('tableCellOps', handler)
     return () => {
-      scopedEmitter.removeListener('editor', handler)
+      instance.removeEventListener?.('tableCellOps', handler)
     }
-  }, [])
+  })
 
   useEffect(() => {
     if (selected) {
@@ -160,7 +155,7 @@ const TableCell = ({
   const resizerDragHandler = useMemoizedFn((e: PointerEvent) => {
     const table = (row ? NODE_TO_PARENT.get(row) : undefined) as (CustomElement & TableElement) | undefined
     if (!table || !initialClientX.current) return
-    const tablePath = ID_TO_PATH_MAP.get(editor)?.get(table.id)
+    const tablePath = instance.getElementPathById(table.id)
     if (e.type === 'pointermove') {
       const targetColumnIndex = table.columns.findIndex(i => i.accessor === element.colName)
       if (targetColumnIndex >= 0) {
@@ -224,14 +219,11 @@ const TableCell = ({
         document.removeEventListener('pointermove', resizerDragHandler, true)
         document.removeEventListener('pointerup', resizerDragHandler, true)
         document.body.classList.remove(ClassName.disableUserSelect)
-        scopedEmitter.emit('editor', {
-          type: 'tableCellOp',
-          data: {
-            type: 'pointerLeaveResizer',
-            colName: element.colName,
-            rowIndex,
-            tableId: table.id
-          }
+        instance.emitEvent?.('tableCellOps', {
+          type: 'pointerLeaveResizer',
+          colName: element.colName,
+          rowIndex,
+          tableId: table?.id
         })
       }
     }
@@ -434,14 +426,11 @@ const TableCell = ({
           setTableState(s => ({ ...s, hoveredCellPath: undefined }))
         }
         if (table) {
-          scopedEmitter.emit('editor', {
-            type: 'tableCellOp',
-            data: {
-              type: 'pointerLeaveCell',
-              rowIndex,
-              colName: element.colName,
-              tableId: table.id
-            }
+          instance.emitEvent?.('tableCellOps', {
+            type: 'pointerLeaveCell',
+            rowIndex,
+            colName: element.colName,
+            tableId: table.id
           })
         }
       }}
@@ -450,14 +439,11 @@ const TableCell = ({
           setTableState(s => ({ ...s, hoveredCellPath: ReactEditor.findPath(editor, element) }))
         }
         if (table) {
-          scopedEmitter.emit('editor', {
-            type: 'tableCellOp',
-            data: {
-              type: 'pointerEnterCell',
-              rowIndex,
-              colName: element.colName,
-              tableId: table.id
-            }
+          instance.emitEvent?.('tableCellOps', {
+            type: 'pointerEnterCell',
+            rowIndex,
+            colName: element.colName,
+            tableId: table.id
           })
         }
       }}
@@ -558,27 +544,21 @@ const TableCell = ({
           contentEditable={false}
           onPointerEnter={() => {
             table &&
-              scopedEmitter.emit('editor', {
-                type: 'tableCellOp',
-                data: {
-                  type: 'pointerEnterResizer',
-                  colName: element.colName,
-                  rowIndex,
-                  tableId: table.id
-                }
+              instance.emitEvent?.('tableCellOps', {
+                type: 'pointerEnterResizer',
+                colName: element.colName,
+                rowIndex,
+                tableId: table.id
               })
           }}
           onPointerLeave={() => {
             table &&
               !resizing &&
-              scopedEmitter.emit('editor', {
-                type: 'tableCellOp',
-                data: {
-                  type: 'pointerLeaveResizer',
-                  colName: element.colName,
-                  rowIndex,
-                  tableId: table.id
-                }
+              instance.emitEvent?.('tableCellOps', {
+                type: 'pointerLeaveResizer',
+                colName: element.colName,
+                rowIndex,
+                tableId: table.id
               })
           }}
           className={CellResizerWrapperClassName}

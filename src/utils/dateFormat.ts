@@ -1,13 +1,38 @@
-import { format, formatDistanceToNow, getWeekOfMonth, formatDistanceToNowStrict } from 'date-fns'
+import {
+  isToday,
+  isYesterday,
+  formatRelative,
+  isThisYear,
+  format,
+  formatDistanceToNow,
+  getWeekOfMonth,
+  formatDistanceToNowStrict,
+  differenceInDays
+} from 'date-fns'
 import { enUS, zhCN } from 'date-fns/locale'
 import i18next from 'i18next'
+import { normalizeSecondsToTime } from '@/core/components/media/utils'
 
+const zhRelativeLocale = {
+  yesterday: "'昨天'",
+  today: "'今天'"
+}
+const enRelativeLocale = {
+  yesterday: "'Yesterday'",
+  today: "'Today'"
+}
 const getLocale = () => {
   const lang = i18next.language
   if (lang === 'zh-CN') {
-    return zhCN
+    return {
+      ...zhCN,
+      formatRelative: (t, d, b, o) => zhRelativeLocale[t] || zhCN.formatRelative(t, d, b, o)
+    }
   } else {
-    return enUS
+    return {
+      ...enUS,
+      formatRelative: (t, d, b, o) => enRelativeLocale[t] || enUS.formatRelative(t, d, b, o)
+    }
   }
 }
 
@@ -30,19 +55,43 @@ export const ChineseFormats = {
   yearMonths: 'y年M月',
   yearMonthDays: 'y年M月d日',
   yearMonthWeeks: 'y年M月第w周',
-  year: 'y年'
+  year: 'y年',
+  monthDays: 'M月d日'
 }
 export const EnglishFormats = {
   yearMonths: 'MMM y',
   yearMonthDays: 'MMMM d, y',
   yearMonthWeeks: 'wo week of MMM, y',
-  year: 'y'
+  year: 'y',
+  monthDays: 'MMMM d'
 }
 export const DateFormat = {
+  getLocale,
   format: (date: number | Date, f: string) =>
     format(date, f, {
       locale: getLocale()
     }),
+  // seconds
+  formatDuration: (duration: number) => {
+    return normalizeSecondsToTime(duration)
+  },
+  formatTime: (
+    date: number | string | Date,
+    opts?: {
+      thisYearShowYear?: boolean
+      showMinute?: boolean
+    }
+  ) => {
+    const time = new Date(date)
+    const diffDays = differenceInDays(new Date(), time)
+    if (diffDays < 7) {
+      return DateFormat.formatDistanceToNowStrict(time.getTime(), true)
+    }
+    if (time.getFullYear() !== new Date().getFullYear()) {
+      return `${DateFormat.format(time, DateFormat.Formats.yearMonthDays)}${opts?.showMinute ? ` ${DateFormat.format(time, DateFormat.Formats.minute)}` : ''}`
+    }
+    return `${DateFormat.format(time, opts?.thisYearShowYear ? DateFormat.Formats.yearMonthDays : DateFormat.Formats.monthDays)}${opts?.showMinute ? ` ${DateFormat.format(time, DateFormat.Formats.minute)}` : ''}`
+  },
   formatWeekOfMonth: (date: number) => {
     const lang = i18next.language
     const week = getWeekOfMonth(date, { weekStartsOn: 1 })
@@ -60,20 +109,47 @@ export const DateFormat = {
     let prefixes = ['0', '1', '2', '3', '4', '5']
     return parseInt(prefixes[0 | (adjustedDate / 7)]) + 1
   },
-  formatDistanceToNow: (date: number) =>
+  formatDistanceToNow: (date: number, suffix?: boolean) =>
     formatDistanceToNow(date, {
-      locale: getLocale()
+      locale: getLocale(),
+      addSuffix: suffix
     }),
+  formatDate: (date: number | string, compact?: boolean) => {
+    const d = new Date(date)
+    if (isToday(d)) {
+      return formatRelative(d, new Date(), {
+        locale: getLocale()
+      })
+    }
+    if (isYesterday(d)) {
+      return formatRelative(d, new Date(), {
+        locale: getLocale()
+      })
+    }
+    if (isThisYear(d)) {
+      if (compact) {
+        return DateFormat.format(d.getTime(), 'MM-dd')
+      }
+      return DateFormat.format(d.getTime(), DateFormat.Formats.monthDays)
+    } else {
+      if (compact) {
+        return DateFormat.format(d.getTime(), 'yyyy-MM')
+      }
+      return DateFormat.format(d.getTime(), DateFormat.Formats.yearMonthDays)
+    }
+  },
   formatDistanceToNowStrict: (date: number, suffix = false) => formatDistanceToNowStrict(date, { locale: getLocale(), addSuffix: suffix }),
   Formats: {
     default: 'y/M/d',
     withMinute: 'y/M/d H:mm',
     withSecond: 'y/M/d H:mm:ss',
+    minute: 'H:mm',
+    weekday: 'EEE',
     yearMonthDays: EnglishFormats.yearMonthDays,
     yearMonths: EnglishFormats.yearMonths,
     yearMonthWeeks: EnglishFormats.yearMonthWeeks,
-    year: EnglishFormats.year
+    year: EnglishFormats.year,
+    monthDays: EnglishFormats.monthDays
   }
 }
-
 export default DateFormat

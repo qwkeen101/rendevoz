@@ -38,8 +38,10 @@ export default async (page: number, instance: IPDFInstance, box?: Box) => {
         )
       const dataURL = newCanvas.toDataURL()
       return await FileSystem.saveImage(dataURL, { compress: false })
+      // return dataURL
     } else {
       const dataURL = c.toDataURL()
+      // return dataURL
       return await FileSystem.saveImage(dataURL, { compress: false })
     }
   }

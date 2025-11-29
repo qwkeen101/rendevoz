@@ -10,9 +10,9 @@ export default () => {
   const metaAttachmentIdToMetaIdsMap: Map<number, Set<number>> = prevIndex?.metaAttachmentIdToMetaIdsMap || new Map()
   // question: what is the cost of creating a new set from exisiting set?
   // no need to create new set becuz everytime its reference is different: Array.from(...)
-  const undeletedMetaObjectsSet: Set<MetaObject> = prevIndex?.undeletedMetaObjectsSet || new Set()
-  const pinnedMetaObjectsSet: Set<MetaObject> = prevIndex?.pinnedMetaObjectsSet || new Set()
-  const deletedMetaObjectsSet: Set<MetaObject> = prevIndex?.deletedMetaObjectsSet || new Set()
+  const undeletedMetaObjectsSet: Set<MetaObject> = new Set(prevIndex?.undeletedMetaObjectsSet)
+  const pinnedMetaObjectsSet: Set<MetaObject> = new Set(prevIndex?.pinnedMetaObjectsSet)
+  const deletedMetaObjectsSet: Set<MetaObject> = new Set(prevIndex?.deletedMetaObjectsSet)
   // need shallow copy to rerender components
   const objectIdToMetaObjectMap: Map<number, number> = new Map(prevIndex?.objectIdToMetaObjectMap)
   const tagToMetaObjectIdsMap: Map<number, Set<number>> = new Map(prevIndex?.tagToMetaObjectIdsMap)
@@ -58,9 +58,8 @@ export default () => {
       objectIdToMetaObjectMap.set(v.objectId, v.id)
     }
     if (v.deleted) {
-      if (v.deleted) {
-        deletedMetaObjectsSet.add(v)
-      }
+      deletedMetaObjectsSet.add(v)
+      undeletedMetaObjectsSet.delete(v)
       return
     }
     if (typeToMetaObjectIdsMap.has(v.type)) {

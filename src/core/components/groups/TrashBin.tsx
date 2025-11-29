@@ -1,21 +1,15 @@
 import { MetaStore } from '@/api/stores'
 import { memo, useLayoutEffect, useMemo, useState } from 'react'
 import GroupStore from '../../../api/stores/group.store'
-import { Content, Icon } from '@/components'
+import { Content, Icon, TabTitle } from '@/components'
 import MetaGroup from '@/core/components/group/MetaGroup'
-import { TabTitle } from '@/core/rendevoz/components'
-import { calculateSortObjects } from '@/core/object/filter/BetterSorter'
 import { useTranslation } from 'react-i18next'
 import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { IGroupInstance } from '~/typings'
 
 export default memo(({ onInstanceInitialized }: { onInstanceInitialized?: (i: IGroupInstance) => void }) => {
   const recycleGroup = KeyvalueStore.useValue('recycleBinGroup')
-  const all = MetaStore.useMetaObjectsMap()
-  const deleted = useMemo(() => {
-    return Array.from(all.values()).filter(i => i.deleted)
-  }, [all])
-
+  const all = MetaStore.useAll({ showDeleted: true, showAll: true })
   const { t } = useTranslation()
   const [data, setData] = useState(
     recycleGroup ?? {
@@ -26,17 +20,13 @@ export default memo(({ onInstanceInitialized }: { onInstanceInitialized?: (i: IG
   )
 
   useLayoutEffect(() => {
-    const sorted = calculateSortObjects(deleted, {
-      sorters: [
-        {
-          field: 'deletedAt',
-          type: 'descending',
-          id: 1
-        }
-      ]
-    })
+    const sorted = Global.metaOps.sort(
+      'deletedAt',
+      'desc',
+      all.filter(i => i.deleted)
+    )
     setData(s => ({ ...s, values: sorted.map(i => ({ rowId: i.id, type: 'metaObject', id: i.id })) }))
-  }, [deleted])
+  }, [all])
 
   return (
     <Content fullHeight fullWidth>
@@ -77,14 +67,28 @@ export default memo(({ onInstanceInitialized }: { onInstanceInitialized?: (i: IG
             showDescription: false,
             showTitleActions: false,
             showIcon: true,
+            showClearAll: true,
             showAddNew: false,
             showImport: false,
             contextMenu: () => ['deleteCompleted', 'recover', 'separator']
           }),
           []
         )}
+        styles={useMemo(
+          () => ({
+            titleContainerStyle: {
+              paddingTop: 42
+            }
+          }),
+          []
+        )}
         value={{ ...data, ...recycleGroup, values: data.values }}
         on={v => {
+          if (v.type === 'clearAll') {
+            data.values.forEach(i => {
+              MetaStore.deleteMetaObject(i.id, { force: true })
+            })
+          }
           if (v.type === 'deleteRow') {
             const id = v.metaId
             MetaStore.deleteMetaObject(id, { force: true, silent: true })

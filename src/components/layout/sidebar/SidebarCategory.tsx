@@ -1,9 +1,11 @@
 import { memo, useMemo } from 'react'
 import { MetaStore, ObjectStore } from '@/api/stores'
-import { Button, Content } from '@/components'
-import { Rendevoz } from '@/core/rendevoz'
+import { Button } from '@/components'
 import { useGlobalAtomValue } from '@/hooks'
 import { useTranslation } from 'react-i18next'
+import ContextMenu from '@/components/contextMenu'
+import PropertyMenu from '@/core/object/renderer/properties/PropertyMenu'
+import MetaTagMenu from '@/core/object/MetaTagMenu'
 
 export default memo(() => {
   const all = MetaStore.useMetaObjectsMap()
@@ -14,13 +16,17 @@ export default memo(() => {
   const propIndex = index?.propToMetaObjectIdsMap
   const allProps = useGlobalAtomValue(ObjectStore('metaProp').objectMapAtom)
   const types = useMemo(() => {
-    const index = MetaStore.getIndexedMetaObjects()
-    if (!index) return null
-    const visibleTypes = Array.from(index.typeToMetaObjectIdsMap.keys())
+    const visibleTypes = MetaStore.getVisibleMetaTypes({
+      showLabel: true,
+      showHidden: true
+    })
     const grouped = visibleTypes.map(i => {
       return {
         type: i,
-        num: index?.typeToMetaObjectIdsMap.get(i)?.size ?? 0
+        num:
+          Array.from(index?.typeToMetaObjectIdsMap.get(i)?.values() || []).filter(i =>
+            MetaStore.isVisibleMetaObject(MetaStore.getCachedMetaObject(i), { showLabel: true, showHidden: true })
+          )?.length ?? 0
       }
     })
     grouped.sort((a, b) => b.num - a.num)
@@ -46,110 +52,93 @@ export default memo(() => {
           propNum: propIndex?.get(i)?.size ?? 0
         }
       })
-      .filter(i => i.prop && !i.prop.deleted)
+      .filter(i => i.prop && !i.prop.deleted && i.propNum > 0)
       .sort((a, b) => b.propNum - a.propNum)
     return grouped
   }, [propIndex, allProps])
   const { t } = useTranslation()
   return (
-    <Content
-      style={{
-        height: '100%',
-        paddingBottom: 200,
-        overflowY: 'auto'
-      }}
-    >
-      <div
-        className={'menu-sub-title'}
-        style={{
-          padding: '12px 12px 6px'
-        }}
-      >
-        {t('general.Types')}
-      </div>
-      <div
-        style={{
-          padding: '0px 4px'
-        }}
-      >
-        {types?.map(i => (
-          <Button.IconButton
-            icon={Rendevoz.Utils.Object.getMetaObjectIcon(i.type)}
-            onClick={() => {
-              Rendevoz.Actions.Open.Group.openTypeGroup(i.type)
-            }}
-            className={'font-size-14'}
-            suffixStr={i.num ? `${i.num}` : undefined}
-            text={`${Rendevoz.Utils.Meta.getTypeName(i.type)}`}
-            key={i.type}
-          ></Button.IconButton>
-        ))}
-      </div>
-      <div
-        className={'menu-sub-title'}
-        style={{
-          padding: '12px 12px 6px'
-        }}
-      >
-        {t('general.Tags')}
-      </div>
-      <Content
-        flex
-        column
-        style={{
-          padding: '0px 4px'
-        }}
-      >
-        {tags.map(
-          i =>
-            i.tag && (
-              <Button.IconButton
-                onClick={() => {
-                  Rendevoz.Actions.Open.Group.openTagGroup(i.tag!.id)
-                }}
-                className={'font-size-14'}
-                text={`# ${i.tag?.name}`}
-                suffixStr={i.metaNum ? `${i.metaNum}` : undefined}
-                key={i.tag?.id}
-              ></Button.IconButton>
-            )
+    <div className={'overflow-y-auto pb-10 h-full px-3 pt-4'}>
+      <div className={'menu-sub-title pl-2 mb-1'}>{t('general.Types')}</div>
+      <div>
+        {types?.length ? (
+          types?.map(i => (
+            <Button.IconButton
+              icon={Global.utils.getIcon(i.type)}
+              onClick={() => {
+                Global.layoutOps?.openPage('typeGroup', {
+                  id: i.type
+                })
+              }}
+              suffixStr={i.num ? `${i.num}` : undefined}
+              text={`${Global.utils.getTypeName(i.type)}`}
+              key={i.type}
+            ></Button.IconButton>
+          ))
+        ) : (
+          <div className={'small-transparent w-full px-6 py-32 text-center'}>
+            {t('sidebar.Your files will be categorized here by type')}
+          </div>
         )}
-      </Content>
+      </div>
+      <div className={'menu-sub-title pl-2 mt-4 mb-1'}>{t('general.Tags')}</div>
+      <div>
+        {tags.length ? (
+          tags.map(
+            i =>
+              i.tag && (
+                <ContextMenu key={i.tag.id} content={setV => <MetaTagMenu id={i.tag.id} onClose={() => setV(false)} />}>
+                  <Button.IconButton
+                    onClick={() => {
+                      Global.layoutOps?.openPage('tagGroup', { id: i.tag!.id })
+                    }}
+                    text={`# ${i.tag?.name}`}
+                    suffixStr={i.metaNum ? `${i.metaNum}` : undefined}
+                    key={i.tag?.id}
+                  ></Button.IconButton>
+                </ContextMenu>
+              )
+          )
+        ) : (
+          <div className={'small-transparent w-full px-6 py-32 text-center'}>{t('sidebar.Your files will be categorized here by tag')}</div>
+        )}
+      </div>
       {props.length !== 0 && (
         <>
-          <div
-            className={'menu-sub-title'}
-            style={{
-              padding: '12px 12px 6px'
-            }}
-          >
-            {t('general.Properties')}
-          </div>
-          <Content
-            flex
-            column
-            style={{
-              padding: '0 4px'
-            }}
-          >
+          <div className={'menu-sub-title pl-2 mt-4 mb-1'}>{t('general.Properties')}</div>
+          <div>
             {props.map(
               i =>
                 i.prop && (
-                  <Button.IconButton
-                    onClick={() => {
-                      Rendevoz.Actions.Open.Group.openPropGroup(i.prop!.id)
-                    }}
-                    icon={i.prop.icon}
-                    className={'font-size-14'}
-                    text={`${i.prop?.name}`}
-                    suffixStr={i.propNum ? `${i.propNum}` : undefined}
-                    key={i.prop?.id}
-                  ></Button.IconButton>
+                  <ContextMenu
+                    key={i.prop.id}
+                    content={setV => (
+                      <PropertyMenu
+                        show={{
+                          view: true,
+                          delete: true
+                        }}
+                        editable
+                        onClose={() => setV(false)}
+                        property={i.prop}
+                      />
+                    )}
+                  >
+                    <Button.IconButton
+                      onClick={() => {
+                        Global.layoutOps?.openPage('propGroup', { id: i.prop!.id })
+                      }}
+                      icon={i.prop.icon}
+                      text={`${i.prop?.name}`}
+                      suffixStr={i.propNum ? `${i.propNum}` : undefined}
+                      key={i.prop?.id}
+                    ></Button.IconButton>
+                  </ContextMenu>
                 )
             )}
-          </Content>
+          </div>
         </>
       )}
-    </Content>
+    </div>
   )
 })

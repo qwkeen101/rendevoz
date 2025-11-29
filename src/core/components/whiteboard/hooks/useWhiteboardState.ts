@@ -1,10 +1,10 @@
-import { atom, useAtom } from 'jotai'
+import { atom, useAtom, useSetAtom } from 'jotai'
 import { Colors } from '@/consts'
 import { IPenStyle } from '@/core/components/whiteboard/toolbars/WhiteboardToolsBar'
-import { Transform } from 'panzoom'
 import { IWhiteboardProps } from '~/typings'
+import { useSelectAtomValue } from '@/hooks'
 
-type IWhiteboardState = {
+export type IWhiteboardState = {
   zoom: number
   readOnly?: boolean
   dragMode: 'select' | 'drag'
@@ -13,11 +13,10 @@ type IWhiteboardState = {
   isPanning: boolean
   isSelecting: boolean
   isDraggingNode: boolean
-  hasSelectedNodes: boolean
-  panStartTransform?: Transform
   currentTool?: 'erase' | 'freehand'
-  openMinimap?: boolean
-  erasing: boolean
+  isErasing: boolean
+  loaded: boolean
+  erasedNodes?: Set<number>
   highlightedIds?: {
     currentFocusCenterNodeId: number[]
     nodeIds: Set<number>
@@ -33,6 +32,7 @@ type IWhiteboardState = {
   }
   layout?: IWhiteboardProps['layout']
   state?: IWhiteboardProps['state']
+  name?: string
 }
 export const WhiteboardStateAtom = atom<IWhiteboardState>({
   zoom: 1,
@@ -41,14 +41,16 @@ export const WhiteboardStateAtom = atom<IWhiteboardState>({
   toolbarPointerMode: 'select',
   pointerMode: 'select',
   isDraggingNode: false,
-  erasing: false,
+  isErasing: false,
   isPanning: false,
   isSelecting: false,
-  hasSelectedNodes: false,
+  loaded: false,
   freeHandConfig: {
     type: 'ballpen',
     color: Colors.Font.Primary
   }
 })
-
+export const useSelectWhiteboardState = <Slice>(slice: (v: IWhiteboardState) => Slice) =>
+  useSelectAtomValue<IWhiteboardState, Slice>(WhiteboardStateAtom, slice)
+export const useSetWhiteboardState = () => useSetAtom(WhiteboardStateAtom)
 export const useWhiteboardState = () => useAtom(WhiteboardStateAtom)

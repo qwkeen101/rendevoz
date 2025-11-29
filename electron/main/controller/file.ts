@@ -52,7 +52,6 @@ callback('getUserFilePath', async () => {
 callback('changeToNewFilePath', async (curr: string) => {
   const originalAppPath =
     process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + '/.local/share')
-  console.log(originalAppPath, curr)
   if (
     path.relative(path.resolve(originalAppPath, 'rendevoz'), curr) === '' ||
     path.relative(path.resolve(originalAppPath, 'Rendevoz'), curr) === ''

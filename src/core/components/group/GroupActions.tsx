@@ -1,15 +1,13 @@
-import { AnimatePopover, Button, Content, Icon, IconWithPopover, WithBorder } from '@/components'
+import { AnimatePopover, BetterInput, Button, Icon, IconWithPopover, Menu, WithBorder } from '@/components'
 import { MetaStore } from '@/api/stores'
 import { MetaGroup } from '~/typings'
 import BetterFilter from '@/core/object/filter/BetterFilter'
-import { memo, useLayoutEffect, useRef, useState } from 'react'
-import { ClassName } from 'rendevoz'
-import { GlobalInstance, useDebounceFn, useSelectAtomValue } from '@/hooks'
-import { Colors } from '@/consts'
+import { memo, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useDebounceFn, useSelectAtomValue } from '@/hooks'
+import { Colors, Icons } from '@/consts'
 import GroupSettingMenu from '@/core/components/group/components/menu/setting/GroupSettingMenu'
 import { GroupStateAtom } from '@/core/components/group/hooks/useGroupState'
-import useGroupQueryLibrary from '@/core/components/group/components/queryLibrary/useGroupQueryLibrary'
-import { assignProperties } from '@/utils'
+import { noRepeatArray } from '@/utils'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import BetterSorter from '@/core/object/filter/BetterSorter'
 import EmojiWithPicker from '@/components/EmojiWithPicker'
@@ -18,21 +16,16 @@ import { Reorder } from 'framer-motion'
 import { isEqual } from 'lodash'
 import { useMeasure } from 'react-use'
 import useDisplayInside from '@/core/object/objectList/useDisplayInside'
+import classnames from 'classnames'
+import trans from '@/consts/trans'
+import Id from '../../../utils/id'
+import toast from 'react-hot-toast'
 const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
   const groupData = groupValue
   const currentView = useSelectAtomValue(GroupStateAtom, s => s.currentView)
   const [innerFilter, setInnerFilter] = useState(currentView?.filter)
   const [innerSort, setInnerSort] = useState(currentView?.sort)
-  const { renderPanel, open } = useGroupQueryLibrary(groupValue)
-  const layout = useSelectAtomValue(GroupStateAtom, s => s.layout)
-  const { renderContains, renderContainIndicator } = useDisplayInside({
-    defaultSelected: currentView?.selectedContainsMeta,
-    onSelect: v => instance.updateCurrentView?.(w => ({ ...w, selectedContainsMeta: v }))
-  })
   const instance = useGroupInstance()
-  assignProperties(instance, {
-    openFilterPanel: () => open()
-  })
   const search = currentView?.search
   const setSearch = (v: string) => {
     instance.updateCurrentView?.(s => ({ ...s, search: v }))
@@ -43,24 +36,36 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
     visibleProps,
     showImport,
     showViews,
-    showCreate
+    showCreate,
+    onlyCreateType,
+    metas,
+    showClearAll
   } = useSelectAtomValue(
     GroupStateAtom,
     s => ({
+      onlyCreateType: s.state?.onlyCreateType,
       paddingTop: s.styles?.actionPaddingTop,
       visibleProps: s.visibleProperties,
       visibleTypes: s.visibleTypes,
       showViews: s.layout?.showMultipleViews,
       showImport: s.layout?.showImport,
-      showCreate: s.layout?.showCreate
+      showCreate: s.layout?.showCreate,
+      showClearAll: s.layout?.showClearAll,
+      metas: s.data?.values
     }),
     {
       compare: (prev, curr) => isEqual(prev, curr)
     }
   )
-
+  const currentInGroupMetas = useMemo(() => {
+    return noRepeatArray(metas?.map(i => i.id) || [])
+  }, [metas])
+  const { renderContains, renderContainIndicator } = useDisplayInside({
+    defaultSelected: currentView?.selectedContainsMeta,
+    currentMetas: currentInGroupMetas,
+    onSelect: v => instance.updateCurrentView?.(w => ({ ...w, selectedContainsMeta: v }))
+  })
   const [showSearch, setShowSearch] = useState(!!search)
-  const isCompo = useRef(false)
   const debounceSet = useDebounceFn(v => setSearch(v), { wait: 500 })
   const existedFilterLength = currentView?.filter?.rules.length ?? 0
   const existedSortLength = currentView?.sort?.sorters.length ?? 0
@@ -78,6 +83,12 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
     }
   }, [showSearch])
   useLayoutEffect(() => {
+    const ele = searchInputRef.current
+    if (ele) {
+      ele.value = search || ''
+    }
+  }, [search])
+  useLayoutEffect(() => {
     if (groupValue?.views) {
       setInnerViews(groupValue.views)
     }
@@ -88,22 +99,16 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
 
   return (
     <>
-      <Content
+      <div
         ref={ref}
-        flex
-        column={columnLayout}
-        gap={10}
         role={'group-action-container'}
+        className={classnames('sticky gap-3 left-0 flex font-size-13', columnLayout && 'flex-col')}
         style={{
-          padding: `${paddingTop}px var(--page-padding-right) 8px var(--page-padding-left)`,
-          position: 'sticky',
-          left: 0,
-          fontSize: 13
+          padding: `${paddingTop}px var(--page-padding-right) 8px var(--page-padding-left)`
         }}
       >
-        {renderPanel()}
         {showViews !== false && (
-          <Content flex className={'normal-font'}>
+          <div className={'flex'}>
             <Reorder.Group
               ref={reorderRef}
               values={innerViews}
@@ -113,7 +118,7 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
               layoutScroll={true}
               as={'div'}
               axis={'x'}
-              style={{ overflowX: 'auto', marginRight: 4, display: 'flex', gap: 4 }}
+              className={'overflow-x-auto no-scrollbar mr-1 flex gap-1.5'}
             >
               {innerViews.map(i => (
                 <Reorder.Item
@@ -138,14 +143,10 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
                   }}
                 >
                   <div
-                    className={ClassName.flatButton()}
+                    className={'button em:h-8 shrink-0 flex items-center gap-2'}
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
                       color: i.id === currentView?.id ? Colors.Font.Primary : Colors.Font.Transparent,
-                      background: i.id === currentView?.id ? Colors.Background.ButtonHover : undefined,
-                      flexShrink: 0
+                      background: i.id === currentView?.id ? Colors.Background.ButtonHover : undefined
                     }}
                     onClick={() => {
                       if (isReorder) return
@@ -170,79 +171,66 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
               placement={['bottom']}
               padding={4}
               content={setV => (
-                <WithBorder padding={4} width={180}>
-                  <div
-                    className={'transparent-font font-size-13'}
-                    style={{
-                      padding: '4px 8px'
+                <WithBorder padding={'0.25rem 0 0.4rem'} width={180}>
+                  <Menu.NavigationMenu
+                    onSelect={v => {
+                      if (v?.type === 'item' && v.key) {
+                        instance.viewOps?.addNewView(v.key)
+                        setV(false)
+                      }
                     }}
-                  >
-                    {t('group.Create new view')}
-                  </div>
-                  <Button.IconButton
-                    text={t('general.Table')}
-                    icon={'park-table-file'}
-                    onClick={() => {
-                      instance.viewOps?.addNewView('table')
-                      setV(false)
-                    }}
-                  />
-                  <Button.IconButton
-                    text={t('general.Gallery')}
-                    icon={'park-all-application'}
-                    onClick={() => {
-                      instance.viewOps?.addNewView('gallery')
-                      setV(false)
-                    }}
-                  />
-                  <Button.IconButton
-                    text={t('general.List')}
-                    icon={'custom-list'}
-                    onClick={() => {
-                      instance.viewOps?.addNewView('list')
-                      setV(false)
-                    }}
-                  />
-                  <Button.IconButton
-                    text={t('general.Kanban')}
-                    icon={'custom-kanban'}
-                    onClick={() => {
-                      instance.viewOps?.addNewView('kanban')
-                      setV(false)
-                    }}
-                  />
-                  <Button.IconButton
-                    text={t('general.Calendar')}
-                    icon={'park-calendar-three'}
-                    onClick={() => {
-                      instance.viewOps?.addNewView('calendar')
-                      setV(false)
-                    }}
+                    layout={[
+                      {
+                        type: 'title',
+                        name: t('group.Create new view')
+                      },
+                      {
+                        type: 'item',
+                        key: 'table',
+                        text: t('general.Table'),
+                        icon: 'park-table-file'
+                      },
+                      {
+                        type: 'item',
+                        key: 'gallery',
+                        text: t('general.Gallery'),
+                        icon: 'park-all-application'
+                      },
+                      {
+                        type: 'item',
+                        key: 'list',
+                        text: t('general.List'),
+                        icon: 'custom-list'
+                      },
+                      {
+                        type: 'item',
+                        key: 'kanban',
+                        text: t('general.Kanban'),
+                        icon: 'custom-kanban'
+                      },
+                      {
+                        type: 'item',
+                        key: 'calendar',
+                        text: t('general.Calendar'),
+                        icon: 'park-calendar-three'
+                      }
+                    ]}
                   />
                 </WithBorder>
               )}
               name={'park-plus'}
-              className={ClassName.flatButton(4, '6px')}
-              style={{
-                color: Colors.Font.Transparent
-              }}
+              className={'button transparent-font em:w-8 em:h-8'}
               size={14}
             />
-          </Content>
+          </div>
         )}
-        <Content flex alignItems="center" style={{ flexShrink: 0, marginLeft: columnLayout ? undefined : 'auto' }}>
-          {layout?.showContains &&
-            renderContains({
-              size: 16,
-              style: {
-                padding: '3px 8px',
-                height: 26,
-                marginRight: 4
-              }
-            })}
+        <div className={'flex items-center shrink-0 transparent-font'} style={{ marginLeft: columnLayout ? undefined : 'auto' }}>
+          {renderContains({
+            size: 16,
+            className: '!p-1.5 mr-1'
+          })}
           <AnimatePopover
             positions={['bottom']}
-            align="end"
             padding={8}
             withClickCover={true}
             containerStyle={{
@@ -257,6 +245,7 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
             content={
               <WithBorder>
                 <BetterFilter
+                  currentMetas={currentInGroupMetas}
                   visibleFields={visibleProps.map(i =>
                     i.type === 'custom' ? MetaStore.property.getPropDetails(i.id)?.name ?? '' : i.name
                   )}
@@ -274,20 +263,19 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
               </WithBorder>
             }
           >
-            <Button.IconButton
+            <Icon
+              size={16}
               style={{
-                color: existedFilterLength ? Colors.Common.SelectColor : undefined,
-                height: 26,
-                marginRight: 4
+                color: existedFilterLength ? Colors.Common.SelectColor : undefined
               }}
-              icon="park-filter"
-              text={t('general.Filter')}
+              name={Icons.Filter}
+              className={'square-button !p-1.5 mr-1'}
+              tooltip={t('general.Filter')}
             />
           </AnimatePopover>
           {currentView?.type !== 'calendar' && (
             <AnimatePopover
               positions={['bottom']}
-              align="end"
               padding={8}
               onVisiblityChange={v => {
                 if (v === false) {
@@ -296,39 +284,36 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
               }}
               withClickCover={true}
               content={
-                <WithBorder padding={8} width={200}>
+                <WithBorder padding={8} width={240}>
                   <BetterSorter root={currentView?.sort} onChange={v => setInnerSort(v)} />
                 </WithBorder>
               }
             >
-              <Button.IconButton
+              <Icon
+                size={16}
                 style={{
-                  color: existedSortLength ? Colors.Common.SelectColor : undefined,
-                  height: 26,
-                  marginRight: 4
+                  color: existedSortLength ? Colors.Common.SelectColor : undefined
                 }}
-                icon="park-sort-one"
-                text={t('general.Sort')}
+                className={'!p-1.5 square-button mr-1'}
+                name={Icons.Sort}
+                tooltip={t('general.Sort')}
               />
             </AnimatePopover>
           )}
 
           <Icon
-            name={'park-search'}
+            name={Icons.Search}
             size={16}
-            className={ClassName.circleButton(5, 4)}
+            className={'square-button !p-1.5'}
             onClick={e => {
               setShowSearch(true)
               e.currentTarget.nextElementSibling?.focus?.()
             }}
           />
-          <input
-            className={ClassName.noStyleInput}
+          <BetterInput
             defaultValue={search}
             onChange={e => {
-              if (!isCompo.current) {
-                debounceSet.run(e.target.value)
-              }
+              debounceSet.run(e.target.value)
             }}
             ref={searchInputRef}
             onBlur={e => {
@@ -338,20 +323,14 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
                 e.currentTarget.value = ''
               }
             }}
-            placeholder={t('group.Search in group')}
-            onCompositionStart={() => (isCompo.current = true)}
-            onCompositionEnd={e => {
-              isCompo.current = false
-              setSearch(e.currentTarget.value)
-            }}
-            style={{ width: showSearch ? 150 : 0, transition: 'width 0.3s ease', padding: 0, marginRight: 4 }}
+            placeholder={t(trans.Search)}
+            style={{ width: showSearch || search?.length ? 150 : 0, transition: 'width 0.3s ease', padding: 0, marginRight: 4 }}
           />
           <IconWithPopover
             size={16}
             renderOnParent={false}
-            align={'end'}
-            name="park-more"
-            className={ClassName.circleButton(5, 4)}
+            name={Icons.More}
+            className={'square-button !p-1.5'}
             placement={['bottom']}
             content={setV => (
               <WithBorder width={260}>
@@ -361,33 +340,68 @@ const GroupActions = memo(({ groupValue }: { groupValue?: MetaGroup }) => {
           />
           {groupData.enableReview && (
             <Button.IconButton
+              size={16}
+              icon={'park-degree-hat'}
               text={t('general.Flashcards')}
               onClick={() => {
                 instance.reviewOps?.open()
               }}
-              className={'select-button py-2 px-10 height-26 ml-8'}
+              className={'ml-1'}
             />
           )}
           {showImport !== false && (
             <Button.IconButton
+              size={16}
               text={t('general.Add')}
+              icon={Icons.Create}
               onClick={() => {
-                open()
+                const metas = MetaStore.getAll({
+                  showHidden: true,
+                  showLabel: true,
+                  sort: 'createdAtDsc'
+                })
+                const inGroupMetas = instance.valueOps?.getAllMetasInGroup()
+                const inGroupMetaIds = new Set(inGroupMetas?.map(i => i.id))
+                const notInGroup = metas.filter(i => !inGroupMetaIds.has(i.id)).map(i => i.id)
+                Global.commonOps?.importFromLibrary(notInGroup).then(res => {
+                  instance.valueOps?.insertValueByPath(
+                    res.map(i => ({
+                      id: i.id,
+                      type: 'metaObject',
+                      rowId: Id.getId()
+                    })),
+                    groupValue.autoAddto === 'first' ? [0] : undefined
+                  )
+                  setTimeout(() => toast.success(t(trans.Success.ImportedSuccessfully)), 300)
+                })
               }}
-              className={'select-button py-2 px-10 height-26 ml-8'}
+              className={'ml-1'}
             ></Button.IconButton>
           )}
           {showCreate && (
             <Button.IconButton
+              size={16}
+              icon={Icons.Create}
               text={t('general.New')}
               onClick={() => {
-                GlobalInstance.metaOps?.createObject()
+                Global.metaOps.createObjects?.(onlyCreateType)
               }}
-              className={'select-button py-2 px-10 height-26 ml-8'}
+              className={'ml-1'}
             ></Button.IconButton>
           )}
-        </Content>
-      </Content>
+          {showClearAll && (
+            <Button.IconButton
+              size={16}
+              icon={Icons.Delete}
+              text={t('general.Clear')}
+              onClick={() => {
+                instance.on?.({ type: 'clearAll' })
+              }}
+              className={'ml-1'}
+            ></Button.IconButton>
+          )}
+        </div>
+      </div>
       {renderContainIndicator({
         style: {
           margin: `0px 0px ${currentView?.type === 'gallery' ? '0px' : '10px'}`,

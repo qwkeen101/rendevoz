@@ -3,7 +3,7 @@ import { INote, INoteLabel } from '~/typings'
 
 const useLabel = (note?: INote) => {
   const labels = note?.labels || []
-  const handleAddLabel = async (label: Partial<INoteLabel>) => {
+  const addLabel = async (label: Partial<INoteLabel>) => {
     if (!note) return
     const newLabel = await ObjectStore('noteLabel').addOne({
       ...label,
@@ -14,16 +14,17 @@ const useLabel = (note?: INote) => {
     return newLabel
   }
 
-  const handleDeleteLable = async (id: number) => {
+  const deleteLabel = async (id: number | number[]) => {
     if (!note) return
-    await ObjectStore('noteLabel').deleteOneById(id, { force: true })
-    const newLabels = labels.filter(i => i !== id)
+    const ids = Array.isArray(id) ? id : [id]
+    await Promise.allSettled(ids.map(async id => await ObjectStore('noteLabel').deleteOneById(id, { force: true })))
+    const newLabels = labels.filter(i => !ids.includes(i))
     await ObjectStore('note').updateOne({ id: note.id, labels: newLabels })
   }
 
   return {
-    handleAddLabel,
-    handleDeleteLable
+    addLabel,
+    deleteLabel
   }
 }
 

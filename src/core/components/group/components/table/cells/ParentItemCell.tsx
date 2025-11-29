@@ -1,6 +1,5 @@
 import { MetaStore } from '@/api/stores'
 import { useEffect, useState } from 'react'
-import { Rendevoz } from '@/core/rendevoz'
 import { Content, Icon } from '@/components'
 
 export default ({ metaId }: { metaId: number }) => {
@@ -17,7 +16,7 @@ export default ({ metaId }: { metaId: number }) => {
           return {
             id: i,
             name: item.name,
-            icon: Rendevoz.Utils.Object.getMetaObjectIcon(item.type)
+            icon: Global.utils.getIcon(item.type)
           }
         })
         .filter(i => i)

@@ -1,16 +1,14 @@
 import { Noop } from '@/common/types'
 import { AnimatePopover } from '@/components/base'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CustomEditor, IEditorOverlayContent, LeftTopPosition, XYPosition } from '~/typings'
 import EditorOverlayElements from './components/EditorOverlayElements'
 import { PopoverPosition } from 'react-tiny-popover'
 import EditorEmojiPicker from './components/EditorEmojiPicker'
 import EditorBlockMenu from '../blockMenu/EditorBlockMenu'
-import EditorSelectArea from './components/EditorSelectArea'
 import EditorLinkForm from './components/EditorLinkForm'
 import { KEY, Zindexes } from '@/consts'
 import isHotkey from 'is-hotkey'
-import { useUpdate } from 'react-use'
 import { atom, useAtom } from 'jotai'
 import { assignProperties } from '@/utils'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
@@ -74,8 +72,6 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
   const overlayContent = overlayState.content
   const renderOverlayContent = () => {
     switch (overlayContent) {
-      case 'selectArea':
-        return <EditorSelectArea editor={editor} scrollElement={scrollElement} />
       case 'emojiPicker':
         return <EditorEmojiPicker editor={editor} manager={overlayManager} />
       case 'blockHandleMenu':
@@ -129,6 +125,8 @@ const useEditorOverlay = (editor: CustomEditor, scrollElement?: HTMLDivElement |
         return 'start'
       case 'slashMenu':
         return 'start'
+      case 'linkForm':
+        return 'center'
       default:
         return 'start'
     }

@@ -1,5 +1,4 @@
 export type ISearchableDocument = {
-  docType: 'metaObject'
   metaId: number
   metaType: string
   name: string

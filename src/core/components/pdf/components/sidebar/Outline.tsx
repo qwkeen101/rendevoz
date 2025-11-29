@@ -1,24 +1,20 @@
 import { Content, Icon } from '@/components'
 import { useSelectAtomValue, useToggle } from '@/hooks'
 import { LayoutFunctions } from '~/typings'
-import ClassName from '@/styles/classNames'
-import { css } from '@emotion/css'
 import { atom, useAtom } from 'jotai'
-import { memo, useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 import { waitFor } from '@/utils'
-import usePDFBarState from '@/core/components/pdf/hooks/usePDFBarState'
-import { PdfStateAtom } from '@/core/components/pdf/hooks/usePdfState'
+import { PDFStateAtom } from '@/core/components/pdf/hooks/usePDFState'
 import classnames from 'classnames'
+import EmptyList from '@/core/components/common/EmptyList'
 
 type Outline = Awaited<ReturnType<LayoutFunctions['getOutline']>>
 const outlineAtom = atom<Outline | null>(null)
 const PdfOutline = () => {
   const [outline, setOutline] = useAtom(outlineAtom)
-  const [barStste] = usePDFBarState()
   const viewer = usePDFInstance()
-  const showOutline = barStste.sidebarActive === 'outline'
-  const lastReadPage = useSelectAtomValue(PdfStateAtom, s => s.document?.lastReadPage)
+  const lastReadPage = useSelectAtomValue(PDFStateAtom, s => s.document?.lastReadPage)
   const [pageIndexToOutline, setPageIndexToOutline] = useState<Record<number, Outline[0]>>()
   const [activeOutline, setActiveOutline] = useState<Outline[number]>()
   useEffect(() => {
@@ -29,12 +25,11 @@ const PdfOutline = () => {
       }
     }
   }, [lastReadPage])
-  console.log(lastReadPage, pageIndexToOutline, activeOutline)
   useEffect(() => {
     waitFor(
       () => !!viewer.getOutline,
       () => {
-        if (!outline && showOutline) {
+        if (!outline) {
           viewer?.getOutline?.().then(o => {
             setOutline(o)
             const doc = viewer.values.document
@@ -66,27 +61,14 @@ const PdfOutline = () => {
         }
       }
     )
-  }, [showOutline])
+  }, [])
+  if (!outline || outline.length === 0) {
+    return <EmptyList className={'h-full'} />
+  }
   return (
-    <Content
-      flex
-      className={'font-size-14'}
-      column
-      style={{
-        width: '100%',
-        height: '100%',
-        overflowX: 'hidden',
-        overflowY: 'auto',
-        padding: '10px 10px 100px'
-      }}
-    >
-      {outline?.map((i, idx) => <OutlineItem activeItem={activeOutline} item={i} key={idx} />)}
-      {(!outline || outline.length === 0) && (
-        <div style={{ margin: 'auto' }} className={'transparent-font bold-font'}>
-          No content
-        </div>
-      )}
-    </Content>
+    <div className={'h-full w-full overflow-y-auto px-3'}>
+      <div className={'pb-20 w-full'}>{outline?.map((i, idx) => <OutlineItem activeItem={activeOutline} item={i} key={idx} />)}</div>
+    </div>
   )
 }
 
@@ -108,13 +90,11 @@ const OutlineItem = memo(({ item, activeItem }: { item: Outline[number]; activeI
   }
   return (
     <div>
-      <Content
-        flex
-        alignItems={'center'}
+      <div
         onClick={() => {
           item.dest && instance.navigateOps?.jumpToDest(item.dest)
         }}
-        className={classnames(ClassName.flatButton(4, '4px 8px'), contains && 'active-button')}
+        className={classnames('button items-start flex gap-2', contains && 'active-button')}
       >
         {hasChildren && (
           <Icon
@@ -123,17 +103,14 @@ const OutlineItem = memo(({ item, activeItem }: { item: Outline[number]; activeI
               e.stopPropagation()
             }}
             name="park-right"
-            style={{
-              transform: hide ? undefined : 'rotate(90deg)',
-              transition: 'transform 0.3s ease',
-              marginRight: 6
-            }}
+            strokeWidth={4}
+            className={classnames(!hide && 'rotate-90', 'transition-transform mt-1')}
           />
         )}
-        <div className={ClassName.ellipsisFont(1)}>{item.title}</div>
-      </Content>
+        <div>{item.title}</div>
+      </div>
       {!hide && (
-        <div style={{ paddingLeft: 20 }}>
+        <div className={'pl-5'}>
           {item.items.map((i, idx) => (
             <OutlineItem item={i} key={idx} activeItem={activeItem} />
           ))}

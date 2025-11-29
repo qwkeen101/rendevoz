@@ -1,25 +1,22 @@
 import { MetaStore, ObjectStore } from '@/api/stores'
-import { Content, Icon } from '@/components'
+import { Button, Icon } from '@/components'
 import Select from '@/components/base/select'
 import { langs } from '@uiw/codemirror-extensions-langs'
-import { ClassName } from 'rendevoz'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
 import { useSelectGlobalAtomValue } from '@/hooks'
 import { SettingAtom } from '@/core'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
+import trans from '@/consts/trans'
 
 export const CodeLangs: (keyof typeof langs)[] = [
-  'angular',
   'c',
   'cpp',
   'clojure',
   'coffeescript',
-  'csharp',
   'css',
   'dart',
-  'dockerfile',
   'erlang',
   'go',
   'haskell',
@@ -33,22 +30,16 @@ export const CodeLangs: (keyof typeof langs)[] = [
   'less',
   'lua',
   'markdown',
-  'objectiveC',
-  'perl',
   'php',
   'powershell',
   'python',
-  'ruby',
+  'plain text',
   'rust',
-  'scala',
-  'sass',
-  'shell',
   'solidity',
   'sql',
   'tsx',
   'typescript',
   'verilog',
-  'vue',
   'vhdl',
   'xml',
   'yaml'
@@ -60,19 +51,12 @@ export default ({ id }: { id: number }) => {
   const language = code?.language || defaultLang || 'typescript'
   const codeMeta = MetaStore.useObjectToMetaValue(id)
   return (
-    <Content
-      flex
-      alignItems={'center'}
-      justifyContent={'space-between'}
-      style={{
-        padding: '6px 14px 0px'
-      }}
-    >
+    <div className={'flex items-center justify-between py-2 pr-2 pl-4'}>
       <input
         onBlur={e => {
           codeMeta && MetaStore.updateMetaObject({ id: codeMeta.id, name: e.target.value })
         }}
-        className={ClassName.noStyleInput}
+        className={'flex-1 mr-6 font-medium'}
         defaultValue={codeMeta?.name}
         onKeyDown={e => {
           if (isHotkey(KEY.Enter, e)) {
@@ -82,25 +66,18 @@ export default ({ id }: { id: number }) => {
             e.currentTarget.blur()
           }
         }}
-        style={{
-          flexGrow: 1,
-          marginRight: 20,
-          fontWeight: 500
-        }}
-        placeholder={'Unnamed code'}
+        placeholder={t(trans.Untitled)}
       ></input>
-      <Content flex gap={8} alignItems={'center'}>
-        <Icon
+      <div className={'transparent-font flex items-center gap-3'}>
+        <Button.IconButton
           onClick={() => {
             if (code?.content) {
               navigator.clipboard.writeText(code.content)
-              toast.success(t('general.Copied'))
+              toast.success(t(trans.Copied))
             }
           }}
-          tooltip={'Copy'}
-          name={'park-copy-one'}
-          size={16}
-          className={ClassName.flatButton(3, '4px')}
+          icon={'park-copy-one'}
+          text={t(trans.Copy)}
         />
         <Select
           align={'center'}
@@ -122,7 +99,7 @@ export default ({ id }: { id: number }) => {
             children: i
           }))}
         />
-      </Content>
-    </Content>
+      </div>
+    </div>
   )
 }

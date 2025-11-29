@@ -1,8 +1,22 @@
-import { ObjectStore } from '@/api/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import transformFeedItemIntoWebpage from '@/core/components/feed/utils/transformFeedItemIntoWebpage'
 
-export default async (itemId: number) => {
+export default async (itemId: number, metaId?: number) => {
+  if (metaId) {
+    const meta = MetaStore.getCachedMetaObject(metaId)
+    console.log(meta)
+    if (meta?.temp) {
+      return await MetaStore.updateMetaObject({ id: metaId, temp: false, deleted: false })
+    }
+    if (meta?.deleted) {
+      return await MetaStore.updateMetaObject({ id: metaId, deleted: false })
+    }
+    if (meta) {
+      return meta
+    }
+  }
   const feed = await ObjectStore('feed').getOneById(itemId)
+  ObjectStore('feed').updateOne({ id: itemId, viewAt: Date.now() })
   if (feed) {
     if (!feed.feedType || feed.feedType === 'webpage') {
       return await transformFeedItemIntoWebpage(feed)

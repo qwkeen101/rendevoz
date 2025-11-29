@@ -1,9 +1,8 @@
 // cmd w 关闭当前标签
-import { GlobalInstance, useSelectGlobalAtomValue } from '@/hooks'
+import { useSelectGlobalAtomValue } from '@/hooks'
 import { SettingAtom } from '@/core'
 import { useEffect } from 'react'
 import isHotkey from 'is-hotkey'
-import { Rendevoz } from '@/core/rendevoz'
 import updateSidebarState from '@/components/layout/sidebar/updateSidebarState'
 
 export default function useGlobalShortcutHandler() {
@@ -28,52 +27,46 @@ export default function useGlobalShortcutHandler() {
     }
     if (isShortcut(e, 'quickCreateObject')) {
       e.preventDefault()
-      GlobalInstance.metaOps?.createObject().then(res => {
-        if (res) {
-          setTimeout(() => {
-            Rendevoz.Actions.Open.Meta.openMetaObject(res.id)
-          }, 200)
-        }
-      })
+      Global.metaOps?.createObjects(undefined, undefined, { openAfterTriggerOnce: true })
     }
     if (isShortcut(e, 'openObjectPanel')) {
       e.preventDefault()
-      GlobalInstance.metaOps?.toggleDetails()
+      Global.metaOps?.toggleDetails()
     }
     if (isShortcut(e, 'closeOtherTabs')) {
       e.preventDefault()
-      GlobalInstance.layoutOps?.closeTabs('others')
+      Global.layoutOps?.closeTabs('others')
     }
     if (isShortcut(e, 'closeRightTabs')) {
       e.preventDefault()
-      GlobalInstance.layoutOps?.closeTabs('right')
+      Global.layoutOps?.closeTabs('right')
     }
     if (isShortcut(e, 'closeLeftTabs')) {
       e.preventDefault()
-      GlobalInstance.layoutOps?.closeTabs('left')
+      Global.layoutOps?.closeTabs('left')
     }
     if (isShortcut(e, 'openSidebar')) {
       e.preventDefault()
       updateSidebarState(draft => {
         draft.leftOpen = !draft.leftOpen
-        draft.leftVisible = draft.leftVisible || 'database'
+        draft.leftVisible = draft.leftVisible || 'application'
       })
     }
     if (isShortcut(e, 'openGlobalSearch')) {
       e.preventDefault()
-      GlobalInstance.searchOps?.openSearchPanel()
+      Global.searchOps?.openSearchPanel()
     }
     if (isShortcut(e, 'switchToPrevTab')) {
       e.preventDefault()
-      GlobalInstance.layoutOps?.switchToTab('prev')
+      Global.layoutOps?.switchToTab('prev')
     }
     if (isShortcut(e, 'switchToNextTab')) {
       e.preventDefault()
-      GlobalInstance.layoutOps?.switchToTab('next')
+      Global.layoutOps?.switchToTab('next')
     }
     if (isShortcut(e, 'closeCurrentTab')) {
       e.preventDefault()
-      GlobalInstance.layoutOps?.closeCurrentFocusedTab()
+      Global.layoutOps?.closeCurrentFocusedTab()
     }
   }
   useEffect(() => {

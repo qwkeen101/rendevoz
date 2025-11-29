@@ -1,8 +1,9 @@
 import { globalStore } from '@/api/stores'
-import { PrimitiveAtom, useAtom, useAtomValue, useSetAtom } from 'jotai'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { selectAtom } from 'jotai/utils'
 import { useMemo } from 'react'
 import { Atom } from 'jotai/vanilla'
+import { isEqual } from 'lodash'
 
 export const useGlobalAtom: typeof useAtom = (atom: Parameters<typeof useAtom>[0]) => useAtom(atom, { store: globalStore })
 
@@ -19,7 +20,7 @@ export const useSelectAtomValue = <T, Slice>(
   }
 ): Slice =>
   useAtomValue(
-    useMemo(() => selectAtom(atom, selector, options?.compare), [atom]),
+    useMemo(() => selectAtom(atom, selector, options?.compare ?? isEqual), [atom]),
     options
   )
 

@@ -95,6 +95,5 @@ export default (node: HTMLTableElement, opts?: deserializeOptions) => {
       }
     })
   }
-  console.log(tableEle, node)
   return tableEle
 }

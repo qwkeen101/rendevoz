@@ -18,7 +18,7 @@ const imageAccessible = async (url: string) => {
   }
   try {
     const res = await fetch(url, { method: 'HEAD' })
-    if (res.status === 200) {
+    if (res.status === 200 && res.headers.get('Content-type')?.startsWith('image')) {
       return true
     }
     return false
@@ -152,27 +152,23 @@ const getDomainName = async (doc: Document, uri: string) => {
 }
 
 export const getFavicon = async (doc: Document, uri: string) => {
-  const noLinkFavicon = `${new URL(uri).origin}/favicon.ico`
-  if (await imageAccessible(noLinkFavicon)) {
-    return noLinkFavicon
-  }
   const icon16Sizes = doc.querySelector('link[rel=icon][sizes="16x16"]')
   if (icon16Sizes) {
-    const href = icon16Sizes.getAttribute('href')
+    const href = icon16Sizes.href
     if (href && (await imageAccessible(href))) {
       return href
     }
   }
   const shortcutIcon = doc.querySelector('link[rel="shortcut icon"]')
   if (shortcutIcon) {
-    const href = shortcutIcon.getAttribute('href')
+    const href = shortcutIcon.href
     if (href && (await imageAccessible(href))) {
       return href
     }
   }
   const icon = doc.querySelector('link[rel=icon]')
   if (icon) {
-    const href = icon.getAttribute('href')
+    const href = icon.href
     if (href && (await imageAccessible(href))) {
       return href
     }

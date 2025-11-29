@@ -1,15 +1,16 @@
 import { Button, Content, IconWithPopover, WithBorder } from '@/components'
 import { useMediaInstance } from '../../hooks/useMediaInstance'
 import useMediaState from '../../hooks/useMediaState'
-import ClassName from '@/styles/classNames'
 import Colors from '@/consts/colors'
 import { normalizeSecondsToTime } from '../../utils'
 import { useMemo, useRef, useState } from 'react'
 import { IMediaChapter } from '~/typings'
 import isHotkey from 'is-hotkey'
-import { KEY } from '@/consts'
+import { Icons, KEY } from '@/consts'
 import { useTranslation } from 'react-i18next'
 import classnames from 'classnames'
+import trans from '@/consts/trans'
+import EmptyList from '@/core/components/common/EmptyList'
 
 const MediaChapterController = () => {
   const [mediaState] = useMediaState()
@@ -23,15 +24,13 @@ const MediaChapterController = () => {
         padding: 12
       }}
     >
-      <Content flex column style={{ overflowY: 'auto', paddingRight: 8, height: '100%' }}>
+      <Content flex column style={{ overflowY: 'auto', height: '100%' }}>
         {mediaState.sortedChapters?.length ? (
           mediaState.sortedChapters?.map((i, idx, arr) => (
             <Chapter canDelete={i.startTime === 0 ? arr.length === 1 : true} chapter={i} key={i.id} />
           ))
         ) : (
-          <div className={'bold-font transparent-font'} style={{ margin: 'auto' }}>
-            No chapter
-          </div>
+          <EmptyList className={'flex-1'} />
         )}
       </Content>
     </Content>
@@ -68,31 +67,12 @@ const Chapter = ({ chapter, canDelete }: { chapter: IMediaChapter; canDelete: bo
   }
 
   return (
-    <Content
-      flex
-      gap={12}
-      alignItems="center"
-      style={{
-        padding: 8
+    <div
+      onClick={() => {
+        instance.actionOps?.jumpTo?.(chapter.startTime ?? 0)
       }}
-      onClick={e => {
-        instance.actionOps?.jumpTo?.(chapter.startTime)
-      }}
-      className={classnames(ClassName.flatButton(0), isPlaying && 'active-button')}
+      className={classnames('button flex gap-3 items-start !p-2', isPlaying && 'active-button')}
     >
-      {chapter.imageUrl && (
-        <div
-          style={{
-            width: 100,
-            height: 56,
-            borderRadius: 8,
-            flexShrink: 0,
-            overflow: 'hidden'
-          }}
-        >
-          <img draggable={false} src={chapter.imageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }}></img>
-        </div>
-      )}
       <Content flex column auto gap={4}>
         {editingName ? (
           <Content
@@ -123,7 +103,7 @@ const Chapter = ({ chapter, canDelete }: { chapter: IMediaChapter; canDelete: bo
           </Content>
         ) : (
           <div className={'ellipsis-font-3 normal-font'} style={{ width: 'fit-content' }}>
-            {chapter.name}
+            {chapter.name || t(trans.Unnamed)}
           </div>
         )}
         <div
@@ -140,9 +120,9 @@ const Chapter = ({ chapter, canDelete }: { chapter: IMediaChapter; canDelete: bo
         </div>
       </Content>
       <IconWithPopover
-        name="park-more"
-        disableIntersection
-        className={ClassName.flatButton(4, '4px')}
+        name={Icons.More}
+        className={'hover-active-button'}
+        size={18}
         disableNudge
         placement={['right', 'left']}
         align="center"
@@ -150,24 +130,23 @@ const Chapter = ({ chapter, canDelete }: { chapter: IMediaChapter; canDelete: bo
         onClick={e => e.stopPropagation()}
         onContentClick={e => e.stopPropagation()}
         content={
-          <WithBorder padding={8} style={{ width: 160 }}>
+          <WithBorder className={'p-1 min-w-48'}>
             <Button.IconButton
-              text={t('general.edit name')}
-              icon="park-edit"
+              text={t(trans.Edit)}
+              icon={Icons.Edit}
               onClick={() => setChapterState(s => ({ ...s, editingName: true }))}
             ></Button.IconButton>
             {canDelete && (
               <Button.IconButton
-                dangerous
-                text={t('general.delete')}
-                icon="park-delete"
+                text={t(trans.Delete)}
+                icon={Icons.Delete}
                 onClick={() => instance.deleteChapter?.(chapter.id)}
               ></Button.IconButton>
             )}
           </WithBorder>
         }
       ></IconWithPopover>
-    </Content>
+    </div>
   )
 }
 

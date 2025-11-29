@@ -1,12 +1,9 @@
-import { IEditorInstance } from '~/typings'
-import { Rendevoz } from '@/core/rendevoz'
+import { IEditorInstance, IGlobalEvents } from '~/typings'
 import { RefObject, useEffect } from 'react'
 
 // sync note value between different notes
 const useSyncValue = (editorId: string, noteId?: number, instanceRef?: RefObject<IEditorInstance | undefined>) => {
-  const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
-  const handler = Rendevoz.Events.Emit.useEventHandler('editor')
-  handler.on('operationApplied', data => {
+  const handleOperationApplied = (data: IGlobalEvents['editorOperationApplied']) => {
     const instance = instanceRef?.current
     if (!noteId) return
     if (!instance) return
@@ -14,11 +11,11 @@ const useSyncValue = (editorId: string, noteId?: number, instanceRef?: RefObject
       const { operation } = data
       instance.applyOperation?.(operation, true)
     }
-  })
+  }
   useEffect(() => {
-    emitter.addListener('editor', handler)
+    Global.addEventListener('editorOperationApplied', handleOperationApplied)
     return () => {
-      emitter.removeListener('editor', handler)
+      Global.removeEventListener('editorOperationApplied', handleOperationApplied)
     }
   })
 }

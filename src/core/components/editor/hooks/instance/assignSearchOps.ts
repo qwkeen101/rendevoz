@@ -2,26 +2,20 @@ import { CustomEditor, IEditorInstance } from '~/typings'
 import { assignProperties } from '@/utils'
 import { useAtomValue, useSetAtom } from 'jotai/index'
 import { EditorSearchAtom, SearchEntry, SearchOccurrence } from '@/core/components/editor/hooks/useEditorSearch'
-import { EditorBarStateAtom } from '@/core/components/editor/hooks/useEditorBarState'
 import { useEffect, useRef } from 'react'
 import { Editor, Node, Transforms } from 'slate'
 import { useDebounceFn } from '@/hooks'
-import { useEventHandler, useScopedEventEmitter } from '@/events'
-import { ID_TO_PATH_MAP } from '@/core'
 
 const assignSearchOps = (instance: IEditorInstance, editor: CustomEditor) => {
   const setEditorSearch = useSetAtom(EditorSearchAtom)
   const editorSearch = useAtomValue(EditorSearchAtom)
-  const setEditorBarState = useSetAtom(EditorBarStateAtom)
-  const scopedEmitter = useScopedEventEmitter()
-  const handler = useEventHandler('editor')
   const cachedBlockStringRef = useRef<Record<number, string>>({})
-  handler.on('valueChange', () => {
+  const handleValueChange = () => {
     debouncedCacheString.run()
-  })
+  }
   useEffect(() => {
-    scopedEmitter.addListener('editor', handler)
-    return () => scopedEmitter.removeListener('editor', handler)
+    instance.addEventListener?.('valueChange', handleValueChange)
+    return () => instance.removeEventListener?.('valueChange', handleValueChange)
   })
   const getCache = () => {
     const value = editor.children
@@ -41,26 +35,28 @@ const assignSearchOps = (instance: IEditorInstance, editor: CustomEditor) => {
   )
   assignProperties(instance, {
     searchOps: {
+      ...instance.searchOps,
       changeOccurrence: direction => {
         const currentOccur = editorSearch.currentOccurrence
         const loop = true
-        if (!editorSearch.occurrences) return
         const occurrences = editorSearch.occurrences
+        if (!occurrences) return
+
         if (!currentOccur) {
-          const firstOccur = Object.entries(editorSearch.occurrences || {})[0]
+          const firstOccur = Array.from(occurrences.keys())[0]
           setEditorSearch(s => ({
             ...s,
             currentOccurrence: {
-              blockId: Number(firstOccur[0]),
+              blockId: firstOccur,
               idx: 0
             }
           }))
           return
         } else {
-          const occurs = occurrences[currentOccur.blockId]
-          const strCurrentOccurBlockId = String(currentOccur.blockId)
-          const occurKeys = Object.keys(occurrences)
-          const currentOccurIdx = occurKeys.findIndex(i => i === strCurrentOccurBlockId)
+          const occurs = occurrences.get(currentOccur.blockId)
+          if (!occurs) return
+          const occurKeys = Array.from(occurrences.keys())
+          const currentOccurIdx = occurKeys.findIndex(i => i === currentOccur.blockId)
           if (direction === 'down') {
             // if last
             let nextOccur: {
@@ -72,7 +68,7 @@ const assignSearchOps = (instance: IEditorInstance, editor: CustomEditor) => {
               // no next occur
               if (currentOccurIdx === occurKeys.length - 1) {
                 if (loop) {
-                  const firstOccurBlockId = Number(occurKeys[0])
+                  const firstOccurBlockId = occurKeys[0]
                   nextOccur = {
                     blockId: firstOccurBlockId,
                     idx: 0
@@ -85,7 +81,7 @@ const assignSearchOps = (instance: IEditorInstance, editor: CustomEditor) => {
               else {
                 const nextBlockOccur = occurKeys[currentOccurIdx + 1]
                 nextOccur = {
-                  blockId: Number(nextBlockOccur),
+                  blockId: nextBlockOccur,
                   idx: 0
                 }
               }
@@ -105,20 +101,19 @@ const assignSearchOps = (instance: IEditorInstance, editor: CustomEditor) => {
               // no prev occur
               if (currentOccurIdx === 0) {
                 if (loop) {
-                  const lastOccurBlockId = Number(occurKeys[occurKeys.length - 1])
+                  const lastOccurBlockId = occurKeys[occurKeys.length - 1]
                   prevOccur = {
                     blockId: lastOccurBlockId,
-                    idx: Math.max(occurrences[lastOccurBlockId] - 1, 0)
+                    idx: Math.max(occurrences.get(lastOccurBlockId)! - 1, 0)
                   }
-                  console.log(prevOccur)
                 } else {
                   prevOccur = currentOccur
                 }
               } else {
                 const prevBlockOccur = occurKeys[currentOccurIdx - 1]
                 prevOccur = {
-                  blockId: Number(prevBlockOccur),
-                  idx: Math.max(0, occurrences[Number(prevBlockOccur)] - 1)
+                  blockId: prevBlockOccur,
+                  idx: Math.max(0, occurrences.get(prevBlockOccur)! - 1)
                 }
               }
             } else {
@@ -133,7 +128,7 @@ const assignSearchOps = (instance: IEditorInstance, editor: CustomEditor) => {
       },
       search: (query, reset = true) => {
         const searchString = cachedBlockStringRef.current
-        const regexp = new RegExp(query, 'gi')
+        const regexp = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
         const result = Object.entries(searchString)
           .map(entry => {
             const length = entry[1].match(regexp)?.length
@@ -145,29 +140,57 @@ const assignSearchOps = (instance: IEditorInstance, editor: CustomEditor) => {
           })
           .filter(i => i) as [number, string, number][]
         const resultRecord: Record<number, string> = {}
-        const occurrencesRecord: Record<number, number> = {}
+        const occurrencesRecord: Map<number, number> = new Map()
         result.forEach(i => {
           resultRecord[i[0]] = i[1]
-          occurrencesRecord[i[0]] = i[2]
+          occurrencesRecord.set(i[0], i[2])
         })
 
         if (reset) {
           CSS.highlights.clear()
         }
-        const firstOccurrence = Object.entries(occurrencesRecord)[0]
+        const firstOccurrence = Array.from(occurrencesRecord.entries())[0]
+        const firstOccurBlock = firstOccurrence
+          ? {
+              blockId: firstOccurrence[0],
+              idx: 0
+            }
+          : undefined
+        let nextOccur = firstOccurBlock
+        if (!reset) {
+          const prevOccurrences = editorSearch.occurrences
+          // 上一个occur
+          const prevCurrentOccur = editorSearch.currentOccurrence
+          if (prevCurrentOccur) {
+            // 当前block的occur
+            const currentOccurCount = occurrencesRecord.get(prevCurrentOccur.blockId)
+            // 如果当前block还有occur并且数量>=之前的idx，那么还是idx
+            if (currentOccurCount && currentOccurCount >= prevCurrentOccur.idx + 1) {
+              nextOccur = prevCurrentOccur
+            } else {
+              if (prevOccurrences) {
+                // 如果当前行没有了，或者idx到最后了，那么就去寻找下一个block
+                const prevKeys = Array.from(prevOccurrences.keys())
+                const prevIdx = prevKeys.indexOf(prevCurrentOccur.blockId)
+                if (prevIdx >= 0) {
+                  const prevNextKey = prevKeys[prevIdx + 1]
+                  if (prevNextKey) {
+                    nextOccur = {
+                      blockId: prevNextKey,
+                      idx: 0
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
         setEditorSearch({
           query,
           occurrences: occurrencesRecord,
           results: resultRecord,
           entryCache: {},
-          currentOccurrence: reset
-            ? firstOccurrence
-              ? {
-                  blockId: Number(firstOccurrence[0]),
-                  idx: 0
-                }
-              : undefined
-            : editorSearch.currentOccurrence
+          currentOccurrence: nextOccur
         })
         return result.map(i => [i[0], i[1]])
       },
@@ -177,7 +200,7 @@ const assignSearchOps = (instance: IEditorInstance, editor: CustomEditor) => {
           if (!currentOccurrence) return
           const { blockId, idx } = currentOccurrence
           const block = editor.children.find(i => 'id' in i && i.id === blockId)
-          const path = ID_TO_PATH_MAP.get(editor)?.get(blockId)
+          const path = instance.getElementPathById(blockId)
           if (!block || !path) return
           const textEntries = Array.from(Node.texts(block))
           const withLengthEntries: SearchEntry[] = []
@@ -214,6 +237,7 @@ const assignSearchOps = (instance: IEditorInstance, editor: CustomEditor) => {
             })
             .filter(i => i) as SearchOccurrence[]
           const entry = entries[idx]
+          if (!entry) return
           Transforms.delete(editor, {
             at: {
               path: [path[0], ...entry.startEntry.path],
@@ -229,12 +253,9 @@ const assignSearchOps = (instance: IEditorInstance, editor: CustomEditor) => {
               offset: entry.startOffset
             }
           })
-          const totalCurrentBlockOccurs = editorSearch.occurrences?.[blockId] || 0
           const currentBlock = Editor.node(editor, path)!
           cachedBlockStringRef.current[blockId] = Node.string(currentBlock[0])
-          if (currentOccurrence.idx >= totalCurrentBlockOccurs - 1) {
-            instance.changeOccurrence?.('down')
-          }
+          instance.searchOps?.search(source, false)
           return
         }
         const searchString = cachedBlockStringRef.current
@@ -242,7 +263,7 @@ const assignSearchOps = (instance: IEditorInstance, editor: CustomEditor) => {
         Object.entries(searchString).forEach((entry, idx) => {
           const length = entry[1].match(regexp)?.length
           if (length) {
-            const path = ID_TO_PATH_MAP.get(editor)?.get(Number(entry[0]))
+            const path = instance.getElementPathById(Number(entry[0]))
             if (path) {
               const block = editor.children[path[0]]
               const textEntries = Array.from(Node.texts(block))
@@ -299,9 +320,10 @@ const assignSearchOps = (instance: IEditorInstance, editor: CustomEditor) => {
             }
           }
         })
+        setEditorSearch({})
         getCache()
       },
-      pureSearch: (query, reset = true) => {
+      pureSearch: query => {
         const searchString = cachedBlockStringRef.current
         const regexp = new RegExp(query, 'gi')
         const result = Object.entries(searchString)
@@ -342,12 +364,7 @@ const assignSearchOps = (instance: IEditorInstance, editor: CustomEditor) => {
         })
         const total = Object.values(occurrencesRecord).reduce((prev, curr) => prev + curr, 0)
         return total
-      },
-      toggleSearch: () =>
-        setEditorBarState(s => ({
-          ...s,
-          sidebarActive: 'search'
-        }))
+      }
     }
   })
 }

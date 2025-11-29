@@ -18,11 +18,13 @@ export const deleteLocalFile = async (filepath: string) => {
 }
 
 export const imageToDataUrl = (img: HTMLImageElement) => {
-  const canvas = document.createElement('canvas')
-  canvas.width = img.width
-  canvas.height = img.height
-  canvas.getContext('2d')?.drawImage(img, 0, 0, img.width, img.height)
-  return canvas.toDataURL('image/png')
+  if (img instanceof HTMLImageElement) {
+    const canvas = document.createElement('canvas')
+    canvas.width = img.width
+    canvas.height = img.height
+    canvas.getContext('2d')?.drawImage(img, 0, 0, img.width, img.height)
+    return canvas.toDataURL('image/png')
+  }
 }
 
 export const downloadImg = async (imageUrl: string, imageName?: string) => {

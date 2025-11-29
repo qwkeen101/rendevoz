@@ -1,4 +1,3 @@
-import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import { useAtomValue } from 'jotai/index'
 import { EditorSearchAtom, SearchOccurrence } from '@/core/components/editor/hooks/useEditorSearch'
 import { Node, Path } from 'slate'
@@ -69,7 +68,7 @@ const useBlockContentSearch = (element: CustomElement, instance: IEditorInstance
     return entries
   }
   useEffect(() => {
-    if (editorSearch.results?.[blockId] && editorSearch.query && editorSearch.isSearching !== false) {
+    if (editorSearch.results?.[blockId] && editorSearch.query) {
       const entries = getSearchEntries()
       if (entries) {
         const currentOccur = editorSearch.currentOccurrence

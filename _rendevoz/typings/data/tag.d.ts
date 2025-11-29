@@ -5,4 +5,5 @@ export interface ITag extends IBase {
   name?: string
   order?: number
   workspace?: number
+  specType: 'tag'
 }

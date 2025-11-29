@@ -1,33 +1,45 @@
 export default {
   LocalCommon: 'http://localhost:9001',
   LocalAI: 'http://localhost:9000',
-  Remote: 'https://api.rendevoz.com',
-  RemoteGrey: 'https://api.rendevoz.com/grey',
-  Translate: function (api: 'common' | 'text') {
-    switch (api) {
-      case 'text':
-        return this.Remote + '/translate/text'
-      case 'common':
-        return this.Remote + '/translate'
-    }
-  },
+  RemoteGreyCommon: 'https://1252524756-ior7x3ciqn-hk.scf.tencentcs.com',
+  RemoteGreyAI: 'https://1252524756-eg6i4qu64d-hk.scf.tencentcs.com',
   OCR: function () {
-    return this.Remote + '/image/ocr'
+    return this.RemoteGreyCommon + '/image/ocr'
   },
   Upgrade: function () {
-    return this.Remote + '/pay'
+    return this.RemoteGreyCommon + '/pay'
+  },
+  Email: function () {
+    return this.RemoteGreyCommon + '/email'
   },
   User: function () {
-    return this.Remote + '/user'
+    return this.RemoteGreyCommon + '/user'
   },
-  AI: function (api: 'addCredit' | 'buyCredit' | 'clearCredit') {
+  CheckPayOrder: function () {
+    return this.RemoteGreyCommon + '/pay/order'
+  },
+  AI: function (api: 'addCredit' | 'buyCredit' | 'clearCredit' | 'ask' | 'askStream' | 'transcribe' | 'chatStream' | 'sts' | 'isValidAudio' | 'hasTranscript') {
     switch (api) {
+      case 'hasTranscript':
+        return this.RemoteGreyAI + '/hasTranscript'
+      case 'chatStream':
+        return this.RemoteGreyAI + '/ai/stream'
+      case 'isValidAudio':
+        return this.RemoteGreyAI + '/isValidAudio'
+      case 'sts':
+        return this.RemoteGreyAI + '/ai/sts'
+      case 'askStream':
+        return this.RemoteGreyAI + '/ai/askStream'
       case 'addCredit':
-        return this.Remote + '/ai/credit/add'
+        return this.RemoteGreyAI + '/ai/credit/add'
       case 'buyCredit':
-        return this.Remote + '/ai/pay'
+        return this.RemoteGreyAI + '/ai/pay'
       case 'clearCredit':
         return ''
+      case 'ask':
+        return this.RemoteGreyAI + '/ai/ask'
+      case 'transcribe':
+        return this.RemoteGreyAI + '/transcribe'
     }
   }
 }

@@ -1,5 +1,4 @@
 import { atom, useAtom } from 'jotai'
-import { CustomElement } from '~/typings'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 
 type DragHandleProps = {

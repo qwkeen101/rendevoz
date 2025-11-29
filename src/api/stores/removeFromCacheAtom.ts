@@ -1,4 +1,4 @@
-import { CollectionStore, MetaStore } from '@/api/stores/index'
+import { MetaStore } from '@/api/stores/index'
 import { removeFromCache } from '@/api/stores/object/object.store'
 import keyvalueStore from '@/api/stores/keyvalue.store'
 
@@ -12,9 +12,6 @@ export default (db: 'keypairs' | 'objects' | 'metaObjects' | 'metaLinks' | 'coll
       break
     case 'objects':
       removeFromCache(key)
-      break
-    case 'collections':
-      CollectionStore.removeFromCache(key)
       break
     case 'keypairs':
       keyvalueStore.removeFromCache(key)

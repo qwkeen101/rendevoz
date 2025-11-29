@@ -3,7 +3,6 @@ import { Zindexes } from '@/consts'
 import createPanZoom from 'panzoom'
 import { useEffect, useRef, useState } from 'react'
 import { assignProperties } from '@/utils'
-import { GlobalInstance } from '@/hooks'
 
 export default () => {
   const [previewerState, setPreviewerState] = useState<{
@@ -12,9 +11,9 @@ export default () => {
   }>({
     visible: false
   })
-  assignProperties(GlobalInstance, {
+  assignProperties(Global, {
     commonOps: {
-      ...GlobalInstance.commonOps,
+      ...Global.commonOps,
       previewImage: url => {
         setPreviewerState({ imgSrc: url, visible: true })
       }

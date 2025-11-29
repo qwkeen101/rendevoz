@@ -1,7 +1,7 @@
 import React from 'react'
 import { BoxData, DockContext, DockContextType } from './DockData'
 import { default as Divider, DividerChild } from './Divider'
-import { DockPanel } from './DockPanel'
+import DockPanel from './DockPanel'
 
 interface Props {
   size: number
@@ -79,11 +79,13 @@ export class DockBox extends React.PureComponent<Props, any> {
         )
       }
       const child = children[i]
-      if ('tabs' in child) {
-        childrenRender.push(<DockPanel size={child.size} panelData={child} key={child.id} />)
-        // render DockPanel
-      } else if ('children' in child) {
-        childrenRender.push(<DockBox size={child.size} boxData={child} key={child.id} />)
+      if (child.size !== undefined) {
+        if ('tabs' in child) {
+          childrenRender.push(<DockPanel size={child.size} panelData={child} key={child.id} />)
+          // render DockPanel
+        } else if ('children' in child) {
+          childrenRender.push(<DockBox size={child.size} boxData={child} key={child.id} />)
+        }
       }
     }
     let cls: string

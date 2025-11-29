@@ -1,6 +1,6 @@
 import { memo, useRef } from 'react'
 import { Content } from '@/components'
-import { useVirtualizer } from '@tanstack/react-virtual'
+import { useVirtualizer } from '@/components'
 import { MetaGroupChild } from '~/typings'
 import { RowWrapper } from '@/core/components/group/components/table/RowWrapper'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'

@@ -1,7 +1,6 @@
 import { CustomEditor, IEditorInstance } from '~/typings'
 import { assignProperties } from '@/utils'
 import { useDebounceFn } from '@/hooks'
-import { EDITOR_TO_CHANGED } from '@/core'
 import { Transforms } from 'slate'
 import Id from '@/utils/id'
 import { useSetAtom } from 'jotai'
@@ -29,7 +28,7 @@ const assignValueOps = (instance: IEditorInstance, editor: CustomEditor) => {
   )
   assignProperties(instance, {
     applyOperation: (op, debounce) => {
-      EDITOR_TO_CHANGED.set(editor, false)
+      editor.changeHandled = false
       Transforms.transform(editor, op)
       editor.operations.push(op)
       if (debounce) {
@@ -41,8 +40,8 @@ const assignValueOps = (instance: IEditorInstance, editor: CustomEditor) => {
     replaceChildren: (newValue, restoreScrollPosition) => {
       editor.children = newValue
       editor.selection = null
+      editor.changeHandled = false
       normalizeFirstLayer(editor)
-      EDITOR_TO_CHANGED.set(editor, false)
       instance.indexPath?.()
       editor.history = {
         redos: [],

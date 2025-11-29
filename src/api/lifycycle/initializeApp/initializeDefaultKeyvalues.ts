@@ -1,22 +1,41 @@
-import { CurrentKeyValues } from '@/api/stores/keyvalue.store'
-import { DefaultEditorSettings } from '@/api/lifycycle/initializeApp/initializeSettings'
+import { CurrentKeyValues, ISidebarConfig } from '@/api/stores/keyvalue.store'
 import { useDb } from '@/hooks'
 
-const defaultSidebarItems = ['home', 'database', 'feeds', 'search', 'graph', 'recycleBin', 'settings']
+export const DEFAULT_SIDEBAR_CONFIG: ISidebarConfig = {
+  navs: [
+    {
+      key: 'search',
+      visible: true
+    },
+    {
+      key: 'home',
+      visible: true
+    },
+    {
+      key: 'recycleBin',
+      visible: true
+    },
+    {
+      key: 'settings',
+      visible: true
+    }
+  ],
+  widgets: [
+    {
+      key: 'workspaces',
+      visible: true
+    },
+    {
+      key: 'folders',
+      visible: true
+    }
+  ]
+}
 export default async () => {
   const defaultKeyvalues: Partial<CurrentKeyValues> = {
-    searchHistory: [],
-    editorSettings: DefaultEditorSettings,
-    webpageShowOriginal: false,
-    rightBarItems: [],
-    leftBarItems: defaultSidebarItems,
-    feedCardView: 'title',
-    feedOpenMode: 'rightBar',
-    feedReadRule: 'all',
-    feedReadIds: [],
-    feedReadLaterIds: [],
-    feedRecentlyReadIds: [],
-    baiduAccessToken: localStorage.getItem('bda') ?? undefined
+    searchQueryHistory: {},
+    baiduAccessToken: localStorage.getItem('bda') ?? undefined,
+    sidebarConfig: DEFAULT_SIDEBAR_CONFIG
   }
   const kvDb = useDb('keypairs')
   const all = kvDb.toCollection()

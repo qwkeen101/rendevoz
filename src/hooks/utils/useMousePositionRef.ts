@@ -18,9 +18,13 @@ type MousePosition = [number, number]
 export const mousePos = {
   current: [0, 0]
 }
-document.addEventListener('pointermove', e => {
-  mousePos.current = [e.pageX, e.pageY]
-})
+document.addEventListener(
+  'pointermove',
+  e => {
+    mousePos.current = [e.pageX, e.pageY]
+  },
+  true
+)
 const useMousePosition = () => {
   return mousePos
 }

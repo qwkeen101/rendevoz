@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useGlobalAtomValue } from '@/hooks'
 import { urlToIdMap } from '@/api/indexData/urlToId'
 
-export default (feedItemId: number) => {
+export default (feedItemId?: number) => {
   const item = ObjectStore('feed').useValue(feedItemId)
   const [isMeta, setIsMeta] = useState(false)
   const [metaId, setMetaId] = useState<number>()
@@ -16,11 +16,11 @@ export default (feedItemId: number) => {
       return
     }
     if ((item.enclosure?.url && urlToId.has(item.enclosure.url)) || urlToId.has(item.link)) {
-      setIsMeta(true)
       const objectId = item.enclosure?.url ? urlToId.get(item.enclosure.url) || urlToId.get(item.link) : urlToId.get(item.link)
       if (objectId) {
         const meta = MetaStore.getMetaObjectByObjectId(objectId)
         if (meta) {
+          setIsMeta(meta.temp || meta.deleted ? false : true)
           setMetaId(meta.id)
         }
       } else {

@@ -4,7 +4,8 @@ import { useDb } from '@/hooks'
 import loadAllNotes from '@/api/textSearch/loadAllNotes'
 import { MetaObject } from '~/typings'
 import FileSystem from '@/api/fileSystem'
-import normalizeChildrenToText from '@/core/components/editor/utils/normalize/normalizeChildrenToText'
+import { slateToMarkdown } from '@/core/components/editor/plugins/slateToMarkdown'
+import { ObjectStore } from '@/api/stores'
 
 const worker = new OramaWorker()
 const metaDb = useDb('metaObjects')
@@ -14,29 +15,40 @@ const normalizeMetaToDoc = (meta: MetaObject) => {
     id: meta.id,
     metaId: meta.id,
     metaType: meta.type,
-    docType: 'metaObject',
     name: meta.name || meta.placeholderName,
     placeholderName: meta.placeholderName,
     description: meta.description
   }
 }
+
 export const initializeSearch = async (force?: boolean) => {
   worker.postMessage({
     event: 'initialize'
   })
   if (force) {
-    metaDb.toArray().then(docs => {
+    metaDb.toArray().then(async docs => {
       worker.postMessage({
         event: 'insertDocuments',
-        documents: docs.map(i => normalizeMetaToDoc(i))
+        documents: (
+          await Promise.all(
+            docs.map(async i => {
+              if (i.objectId) {
+                const str = await ObjectStore(i.type).triggerSearch?.(i.objectId, false)
+                if (str) {
+                  return { ...normalizeMetaToDoc(i), content: str }
+                }
+              }
+              return normalizeMetaToDoc(i)
+            })
+          )
+        ).filter(i => i)
       })
       loadAllNotes().then(values => {
-        console.log(values)
         const normalizedDocuments = values
           .filter(i => i)
           .map(i => ({
             ...normalizeMetaToDoc(i.targetMeta),
-            content: normalizeChildrenToText(i.value)
+            content: slateToMarkdown(i.value)
           }))
         worker.postMessage({
           event: 'updateDocuments',
@@ -57,28 +69,12 @@ export const initializeSearch = async (force?: boolean) => {
             json: t
           })
         })
+      } else {
+        initializeSearch(true)
       }
     })
     .catch(e => {
-      metaDb.toArray().then(docs => {
-        worker.postMessage({
-          event: 'insertDocuments',
-          documents: docs.map(i => normalizeMetaToDoc(i))
-        })
-        loadAllNotes().then(values => {
-          console.log(values)
-          const normalizedDocuments = values
-            .filter(i => i)
-            .map(i => ({
-              ...normalizeMetaToDoc(i.targetMeta),
-              content: normalizeChildrenToText(i.value)
-            }))
-          worker.postMessage({
-            event: 'updateDocuments',
-            documents: normalizedDocuments
-          })
-        })
-      })
+      initializeSearch(true)
     })
 }
 

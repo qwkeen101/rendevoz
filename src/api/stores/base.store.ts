@@ -1,14 +1,13 @@
 import Id from '@/utils/id'
 import { Table } from 'dexie'
 import produce, { createDraft, finishDraft, Patch } from 'immer'
-import { Atom, PrimitiveAtom } from 'jotai/vanilla'
+import { Atom, PrimitiveAtom } from 'jotai'
 import { orderBy } from 'lodash'
 import { IBase } from '~/typings/data'
-import { Hooks } from 'rendevoz'
 import { type PartialWithId } from '@/types'
 import { immerWithDatabase } from '@/api/stores/immerWithDatabase'
 import { IStore } from '~/typings'
-const globalStore = Hooks.globalStore
+import { globalStore } from '@/api/stores'
 const ATOM_QUEUE_MAP = new Map<Atom<any>, StoreDispatchEvent<any>[]>()
 
 let historyStore: typeof import('./history.store') | undefined = undefined
@@ -40,7 +39,7 @@ type StoreDispatchEvent<T> = {
 )
 
 const handleQueue = () => {
-  console.log('handle queue')
+  console.log('handle queue', ATOM_QUEUE_MAP)
   const DB_ACTION_MAP = new Map<Table, Patch[]>()
   Array.from(ATOM_QUEUE_MAP.entries()).forEach(([k, v]) => {
     const atomValue = globalStore.get(k)
@@ -94,19 +93,22 @@ const handleQueue = () => {
       const { database } = v[0]
       const dbName = database.name
       historyStore?.finishProcess(patches, inversePatches, k, dbName)
-      DB_ACTION_MAP.set(database, patches)
+      const existedPatches = DB_ACTION_MAP.get(database)
+      DB_ACTION_MAP.set(database, [...(existedPatches || []), ...patches])
     })
     globalStore.set(k, newAtom)
     ATOM_QUEUE_MAP.delete(k)
   })
-  setTimeout(() => {
-    Array.from(DB_ACTION_MAP.entries()).forEach(([k, v]) => {
-      immerWithDatabase(v, k.name)
-      DB_ACTION_MAP.delete(k)
-    })
+  Array.from(DB_ACTION_MAP.entries()).forEach(([k, v]) => {
+    immerWithDatabase(v, k.name)
+    DB_ACTION_MAP.delete(k)
   })
 }
 
+type GetOneTask = {
+  id: number
+  resolve: (value: any) => void
+}
 const BaseStore = {
   clear(data: Map<number, any>) {
     return produce(data, draft => {
@@ -202,10 +204,83 @@ type ILocalStore<T> = {
 export function initializeLocalStore<T>(
   atom: PrimitiveAtom<Map<number, T>>,
   database: Table,
-  outOptions: {
+  outOptions?: {
     transformData?: (o: T) => T | undefined
   }
 ) {
+  let batchGetOneTaskQueue: GetOneTask[] = []
+  let batchFetchOneTaskQueue: GetOneTask[] = []
+  const processGetOneTaskQueue = async () => {
+    if (batchGetOneTaskQueue.length) {
+      const sliced = batchGetOneTaskQueue.slice()
+      batchGetOneTaskQueue = []
+      const ids = Array.from(new Set(sliced.map(i => i.id)).values())
+      let items = (await database.bulkGet(ids)).filter(i => i)
+      if (outOptions?.transformData) {
+        items = items.map(i => outOptions.transformData?.(i))
+      }
+      const idToItem = Object.fromEntries(items.map(i => [i.id, i]))
+      sliced.forEach(task => {
+        const item = idToItem[task.id]
+        task.resolve(item)
+      })
+      globalStore.set(atom, BaseStore.bulkAdd(items, globalStore.get(atom)))
+    }
+  }
+  const processFetchOneTaskQueue = async () => {
+    if (batchFetchOneTaskQueue.length) {
+      const sliced = batchFetchOneTaskQueue.slice()
+      batchFetchOneTaskQueue = []
+      const ids = Array.from(new Set(sliced.map(i => i.id)).values())
+      let items = (await database.bulkGet(ids)).filter(i => i)
+      if (outOptions?.transformData) {
+        items = items.map(i => outOptions.transformData?.(i))
+      }
+      const idToItem = Object.fromEntries(items.map(i => [i.id, i]))
+      sliced.forEach(task => {
+        const item = idToItem[task.id]
+        task.resolve(item)
+      })
+    }
+  }
+  const handleGetOne = async (id: number, res: (v: T | undefined) => void) => {
+    const queue = batchGetOneTaskQueue
+    if (queue.length) {
+      queue.push({
+        resolve: res,
+        id
+      })
+    } else {
+      batchGetOneTaskQueue = [
+        {
+          resolve: res,
+          id
+        }
+      ]
+      Promise.resolve().then(() => {
+        processGetOneTaskQueue()
+      })
+    }
+  }
+  const handleFetchOne = async (id: number, res: (v: T | undefined) => void) => {
+    const queue = batchFetchOneTaskQueue
+    if (queue.length) {
+      queue.push({
+        resolve: res,
+        id
+      })
+    } else {
+      batchFetchOneTaskQueue = [
+        {
+          resolve: res,
+          id
+        }
+      ]
+      Promise.resolve().then(() => {
+        processFetchOneTaskQueue()
+      })
+    }
+  }
   const store: ILocalStore<T> = {
     addOne: (onSuccess, onFail) => (obj, options) => {
       return new Promise(res => {
@@ -227,8 +302,10 @@ export function initializeLocalStore<T>(
         })
       })
     },
-    fetchOneById: async id => {
-      return await database.get(id)
+    fetchOneById: id => {
+      return new Promise(res => {
+        handleFetchOne(id, res)
+      })
     },
     deleteOneById: (onSuccess, onFail) => (id, options) => {
       return new Promise(res => {
@@ -275,7 +352,9 @@ export function initializeLocalStore<T>(
         }
         const arr = (await database.bulkGet(ids)).map(i => (outOptions?.transformData ? outOptions.transformData(i) : i)).filter(i => i)
         if (cache) {
-          globalStore.set(atom, BaseStore.bulkAdd(arr, globalStore.get(atom)))
+          if (arr.some(i => !map.has(i.id))) {
+            globalStore.set(atom, BaseStore.bulkAdd(arr, globalStore.get(atom)))
+          }
         }
         return arr as T[]
       },
@@ -285,19 +364,7 @@ export function initializeLocalStore<T>(
         if (!opts?.forceRefresh && atomOne) {
           res(atomOne)
         } else {
-          database.get(id).then(one => {
-            if (one) {
-              one = outOptions?.transformData ? outOptions?.transformData?.(one) : one
-              if (!one) {
-                res(undefined)
-                return
-              }
-              globalStore.set(atom, BaseStore.add(one, globalStore.get(atom)))
-              res(one)
-            } else {
-              res(undefined)
-            }
-          })
+          handleGetOne(id, res)
         }
       })
     },

@@ -5,7 +5,6 @@ import BetterFilter from '@/core/object/filter/BetterFilter'
 import produce from 'immer'
 import Id from '@/utils/id'
 import { MetaObject } from '~/typings'
-import _ from 'lodash'
 import { ClassName } from 'rendevoz'
 const FilterSelect = BetterFilter.FilterSelect
 export type SorterGroup = {
@@ -151,12 +150,11 @@ const SorterItem = ({
 }
 
 export function calculateSortObjects(objects: MetaObject[], group: SorterGroup) {
-  const result = _.orderBy(
-    objects,
-    [...group.sorters.map(i => o => o[i.field] ?? '')],
-    [...group.sorters.map(i => (i.type === 'ascending' ? 'asc' : 'desc'))]
-  )
-  return result
+  let sliced = objects.slice()
+  group.sorters.forEach(sort => {
+    sliced = Global.metaOps.sort(sort.field, sort.type === 'descending' ? 'desc' : 'asc', sliced)
+  })
+  return sliced
 }
 
 export default BetterSorter

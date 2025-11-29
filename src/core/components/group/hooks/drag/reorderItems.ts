@@ -55,8 +55,8 @@ const reorderDragItems = async (opts: {
       towards === 'top'
         ? nowTargetPath
         : towards === 'inner'
-        ? [...nowTargetPath, targetValue.children?.length || 0]
-        : Path.next(nowTargetPath)
+          ? [...nowTargetPath, targetValue.children?.length || 0]
+          : Path.next(nowTargetPath)
     )
   }
 }

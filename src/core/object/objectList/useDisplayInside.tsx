@@ -1,29 +1,67 @@
 // display inside groups, whiteboards, tags, collections
 import { CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { ITag, MetaObject } from '~/typings'
-import { MetaStore } from '@/api/stores'
+import { MetaObject } from '~/typings'
+import { CollectionStore, globalStore, MetaStore } from '@/api/stores'
 import calculateContains, { ContainResults } from '@/core/object/objectList/calculateContains'
 import { Content, Icon, IconWithPopover, Menu, WithBorder } from '@/components'
 import { IMenuLayoutItem } from '@/components/base/menu'
 import { useTranslation } from 'react-i18next'
-import { ObjectActionMenu } from '@/core'
-import { Rendevoz } from '@/core/rendevoz'
-import { ClassName } from 'rendevoz'
 import { Colors } from '@/consts'
-import { GlobalInstance } from '@/hooks'
+import { useGlobalAtomValue } from '@/hooks'
 import fuzzysort from 'fuzzysort'
+import classnames from 'classnames'
+import { atom } from 'jotai/index'
+import { debounce } from 'lodash'
+import trans from '@/consts/trans'
 
-export default (opt: { defaultSelected?: number[]; onSelect: (selected: number[]) => void }) => {
-  const [search, setSearch] = useState<string>()
-  const [displays, setDisplays] = useState<ContainResults>({
+const displaysAtom = atom<ContainResults>({
+  group: [],
+  whiteboard: [],
+  note: [],
+  video: [],
+  audio: [],
+  pdf: [],
+  webpage: [],
+  chat: [],
+  collection: []
+})
+const calculateDisplays = debounce(() => {
+  const metas = MetaStore.getMetaObjectsMap()
+  const displayable = {
+    collection: [],
     group: [],
     whiteboard: [],
+    chat: [],
     note: [],
     video: [],
     audio: [],
     pdf: [],
     webpage: []
+  }
+  const ms = Array.from(metas.values())
+  Promise.all(
+    ms.map(async i => {
+      if (i.deleted) return
+      if (i.type === 'collection' && i.objectId && !CollectionStore.isVisibleCollection(i.objectId)) return
+      if (displayable[i.type]) {
+        const contains = await calculateContains(i, true)
+        if (contains?.length) {
+          displayable[i.type].push({ meta: i, contains: contains.length, children: contains.map(i => i.id) })
+        }
+      }
+    })
+  ).then(() => {
+    globalStore.set(displaysAtom, displayable)
   })
+}, 500)
+const useDisplayInside = (opt: {
+  defaultSelected?: number[]
+  onSelect: (selected: number[]) => void
+  disable?: boolean
+  currentMetas?: number[]
+}) => {
+  const [search, setSearch] = useState<string>()
+  const displays = useGlobalAtomValue(displaysAtom)
   const selectedMeta = opt.defaultSelected
   const [contains, setContains] = useState<MetaObject[]>()
   const [filteredDisplay, setFilteredDisplay] = useState<typeof displays>()
@@ -31,51 +69,66 @@ export default (opt: { defaultSelected?: number[]; onSelect: (selected: number[]
   const { t } = useTranslation()
   const inputRef = useRef<HTMLInputElement>(null)
   useEffect(() => {
-    const displayable = {
-      group: [],
-      whiteboard: [],
-      note: [],
-      video: [],
-      audio: [],
-      pdf: [],
-      webpage: []
-    }
-    const ms = Array.from(metas.values())
-    Promise.all(
-      ms.map(async i => {
-        if (i.deleted) return
-        if (displayable[i.type]) {
-          const contains = await calculateContains(i, true)
-          if (contains?.length) {
-            displayable[i.type].push({ meta: i, contains: contains.length })
-          }
-        }
-      })
-    ).then(() => {
-      setDisplays(displayable)
-    })
-  }, [metas])
+    if (opt.disable) return
+    calculateDisplays()
+  }, [metas, opt.disable])
   useLayoutEffect(() => {
-    if (search) {
+    if (search || opt.currentMetas) {
       const currDisplayMetaIds = new Set(Object.values(displays).flatMap(i => i.map(o => o.meta.id)))
       let ms = Array.from(currDisplayMetaIds.values())
         .map(i => MetaStore.getCachedMetaObject(i))
         .filter(o => o) as MetaObject[]
-      ms = Array.from(
-        fuzzysort
-          .go(search, ms, {
-            keys: ['name', 'placeholderName', 'description']
-          })
-          .values()
-      ).map(i => i.obj)
+      if (search) {
+        ms = Array.from(
+          fuzzysort
+            .go(search, ms, {
+              keys: ['name', 'placeholderName', 'description']
+            })
+            .values()
+        ).map(i => i.obj)
+      }
+      const currentIds = opt.currentMetas ? new Set(opt.currentMetas) : undefined
       const leftIds = new Set(ms.map(i => i.id))
-      setFilteredDisplay(Object.fromEntries(Object.entries(displays).map(i => [i[0], i[1].filter(o => leftIds.has(o.meta.id))])))
+      setFilteredDisplay(
+        // @ts-ignore
+        Object.fromEntries(
+          Object.entries(displays).map(i => [
+            i[0],
+            i[1]
+              .filter(o => {
+                if (leftIds.has(o.meta.id)) {
+                  if (currentIds) {
+                    if (o.children.some(c => currentIds.has(c))) return true
+                    return false
+                  }
+                  return true
+                }
+                return false
+              })
+              .map(i => {
+                if (!currentIds) {
+                  return i
+                }
+                return { ...i, contains: i.children.filter(i => currentIds.has(i)).length }
+              })
+          ])
+        )
+      )
     } else {
       setFilteredDisplay(undefined)
     }
-  }, [search])
+  }, [search, opt.currentMetas, displays])
   useLayoutEffect(() => {
     if (selectedMeta?.length) {
+      const all = selectedMeta.filter(id => {
+        const m = MetaStore.getCachedMetaObject(id)
+        if (!m || m.deleted) return false
+        return true
+      })
+      if (!all.length) {
+        setContains(undefined)
+        return
+      }
       const currWorkspaceMetas = selectedMeta.filter(i => MetaStore.getCachedMetaObject(i))
       if (!currWorkspaceMetas.length) {
         setContains(undefined)
@@ -113,7 +166,9 @@ export default (opt: { defaultSelected?: number[]; onSelect: (selected: number[]
         if (!m || m.deleted) return false
         return true
       })
-      if (!all.length) return null
+      if (!all.length) {
+        return null
+      }
       return (
         <Content style={{ display: 'flex', gap: 4, fontSize: 12, marginTop: 2, ...opts?.style }}>
           {selectedMeta.map(id => {
@@ -134,24 +189,21 @@ export default (opt: { defaultSelected?: number[]; onSelect: (selected: number[]
                 }}
                 flex
                 onClick={() => {
-                  GlobalInstance.layoutOps?.openObject(m.id)
+                  Global.layoutOps?.openObject(m.id)
                 }}
                 gap={6}
               >
-                <Icon name={Rendevoz.Utils.Object.getMetaObjectIcon(m.type)} />
-                <div className={'ellipsis-font-1'}>{m.name || m.placeholderName}</div>
-                <Content style={{ marginLeft: 'auto' }}>
-                  <Icon
-                    onClick={e => {
-                      e.stopPropagation()
-                      opt.onSelect(opt.defaultSelected?.filter(i => i !== m.id) || [])
-                    }}
-                    name={'park-close'}
-                    style={{
-                      cursor: 'pointer'
-                    }}
-                  />
-                </Content>
+                <Icon name={Global.utils.getIcon(m.type)} />
+                <div className={'ellipsis-font-1'}>{m.name || t(trans.Unnamed)}</div>
+                <Icon
+                  onClick={e => {
+                    e.stopPropagation()
+                    opt.onSelect(opt.defaultSelected?.filter(i => i !== m.id) || [])
+                  }}
+                  size={12}
+                  name={'park-close'}
+                  className={'cursor-pointer ml-auto'}
+                />
               </Content>
             )
           })}
@@ -159,12 +211,13 @@ export default (opt: { defaultSelected?: number[]; onSelect: (selected: number[]
       )
     }
   }
-  const renderIcon = (opts?: { style?: CSSProperties; size?: number }) => (
+  const renderIcon = (opts?: { style?: CSSProperties; size?: number; className?: string; align?: string }) => (
     <IconWithPopover
       tooltip={t('general.View included objects')}
       name={'park-hamburger-button'}
       size={opts?.size || 14}
       style={opts?.style}
+      align={opts?.align}
       onVisiblityChange={v => {
         if (v) {
           console.log(v)
@@ -174,7 +227,7 @@ export default (opt: { defaultSelected?: number[]; onSelect: (selected: number[]
           }, 100)
         }
       }}
-      className={ClassName.flatButton(4, '3px')}
+      className={classnames('square-button-small', opts?.className)}
       zIndex={999}
       content={setV => renderMenu(() => setV(false))}
       placement={['bottom']}
@@ -198,11 +251,6 @@ export default (opt: { defaultSelected?: number[]; onSelect: (selected: number[]
             if (alreadyContains.has(m.meta.id)) return
             layout.push({
               type: 'item',
-              contextMenu: setV => (
-                <WithBorder>
-                  <ObjectActionMenu onClose={() => setV(false)} metaObjectId={m.meta.id} />
-                </WithBorder>
-              ),
               key: String(m.meta.id),
               suffix: String(m.contains),
               onSelect: () => {
@@ -211,7 +259,10 @@ export default (opt: { defaultSelected?: number[]; onSelect: (selected: number[]
                 }
                 onClose?.()
               },
-              text: m.meta.name || m.meta.placeholderName || 'Unnamed object'
+              style: {
+                color: !m.meta.name ? Colors.Font.SuperTransparent : undefined
+              },
+              text: m.meta.name || t(trans.Unnamed)
             })
           }
         })
@@ -221,7 +272,7 @@ export default (opt: { defaultSelected?: number[]; onSelect: (selected: number[]
       <WithBorder
         padding={'0.4rem 0'}
         style={{
-          width: layout.length || search ? 320 : 200,
+          width: layout.length || search ? 280 : 200,
           maxHeight: 360,
           overflowY: 'auto'
         }}
@@ -268,4 +319,9 @@ export default (opt: { defaultSelected?: number[]; onSelect: (selected: number[]
     renderMenu,
     renderContainIndicator
   }
+}
+
+useDisplayInside.calculateDisplays = calculateDisplays
+export default useDisplayInside as typeof useDisplayInside & {
+  calculateDisplays: typeof calculateDisplays
 }

@@ -1,10 +1,11 @@
 import { formatDuration, intervalToDuration } from 'date-fns'
 import { DateFormat } from '@/utils'
 
-export default (dur: number) => {
+export default (dur?: number) => {
+  if (!dur) return undefined
   return formatDuration(intervalToDuration({ start: 0, end: dur * 1000 }), {
     locale: DateFormat.getLocale(),
-    format: ['hours', 'minutes']
+    format: ['hours', 'minutes', 'seconds']
   })
     .replace(' seconds', 's')
     .replace(' second', 's')

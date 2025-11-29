@@ -12,6 +12,9 @@ export type IGroupEvent =
       rowId: number
     }
   | {
+      type: 'clearAll'
+    }
+  | {
       type: 'groupDataChange'
       value: Partial<MetaGroup>
       onChange: (g: MetaGroup) => void

@@ -1,24 +1,32 @@
 import { MetaStore, ObjectStore } from '@/api/stores'
-import { IPdfLabel, PageSize } from '~/typings'
+import { IPDFLabel } from '~/typings'
 import { ResizeAndDrag } from '@/components'
 import { deleteLocalFile } from '@/utils'
 import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 import { useSetAtom } from 'jotai'
-import { PdfStateAtom } from '@/core/components/pdf/hooks/usePdfState'
+import { PDFStateAtom } from '@/core/components/pdf/hooks/usePDFState'
 import { useRef } from 'react'
-import usePdfSelectMode from '@/core/components/pdf/hooks/useSelectMode'
 import { useSelectAtomValue } from '@/hooks'
 import { Colors } from '@/consts'
-import LabelNoteRenderer from '@/core/components/pdf/components/label/LabelNoteRenderer'
 
-const CropLabel = ({ labelId, pageSize, scale }: { labelId: number; pageSize: PageSize; scale?: number }) => {
-  const label = ObjectStore('pdfLabel').useValue(labelId) as (IPdfLabel & { type: 'crop' }) | undefined
+const CropLabel = ({
+  labelId,
+  transformScale,
+  width,
+  height
+}: {
+  labelId: number
+  width: number
+  height: number
+  transformScale?: number
+}) => {
+  const label = ObjectStore('pdfLabel').useValue(labelId) as (IPDFLabel & { type: 'crop' }) | undefined
   const instance = usePDFInstance()
   const labelMeta = MetaStore.useObjectToMetaValue(labelId)
-  const setPdfState = useSetAtom(PdfStateAtom)
+  const setPdfState = useSetAtom(PDFStateAtom)
   const dragInitPos = useRef({ x: 0, y: 0 })
-  const [selectMode] = usePdfSelectMode()
-  const currentHighlightLabelId = useSelectAtomValue(PdfStateAtom, s => s.currentHighlightLabelId)
+  const selectMode = useSelectAtomValue(PDFStateAtom, s => s.selectMode)
+  const currentHighlightLabelId = useSelectAtomValue(PDFStateAtom, s => s.currentHighlightLabelId)
   const handleResizeOrDrag = async (element: HTMLElement) => {
     if (!label || label.page === undefined) return
     const originalImage = label?.imageUrl
@@ -43,13 +51,15 @@ const CropLabel = ({ labelId, pageSize, scale }: { labelId: number; pageSize: Pa
       }
     })
   }
+  if (labelMeta?.deleted) return null
   if (label) {
+    const defaultColor = 'rgba(39, 158, 255)'
     return (
       <ResizeAndDrag
-        size={{ width: pageSize.width * label.rect.width, height: pageSize.height * label.rect.height }}
+        size={{ width: width * label.rect.width, height: height * label.rect.height }}
         position={{
-          x: pageSize.width * label.rect.left,
-          y: pageSize.height * label.rect.top
+          x: width * label.rect.left,
+          y: height * label.rect.top
         }}
         bounds={'parent'}
         onResizeStop={(e, dir, element) => {
@@ -61,7 +71,7 @@ const CropLabel = ({ labelId, pageSize, scale }: { labelId: number; pageSize: Pa
             y: data.y
           }
         }}
-        scale={scale}
+        scale={transformScale}
         onDragStop={(e, data) => {
           const { x, y } = data
           if (Math.abs(x - dragInitPos.current.x) > 5 || Math.abs(y - dragInitPos.current.y) > 5) {
@@ -84,13 +94,15 @@ const CropLabel = ({ labelId, pageSize, scale }: { labelId: number; pageSize: Pa
         }}
         style={{
           pointerEvents: selectMode ? 'none' : 'auto',
-          borderRadius: 6,
-          boxShadow: `0 0 0 2px ${label.color === 'rgba(39, 158, 255)' ? 'rgba(39, 158, 255)' : Colors.getAdaptColor(label.color)}`,
-          background: currentHighlightLabelId === labelId ? Colors.Common.SelectColorTransparent : undefined
+          borderRadius: 4,
+          boxShadow: `0 0 0 1px ${label.color === defaultColor ? defaultColor : Colors.getAdaptColor(label.color)}`,
+          background:
+            label.color === defaultColor
+              ? Colors.getAlphaColor(defaultColor.replace('rgba', 'rgb'), currentHighlightLabelId === labelId ? 0.3 : 0.1)
+              : Colors.getAlphaColor(Colors.getAdaptColor(label.color), currentHighlightLabelId === labelId ? 0.4 : 0.15)
         }}
         cancel={'.cancel'}
       >
-        <LabelNoteRenderer labelId={labelId} />
       </ResizeAndDrag>
     )
   }

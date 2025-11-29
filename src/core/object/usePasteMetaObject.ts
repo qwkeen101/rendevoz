@@ -11,11 +11,11 @@ export default (ref: RefObject<HTMLElement>, onPaste?: (objs: MetaObject[]) => v
       if (container) {
         const ele = document.elementFromPoint(mousePos.current[0], mousePos.current[1])
         if (ele && container.contains(ele)) {
-          // GlobalInstance.metaOps?.getCopiedMetaObjects?.().then(res => {
-          //   if (res?.length) {
-          //     onPaste?.(res)
-          //   }
-          // })
+          Global.metaOps?.getCopiedMetaObjects?.().then(res => {
+            if (res?.length) {
+              onPaste?.(res)
+            }
+          })
         }
       }
     }

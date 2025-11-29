@@ -1,3 +1,4 @@
+import getPodcastCountryCode from '../utils/getPodcastCountryCode'
 export type IItunesPodcast = {
   artistName: string
   id: string
@@ -18,10 +19,7 @@ export type IItunesPodcast = {
   trackName: string
 }
 export default {
-  getShowNotesByItunesId: async (itunesId: number) => {
-    return '1'
-  },
-  getTop: async (lang = 'cn', max = 100) => {
+  getTop: async (lang = getPodcastCountryCode(), max = 100) => {
     const url = `https://rss.applemarketingtools.com/api/v2/${lang}/podcasts/top/${max}/podcasts.json`
     const res = await fetch(url).then(res => res.json())
     if (res) {
@@ -29,7 +27,7 @@ export default {
     }
     return
   },
-  getEpisodes: async (lang = 'cn', max = 100) => {
+  getEpisodes: async (lang = getPodcastCountryCode(), max = 100) => {
     const url = `https://rss.applemarketingtools.com/api/v2/${lang}/podcasts/top/${max}/podcast-episodes.json`
     const res = await fetch(url).then(res => res.json())
     if (res) {

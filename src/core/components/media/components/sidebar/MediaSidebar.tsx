@@ -1,113 +1,130 @@
 import { TabPane, Tabs } from '@/components'
 import MediaChapterController from './MediaChapterController'
 import MediaLabelController from './MediaLabelController'
-import { memo, useEffect, useLayoutEffect, useRef } from 'react'
-import useMediaSidebarState from '../../hooks/useMediaSidebarState'
+import { memo } from 'react'
 import { Resizable } from 're-resizable'
-import Subtitle from '@/core/components/media/components/sidebar/Subtitle'
-import { useAtomValue } from 'jotai'
-import { MediaLayoutAtom } from '@/core/components/media/hooks/useVideoLayout'
-import { useSelectAtomValue, useUpdateEffect } from '@/hooks'
-import { MediaStateAtom } from '@/core/components/media/hooks/useMediaState'
-import { useTranslation } from 'react-i18next'
+import { useUpdateEffect } from '@/hooks'
+import { useSelectMediaState, useSetMediaState } from '@/core/components/media/hooks/useMediaState'
 import { useMediaInstance } from '@/core/components/media/hooks/useMediaInstance'
-import CommonAttachmentsSidebar from '@/core/components/common/CommonAttachmentsSidebar'
-import { GlobalSetting } from '@/core'
+import { Tab } from '@/components/base/tabs'
+import { useTranslation } from 'react-i18next'
+import SidebarMetaInfo from '@/core/components/common/SidebarMetaInfo'
+import YoutubePlaylistView from '@/core/components/media/components/YoutubePlaylistView'
+import MediaSubtitle from '@/core/components/media/components/sidebar/Subtitle'
+import MediaAI from '@/core/components/media/components/AI/MediaAI'
+import trans from '@/consts/trans'
+import CommonSummarySidebar from '@/core/components/ai/CommonSummarySidebar'
+import { MetaStore } from '@/api/stores'
+import CommonExamSidebar from '@/core/components/ai/CommonExamSidebar'
+import askAIExamQuestion from '@/core/ai/chat/askAIExamQuestion'
 
 const MediaSidebar = memo(() => {
-  const [sidebarState, setSidebarState] = useMediaSidebarState()
-  const column = useAtomValue(MediaLayoutAtom)
-  const labelType = useSelectAtomValue(MediaStateAtom, s => s.labelType)
-  const labelIds = useSelectAtomValue(MediaStateAtom, s => s.labels)
-  const subtitleInSidebar = GlobalSetting.useSelectSettingAtom('subtitleInSidebar')
-  const { sidebarOpened } = sidebarState
-  const visible = sidebarOpened
-  const metaId = useSelectAtomValue(MediaStateAtom, s => s.metaId)
+  const setState = useSetMediaState()
   const instance = useMediaInstance()
+  const { labelIds, metaId, exam, chapters, currentFocusQuestionId, ytPlaylistId, aiSummary, visible, active, width } = useSelectMediaState(
+    state => ({
+      labelIds: state.labels,
+      metaId: state.metaId,
+      chapters: state.sortedChapters?.length,
+      aiSummary: state.aiSummary,
+      exam: state.exam,
+      ytPlaylistId: state.state?.ytPlaylistId,
+      visible: state.sidebarVisible,
+      active: state.sidebarActive,
+      width: state.sidebarWidth,
+      currentFocusQuestionId: state.currentFocusQuestionId
+    })
+  )
   useUpdateEffect(() => {
     instance.on?.({
       type: 'externalStateChange',
       state: {
-        defaultActiveSidebar: sidebarState.rightBarActive
+        defaultActiveSidebar: active,
+        defaultSidebarVisible: visible
       }
     })
-  }, [sidebarState.rightBarActive])
-
+  }, [active, visible])
+  const { t } = useTranslation()
   return (
     <>
       <Resizable
         size={{
-          height: column ? 'auto' : '100%',
-          width: column ? '100%' : sidebarState.rightBarWidth
+          height: '100%',
+          width: width
         }}
         onResizeStop={(event, direction, elementRef) => {
-          const width = elementRef.clientWidth
-          setSidebarState(s => ({ ...s, rightBarWidth: width }))
-        }}
-        onResize={(event, direction, elementRef) => {
-          setSidebarState(s => ({ ...s, rightBarRealtimeWidth: elementRef.clientWidth }))
-        }}
-        ref={ref => {
-          if (column) {
-            ref?.resizable?.style.setProperty('flex-shrink', '1')
-            ref?.resizable?.style.setProperty('width', 'calc(100% - 32px)')
-          } else {
-            ref?.resizable?.style.setProperty('flex-shrink', '0')
-          }
+          setState(s => ({ ...s, sidebarWidth: elementRef.clientWidth }))
         }}
         minWidth={300}
-        maxWidth={column ? undefined : 1000}
-        enable={
-          column
-            ? false
-            : {
-                left: true
-              }
-        }
-        minHeight={column ? 240 : undefined}
+        maxWidth={1000}
+        enable={{
+          left: true
+        }}
         style={{
-          display: 'flex',
-          borderRadius: column ? 12 : 0,
-          flexDirection: 'column',
-          borderWidth: column ? '1px' : '0px 0px 0px 1px',
-          borderColor: 'var(--border-background)',
-          borderStyle: 'solid',
-          flexGrow: 1,
           opacity: visible ? 1 : 0,
-          visibility: visible ? 'visible' : 'hidden',
-          position: visible ? 'relative' : 'absolute',
-          marginBottom: column ? 16 : 0,
-          overflow: 'hidden'
+          pointerEvents: visible ? 'auto' : 'none',
+          position: visible ? 'relative' : 'absolute'
         }}
       >
-        <Tabs activeKey={sidebarState.rightBarActive} disableTabNav={true}>
-          <TabPane key="label">
-            <MediaLabelController labelType={labelType} labelIds={labelIds} />
-          </TabPane>
-          <TabPane key="chapter">
-            <MediaChapterController />
-          </TabPane>
-          <TabPane key="attachments">{metaId && <CommonAttachmentsSidebar metaId={metaId} />}</TabPane>
-          {subtitleInSidebar ? (
-            <TabPane key="subtitle">
-              <div
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  height: '100%'
-                }}
-              >
-                <Subtitle />
-              </div>
+        <div className={'flex h-full flex-col grow overflow-hidden border-left'}>
+          <Tabs
+            activeKey={active}
+            tabNavLeftClassName={'overflow-x-auto font-size-13 no-scrollbar !flex-nowrap'}
+            tabNavContainerClassname={'p-2.5 py-1.5 border-bottom'}
+            tabNavClassname={'!font-medium !px-1.5 shrink-0 !py-1.5'}
+            onTabClick={k => setState(s => ({ ...s, sidebarActive: k }))}
+          >
+            {MetaStore.isVisibleMetaObject(metaId, { showHidden: true, showDeleted: true }) ? (
+              <TabPane key={'info'} tab={<Tab text={t('general.Info')} />}>
+                <SidebarMetaInfo id={metaId} />
+              </TabPane>
+            ) : null}
+            <TabPane className={'flex flex-col'} key={'ai'} tab={<Tab text={t('general.Chat')} />}>
+              <MediaAI />
             </TabPane>
-          ) : null}
-        </Tabs>
-        {sidebarOpened && subtitleInSidebar === false && (sidebarState.rightBarActive === 'hide' || sidebarState.rightBarActive === 'subtitle') ? (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column' }}>
-            <Subtitle />
-          </div>
-        ) : null}
+            {aiSummary ? (
+              <TabPane key={'summary'} tab={<Tab text={t(trans.AI.Summary)} />}>
+                <CommonSummarySidebar mediaSummary={aiSummary} />
+              </TabPane>
+            ) : null}
+            {exam ? (
+              <TabPane key={'exam'} tab={<Tab text={t('general.exam')} />}>
+                <CommonExamSidebar
+                  currentFocusQuestionId={currentFocusQuestionId}
+                  source={async question => {
+                    const chat = instance.aiOps?.getActiveChatId(true)
+                    if (chat) {
+                      setState(s => ({ ...s, sidebarActive: 'ai' }))
+                      askAIExamQuestion({
+                        chatId: chat,
+                        question,
+                        initialMessages: await instance.aiOps?.getInitialMessages(),
+                        parentMetaId: metaId
+                      })
+                    }
+                  }}
+                  id={exam}
+                />
+              </TabPane>
+            ) : null}
+            <TabPane key='subtitles' tab={<Tab text={t('general.Subtitles')} />}>
+              <MediaSubtitle />
+            </TabPane>
+            <TabPane key='label' tab={<Tab text={t('general.Highlights')} count={labelIds?.length} />}>
+              <MediaLabelController />
+            </TabPane>
+            {chapters ? (
+              <TabPane key='chapter' tab={<Tab text={t('general.Chapters')} count={chapters} />}>
+                <MediaChapterController />
+              </TabPane>
+            ) : null}
+            {ytPlaylistId ? (
+              <TabPane key='playlist' tab={<Tab text={t('feed.Playlist')} />}>
+                <YoutubePlaylistView />
+              </TabPane>
+            ) : null}
+          </Tabs>
+        </div>
       </Resizable>
     </>
   )

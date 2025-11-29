@@ -1,10 +1,9 @@
 /// <reference types="react" />
 type AvaliableLanguages = 'en-US' | 'zh-CN'
-type Setting = INotificationSetting & IShortCutSetting & IGeneralSetting & IObjectsAndLinkSetting & IComponentSetting & IAppearanceSetting
+type Setting = INotificationSetting & IShortCutSetting & IGeneralSetting & IComponentSetting
 type IGeneralSetting = {
   general: {
     language?: AvaliableLanguages
-    openNewTab: 'always open new tab' | 'open existing tab'
     darkMode: boolean
     customSearchEngineUrl?: string
     userFilePath?: string
@@ -13,20 +12,6 @@ type IGeneralSetting = {
     defaultFilePath?: string
     defaultLanguage: string
     dataBackup: 'whenClose' | 'every day' | 'every week' | 'every month' | 'never'
-    defaultSearchEngine:
-      | 'custom'
-      | 'baidu'
-      | 'google'
-      | 'bing'
-      | 'zhihu'
-      | 'google scholar'
-      | 'wikipedia'
-      | 'wiki summary'
-      | 'vocabulary'
-      | 'bing dictionary'
-      | 'youdao dictionary'
-      | 'semantic scholar'
-    defaultImageSearchEngine: 'bing' | 'google' | 'pinterest' | 'baidu'
   }
 }
 export type INotificationSetting = {
@@ -65,17 +50,7 @@ export type IShortCutSetting = {
     openGlobalSearch: ShortCut | null
   }>
 }
-export type IObjectsAndLinkSetting = {
-  objectAndLink: {
-    enableAll: boolean
-    enableDropOnPDFLink: boolean
-    enableDropOnWhiteboardLink: boolean
-    enableDropOnEditorLink: boolean
-    enableDragFromPDFLink: boolean
-    enableDragFromEditorLink: boolean
-    enableDropAutoGenerateObject: boolean
-  }
-}
+
 export type IComponentSetting = {
   whiteboard: {
     enableMinimap: boolean
@@ -87,9 +62,6 @@ export type IComponentSetting = {
   translate: {
     autoGotoHoverText: boolean
     showOrigWhenHoverText: boolean
-  }
-  webpage: {
-    enableSearchAutoSuggestion: boolean
   }
   pdf: {
     renderMode: 'followTheme' | 'custom' | 'default'

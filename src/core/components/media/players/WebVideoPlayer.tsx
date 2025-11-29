@@ -1,15 +1,26 @@
-import { useEffect, useRef } from 'react'
-import { useSetAtom } from 'jotai'
-import useMediaState, { MediaStateAtom } from '@/core/components/media/hooks/useMediaState'
+import { memo, useEffect, useRef } from 'react'
+import { useGetMediaState, useSelectMediaState, useSetMediaState } from '@/core/components/media/hooks/useMediaState'
 import { assignProperties } from '@/utils'
 import { useMediaInstance } from '@/core/components/media/hooks/useMediaInstance'
-import youtubeCaptionScrapper, { YoutubeCaptionParser } from '@/core/components/media/utils/youtubeCaptionScrapper'
-const WebVideoPlayer = () => {
+import useThrottleUpdateCurrentTime from '@/core/components/media/hooks/useThrottleUpdateCurrentTime'
+
+const WebVideoPlayer = memo(() => {
   const webviewRef = useRef<HTMLWebViewElement>()
   const webReady = useRef(false)
-  const [mediaState, setMediaState] = useMediaState()
+  const setMediaState = useSetMediaState()
   const instance = useMediaInstance()
-  const { paused, url } = mediaState
+  const get = useGetMediaState()
+  const updateTime = useThrottleUpdateCurrentTime()
+  const { paused, url, loaded, autoPlay, jumpTime, speed, volume, muted } = useSelectMediaState(s => ({
+    paused: s.paused,
+    url: s.url,
+    muted: s.muted,
+    loaded: s.loaded,
+    speed: s.speed,
+    autoPlay: s.autoPlay,
+    volume: s.volume,
+    jumpTime: s.jumpTime
+  }))
   useEffect(() => {
     const webview = webviewRef.current
     if (webview) {
@@ -17,13 +28,12 @@ const WebVideoPlayer = () => {
         const { channel, args } = event
         if (channel === 'event') {
           const e = args[0]
-          console.log(e)
           switch (e.type) {
             case 'loaded':
               setMediaState(s => ({ ...s, loaded: true }))
               break
             case 'timeUpdate': {
-              setMediaState(s => ({ ...s, currentTime: e.time }))
+              updateTime(e.time)
               break
             }
             case 'play': {
@@ -60,58 +70,65 @@ const WebVideoPlayer = () => {
       }
     }
   })
-  const web = webviewRef.current
+
   useEffect(() => {
-    if (url.includes('youtube')) {
-      youtubeCaptionScrapper(url.split('embed/')[1]).then(res => {
-        res.forEach(async i => {
-          const text = await fetch(i.baseUrl).then(res => res.text())
-          const data = YoutubeCaptionParser(text)
-          setMediaState(s => ({
-            ...s,
-            subtitleLang: i.name.simpleText,
-            subtitleList: [
-              ...(s.subtitleList || []),
-              {
-                lang: i.name.simpleText,
-                value: data
-              }
-            ]
-          }))
-        })
-      })
+    return () => {
+      setMediaState(s => ({ ...s, loaded: false, jumpTime: s.currentTime }))
     }
-  }, [url])
+  }, [])
+
+  const web = webviewRef.current
+
   useEffect(() => {
-    if (mediaState.loaded && web && webReady.current) {
+    if (loaded && web && webReady.current) {
       if (paused) {
         web.send('videoEvent', { type: 'stop' })
       } else {
         web.send('videoEvent', { type: 'play' })
       }
     }
-  }, [paused, mediaState.loaded])
+  }, [paused, loaded])
 
   useEffect(() => {
-    if (mediaState.loaded && webReady.current) {
-      if (mediaState.autoPlay) {
+    if (loaded && web && webReady.current) {
+      if (volume !== undefined) {
+        web.send('videoEvent', { type: 'volume', volume: volume })
+      }
+    }
+  }, [volume, loaded])
+
+  useEffect(() => {
+    if (loaded && web && webReady.current) {
+      if (muted !== undefined) {
+        web.send('videoEvent', { type: 'mute', muted })
+      }
+    }
+  }, [muted, loaded])
+
+  useEffect(() => {
+    if (loaded && web && webReady.current && speed !== undefined) {
+      web.send('videoEvent', { type: 'speed', speed })
+    }
+  }, [loaded, speed])
+
+  useEffect(() => {
+    if (loaded && webReady.current) {
+      if (autoPlay) {
         web.send('videoEvent', { type: 'play' })
       }
     }
-  }, [mediaState.loaded, mediaState.autoPlay])
+  }, [loaded, autoPlay])
   useEffect(() => {
-    if (mediaState.jumpTime !== undefined && mediaState.loaded && web) {
-      if (Math.abs(mediaState.jumpTime - (mediaState.currentTime || 0)) > 1) {
-        web.send('videoEvent', { type: 'jump', time: mediaState.jumpTime })
-      }
+    if (jumpTime !== undefined && loaded && web) {
+      web.send('videoEvent', { type: 'jump', time: jumpTime })
     }
-  }, [mediaState.jumpTime, mediaState.loaded])
+  }, [jumpTime, loaded])
   useEffect(() => {
-    if (mediaState.currentTime !== undefined && mediaState.loaded && web) {
-      web.send('videoEvent', { type: 'jump', time: mediaState.currentTime })
+    if (get().currentTime !== undefined && loaded && web) {
+      web.send('videoEvent', { type: 'jump', time: get().currentTime })
     }
-  }, [mediaState.loaded])
-  if (mediaState.loaded && web) {
+  }, [loaded])
+  if (loaded && web) {
     assignProperties(instance, {
       imageOps: {
         ...instance.imageOps,
@@ -140,8 +157,8 @@ const WebVideoPlayer = () => {
   return (
     <webview
       ref={webviewRef}
-      sandbox="allow-top-navigation allow-same-origin allow-forms allow-scripts"
-      webpreferences="video"
+      sandbox='allow-top-navigation allow-same-origin allow-forms allow-scripts'
+      webpreferences='video'
       src={url}
       disablewebsecurity={true}
       httpreferrer={'https://www.youtube.com'}
@@ -154,6 +171,6 @@ const WebVideoPlayer = () => {
       }}
     ></webview>
   )
-}
+})
 
 export default WebVideoPlayer

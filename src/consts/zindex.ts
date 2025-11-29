@@ -1,5 +1,6 @@
 const Zindexes = {
   SidebarContextMenuOverlay: 5000,
+  GeneralPanel: 7000,
   PopupMenu: 9999,
   ToolBar: 20103,
   DragIndicator: 10001,
@@ -8,7 +9,6 @@ const Zindexes = {
   SearchPanel: 19989,
   HoverObjectDetails: 19990,
   ObjectPanel: 19992,
-  TranslatePanel: 19994,
   Modal: 20000,
   ModalBackdrop: 20001,
   GraphPopup: 20002,
@@ -16,6 +16,11 @@ const Zindexes = {
   EditorSelectionToolbar: 22000,
   Tooltip: 30102,
   ImagePreview: 32004,
-};
+  QuickAddTag: 1001,
+  ObjectDetails: 1000,
+  LabelEditor: 999,
+  QuickAdd: 998,
+  Preview: 997
+}
 
-export default Zindexes;
+export default Zindexes

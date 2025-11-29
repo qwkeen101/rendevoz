@@ -1,147 +1,60 @@
-import { Content, Icon, IconWithPopover, Menu, WithBorder } from '@/components'
+import { Content, Icon, IconWithPopover } from '@/components'
 import { MetaStore, ObjectStore } from '@/api/stores'
-import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { DateFormat } from '@/utils'
-import { Colors } from '@/consts'
-import { ClassName } from 'rendevoz'
+import { Colors, Icons } from '@/consts'
 import useFeedIsMeta from '@/core/components/feed/hooks/useFeedIsMeta'
-import useFeedIsRead from '@/core/components/feed/hooks/useFeedIsRead'
-import unreadItem from '@/core/components/feed/utils/service/unreadItem'
-import useFeedState from '@/core/components/feed/hooks/useFeedState'
-import readItem from '@/core/components/feed/utils/service/readItem'
 import addFeedAsMeta from '@/core/components/feed/utils/service/addFeedAsMeta'
-import { useTranslation } from 'react-i18next'
-import { GlobalInstance } from '@/hooks'
-import toast from 'react-hot-toast'
-import { useAtomValue } from 'jotai/react'
+import classnames from 'classnames'
+import FeedItemMenu from '@/core/components/feed/components/FeedItemMenu'
+import useFeedInstance from '@/core/components/feed/hooks/useFeedInstance'
+import MetaPropertyStore from '@/api/stores/meta/metaProperty.store'
 
-const ItemsToolbar = ({ itemId, isFocused = false }: { itemId: number; isFocused: boolean }) => {
+const ItemsToolbar = ({ itemId, isFocused = false, className }: { itemId: number; isFocused: boolean; className?: string }) => {
   const item = ObjectStore('feed').useValue(itemId)
-  const isReadLater = useAtomValue(useFeedState.readLaterIdsAtom).has(itemId)
   const { isMeta, metaId } = useFeedIsMeta(itemId)
-  const { t } = useTranslation()
+  const instance = useFeedInstance()
   if (!item) return null
   return (
-    <Content gap={10} flex justifyContent={'space-between'} className={'font-size-13' + (!isFocused ? ' transparent-font' : '')}>
+    <div className={classnames('font-size-13 flex gap-3.5 items-center', !isFocused && 'transparent-font', className)}>
       {item.date && <span className={'font-size-12'}>{DateFormat.formatDistanceToNowStrict(item.date)}</span>}
-      <Content flex alignItems={'center'} gap={4}>
-        <Icon
-          className={'button p-3'}
-          name={'park-star'}
-          onClick={e => {
-            e.stopPropagation()
-            const currentReadLater = KeyvalueStore.getOne('feedReadLaterIds') || []
-            if (isReadLater) {
-              KeyvalueStore.updateOne(
-                'feedReadLaterIds',
-                currentReadLater.filter(i => i !== itemId)
-              )
-            } else {
-              KeyvalueStore.updateOne('feedReadLaterIds', [itemId, ...currentReadLater])
-            }
-          }}
-          theme={isReadLater ? 'filled' : undefined}
-          style={{
-            color: isReadLater ? Colors.Emphasis.Emphasis : undefined
-          }}
-        />
-        {/*<Icon*/}
-        {/*  style={{*/}
-        {/*    color: isRead ? Colors.Common.SelectColor : undefined*/}
-        {/*  }}*/}
-        {/*  onClick={e => {*/}
-        {/*    e.stopPropagation()*/}
-        {/*    if (isRead) {*/}
-        {/*      unreadItem(itemId, currentCollectionId)*/}
-        {/*    } else {*/}
-        {/*      readItem(itemId, currentCollectionId)*/}
-        {/*    }*/}
-        {/*  }}*/}
-        {/*  className={ClassName.flatButton(4, '3px')}*/}
-        {/*  name={isRead ? 'park-preview-open' : 'park-preview-close'}*/}
-        {/*/>*/}
-        <Icon
-          style={{
-            color: metaId ? Colors.Emphasis.Emphasis : undefined
-          }}
-          theme={metaId ? 'filled' : undefined}
-          onClick={e => {
-            e.stopPropagation()
-            if (!metaId) {
-              addFeedAsMeta(itemId)
-            }
-          }}
-          className={'button p-3'}
-          name={'park-share-one'}
-        />
-        <IconWithPopover
-          placement={['right', 'left']}
-          name={'park-more'}
-          align={'start'}
-          size={13}
-          padding={6}
-          renderOnParent={false}
-          onClick={e => e.stopPropagation()}
-          className={'button p-3'}
-          content={setV => (
-            <WithBorder onClick={e => e.stopPropagation()} padding={'0.4rem 0'} width={180}>
-              <Menu.NavigationMenu
-                layout={[
-                  metaId
-                    ? {
-                        type: 'item',
-                        key: 'view-details',
-                        icon: 'park-info',
-                        text: t('general.View details'),
-                        onSelect: () => {
-                          setV(false)
-                          GlobalInstance.metaOps?.openDetails(metaId)
-                        }
-                      }
-                    : undefined,
-                  {
-                    key: 'move-to',
-                    type: 'item',
-                    icon: 'park-corner-up-right',
-                    text: t('general.Move to'),
-                    onSelect: async () => {
-                      setV(false)
-                      if (!isMeta) {
-                        const m = await addFeedAsMeta(itemId)
-                        if (m) {
-                          GlobalInstance.metaOps?.quickAdd(m.id)
-                        }
-                      } else {
-                        if (metaId) {
-                          GlobalInstance.metaOps?.quickAdd(metaId)
-                        }
-                      }
-                    }
-                  },
-                  {
-                    key: 'copy-link',
-                    type: 'item',
-                    icon: 'park-link',
-                    text: t('general.Copy link'),
-                    onSelect: async () => {
-                      setV(false)
-                      navigator.clipboard.writeText(item?.link)
-                      toast.success(t('general.Copied'))
-                    }
-                  },
-                  item?.link ? { type: 'separator' } : undefined
-                ]}
-              />
-              {item.link && (
-                <div style={{ padding: '0px 8px' }} className={'transparent-font font-size-12'}>
-                  <div style={{ maxWidth: 200, wordBreak: 'break-all' }}>{item?.link}</div>
-                </div>
-              )}
-            </WithBorder>
-          )}
-        ></IconWithPopover>
-      </Content>
-    </Content>
+      <Icon
+        theme={item.followed ? 'filled' : undefined}
+        onClick={e => {
+          instance.feedOps?.follow(itemId)
+          e.stopPropagation()
+        }}
+        size={15}
+        className={classnames('cursor-pointer', item.followed ? 'text-red-500' : 'transparent-font hover-primary-color')}
+        name={Icons.Follow}
+      />
+      <Icon
+        style={{
+          color: isMeta ? Colors.Common.SelectColor : undefined
+        }}
+        size={15}
+        theme={isMeta ? 'filled' : undefined}
+        onClick={e => {
+          e.stopPropagation()
+          if (!isMeta) {
+            addFeedAsMeta(itemId, metaId)
+          } else if (metaId) {
+            Global.metaOps.openDetails?.(metaId)
+          }
+        }}
+        className={'cursor-pointer transparent-font hover-primary-color'}
+        name={isMeta ? Icons.Info : Icons.AddAsObject}
+      />
+      <IconWithPopover
+        placement={['right', 'bottom', 'top']}
+        name={Icons.More}
+        size={17}
+        padding={6}
+        renderOnParent={false}
+        onClick={e => e.stopPropagation()}
+        className={'cursor-pointer transparent-font hover-primary-color'}
+        content={setV => <FeedItemMenu id={itemId} onClose={() => setV(false)} />}
+      ></IconWithPopover>
+    </div>
   )
 }
 

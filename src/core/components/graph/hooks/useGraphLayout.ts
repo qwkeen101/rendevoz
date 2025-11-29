@@ -1,7 +1,7 @@
 import { selectAtom } from 'jotai/utils'
 import { GlobalSetting } from '@/core'
 import { isEqual } from 'lodash'
-import { useDebounceFn, useGlobalAtomValue, useUpdateEffect } from '@/hooks'
+import { useGlobalAtomValue, useUpdateEffect } from '@/hooks'
 import useGraph from '@/core/components/graph/hooks/useGraph'
 
 const selectedAtom = selectAtom(
@@ -15,13 +15,9 @@ const selectedAtom = selectAtom(
 export default () => {
   const graph = useGraph()
   const { nodeDistance, nodeSize } = useGlobalAtomValue(selectedAtom)
-  const debounceUpdateLayout = useDebounceFn(
-    () => {
-      graph.size = nodeSize
-      graph.distance = nodeDistance
-      graph.updateLayout()
-    },
-    { wait: 1000 }
-  )
-  useUpdateEffect(() => {}, [nodeSize, nodeDistance])
+  useUpdateEffect(() => {
+    graph.size = nodeSize
+    graph.distance = nodeDistance
+    graph.updateLayout(true)
+  }, [nodeSize, nodeDistance])
 }

@@ -1,6 +1,3 @@
-import { ReactElement, RefObject } from 'react'
-import { Box } from '~/typings/common'
-
 export interface PageSize {
   width: number
   height: number
@@ -10,6 +7,7 @@ export interface PageSize {
 
 type SelectedTextEvent = {
   selectedText?: string
+  e: PointerEvent
   rects?: Partial<{
     left: number
     top: number
@@ -20,27 +18,4 @@ type SelectedTextEvent = {
     percentageHeight: number
     percentageWidth: number
   }>[]
-}
-
-export interface PageFunctionRef {
-  clearTextLayer?: VoidFunction
-  highlightText?: (text: string) => void
-  onTextSelected?: (e: SelectedTextEvent) => void
-  onTextSelectEnd?: VoidFunction
-  getTextLayerCanvas?: () => HTMLCanvasElement | null
-  onCanvasRendered?: VoidFunction
-  highlightArea?: (rect: Box) => void
-  clearAllSelect?: VoidFunction
-  onImageCropped?: (rect: Box, imagePath: string) => void
-}
-
-export interface RenderPageProps {
-  canvasLayer: ReactElement
-  textLayer: ReactElement
-  annotationLayer: ReactElement
-  pageElement: HTMLElement | null
-  pageIndex: number
-  pageSize: PageSize
-  pageFunctionRef: RefObject<PageFunctionRef>
-  containerRef: RefObject<HTMLElement>
 }

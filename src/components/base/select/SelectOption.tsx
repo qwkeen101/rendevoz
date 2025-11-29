@@ -1,10 +1,12 @@
-import { FC } from 'react'
+import { FC, ReactElement } from 'react'
 
 export type SelectOptionProps =
   | {
       children: string
       value: string | number
       icon?: string
+      image?: string
+      suffix?: string
     }
   | boolean
 

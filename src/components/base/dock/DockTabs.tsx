@@ -4,54 +4,88 @@ import * as DragManager from './dragdrop/DragManager'
 import { DragDropDiv } from './dragdrop/DragDropDiv'
 import { DockTabBar } from './DockTabBar'
 import { DockTabPane, DockTabPaneContext } from './DockTabPane'
-import { getFloatPanelSize } from './Algorithm'
-import { TabNavListProps, Tabs } from '../tabs'
-import styles from './index.module.less'
+import { Tabs } from '../tabs'
 import Icon from '@/components/base/Icon'
 import { LayoutIdToTabMap } from '@/components/layout'
-import ClassName from '@/styles/classNames'
-import classNames from 'classnames'
-import { css } from '@emotion/css'
-import { addDockDragHandler, addDragStateListener, DragState, removeDockDragHandler, removeDragStateListener } from './dragdrop/DragManager'
-import { GlobalInstance } from '@/hooks'
+import { addDockDragHandler, DragState, removeDockDragHandler } from './dragdrop/DragManager'
+import ContextMenu from '@/components/contextMenu'
+import classnames from 'classnames'
+import { Colors, Icons } from '@/consts'
+import './dock-tab.less'
+import { Menu, WithBorder } from '@/components'
+import trans from '@/consts/trans'
+import { MetaStore } from '@/api/stores'
+import { useTranslation } from 'react-i18next'
+import { pointInBox } from '@/utils'
+import { atom } from 'jotai/index'
+import { useSetAtom } from 'jotai'
 
-function findParentPanel(element: HTMLElement) {
-  for (let i = 0; i < 10; ++i) {
-    if (!element) {
-      return null
-    }
-    if (element.classList.contains('dock-panel')) {
-      return element
-    }
-    element = element.parentElement
-  }
-  return null
-}
-
-export const TabItem = ({ data }: { data: TabData }) => {
+export const ShowInPanelDragEdgeAtom = atom(false)
+export const IsDraggingTabAtom = atom(false)
+export const TabItem = ({ data, isActive }: { data: TabData; isActive: boolean }) => {
   const context = useContext(DockContextType)
-
-  const _ref = useRef<HTMLDivElement>(null)
-  //
-  const _hitAreaRef = useRef<HTMLDivElement>()
-  //
+  const setGlobalDraggingTab = useSetAtom(IsDraggingTabAtom)
+  const [isDragging, setIsDragging] = useState(false)
+  const setShowDragEdge = useSetAtom(ShowInPanelDragEdgeAtom)
+  const { t } = useTranslation()
+  const ref = useRef<HTMLDivElement>(null)
+  const clonedRef = useRef<HTMLDivElement>()
   const onCloseClick = (e: React.MouseEvent) => {
     context.dockMove(data, null, 'remove')
     LayoutIdToTabMap.delete(data.id!)
-    context.getGlobal().onTabClose?.(data)
     e.stopPropagation()
   }
-  //
+
+  // if out of tabs container, clone element
+  const onDragMove = (e: DragManager.DragState) => {
+    const ele = ref.current
+    const tabsContainer = ele?.parentElement
+    if (tabsContainer) {
+      const parentBounding = tabsContainer.getBoundingClientRect()
+      let cloned = clonedRef.current
+      if (!cloned) {
+        cloned = ele.cloneNode(true) as HTMLDivElement
+        const bounding = ele.getBoundingClientRect()
+        cloned.id = 'dragging-tab'
+        cloned.style.opacity = '1'
+        cloned.style.width = `${bounding.width}px`
+        cloned.style.height = `${bounding.height}px`
+        cloned.style.position = 'absolute'
+        cloned.style.left = `${bounding.left}px`
+        cloned.style.top = `${bounding.top}px`
+        cloned.style.zIndex = '100000'
+        cloned.style.pointerEvents = 'none'
+        clonedRef.current = cloned
+        document.body.appendChild(cloned)
+      }
+      // still in tabs container
+      if (pointInBox({ x: e.clientX, y: e.clientY }, parentBounding, 15)) {
+        cloned.style.setProperty('transform', `translateX(${e.dx}px)`)
+        cloned.style.removeProperty('border-radius')
+        cloned.style.removeProperty('box-shadow')
+        cloned.classList.remove('cloned')
+        setShowDragEdge(false)
+      } else {
+        cloned.style.setProperty('transform', `translateX(${e.dx}px) translateY(${e.dy}px)`)
+        cloned.style.setProperty('border-radius', '8px')
+        cloned.style.setProperty('box-shadow', '0 0 0 2px var(--select-color)')
+        cloned.classList.add('cloned')
+        setShowDragEdge(true)
+      }
+    }
+  }
   const onDragStart = (e: DragManager.DragState) => {
-    const panel = data.parent
-    const panelElement = findParentPanel(_ref.current)
-    const tabGroup = context.getGroup(data.group)
-    const [panelWidth, panelHeight] = getFloatPanelSize(panelElement, tabGroup)
-    e.setData({ tab: data, panelSize: [panelWidth, panelHeight] }, context.getDockId())
-    e.startDrag(_ref.current.parentElement, _ref.current.parentElement)
+    const ele = ref.current
+    if (ele) {
+      setGlobalDraggingTab(true)
+      setIsDragging(true)
+      e.setData({ tab: data }, context.getDockId())
+      e.startDrag(ele, ele)
+    }
   }
 
-  let { id, title, onTabClick, content, parent, icon } = data
+  let { id, title, content, icon, objectId } = data
+  const meta = MetaStore.useObjectToMetaValue(objectId)
   if (typeof content === 'function') {
     content = content(data)
   }
@@ -59,29 +93,136 @@ export const TabItem = ({ data }: { data: TabData }) => {
     icon = <Icon name={icon} />
   }
   return (
-    <DragDropDiv
-      getRef={n => {
-        _ref.current = n
-      }}
-      onDragStartT={onDragStart}
-      role="tab"
-      aria-selected={parent.activeId === id}
-      onClick={onTabClick}
-      key={`${id}_tab`}
-      id={`${id}_tab`}
-      className={css({
-        display: 'flex',
-        gap: 10,
-        alignItems: 'center'
-      })}
+    <ContextMenu
+      ref={ref}
+      key={id}
+      content={setV => (
+        <WithBorder className={'popover-menu'}>
+          <Menu.NavigationMenu
+            layout={[
+              {
+                type: 'item',
+                key: 'close',
+                text: t('dock.close'),
+                onSelect: () => {
+                  context.dockMove(data, null, 'remove')
+                  LayoutIdToTabMap.delete(id)
+                  setV(false)
+                }
+              },
+              {
+                type: 'item',
+                key: 'close-others',
+                text: t('dock.close other tabs'),
+                onSelect: () => {
+                  Global.layoutOps?.closeTabs('others', id)
+                  setV(false)
+                }
+              },
+              {
+                type: 'item',
+                key: 'close-right',
+                text: t('dock.close right side tabs'),
+                onSelect: () => {
+                  Global.layoutOps?.closeTabs('right', id)
+                  setV(false)
+                }
+              },
+              // @ts-ignore
+              ...(meta
+                ? [
+                    {
+                      type: 'separator'
+                    },
+                    {
+                      type: 'item',
+                      key: 'view-details',
+                      icon: Icons.Info,
+                      text: t(trans.Meta.ViewDetails),
+                      onSelect: () => {
+                        setV(false)
+                        Global.metaOps.openDetails?.(meta.id)
+                      }
+                    },
+                    {
+                      type: 'item',
+                      key: 'edit',
+                      icon: Icons.Edit,
+                      text: t(trans.Edit),
+                      onSelect: () => {
+                        setV(false)
+                        Global.metaOps.edit?.(meta.id)
+                      }
+                    },
+                    {
+                      type: 'item',
+                      icon: Icons.MoveTo,
+                      key: 'move-to',
+                      text: t(trans.Meta.MoveTo),
+                      onSelect: () => {
+                        setV(false)
+                        Global.metaOps.quickAdd?.(meta.id)
+                      }
+                    },
+                    {
+                      type: 'item',
+                      icon: Icons.Link,
+                      key: 'copy-link',
+                      text: t(trans.CopyLink),
+                      onSelect: () => {
+                        setV(false)
+                        Global.metaOps.copyLink(meta.id)
+                      }
+                    },
+                    {
+                      type: 'item',
+                      key: 'delete',
+                      icon: Icons.Delete,
+                      text: t(trans.Delete),
+                      style: {
+                        color: Colors.Common.Red
+                      },
+                      onSelect: () => {
+                        setV(false)
+                        MetaStore.deleteMetaObject(meta.id)
+                      }
+                    }
+                  ]
+                : [])
+            ]}
+          />
+        </WithBorder>
+      )}
     >
-      {icon && <div style={{ flexShrink: 0 }}>{icon}</div>}
-      <div className={'dock-tab-title font-size-13'}>{title}</div>
-      <div className={styles.closeButtonWrapper}>
-        <Icon className={classNames(styles.closeButton, ClassName.circleButton(3))} size={12} onClick={onCloseClick} name="park-close" />
-      </div>
-      <div className="dock-tab-hit-area" ref={_hitAreaRef} />
-    </DragDropDiv>
+      <DragDropDiv
+        onDragStartT={onDragStart}
+        onDragMoveT={onDragMove}
+        onDragEndT={() => {
+          setGlobalDraggingTab(false)
+          setIsDragging(false)
+          clonedRef.current?.remove()
+          setShowDragEdge(false)
+          clonedRef.current = undefined
+        }}
+        role="tab"
+        onPointerDown={e => e.button === 0 && Global.layoutOps?.makeTabActive(id)}
+        style={{
+          opacity: isDragging ? 0 : undefined
+        }}
+        className={classnames('flex gap-3 items-center z-10 dock-tab-container', isActive && 'active')}
+      >
+        {icon && <div style={{ flexShrink: 0, zIndex: 10 }}>{icon}</div>}
+        <div className={'line-clamp-1 break-all font-size-13 z-10 flex-1 whitespace-break-spaces'}>{title}</div>
+        <Icon
+          strokeWidth={6}
+          className={'dock-tab-close shrink-0'}
+          size={11}
+          onPointerDown={e => e.stopPropagation()}
+          onClick={onCloseClick}
+          name={Icons.Close}
+        />
+      </DragDropDiv>
+    </ContextMenu>
   )
 }
 
@@ -96,112 +237,93 @@ export const DockTabs = memo((props: Props) => {
     id: string
     dir: 'before' | 'after'
   }>()
-  const renderTabBar = (defaultTabNav: TabNavListProps) => {
+  const renderTabBar = () => {
     const { panelData } = props
-    const { group: groupName, panelLock } = panelData
-    const group = context.getGroup(groupName)
-    const global = context.getGlobal()
-    const { globalPanelExtra } = global
-    let { panelExtra } = group
-
-    if (panelLock) {
-      if (panelLock.panelExtra) {
-        panelExtra = panelLock.panelExtra
-      }
-    }
-
-    let panelExtraContent: React.ReactElement | undefined = undefined
-    if (panelExtra) {
-      panelExtraContent = panelExtra(panelData, context)
-    }
-    if (globalPanelExtra) {
-      panelExtraContent = globalPanelExtra(panelData, context)
-    }
-
     return (
       <DockTabBar
         ref={tabBarRef}
-        onReorder={tabs => {
-          const sortedTabs = tabs.map(i => panelData.tabs.find(o => o.id === i.key))
-          context.updatePanel(panelData.id, { ...panelData, tabs: sortedTabs })
-        }}
         dragIndicator={dragIndicator}
-        TabNavList={defaultTabNav}
+        navs={panelData.tabs.map(i => ({
+          id: i.id,
+          renderContent: () => <TabItem key={i.id} data={i} isActive={i.id === activeId} />
+        }))}
         panelData={panelData}
-        extraArea={panelExtraContent}
       />
     )
   }
   const onTabClick = (activeId: string) => {
-    GlobalInstance.layoutOps?.makeTabActive(activeId)
+    Global.layoutOps?.makeTabActive(activeId)
   }
-  const currDraggingTab = useRef<TabData>()
   useEffect(() => {
     const handler = (e: DragState) => {
       const dockId = context.getDockId()
-      const tab: TabData = DragState.getData('tab', dockId)
-      if (tab && !props.panelData.tabs.some(i => i.id === tab.id)) {
-        const parentTabBar = tabBarRef.current
-        currDraggingTab.current = tab
-        if (parentTabBar && parentTabBar.contains(e.event.target)) {
-          const allItems = parentTabBar.querySelectorAll('[role="tab-reorder-content"]')
-          let idx = 0
-          for (const i of allItems) {
-            const next = allItems[idx + 1]
-            const bounding = i.getBoundingClientRect()
-            const midX = bounding.left + bounding.width / 2
-            if (e.clientX < midX) {
-              setDragIndicator({ id: props.panelData.tabs[idx].id, dir: 'before' })
-              return
-            }
-            if (e.clientX > midX) {
-              if (!next) {
-                setDragIndicator({ id: props.panelData.tabs[idx].id, dir: 'after' })
-                return
-              } else {
-                const nextB = next.getBoundingClientRect()
-                const nextMidX = nextB.left + nextB.width / 2
-                if (e.clientX < nextMidX) {
-                  setDragIndicator({ id: props.panelData.tabs[idx].id, dir: 'after' })
-                  return
-                } else {
-                  idx += 1
-                  continue
+      let draggingTab: TabData = DragState.getData('tab', dockId)
+      if (draggingTab) {
+        // get fresh tab
+        draggingTab = context.find(draggingTab.id) as TabData
+      }
+      const tabBar = tabBarRef.current
+      if (tabBar && draggingTab) {
+        const barBounding = tabBar.getBoundingClientRect()
+        // dragging in current tab bar
+        if (pointInBox({ x: e.clientX, y: e.clientY }, barBounding)) {
+          const allTabs = tabBar.querySelectorAll('[role="tab"]')
+          const draggingElement = document.getElementById('dragging-tab')
+          if (!draggingElement) return
+          const draggingInSamePanel = props.panelData.tabs.findIndex(i => i.id === draggingTab.id)
+          const { left, right } = draggingElement.getBoundingClientRect()
+          if (draggingInSamePanel >= 0) {
+            const draggingIndex = draggingInSamePanel
+            for (let i = 0; i < allTabs.length; i++) {
+              if (i === draggingIndex) {
+                continue
+              }
+              const current = allTabs[i]
+              const bounding = current.getBoundingClientRect()
+              const midX = bounding.left + bounding.width / 2
+              if (left < midX) {
+                if (i < draggingIndex) {
+                  context.dockMove(draggingTab, props.panelData.tabs[i], 'before-tab')
+                  break
                 }
               }
+              if (right > midX) {
+                if (i > draggingIndex) {
+                  context.dockMove(draggingTab, props.panelData.tabs[i], 'after-tab')
+                  break
+                }
+              }
+            }
+          } else {
+            for (let i = 0; i < allTabs.length; i++) {
+              const current = allTabs[i]
+              const bounding = current.getBoundingClientRect()
+              const midX = bounding.left + bounding.width / 2
+              if (left < midX) {
+                setDragIndicator({ id: props.panelData.tabs[i].id, dir: 'before' })
+                return
+              }
+            }
+            const last = props.panelData.tabs.at(-1)
+            if (last) {
+              setDragIndicator({ id: last.id, dir: 'after' })
+              return
             }
           }
         }
       }
       setDragIndicator(undefined)
     }
-    const dragStateHandler = (e: DragState) => {
-      if (e === null) {
-        document.querySelectorAll('.dock-box').forEach(n => n.style.removeProperty('z-index'))
-        document.querySelectorAll('.dock-panel').forEach(n => n.style.removeProperty('z-index'))
-        const draggingTab = currDraggingTab.current
-        currDraggingTab.current = undefined
-        setDragIndicator(s => {
-          if (s && draggingTab) {
-            const targetTab = context.find(s.id) as TabData
-            context.dockMove(draggingTab, targetTab, s.dir === 'before' ? 'before-tab' : 'after-tab')
-          }
-          return undefined
-        })
-      }
-    }
     addDockDragHandler(handler)
-    addDragStateListener(dragStateHandler)
     return () => {
       removeDockDragHandler(handler)
-      removeDragStateListener(dragStateHandler)
     }
   }, [props.panelData])
   const { activeId } = props.panelData
   return (
-    <Tabs activeKey={activeId} onTabClick={onTabClick} renderTabNav={renderTabBar} disableInnerPanes>
+    <Tabs container={false} activeKey={activeId} onTabClick={onTabClick} renderTabNav={renderTabBar} disableInnerPanes>
       {props.panelData.tabs.map(i => (
-        <DockTabPane parent={i.parent} key={i.id} cacheId={i.id} cached={true} tab={<TabItem data={i} />} forceRender>
+        <DockTabPane key={i.id} cacheId={i.id}>
           <DockTabPaneContext.Provider value={{ currentTabId: i.id }}>
             {typeof i.content === 'function' ? i.content(i) : i.content}
           </DockTabPaneContext.Provider>

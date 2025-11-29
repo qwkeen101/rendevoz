@@ -1,82 +1,87 @@
-import { Content, Icon, VirtualList } from '@/components'
+import { Content, Icon, VirtualList, Virtualizer } from '@/components'
 import Colors from '@/consts/colors'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { useSelectAtomValue } from '@/hooks'
-import { PdfBarStateAtom } from '../../hooks/usePDFBarState'
+import { useMeasure, useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import { ObjectStore } from '@/api/stores'
-import { Virtualizer } from '@tanstack/react-virtual'
-import { Utils } from 'rendevoz'
 import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
-import { PdfStateAtom } from '@/core/components/pdf/hooks/usePdfState'
-import { useAtomValue } from 'jotai/react'
+import { PDFStateAtom } from '@/core/components/pdf/hooks/usePDFState'
+import { useAtomValue } from 'jotai'
+import { range } from 'lodash'
 
-const PDFThumbnail = () => {
+export default () => {
   const instance = usePDFInstance()
-  const pages = useSelectAtomValue(PdfStateAtom, s => s.numPages) ?? 1
-  const showThumbnail = useSelectAtomValue(PdfBarStateAtom, s => s.sidebarActive) === 'thumbnail'
-  const documentId = instance.getPdfId?.()
+  const pages = useSelectAtomValue(PDFStateAtom, s => s.numPages) ?? 1
+  const documentId = instance.getId()
   const pdf = ObjectStore('pdf').useValue(documentId)
   const [ratio, setRatio] = useState<number>()
   const virtualizerRef = useRef<Virtualizer<any, any>>()
   const thumbnailURLMap = useAtomValue(instance.values.thumbnailAtom)
-  useEffect(() => {
+  const ref = useRef<HTMLDivElement>(null)
+  const { width } = useMeasure(ref)
+  const cols = Math.min(4, Math.floor(width / 340) + 1)
+  const rows = pages % cols === 0 ? pages / cols : Math.floor(pages / cols) + 1
+  const initialize = useMemoizedFn(() => {
     if (!ratio) {
       instance.values.document?.getPage(2).then(p => {
         const v = p.getViewport({ scale: 1 })
         setRatio(v.height / v.width)
       })
     }
-    if (pdf && pdf.lastReadPage !== undefined) {
+    const page = pdf?.lastReadPage
+    if (page !== undefined) {
       try {
         setTimeout(() => {
-          virtualizerRef.current?.scrollToIndex(pdf.lastReadPage)
+          console.log(page, cols)
+          virtualizerRef.current?.scrollToIndex(Math.floor(page / cols) + 1)
         })
       } catch (e) {
         console.log(e)
       }
     }
-  }, [showThumbnail])
+  })
+  useEffect(() => {
+    setTimeout(() => initialize())
+  }, [])
   return (
-    <Content
-      flex
-      column
-      style={{
-        overflow: 'hidden',
-        height: '100%'
-      }}
-    >
+    <div className={'w-full h-full relative'} ref={ref}>
       <VirtualList
         ref={virtualizerRef}
-        items={Utils.range(0, pages - 1)}
+        items={range(0, rows)}
         estimateSize={150}
-        overscan={10}
-        renderItem={(item, idx) => (
-          <Content
-            flex
-            column
-            alignItems={'center'}
-            key={idx}
-            onClick={() => {
-              instance?.navigateOps?.jumpToPage?.(idx)
-            }}
-            style={{
-              width: '100%'
-            }}
-          >
-            <ThumbnailItem imgURL={thumbnailURLMap.get(idx)} ratio={ratio} lastReadPage={pdf?.lastReadPage} pageIndex={idx} />
-            <div style={{ margin: '6px 0px' }} className={'transparent-font font-size-13'}>
-              {idx + 1}
+        overscan={1}
+        renderItem={(item, idx) => {
+          const sliced = range(idx * cols, Math.min(pages, (idx + 1) * cols))
+          return (
+            <div
+              style={{
+                gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`
+              }}
+              className={'grid gap-3'}
+            >
+              {sliced.map(i => (
+                <div
+                  className={'flex flex-col relative items-center flex-1'}
+                  key={idx}
+                  onClick={() => {
+                    instance?.navigateOps?.jumpToPage?.(i)
+                  }}
+                  style={{
+                    width: '100%'
+                  }}
+                >
+                  <ThumbnailItem imgURL={thumbnailURLMap.get(i)} ratio={ratio} lastReadPage={pdf?.lastReadPage} pageIndex={i} />
+                  <div className={'transparent-font font-size-12 my-2'}>{i + 1}</div>
+                </div>
+              ))}
             </div>
-          </Content>
-        )}
+          )
+        }}
+        className={'w-full h-full p-3.5 pt-0'}
         style={{
-          width: '100%',
-          height: '100%',
-          padding: '12px',
           overflowAnchor: 'none'
         }}
       />
-    </Content>
+    </div>
   )
 }
 
@@ -101,8 +106,8 @@ const ThumbnailItem = ({
         src={imgURL}
         style={{
           cursor: 'pointer',
-          boxShadow: pageIndex === lastReadPage ? `0 0 0 3px ${Colors.Common.SelectColor}` : '0 0 0 1px var(--border-background)',
-          width: 'min(240px, 100%)',
+          boxShadow: pageIndex === lastReadPage ? `0 0 0 2px ${Colors.Common.SelectColor}` : '0 0 0 1px var(--border-background)',
+          width: '100%',
           borderRadius: 6,
           marginTop: 2
         }}
@@ -112,13 +117,12 @@ const ThumbnailItem = ({
   return (
     <div
       style={{
-        width: 'min(240px, 100%)',
+        width: '100%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         boxShadow: '0 0 0 1px var(--border-background)',
         borderRadius: 6,
-        color: Colors.Common.SelectColor,
         marginTop: 2,
         paddingBottom: ratio ? `${ratio * 100}%` : '160%'
       }}
@@ -132,4 +136,3 @@ const ThumbnailItem = ({
     </div>
   )
 }
-export default PDFThumbnail

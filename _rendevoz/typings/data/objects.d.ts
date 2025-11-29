@@ -1,8 +1,19 @@
 // TODO: Migrate all object types to IObject: PDF, PDFLABEL, NOTE, WHITEBOARD....
-import { ILabelContainerProps, IMetaProperty, MetaLink, MetaObject, PartialWithId } from '..'
-import { IDraggableElement } from '../globalInstances/dragDrop'
+import {
+  IEditorAISummary,
+  ILabelContainerProps,
+  IMediaAiSummary,
+  IMetaProperty,
+  MetaLink,
+  MetaObject,
+  PartialWithId,
+  IDraggableElement,
+  IChat,
+  ISubChat,
+  ISidebarDefaultProps,
+  IMediaSubtitle
+} from '..'
 import { IBase } from './base'
-import { IPDFLabel as _IPdfLabel } from './label'
 import { Descendant } from 'slate'
 import { Tweet } from 'react-tweet/api'
 export type IRegisterdObject = {
@@ -25,6 +36,7 @@ export interface ILabel extends IBase {
   color?: string
   selectedText?: string
   time?: number
+  specType: string
   labelNote?: Descendant[]
 }
 
@@ -41,8 +53,10 @@ export interface ICode extends IBase {
 
 export interface IWebpage extends IBase {
   specType: 'webpage'
+  title?: string
   url?: string
   name: string
+  feedCollectionId?: number
   favicon?: string
   //clipped note
   noteId?: number
@@ -52,31 +66,31 @@ export interface IWebpage extends IBase {
   image?: string
   labels?: number[]
   showOriginal?: boolean
+  aiSummary?: IEditorAISummary
+  aiChat?: ISubChat
 }
 
-export interface IMedia extends IBase, ILabelContainerProps {
+export interface IMedia extends IBase, ILabelContainerProps, ISidebarDefaultProps {
   url: string
   // seconds
-  lastPlayedTime: number
-  // seconds
-  totalPlayedTime: number
+  currentTime?: number
   chapters?: IMediaChapter[]
   // label ids
   labels?: number[]
   volume?: number
   thumbnail?: string
+  aiSummary?: IMediaAiSummary
   subtitleMode?: 'list' | 'article'
   subtitleLang?: string
   subtitleFollow?: boolean
   subtitleList?: {
     lang: string
     url?: string
-    value?: {
-      start: number
-      end: number
-      text: number
-    }[]
+    value?: IMediaSubtitle[]
+    code?: string
   }[]
+  aiChat?: ISubChat
+  exam?: number
 }
 
 export interface IMetaProp extends IBase {
@@ -89,16 +103,20 @@ export interface IMediaLabel extends ILabel {
   // seconds
   imageUrl?: string
   time: number
-  clipUrl?: string
+  name: string
 }
 
 export interface IVideo extends IMedia {
   specType: 'video'
-  videoMode?: 'default' | 'theater'
+  ytChannelId?: number
+  ytPlaylistId?: number
+  ytFolderId?: number
+  ytVideoId?: number
 }
 
 export interface IAudio extends IMedia {
   specType: 'audio'
+  episodeId?: number
 }
 
 export interface INoteLabel extends ILabel {
@@ -119,10 +137,7 @@ export interface IImage extends IFile {
   url?: string
   imageUrl: string
   ocrResult?: string
-  excalidrawUrl?: string
 }
-
-export type IPdfLabel = _IPdfLabel
 
 export interface INoteBlock extends IBase {
   blockId: number
@@ -149,7 +164,6 @@ export interface IVideoLabel extends IMediaLabel {
   specType: 'videoLabel'
   chapterId?: number
   imageUrl?: string
-  name: string
 }
 
 export interface IAudioLabel extends IMediaLabel {
@@ -159,6 +173,11 @@ export interface ILocalFile extends IFile {
   specType: 'localFile'
   url?: string
   name?: string
+}
+
+export type ICloudFile = IFile & {
+  specType: 'cloudFile'
+  url?: string
 }
 
 export interface ISyncedBlock extends IBase {

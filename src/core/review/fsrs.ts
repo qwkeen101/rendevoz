@@ -1,5 +1,5 @@
-import * as fsrsJs from 'fsrs.js'
-import { Card, Rating } from 'fsrs.js'
+import { createEmptyCard, Rating, FSRS, RecordLogItem } from 'ts-fsrs'
+import { IReviewCard, IReviewStateType } from '~/typings'
 export const ReviewRateToNumber: Record<ReviewStateType, number> = {
   easy: 4,
   skip: 999,
@@ -7,50 +7,48 @@ export const ReviewRateToNumber: Record<ReviewStateType, number> = {
   good: 3,
   again: 1
 }
-
+const getTime = (d?: Date | number) => {
+  if (d === undefined) return Date.now()
+  if (typeof d === 'number') return d
+  return d.getTime()
+}
 export type ReviewStateType = 'skip' | 'again' | 'easy' | 'good' | 'hard'
-export const initializeReviewCard = (type: ReviewStateType) => {
-  const fsrs = new fsrsJs.FSRS()
-  const card = new fsrsJs.Card()
+
+export const reviewCard = (card: Partial<IReviewCard> | undefined = {}, type: IReviewStateType): Partial<IReviewCard> => {
+  const fsrs = new FSRS({})
   const now = new Date()
-  if (type === 'skip') {
-    return { ...card, due: new Date(now.getTime() + 60 * 60 * 1000) }
-  }
-  const scheduling = fsrs.repeat(card, new Date())
+  const empty = createEmptyCard(now)
+  const created = { ...empty, ...card }
+  const scheduling = fsrs.repeat(created, now)
+  let final: RecordLogItem
   switch (type) {
     case 'again':
-      return { ...scheduling[Rating.Again].card, last_rate: type }
+      final = scheduling[Rating.Again]
+      break
     case 'easy':
-      return { ...scheduling[Rating.Easy].card, last_rate: type }
+      final = scheduling[Rating.Easy]
+      break
     case 'good':
-      return { ...scheduling[Rating.Good].card, last_rate: type }
+      final = scheduling[Rating.Good]
+      break
     case 'hard':
-      return { ...scheduling[Rating.Hard].card, last_rate: type }
+      final = scheduling[Rating.Hard]
+      break
   }
-}
-export const reviewCard = (card: Card, type: ReviewStateType) => {
-  const fsrs = new fsrsJs.FSRS()
-  if (type === 'skip') {
-    return { ...card, due: new Date(card.due.getTime() + 60 * 60 * 1000) }
-  }
-  const scheduling = fsrs.repeat(card, new Date())
-  switch (type) {
-    case 'again':
-      return { ...scheduling[Rating.Again].card, last_rate: type }
-    case 'easy':
-      return { ...scheduling[Rating.Easy].card, last_rate: type }
-    case 'good':
-      return { ...scheduling[Rating.Good].card, last_rate: type }
-    case 'hard':
-      return { ...scheduling[Rating.Hard].card, last_rate: type }
-  }
-}
-export const getScheduling = (card?: Card): Record<ReviewStateType, Date> => {
-  const now = new Date()
-  const fsrs = new fsrsJs.FSRS()
-  const scheduling = fsrs.repeat(card || new fsrsJs.Card(), now)
   return {
-    skip: new Date(now.getTime() + 60 * 60 * 1000),
+    ...final.card,
+    last_review: final.card.last_review?.getTime(),
+    due: final.card.due.getTime(),
+    last_rate: type,
+    logs: [...(card.logs || []), { ...final.log, review: final.log.review.getTime(), due: final.log.due.getTime() }]
+  }
+}
+export const getScheduling = (card?: IReviewCard): Record<IReviewStateType, Date> => {
+  const now = new Date()
+  const fsrs = new FSRS({})
+  const c = (card || createEmptyCard(now))!
+  const scheduling = fsrs.repeat({ ...c, due: c.due || now }, now)
+  return {
     easy: scheduling[Rating.Easy].card.due,
     hard: scheduling[Rating.Hard].card.due,
     good: scheduling[Rating.Good].card.due,

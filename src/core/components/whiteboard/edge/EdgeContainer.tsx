@@ -1,7 +1,7 @@
 import { css } from '@emotion/css'
 import EdgeOverlay from './EdgeOverlay'
 import TreeEdge from './Edge'
-import { useFlow, useWhiteboardEdges } from '../StateHooks'
+import { useWhiteboardEdges } from '../StateHooks'
 import { memo, useEffect, useLayoutEffect, useRef } from 'react'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import { useUpdate } from 'react-use'

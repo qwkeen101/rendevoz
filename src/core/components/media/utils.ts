@@ -74,7 +74,8 @@ export const captureVideoFrameBlob = (video: HTMLVideoElement, time: number): Pr
 }
 const zeroPad = (num: number) => String(num).padStart(2, '0')
 
-export const normalizeSecondsToTime = (seconds: number) => {
+export const normalizeSecondsToTime = (seconds?: number) => {
+  if (seconds === undefined) return '00:00'
   try {
     const duration = intervalToDuration({ start: 0, end: seconds * 1000 })
     return `${duration.hours ? duration.hours + ':' : ''}${

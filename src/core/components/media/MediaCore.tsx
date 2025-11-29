@@ -1,88 +1,68 @@
-import { memo, useEffect, useRef, useState } from 'react'
+import { CSSProperties, memo } from 'react'
 import { useMediaInstance } from './hooks/useMediaInstance'
 import { assignProperties } from '@/utils'
 import useMediaState from './hooks/useMediaState'
-import { Content } from '@/components'
-import useThrottleFn from '@/hooks/utils/useThrottleFn'
+import { DotLoading } from '@/components'
 import BaidudiskVideoPlayer from '@/core/components/media/players/BaidudiskVideoPlayer'
 import WebVideoPlayer from '@/core/components/media/players/WebVideoPlayer'
 import LocalVideoPlayer from '@/core/components/media/players/LocalVideoPlayer'
-import './loading.css'
-import { Colors } from '@/consts'
 import ContextMenu from '@/components/contextMenu'
 import AudioPlayer from '@/core/components/media/players/AudioPlayer'
-import { useTranslation } from 'react-i18next'
 import MediaMoreMenu from '@/core/components/media/components/MediaMoreMenu'
+import PodcastBottomController from '@/core/components/media/components/PodcastBottomController'
+import PodcastRightPanel from '../podcast/components/PodcastRightPanel'
+import EpisodePageContent from '../podcast/components/EpisodePageContent'
 
-export const MEDIA_PLAYER_DEFAULT_BORDER_RADIUS = 12
-
-const MediaCore = memo(() => {
+const MediaCore = memo(({ className, style }: { className?: string; style?: CSSProperties }) => {
   const instance = useMediaInstance()
   const [mediaState, setMediaState] = useMediaState()
-  const { currentTime, mode } = mediaState
-
-  const throttleUpdateLastViewTime = useThrottleFn(
-    () => {
-      if (currentTime) {
-        instance.on?.({
-          type: 'currentTimeChanged',
-          currentTime: currentTime
-        })
-      }
-    },
-    { wait: 500 }
-  )
-
-  useEffect(() => {
-    if (mediaState.loaded && !mediaState.paused) {
-      instance.on?.({
-        type: 'mediaStartPlay'
-      })
-    }
-  }, [mediaState.loaded, mediaState.paused])
-  useEffect(() => {
-    throttleUpdateLastViewTime.run()
-    setMediaState(s => (s.jumpTime ? { ...s, jumpTime: undefined } : s))
-  }, [currentTime])
+  const { mode, fullScreen, cinemaMode, focus } = mediaState
 
   assignProperties(instance, {
+    getMediaState: () => mediaState,
     actionOps: {
       autoPlay: () => {
         setMediaState(s => ({ ...s, autoPlay: true }))
+      },
+      stopAutoPlay: () => {
+        setMediaState(s => ({ ...s, autoPlay: false }))
       },
       pause: () => setMediaState(s => ({ ...s, paused: true })),
       play: () => setMediaState(s => ({ ...s, paused: false })),
       loop: () => setMediaState(s => ({ ...s, loop: true })),
       unloop: () => setMediaState(s => ({ ...s, loop: false })),
-      jumpTo: t => setMediaState(s => ({ ...s, jumpTime: t })),
+      jumpTo: t => {
+        setMediaState(s => ({ ...s, jumpTime: t }))
+        instance.on?.({
+          type: 'jump',
+          time: t
+        })
+      },
       fullScreen: () => {
         setMediaState(s => ({ ...s, fullScreen: !s.fullScreen }))
       }
-      // clip: async duration => {
-      //   const mode = mediaState.mode
-      //   if (mode === 'video') {
-      //     const file = await fetch(mediaState.url).then(i => i.blob())
-      //     const result = await clipMedia('input.mp4', file, duration)
-      //     const path = await FileSystem.fs.writeFile(result, `/files/clip_${Id.getId()}.mp4`, 'binary')
-      //     if (path) {
-      //       console.log(path)
-      //       return path
-      //     }
-      //   }
-      //   if (mode === 'web') {
-      //     if (mediaState.url.includes('youtube.com')) {
-      //     }
-      //   }
-      // }
     }
   })
 
-  if (!mediaState.url) return null
-
+  if (mediaState.layout?.episode?.pageContainerRef) {
+    return (
+      <>
+        <PodcastBottomController />
+        <PodcastRightPanel parentRef={mediaState.layout.episode.pageContainerRef} />
+      </>
+    )
+  }
+  if (mediaState.layout?.episode?.sidebar) {
+    return (
+      <>
+        <EpisodePageContent />
+      </>
+    )
+  }
   if (mediaState.mode === 'audio') {
     return <AudioPlayer />
   }
-  const borderRadius = mediaState.styles?.videoBorderRadius ?? MEDIA_PLAYER_DEFAULT_BORDER_RADIUS
+
   return (
     <ContextMenu
       enableContextMenu={mediaState.loaded}
@@ -94,54 +74,35 @@ const MediaCore = memo(() => {
         />
       )}
     >
-      <Content
+      <div
+        className={className}
         style={{
+          aspectRatio: '16 / 9',
           width: '100%',
-          paddingBottom: '56.25%',
-          height: 0,
-          position: mediaState.fullScreen ? 'unset' : 'relative',
-          borderRadius: mediaState.fullScreen ? 0 : mediaState.floated ? `0px 0px ${borderRadius}px ${borderRadius}px` : borderRadius,
+          maxHeight: 'calc(100vh - 200px)',
+          position: fullScreen ? 'unset' : 'relative',
           overflow: 'hidden',
-          inset: 0
+          inset: 0,
+          ...style
         }}
       >
         {!mediaState.loaded && (
-          <div style={{ position: 'absolute', inset: 0, zIndex: 999 }}>
-            <LoadingAnimation borderRadius={borderRadius} />
+          <div className={'absolute inset-0 flex items-center justify-center'} style={{ zIndex: 999, borderRadius: 'inherit' }}>
+            <DotLoading />
           </div>
         )}
-        {mode === 'web' && <WebVideoPlayer />}
-        {mode === 'video' && <LocalVideoPlayer />}
-        {mode === 'baidudisk' && <BaidudiskVideoPlayer />}
-      </Content>
+        <div
+          style={{
+            opacity: mediaState.loaded ? 1 : 0
+          }}
+        >
+          {mode === 'web' && <WebVideoPlayer />}
+          {mode === 'video' && <LocalVideoPlayer />}
+          {mode === 'baidudisk' && <BaidudiskVideoPlayer />}
+        </div>
+      </div>
     </ContextMenu>
   )
 })
-
-const LoadingAnimation = ({ borderRadius }: { borderRadius: number }) => {
-  const { t } = useTranslation()
-  return (
-    <div
-      className="loading_center"
-      style={{
-        borderRadius
-      }}
-    >
-      <Content flex>
-        <div className="loading_wave"></div>
-        <div className="loading_wave"></div>
-        <div className="loading_wave"></div>
-        <div className="loading_wave"></div>
-        <div className="loading_wave"></div>
-        <div className="loading_wave"></div>
-        <div className="loading_wave"></div>
-        <div className="loading_wave"></div>
-        <div className="loading_wave"></div>
-        <div className="loading_wave"></div>
-      </Content>
-      <div style={{ fontSize: 16, color: Colors.Font.Transparent, marginTop: 32 }}>{t('general.Loading')}</div>
-    </div>
-  )
-}
 
 export default MediaCore

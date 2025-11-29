@@ -1,14 +1,11 @@
 .ParagraphBlock {
-  width: -webkit-fill-available;
+  width: 100%;
   max-width: var(--editor-max-width);
   position: relative;
-  word-break: break-word;
-  margin-top: 3px;
-  margin-bottom: 3px;
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
   border-radius: 4px;
   transition: background 0.3s ease, color 0.3s ease;
-  white-space: pre-wrap;
-  line-height: var(--editable-line-height);
   p{
     padding-left: 2px;
   }
@@ -23,26 +20,24 @@
     border-radius: 0px;
   }
 }
+.ImageBlock {
+  margin-top: 0.7em;
+  margin-bottom: 0.7em;
+}
 .BlockCommon {
-  &:not(:has(.editor-disable-format)) {
-    span,
-    textarea {
-      color: var(--block-font-color);
-    }
-  }
   flex-shrink: 0;
   overflow: hidden;
   pointer-events: auto;
-  &:is([data-selected="true"],[data-spec-type*="heading"],[data-show-placeholder="true"]){
-    &[data-empty="true"]{
-      span[data-slate-zero-width] {
-        &::before{
-          float: left;
-          height: 0;
-          pointer-events: none;
-          color: var(--font-s-transparent);
-          content: var(--placeholder);
-        }
+}
+.ShowPlaceholder {
+  &[data-selected="true"], &.HeadingBlock, &.FirstLinePlaceholder{
+    span[data-slate-zero-width] {
+      &::before{
+        position: absolute;
+        pointer-events: none;
+        color: var(--font-s-transparent);
+        content: var(--placeholder);
+        opacity: 0.55;
       }
     }
   }
@@ -50,14 +45,9 @@
 .HeadingBlock {
   width: 100%;
   max-width: var(--editor-max-width);
-  position: relative;
   margin-top: 1.2em;
-  margin-bottom: 0.5em;
-  padding-bottom: 0;
-  overflow: visible !important;
-  &:first-child {
-    margin-top: 0;
-  }
+  margin-bottom: 0.2em;
+  position: relative;
   background: var(--block-bg);
 }
 .SelectedBlock {

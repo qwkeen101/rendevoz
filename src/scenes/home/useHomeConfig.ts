@@ -2,27 +2,8 @@ import KeyvalueStore, { IHomeConfig } from '@/api/stores/keyvalue.store'
 
 const defaultHomeConfig: IHomeConfig = {
   mode: 'list',
-  list: {
-    visibleType: 'all',
-    sortMode: 'viewDesc'
-  },
-  gallery: {
-    items: [
-      {
-        name: 'recentlyViewed',
-        visible: true
-      },
-      {
-        name: 'recentlyCreated',
-        visible: true
-      },
-      {
-        name: 'pinned',
-        visible: true
-      }
-    ],
-    rowsPerItem: 1
-  }
+  listSort: 'nameAsc',
+  gallerySort: 'nameAsc'
 }
 
 const useHomeConfig = () => {
@@ -38,9 +19,16 @@ const updateHomeConfig = (updater: (curr: IHomeConfig) => IHomeConfig) => {
     KeyvalueStore.updateOne(`home_config_${currentWorkspace.id}`, next)
   }
 }
+const getValue = () => {
+  const currentWorkspace = KeyvalueStore.getOne('currentWorkspace')
+  const current = KeyvalueStore.getOne(`home_config_${currentWorkspace?.id || 0}`) ?? defaultHomeConfig
+  return current
+}
 useHomeConfig.defaultConfig = defaultHomeConfig
 useHomeConfig.update = updateHomeConfig
+useHomeConfig.getValue = getValue
 export default useHomeConfig as typeof useHomeConfig & {
   defaultConfig: typeof defaultHomeConfig
   update: typeof updateHomeConfig
+  getValue: typeof getValue
 }

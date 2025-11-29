@@ -1,22 +1,23 @@
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import { assignProperties } from '@/utils'
 import { useEffect, useRef } from 'react'
-import { Rendevoz } from '@/core/rendevoz'
 import isHotkey from 'is-hotkey'
 import { applyPatchesOnAtom } from '@/api/stores/history.store'
+import { GroupHistoryItem, IGlobalEvents } from '~/typings'
 
 /**
  * 组历史有两种情况：1.对objectstore或metasore更改，2.更改组属性
  */
 const useGroupHistory = (groupId?: number) => {
   const instance = useGroupInstance()
-  const lastTriggered = useRef<undefined | number>(0)
-  const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
-  const handler = Rendevoz.Events.Emit.useEventHandler('global')
+  const lastTriggered = useRef<undefined | NodeJS.Timeout>()
+  const updateQueuesRef = useRef<GroupHistoryItem[]>([])
   const handleUndo = () => {
     const last = instance.values.undos.pop()
     if (last) {
-      applyPatchesOnAtom(last.atom, last.inversePatches, last.databaseName)
+      last.forEach(l => {
+        applyPatchesOnAtom(l.atom, l.inversePatches, l.databaseName)
+      })
     }
   }
   const handleRedo = () => {}
@@ -31,32 +32,38 @@ const useGroupHistory = (groupId?: number) => {
       }
     }
     document.addEventListener('keydown', keydownHandler)
-    emitter.addListener('global', handler)
+    Global.addEventListener('databaseChange', handleDatabaseChange)
     return () => {
       document.removeEventListener('keydown', keydownHandler)
-      emitter.removeListener('global', handler)
+      Global.removeEventListener('databaseChange', handleDatabaseChange)
     }
   })
-  handler.on('globalValueChange', data => {
+  const handleDatabaseChange = (data: IGlobalEvents['databaseChange']) => {
     if (lastTriggered.current) {
+      const items = updateQueuesRef.current
       // only listen to meta object's history
       if (data.databaseName === 'metaObjects') {
-        instance.values.undos.push({
+        items.push({
           ...data
         })
       }
       if (data.databaseName === 'objects') {
         if (data.patches.some(i => i.value.specType === 'group' && i.value.id === groupId)) {
-          instance.values.undos.push({ ...data })
+          items.push({ ...data })
         }
       }
+      console.log(items)
     }
-  })
+  }
   assignProperties(instance, {
     triggerChange: () => {
-      lastTriggered.current = Date.now()
-      setTimeout(() => {
+      if (lastTriggered.current) {
+        clearTimeout(lastTriggered.current)
+      }
+      lastTriggered.current = setTimeout(() => {
         lastTriggered.current = undefined
+        instance.values.undos.push(updateQueuesRef.current)
+        updateQueuesRef.current = []
       })
     }
   })

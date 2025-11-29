@@ -1,4 +1,3 @@
-import { Rendevoz } from '@/core/rendevoz'
 import { DateFormat } from '@/utils'
 
 const DisplayCell = ({ value, type }: { value: any; type: 'type' | 'createdAt' | 'viewAt' | 'updatedAt' | 'deletedAt' }) => {
@@ -6,7 +5,7 @@ const DisplayCell = ({ value, type }: { value: any; type: 'type' | 'createdAt' |
   const displayed = () => {
     switch (type) {
       case 'type':
-        return Rendevoz.Utils.Meta.getTypeName(value)
+        return Global.utils.getTypeName(value)
       case 'viewAt':
       case 'createdAt':
       case 'updatedAt':

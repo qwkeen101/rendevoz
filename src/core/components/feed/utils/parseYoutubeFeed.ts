@@ -1,4 +1,4 @@
-import { FeedItem } from '~/typings'
+import { IFeedItem } from '~/typings'
 import Id from '@/utils/id'
 
 const parseYoutubeFeed = (item: {
@@ -16,7 +16,7 @@ const parseYoutubeFeed = (item: {
     }[]
     'media:description': string[]
   }
-}): FeedItem => {
+}): IFeedItem => {
   const videoId = item.link.split('watch?v=')[1]
   if (!videoId) {
     return item

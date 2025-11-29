@@ -1,14 +1,14 @@
-import { Content, Icon, IconWithPopover, VirtualList, WithBorder } from '@/components'
+import { Content, Icon, IconWithPopover, VirtualList, WithBorder, Virtualizer } from '@/components'
 import { ClassName } from 'rendevoz'
 import { CSSProperties, ForwardedRef, forwardRef, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import isHotkey from 'is-hotkey'
-import { Colors, KEY } from '@/consts'
+import { Colors, Icons, KEY } from '@/consts'
 import fuzzysort from 'fuzzysort'
 import BlockColorPicker from '@/core/components/editor/components/BlockColorPicker'
-import { Virtualizer } from '@tanstack/react-virtual'
 import { useTranslation } from 'react-i18next'
 import _ from 'lodash'
 import { DEFAULT_BACKGROUND_COLORS } from '@/components/picker/colorPicker'
+import classnames from 'classnames'
 
 function Selector<T extends { name?: string; color?: string; id: number }>(
   {
@@ -20,11 +20,13 @@ function Selector<T extends { name?: string; color?: string; id: number }>(
     onCreateItem,
     selectedItems,
     onItemDelete,
-    onItemUpdate
+    onItemUpdate,
+    inputClassName = 'border-bottom'
   }: {
     style?: CSSProperties
     selectMode?: boolean
     items: T[]
+    inputClassName?: string
     selectedItems?: T[]
     onCreateItem?: (name: string, color: string) => void
     onSelect?: (items: T[]) => void
@@ -35,21 +37,22 @@ function Selector<T extends { name?: string; color?: string; id: number }>(
   ref: ForwardedRef<HTMLElement>
 ) {
   const [search, setSearch] = useState('')
-
+  const inputRef = useRef<HTMLInputElement>(null)
   const [displayItems, setDisplayItems] = useState<T[]>([])
   const searchBgRef = useRef<string>()
   useLayoutEffect(() => {
     if (search) {
       const results = fuzzysort.go(search, items, { key: 'name' })
       const searchBg = searchBgRef.current || _.sample(DEFAULT_BACKGROUND_COLORS)
-      setDisplayItems([
-        ...Array.from(results.values()).map(i => i.obj),
-        {
+      const res = Array.from(results.values()).map(i => i.obj)
+      if (!selectMode) {
+        res.push({
           name: search,
           color: searchBg,
           id: 0
-        } as T
-      ])
+        } as T)
+      }
+      setDisplayItems(res)
       searchBgRef.current = searchBg
     } else {
       searchBgRef.current = undefined
@@ -62,11 +65,15 @@ function Selector<T extends { name?: string; color?: string; id: number }>(
       virtualizer.current?.setFocus(0)
     })
   }, [displayItems.length])
-
+  useEffect(() => {
+    setTimeout(() => {
+      inputRef.current?.focus()
+    }, 100)
+  }, [])
   const virtualizer = useRef<Virtualizer<any, any>>()
   const { t } = useTranslation()
   const handleSelect = (item: T, idx: number) => {
-    if (item.id === 0) {
+    if (item.id === 0 && !selectMode) {
       onCreateItem?.(item.name, item.color)
       setSearch('')
       return
@@ -87,52 +94,55 @@ function Selector<T extends { name?: string; color?: string; id: number }>(
 
   return (
     <Content flex column style={style} ref={ref}>
-      <Content
-        flex
-        gap={6}
+      <div
+        className={classnames('flex gap-2 flex-wrap', inputClassName)}
         style={{
-          flexWrap: 'wrap',
-          padding: '8px 9px 4px',
-          borderBottom: `1px solid ${Colors.Background.Border}`,
-          maxHeight: 200,
-          overflowY: 'auto'
+          padding: '8px 9px 4px'
         }}
       >
         {selectedItems?.map(i => (
           <Content
             style={{
-              padding: '0px 6px',
-              borderRadius: 3,
+              padding: '0px 0px 0px 6px',
               lineHeight: '20px',
               color: Colors.getAdaptFontColor(i.color),
               background: Colors.getAdaptColor(i.color) || Colors.Background.ButtonHover
             }}
             flex
-            gap={4}
+            className={'rounded'}
             key={i.id}
           >
-            <div className={ClassName.ellipsisFont(1)}>{i.name}</div>
-            <Icon cursor={'pointer'} size={12} name={'park-close'} onClick={() => onSelect?.(selectedItems.filter(o => o.id !== i.id))} />
+            <div className={'line-clamp-1 font-size-13'}>{i.name}</div>
+            <Icon
+              className={'opacity-50 w-6 flex justify-center hover:opacity-30 transition-opacity'}
+              cursor={'pointer'}
+              strokeWidth={6}
+              size={9}
+              name={'park-close'}
+              onClick={() => onSelect?.(selectedItems.filter(o => o.id !== i.id))}
+            />
           </Content>
         ))}
         <input
+          ref={inputRef}
           placeholder={!selectedItems?.length ? t('general.Type to search') + '...' : undefined}
           value={search}
           onChange={e => setSearch(e.target.value)}
           className={'font-size-13'}
-          autoFocus
           onKeyDown={e => {
             if (isHotkey(KEY.Backspace, e)) {
               if (!search) {
-                const s = selectedItems?.slice() || []
-                s.pop()
-                onSelect?.(s)
+                if (selectedItems?.length) {
+                  const s = selectedItems?.slice() || []
+                  s.pop()
+                  onSelect?.(s)
+                }
               }
             }
           }}
           style={{ flex: '1 1 60px', overflow: 'hidden', lineHeight: '20px' }}
         />
-      </Content>
+      </div>
       <div style={{ padding: '4px 8px 2px' }} className={'font-size-12 transparent-font normal-font'}>
         {selectMode
           ? mode === 'single'
@@ -186,13 +196,12 @@ function Item<T extends { name?: string; color?: string; id: number }>({
   onDelete?: VoidFunction
   selectMode?: boolean
 }) {
-  const [newName, setNewName] = useState(item.name)
   const inputRef = useRef<HTMLInputElement>(null)
   return (
     <Content
       flex
       alignItems={'center'}
-      className={ClassName.flatButton(3, '2px 4px')}
+      className={ClassName.flatButton(4, '2px 4px')}
       style={{
         height: 28,
         background: selected ? Colors.Background.ButtonHover : 'transparent'
@@ -215,18 +224,24 @@ function Item<T extends { name?: string; color?: string; id: number }>({
           color: Colors.getAdaptFontColor(item.color),
           background: Colors.getAdaptColor(item.color),
           padding: '0px 6px',
-          borderRadius: 3,
           width: 'fit-content'
         }}
-        className={'ellipsis-font-1'}
+        className={'ellipsis-font-1 rounded font-size-13'}
       >
         {item.name}
       </div>
       {item.id !== 0 && !selectMode && (
         <IconWithPopover
+          withClickCover
+          onVisiblityChange={v => {
+            if (v) {
+              setTimeout(() => inputRef.current?.focus(), 100)
+            }
+          }}
+          zIndex={99999}
           content={setV => (
             <WithBorder onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()} padding={10}>
-              <Content flex gap={10} style={{ marginBottom: 10 }}>
+              <Content className={'items-center gap-2 flex'} style={{ marginBottom: 10 }}>
                 <input
                   ref={inputRef}
                   autoFocus
@@ -240,7 +255,7 @@ function Item<T extends { name?: string; color?: string; id: number }>({
                   onBlur={e => {
                     onItemUpdate?.({ ...item, name: e.target.value })
                   }}
-                  className={'font-size-13 border'}
+                  className={'font-size-13 border-box-shadow focus-input bg-input'}
                   style={{
                     flex: 1,
                     borderRadius: 4,
@@ -254,7 +269,7 @@ function Item<T extends { name?: string; color?: string; id: number }>({
                     setV(false)
                     onDelete?.()
                   }}
-                  className={ClassName.circleButton()}
+                  className={'square-button-small'}
                 />
               </Content>
               <BlockColorPicker
@@ -272,16 +287,13 @@ function Item<T extends { name?: string; color?: string; id: number }>({
             </WithBorder>
           )}
           renderOnParent={false}
-          size={22}
+          size={18}
           onClick={e => e.stopPropagation()}
-          name={'park-more'}
-          style={{
-            color: Colors.Font.SuperTransparent
-          }}
+          name={Icons.More}
           containerStyle={{
             marginLeft: 'auto'
           }}
-          className={ClassName.flatButton(4, '1px')}
+          className={'hover-active-button'}
         ></IconWithPopover>
       )}
     </Content>

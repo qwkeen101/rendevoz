@@ -1,27 +1,10 @@
 import { useDropObjectArea } from '@/core'
-import { Rendevoz } from '@/core/rendevoz'
 import { CollectionStore } from '@/api/stores'
-import useCollectionStore from '@/api/stores/collection.store'
 import { RefObject, useState } from 'react'
 import { ICollectionItem } from '~/typings/data'
 
-type giveMeGoodName = Parameters<ReturnType<typeof useCollectionStore>['moveItems']>['0']
-export const sidebarDraggingState: {
-  current:
-    | {
-        draggingItemId: number
-        draggingItemType: giveMeGoodName['item']['type']
-        itemIsInRoot: boolean
-        sourceFromType: giveMeGoodName['sourceFromType']
-        sourceFromId: giveMeGoodName['sourceFromId']
-      }
-    | undefined
-} = {
-  current: undefined
-}
-
-const isDroppableItem = (itemType: ICollectionItem['type']): itemType is giveMeGoodName['targetToType'] => {
-  if (itemType && ['collection'].includes(itemType)) {
+const isDroppableItem = (itemType: ICollectionItem['type']): boolean => {
+  if (itemType && itemType === 'collection') {
     return true
   }
   return false
@@ -33,14 +16,12 @@ const useSidebarItemDrag = (options: {
   draggableElementRef: RefObject<HTMLElement>
   droppableElementRef: RefObject<HTMLElement>
   isInRoot: boolean
-  parentId: giveMeGoodName['sourceFromId']
-  parentType: giveMeGoodName['sourceFromType']
+  parentId?: number
 }) => {
   const { id, type, droppableElementRef } = options
   const [hovered, setHovered] = useState(false)
   const [droppable, setDroppable] = useState(false)
-  const DragState = Rendevoz.Actions.State.Drag
-  const { findParentCollections, moveItems } = useCollectionStore()
+  const { findParentCollections, moveItems } = CollectionStore
 
   const { isDragging, canDropAsMeta } = useDropObjectArea(droppableElementRef, {
     onDragLeave: () => {
@@ -48,11 +29,11 @@ const useSidebarItemDrag = (options: {
       setHovered(false)
     },
     onDragOver: async element => {
-      if (id !== sidebarDraggingState.current?.draggingItemId) {
+      if (id !== CollectionStore.dragState?.draggingItemId) {
         setHovered(true)
       }
       if (element.type === 'collection' && type === 'collection') {
-        const myParentCollections = await findParentCollections(id)
+        const myParentCollections = findParentCollections(id)
         if (myParentCollections?.some(i => i.id === element.collectionId)) {
           setDroppable(false)
         } else {
@@ -62,43 +43,33 @@ const useSidebarItemDrag = (options: {
       }
       setDroppable(!!(canDropAsMeta.droppable || canDropAsMeta.metaId))
     },
-    onDrop: element => {
-      const prevDraggingState = sidebarDraggingState.current ? structuredClone(sidebarDraggingState.current) : undefined
+    onDrop: () => {
+      const prevDraggingState = CollectionStore.dragState ? { ...CollectionStore.dragState } : undefined
       setHovered(false)
       setDroppable(false)
       if (prevDraggingState?.draggingItemId === id) return
       if (!droppable || !id || !type) return
       if (isDroppableItem(type)) {
-        console.log('yes')
         if (prevDraggingState) {
-          moveItems({
-            targetToType: type,
-            targetToId: id,
-            targetIsRoot: false,
-            sourceFromId: prevDraggingState.sourceFromId,
-            sourceFromType: prevDraggingState.sourceFromType,
-            sourceIsRoot: prevDraggingState.itemIsInRoot,
-            item: {
+          moveItems(
+            {
               id: prevDraggingState.draggingItemId,
               type: prevDraggingState.draggingItemType
-            }
-          })
+            },
+            prevDraggingState.sourceFromId,
+            id
+          )
           return
         } else {
           if (canDropAsMeta.metaId) {
             CollectionStore.addItemToCollection({ id: canDropAsMeta.metaId, type: 'meta' }, id)
           } else {
             if (canDropAsMeta.droppable) {
-              Rendevoz.Events.Emit.GlobalEventEmitter.emitWithCallback('global', {
-                type: 'globalDropNeedFurtherProcess',
-                data: {
-                  draggingElement: DragState.getDraggingDetails(),
-                  e: event
-                }
-              }).then(res => {
-                if (res) {
-                  CollectionStore.addItemToCollection({ id: res.id, type: 'meta' }, id)
-                }
+              Global.metaOps.addDraggableAsMeta(undefined).then(res => {
+                CollectionStore.addItemToCollection(
+                  res.map(i => ({ id: i.id, type: 'meta' })),
+                  id
+                )
               })
             }
           }
@@ -110,7 +81,7 @@ const useSidebarItemDrag = (options: {
         setDroppable(false)
         setHovered(false)
       }, 20)
-      setTimeout(() => (sidebarDraggingState.current = undefined))
+      setTimeout(() => (CollectionStore.dragState = undefined))
     }
   })
   return {

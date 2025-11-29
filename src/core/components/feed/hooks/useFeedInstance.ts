@@ -1,8 +1,9 @@
-import { atom, useAtomValue } from 'jotai'
+import { atom } from 'jotai'
 import { IFeedInstance } from '~/typings'
+import { useGlobalAtomValue } from '@/hooks'
 
 const FeedInstanceAtom = atom<IFeedInstance>({})
 
-const useFeedInstance = () => useAtomValue(FeedInstanceAtom)
+const useFeedInstance = () => useGlobalAtomValue(FeedInstanceAtom)
 
 export default useFeedInstance

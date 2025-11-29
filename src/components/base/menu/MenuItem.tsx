@@ -1,4 +1,4 @@
-import { FC, MouseEvent, PointerEventHandler, RefObject, useState } from 'react'
+import { FC, RefObject } from 'react'
 import { IMenuLayoutItem, NavigationMenu } from '@/components/base/menu/index'
 import { AnimatePopover, Button, WithBorder } from '@/components'
 import { Colors } from '@/consts'
@@ -12,6 +12,7 @@ type MenuItemWithProps = IMenuLayoutItem & {
   innerKey?: string
   parentKey: string[]
   parentRef: RefObject<HTMLElement>
+  hoverBg?: boolean
 }
 const MenuItem: FC<MenuItemWithProps> = ({ type, ...rest }) => {
   switch (type) {
@@ -28,7 +29,7 @@ const MenuItem: FC<MenuItemWithProps> = ({ type, ...rest }) => {
           style={{
             paddingLeft: '0.75rem',
             lineHeight: 1.2,
-            margin: '5px 0px 4px',
+            margin: '5px 1px 6px',
             ...rest.style
           }}
         >
@@ -82,14 +83,17 @@ const ButtonMenuItem: FC<MenuItemWithProps & { type: 'item' }> = ({
   text,
   suffixIconStyle,
   type,
+  image,
   dangerous,
   disabled,
   suffixIcon,
   onSuffixIconClick,
   suffixIconClassName,
+  suffixClassName,
   name,
   contextMenu,
   onClick,
+  strokeWidth,
   selectedKey,
   innerKey,
   parentKey,
@@ -98,6 +102,7 @@ const ButtonMenuItem: FC<MenuItemWithProps & { type: 'item' }> = ({
   parentRef,
   suffix,
   onSelect,
+  hoverBg,
   ...rest
 }) => {
   const key = innerKey!
@@ -121,30 +126,30 @@ const ButtonMenuItem: FC<MenuItemWithProps & { type: 'item' }> = ({
   }
   const renderContent = () => (
     <Button.IconButton
+      image={image}
       suffixIcon={subMenu || popOver ? 'park-right' : suffixIcon}
       onSuffixIconClick={onSuffixIconClick}
       onPointerMove={handlePointerMove}
       icon={icon}
+      className={rest.className}
+      theme={rest.iconTheme}
+      iconClassName={rest.iconClassName}
       data-key={innerKey}
       suffixIconClassName={suffixIconClassName}
-      selected={selectedKey.includes(key)}
+      selected={hoverBg ? undefined : selectedKey.includes(key)}
       text={typeof text === 'string' ? text : text?.()}
       suffixIconStyle={suffixIconStyle}
       style={{
         marginLeft: '0.25rem',
         marginRight: '0.25rem',
-        height: '2em',
-        gap: 10,
-        padding: '0px 0.5rem',
-        fontSize: 14,
-        lineHeight: '20px',
-        alignItems: 'center',
         flexShrink: '0',
         ...rest.style
       }}
       size={16}
       dangerous={dangerous}
+      strokeWidth={strokeWidth}
       suffixStr={suffix}
+      suffixStrClassName={suffixClassName}
       onClick={() => {
         onClick?.({
           ...rest,
@@ -162,30 +167,33 @@ const ButtonMenuItem: FC<MenuItemWithProps & { type: 'item' }> = ({
     const subMenuKeys = selectedKey.slice(selectedKey.findIndex(i => i === key))
     return (
       <AnimatePopover
-        parentElement={parentRef.current}
         visible={(popOver && selectedKey.includes(popOver?.key)) || subMenu?.some(i => 'key' in i && selectedKey.includes(i.key))}
         duration={0.15}
         content={
           popOver?.node ||
-          (subMenu && (
-            <WithBorder padding={'0.4rem 0'} style={rest.subMenuStyle}>
-              <NavigationMenu
-                onSelect={item => {
-                  onClick?.(item)
-                }}
-                defaultSelectFirst={true}
-                onSelectChange={keys => {
-                  const myKeys = [...parentKey, key, ...keys]
-                  onPointerMove?.(myKeys)
-                }}
-                layout={subMenu}
-                selectedKeys={subMenuKeys}
-              />
-            </WithBorder>
-          ))
+          (subMenu &&
+            (setV => (
+              <WithBorder className='py-1' style={rest.subMenuStyle}>
+                <NavigationMenu
+                  onSelect={item => {
+                    onClick?.(item)
+                    setV(false)
+                  }}
+                  defaultSelectFirst={true}
+                  onSelectChange={keys => {
+                    const myKeys = [...parentKey, key, ...keys]
+                    onPointerMove?.(myKeys)
+                  }}
+                  layout={subMenu}
+                  selectedKeys={subMenuKeys}
+                />
+              </WithBorder>
+            )))
         }
         keepAlign={true}
         reposition
+        align={rest.align ?? 'start'}
+        padding={-6}
         positions={['right', 'left', 'bottom']}
       >
         {renderContent()}
@@ -201,10 +209,9 @@ const ButtonMenuItem: FC<MenuItemWithProps & { type: 'item' }> = ({
 const SeparatorMenuItem: FC<IMenuLayoutItem & { type: 'separator' }> = ({ style }) => {
   return (
     <div
+      className={'my-1.5 w-full'}
       style={{
         height: 1,
-        width: '100%',
-        margin: '6px 0px',
         background: Colors.Background.Border,
         ...style
       }}

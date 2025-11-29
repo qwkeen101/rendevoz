@@ -12,6 +12,18 @@ ipcRenderer.on('videoEvent', (e, payload) => {
       v && v.pause()
       break
     }
+    case 'mute': {
+      v && (v.muted = payload.muted)
+      break
+    }
+    case 'speed': {
+      v && (v.playbackRate = payload.speed)
+      break
+    }
+    case 'volume': {
+      v && (v.volume = payload.volume)
+      break
+    }
     case 'play': {
       v && v.play()
       break
@@ -63,6 +75,12 @@ const captureVideoFrame = (
   return dataUrl
 }
 
+window.addEventListener('DOMContentLoaded', () => {
+  setInterval(() => {
+    const classes = ['ytp-gradient-top', 'ytp-chrome-top', 'ytp-watermark', 'ytp-pause-overlay-container', 'videowall-endscreen']
+    window.document.body.querySelectorAll(classes.map(i => `.${i}`).join(',')).forEach(i => i.remove())
+  }, 100)
+})
 window.addEventListener('DOMContentLoaded', () => {
   interval = setInterval(() => {
     if (videoLoaded) {

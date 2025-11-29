@@ -1,5 +1,5 @@
-import { GlobalInstance } from '@/hooks'
 import { assignProperties } from '@/utils'
+import { t } from 'i18next'
 import { DockLayout, PanelData, TabData as DockTabData } from '@/components/base/dock'
 import { addNewTab, closeTab, getCurrentFocusedTab } from '@/components/layout/utils'
 import { RefObject } from 'react'
@@ -16,9 +16,13 @@ import {
 } from '~/typings'
 import { defaultLayout, LayoutIdToTabMap } from '@/components/layout/index'
 import Id from '@/utils/id'
-import { Rendevoz } from '@/core/rendevoz'
-import { MetaStore, ObjectStore } from '@/api/stores'
+import { CollectionStore, MetaStore, ObjectStore } from '@/api/stores'
 import { replacePanel } from '@/components/base/dock/Algorithm'
+import toast from 'react-hot-toast'
+import KeyvalueStore from '@/api/stores/keyvalue.store'
+import Workspace from '@/api/common/workspace'
+import { ipcInstance } from '@/electron'
+import UseHomeConfig from '@/scenes/home/useHomeConfig'
 
 const RegisterTabDataMap = new Map<BuiltInTabTypes['type'], TabData[BuiltInTabTypes['type']]>()
 const initializeOneTab = (registeredData: TabData[BuiltInTabTypes['type']], options: OpenTabOptions<BuiltInTabTypes['type']>) => {
@@ -26,8 +30,7 @@ const initializeOneTab = (registeredData: TabData[BuiltInTabTypes['type']], opti
   const originInitializeFunction = options.onInstanceInitialized
   const layoutTab: Partial<ILayoutTab> = {
     type: options.type,
-    objectId: options.objectId,
-    metaType: options.metaType
+    objectId: options.objectId
   }
   const newInitializedFunction = (i: BuiltInTabTypes['instance']) => {
     layoutTab.instance = i
@@ -38,8 +41,7 @@ const initializeOneTab = (registeredData: TabData[BuiltInTabTypes['type']], opti
   const contentElement = registeredData.content({
     tab: layoutTab,
     objectId: options.objectId,
-    onInstanceInitialized: newInitializedFunction,
-    metaType: options.metaType
+    onInstanceInitialized: newInitializedFunction
   })
   if (!contentElement) return
   layoutTab.tabContent = contentElement
@@ -48,15 +50,22 @@ const initializeOneTab = (registeredData: TabData[BuiltInTabTypes['type']], opti
 }
 
 export default function assignGlobalLayoutOps(layoutRef: RefObject<DockLayout>) {
-  assignProperties(GlobalInstance, {
+  assignProperties(Global, {
     layoutOps: {
+      ...Global.layoutOps,
       getTab: id => {
         return LayoutIdToTabMap.get(id)
+      },
+      closeTab: tabId => {
+        const l = layoutRef.current
+        if (l) {
+          closeTab(tabId, l)
+        }
       },
       closeObjectTab: metaId => {
         const m = MetaStore.getCachedMetaObject(metaId)
         if (m) {
-          const maybeExistTab = GlobalInstance.layoutOps?.hasTargetTab({
+          const maybeExistTab = Global.layoutOps?.hasTargetTab({
             objectId: m.objectId,
             type: m.type
           })
@@ -71,33 +80,36 @@ export default function assignGlobalLayoutOps(layoutRef: RefObject<DockLayout>) 
       openObject: async metaId => {
         const m = MetaStore.getCachedMetaObject(metaId)
         if (m) {
+          // delay this update to idle time
+          setTimeout(() => {
+            MetaStore.updateMetaObject({ id: m.id, viewAt: Date.now() })
+          }, 1000)
           const objectId = m.objectId
-          console.log(m)
           if (m.type.includes('Label')) {
             const targetObject = (await ObjectStore(m.type).getOneById(objectId)) as ILabel | undefined
             if (targetObject) {
               const parentMeta = MetaStore.getMetaObjectByObjectId(targetObject.parentObjectId)
-              console.log(parentMeta, targetObject)
               if (parentMeta) {
                 const parentInstance = await new Promise(res => {
-                  GlobalInstance.layoutOps?.openNewTab({
+                  Global.layoutOps?.openNewTab({
                     objectId: parentMeta.objectId,
                     type: parentMeta.type,
                     metaId: parentMeta.id,
-                    metaType: parentMeta.type,
                     onInstanceInitialized: i => {
                       res(i)
                     }
                   })
                 })
-                console.log(parentInstance, m)
                 switch (m.type) {
                   case 'pdfLabel':
                     ;(parentInstance as IPDFInstance).navigateOps?.jumpToLabel(objectId)
                     break
                   case 'videoLabel':
                   case 'audioLabel':
-                    ;(parentInstance as IMediaInstance).actionOps?.jumpTo(targetObject.time)
+                    {
+                      ;(parentInstance as IMediaInstance).actionOps?.jumpTo(targetObject.time)
+                      ;(parentInstance as IMediaInstance).actionOps?.autoPlay?.()
+                    }
                     break
                   case 'noteLabel':
                     ;(parentInstance as IEditorInstance).scrollToHighlight?.({ highlightId: objectId })
@@ -110,26 +122,124 @@ export default function assignGlobalLayoutOps(layoutRef: RefObject<DockLayout>) 
               return
             }
           }
-          if (m.type === 'localFile') {
-            Rendevoz.Actions.Open.Meta.openMetaObject(m.id)
+          if (m.type === 'localFile' || m.type === 'cloudFile') {
+            const file = await ObjectStore(m.type).getOneById(objectId)
+            if (file?.url) {
+              Global.utils.openSpecificURL(file.url)
+            }
+            return
           }
-          const res = await new Promise(res => {
-            GlobalInstance.layoutOps?.openNewTab({
+          if (m.type === 'collection') {
+            if (m.objectId) {
+              const parent = CollectionStore.findParentCollections(m.objectId)
+              if (parent) {
+                UseHomeConfig.update(c => ({ ...c, breadcrumbsFutureStack: [], breadcrumbs: parent.map(i => i.id) }))
+                Global.layoutOps?.openPage('home')
+              }
+            }
+            return
+          }
+          return await new Promise(res => {
+            Global.layoutOps?.openNewTab({
               objectId: objectId,
               type: m.type,
               metaId: m.id,
-              metaType: m.type,
               onInstanceInitialized: i => {
                 res(i)
               }
             })
           })
-          if (m.type === 'videoLabel') {
-            ;(res as IMediaInstance).actionOps?.autoPlay?.()
-          }
-          MetaStore.updateMetaObject({ id: m.id, viewAt: Date.now() })
-          return res
         }
+      },
+      openDeekLink: async link => {
+        if (link.startsWith('rendevoz://object')) {
+          const url = new URL(link)
+          const query = url.searchParams
+          const pathname = url.pathname
+          const metaId = parseInt(pathname.replace('//object/', ''))
+          if (!metaId || metaId.toString().length !== 14) {
+            return
+          }
+          const meta = await MetaStore.getMetaObjectById(metaId)
+          // switch workspace
+          const currentWorkspace = KeyvalueStore.getOne('currentWorkspace')
+          if (meta?.workspace && meta?.workspace !== currentWorkspace?.id) {
+            const hasWorkspace = await Workspace.hasWorkspace(meta.workspace)
+            if (!hasWorkspace) {
+              toast.error('Target workspace not exist!')
+              return
+            }
+            const res = await Global.dialogOps?.confirm(t('general.Confirm switch workspace'))
+            if (res) {
+              await Workspace.switchWorkspace(meta.workspace)
+            } else {
+              return
+            }
+          }
+          if (query.has('t')) {
+            const time = parseInt(query.get('t')!)
+            Global.layoutOps?.openObject(metaId).then(ins => {
+              if (ins && 'actionOps' in ins) {
+                ;(ins as IMediaInstance).actionOps?.jumpTo(time)
+              }
+            })
+          } else if (query.has('blockid')) {
+            const blockId = parseInt(query.get('blockid')!)
+            if (blockId) {
+              Global.layoutOps?.openObject(metaId).then(ins => {
+                if (ins) {
+                  if ('editorInstance' in ins) {
+                    ins.editorInstance?.selectBlock?.({
+                      blockId: blockId
+                    })
+                  }
+                  if ('selectBlock' in ins) {
+                    ins.selectBlock?.({
+                      blockId: blockId
+                    })
+                  }
+                }
+              })
+            }
+          } else {
+            await Global.layoutOps?.openObject(metaId)
+          }
+        }
+        if (link.startsWith('rendevoz://baidudisk')) {
+          const url = new URL(link)
+          const search = url.searchParams
+          if (search.has('code')) {
+            ipcInstance.send('loginBaidudisk', search.get('code')).then(res => {
+              if (res) {
+                KeyvalueStore.updateOne('baiduAccessToken', res.data.access_token)
+                toast.success('登录网盘成功！')
+              }
+            })
+          }
+        }
+        return
+      },
+      openPage: (type, opts) => {
+        return new Promise(res => {
+          switch (type) {
+            case 'youtube':
+            case 'feed':
+            case 'podcast':
+              Global.layoutOps?.openExtraPage(type, i => {
+                res(i)
+              })
+              return
+            default: {
+              Global.layoutOps?.openNewTab({
+                type,
+                objectId: opts?.id,
+                onInstanceInitialized: i => {
+                  res(i)
+                }
+              })
+            }
+          }
+        })
       },
       getCurrentFocusedTab: () => {
         const layout = layoutRef.current
@@ -137,7 +247,7 @@ export default function assignGlobalLayoutOps(layoutRef: RefObject<DockLayout>) 
         return getCurrentFocusedTab(layout)?.id
       },
       switchToTab: direction => {
-        const currFocused = GlobalInstance.layoutOps?.getCurrentFocusedTab()
+        const currFocused = Global.layoutOps?.getCurrentFocusedTab()
         if (currFocused) {
           const currFocusedTab = layoutRef.current?.find(currFocused) as DockTabData | undefined
           if (currFocusedTab) {
@@ -160,7 +270,7 @@ export default function assignGlobalLayoutOps(layoutRef: RefObject<DockLayout>) 
             if (next >= 0 && next !== currIdx) {
               const tab = currFocusedTab.parent?.tabs[next]
               if (tab) {
-                GlobalInstance.layoutOps?.makeTabActive(tab.id)
+                Global.layoutOps?.makeTabActive(tab.id)
               }
             }
           }
@@ -176,9 +286,9 @@ export default function assignGlobalLayoutOps(layoutRef: RefObject<DockLayout>) 
         if (!layout) return
         const registeredData = RegisterTabDataMap.get(tabData.type)
         if (!registeredData) return
-        const maybeExistTab = GlobalInstance.layoutOps?.hasTargetTab(tabData)
+        const maybeExistTab = Global.layoutOps?.hasTargetTab(tabData)
         if (maybeExistTab) {
-          GlobalInstance.layoutOps?.makeTabActive(maybeExistTab)
+          Global.layoutOps?.makeTabActive(maybeExistTab)
           const targetTabData = LayoutIdToTabMap.get(maybeExistTab)
           if (targetTabData && 'instance' in targetTabData && targetTabData.instance) {
             tabData.onInstanceInitialized?.(targetTabData.instance)
@@ -235,14 +345,14 @@ export default function assignGlobalLayoutOps(layoutRef: RefObject<DockLayout>) 
         layoutRef.current?.changeLayout(defaultLayout)
         layoutRef.current?.setLayout(defaultLayout)
         if (keepHome) {
-          Rendevoz.Actions.Open.openHome()
+          Global.layoutOps?.openPage('home')
         }
       },
       closeCurrentFocusedPanel: () => {},
       closeTabs: (type, currTabId) => {
         const l = layoutRef.current
         if (l) {
-          const currTab = currTabId || GlobalInstance.layoutOps?.getCurrentFocusedTab()
+          const currTab = currTabId || Global.layoutOps?.getCurrentFocusedTab()
           if (currTab) {
             let newPanel: PanelData | undefined = undefined
             const tabData = l.find(currTab) as DockTabData

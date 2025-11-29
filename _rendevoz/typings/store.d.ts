@@ -24,44 +24,71 @@ import {
   ICode,
   IMetaSelectOption,
   IMetaProp,
-  IPdfLabel,
   IPDFLabel,
-  IReviewCard
+  IPodcast,
+  IEpisode,
+  IPDFLabel,
+  IReviewCard,
+  IYoutubeChannel,
+  IYoutubeVideo,
+  IYoutubePlaylist,
+  IYoutubeFolder,
+  IPodcastFolder,
+  IChat,
+  IAIMessage,
+  IReviewFolder,
+  ICloudFile,
+  IAudioLabel, ICollection, IExam, IExamQuestion
 } from '.'
 import { PartialWithId } from './common'
 import { CustomTypes } from './custom'
-import { FeedItem, IFeedCollection, IFeedFolder } from '~/typings/components'
+import { IFeedItem, IFeedCollection, IFeedFolder } from '~/typings/components'
 
 export type BuiltInObjectTypes = {
   webpage: IWebpage
   audio: IAudio
+  audioLabel: IAudioLabel
   note: { specType: 'note' } & INote
+  collection: ICollection
   noteLabel: INoteLabel
+  message: IAIMessage
   noteBlock: INoteBlock
   webpageLabel: IWebpageLabel
   pdf: { specType: 'pdf' } & IPdfDocument
   whiteboard: { specType: 'whiteboard' } & IWhiteboard
   pdfLabel: IPDFLabel
-  tag: ITag & { specType: 'tag' }
+  tag: ITag
   image: IImage
   reviewCard: IReviewCard & { specType: 'reviewCard' }
+  reviewFolder: IReviewFolder
   localFile: ILocalFile
+  cloudFile: ICloudFile
   video: IVideo
   videoLabel: IVideoLabel
-  feed: FeedItem
+  feed: IFeedItem
   review: IReviewRecord
   syncedBlock: ISyncedBlock
   group: MetaGroup
   feedCollection: IFeedCollection
   feedFolder: IFeedFolder
   question: IQuestion
+  youtubeChannel: IYoutubeChannel
+  youtubeVideo: IYoutubeVideo
+  youtubePlaylist: IYoutubePlaylist
+  youtubeFolder: IYoutubeFolder
   code: ICode
   metaPropSelectOption: IMetaSelectOption
   metaProp: IMetaProp
   tweet: ITweet
+  podcast: IPodcast
+  episode: IEpisode
+  chat: IChat
+  podcastFolder: IPodcastFolder
+  exam: IExam
+  examQuestion: IExamQuestion
 }
 
-export type ObjectFamily = CustomTypes['Object']
+export type ObjectFamily = BuiltInObjectTypes
 
 export type IStoreOptions<T extends keyof ObjectFamily, V extends ObjectFamily[T], S extends IStore<V>> = {
   toastEnabled?: boolean
@@ -138,6 +165,7 @@ export type IIndexedMetaObjects = {
   objectIdToMetaObjectMap: Map<number, number>
   tagToMetaObjectIdsMap: Map<number, Set<number>>
   typeToMetaObjectIdsMap: Map<string, Set<number>>
+  propToMetaObjectIdsMap: Map<number, Set<number>>
   metaAttachmentIdToMetaIdsMap: Map<number, Set<number>>
   oldMetaObjects: Map<number, MetaObject>
 }
@@ -150,6 +178,16 @@ export type IIndexedMetaLinks = {
   undeletedLinksSet: Set<MetaLink>
   sourceIdToTargetIdsMap: Map<number, Set<number>>
   targetIdToSourceIdsMap: Map<number, Set<number>>
+}
+
+export type IMetaVisibleConditions = {
+  showAll?: true
+  showHidden?: boolean
+  showDeleted?: boolean
+  showLabel?: boolean
+  filter?: (o: Partial<MetaObject>) => boolean
+  showTemp?: boolean
+  sort?: 'viewAtAsc' | 'viewAtDsc' | 'createdAtAsc' | 'createdAtDsc'
 }
 
 export declare const MetaStore: {

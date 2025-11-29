@@ -2,17 +2,15 @@ import { IWhiteboardNode } from '~/typings'
 import { Icon } from '@/components'
 import { Colors } from '@/consts'
 import { memo, RefObject } from 'react'
-import { ClassName } from 'rendevoz'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
-import Id from '@/utils/id'
 import { getFlattenChildrenOfNode } from '@/core/components/whiteboard/node/mindmap/utils/tree'
 import { css } from '@emotion/css'
-import { useIsIn, useSelectAtomValue } from '@/hooks'
+import { useIsIn } from '@/hooks'
 import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
 import { selectAtom } from 'jotai/utils'
 import { useAtomValue } from 'jotai'
-import calculateNewNodePosition from '@/core/components/whiteboard/node/mindmap/calculateNewNodePosition'
-import { waitFor } from '@/utils'
+import addSubNode from '@/core/components/whiteboard/node/mindmap/utils/addSubNode'
+import { EdgeOverlayStateAtom } from '@/core/components/whiteboard/edge/EdgeOverlay'
 
 type direction = 'right' | 'left'
 const rightClazz = css({
@@ -38,6 +36,7 @@ export default memo(({ node, containerRef }: { node: IWhiteboardNode; containerR
   const instance = useWhiteboardInstance()
   const { isIn } = useIsIn(containerRef)
   const readOnly = useAtomValue(readOnlyAtom)
+  const edgeState = useAtomValue(EdgeOverlayStateAtom)
   const getSubNodeLength = (direction: direction) => {
     const all = getFlattenChildrenOfNode(node, instance, direction) || []
     return all.length
@@ -47,89 +46,15 @@ export default memo(({ node, containerRef }: { node: IWhiteboardNode; containerR
   }
 
   const handleAddSubNode = (direction: direction) => {
-    if (node.type === 'mindmap') {
-      const newNodeId = Id.getId()
-      const maxZ = instance.nodeOps?.getMaxZindex() ?? 0
-      const newNode = calculateNewNodePosition(
-        {
-          id: newNodeId,
-          x: 0,
-          y: 0,
-          width: 100,
-          type: 'text',
-          rootId: node.id,
-          side: direction,
-          borderType: node.borderType,
-          border: node.border,
-          z: maxZ,
-          content: [{ id: Id.getId(), type: 'paragraph', children: [{ text: '' }] }]
-        },
-        node,
-        direction,
-        instance
-      )
-      if (!newNode) return
-      instance.updateWhiteboard?.(w => {
-        w.nodes?.set(newNodeId, newNode)
-        const origin = w.nodes?.get(node.id)
-        if (origin && origin.type === 'mindmap') {
-          w.nodes?.set(origin.id, {
-            ...origin,
-            leftChildren: direction === 'left' ? [...(origin.leftChildren || []), { root: newNodeId, children: [] }] : origin.leftChildren,
-            rightChildren:
-              direction === 'right' ? [...(origin.rightChildren || []), { root: newNodeId, children: [] }] : origin.rightChildren
-          })
-        }
-      }, true)
-    } else {
-      const defaultNode = {
-        width: 100,
-        id: Id.getId(),
-        rootId: node.rootId,
-        border: node.border,
-        type: 'text',
-        side: direction,
-        borderType: node.borderType,
-        content: [{ id: Id.getId(), type: 'paragraph', children: [{ text: '' }] }]
-      }
-      console.log(node)
-      const newDefaultNode = calculateNewNodePosition(defaultNode, node, direction, instance)
-      if (newDefaultNode) {
-        instance.insertNode?.(newDefaultNode).then(n => {
-          if (n.length === 1) {
-            Array.from(instance.values.ID_TO_NODE_MAP.values()).forEach(i => {
-              i.onAddSubNode?.(node.id, n[0], 0, direction)
-            })
-          }
-        })
-        waitFor(
-          () => !!instance.nodeOps?.getNodeFuncs?.(newDefaultNode.id!),
-          () => {
-            instance.nodeOps?.getNodeFuncs(newDefaultNode.id!)?.setStyle({
-              opacity: 0
-            })
-            setTimeout(() => {
-              instance.nodeOps?.getNodeFuncs(newDefaultNode.id!)?.setStyle({
-                opacity: 1
-              })
-            }, 5)
-          },
-          {
-            requestAnimationFrame: true
-          }
-        )
-      }
-    }
+    addSubNode(node, direction, instance, true)
   }
   const handleCollape = (direction: direction) => {
     if (node.type === 'mindmap') {
       instance.updateWhiteboard?.(w => {
         const key = direction === 'right' ? 'rightCollapse' : 'leftCollapse'
-
         const origin = w.nodes?.get(node.id)
         if (origin) {
           const nextValue = !origin[key]
-
           w.nodes?.set(origin.id, { ...origin, [key]: nextValue })
           const allSubChildren = getFlattenChildrenOfNode(origin, instance, direction)
           const collapseChangeNodeIds: number[] = [node.id]
@@ -183,37 +108,14 @@ export default memo(({ node, containerRef }: { node: IWhiteboardNode; containerR
     if (nodeLength === 0) return null
     return (
       <div
-        data-disable-add-sub
         onClick={() => handleCollape(direction)}
-        className={'border'}
-        data-disable-drag
+        className={'border rounded-full size-9 flex items-center justify-center bg-global'}
         style={{
-          borderRadius: 999,
-          top: '50%',
           cursor: 'pointer',
-          color: Colors.Common.SelectColor,
-          backgroundColor: Colors.Background.Global
+          color: Colors.Common.SelectColor
         }}
       >
-        {alreadyCollapse ? (
-          <div
-            className={ClassName.circleButton(undefined, 999)}
-            style={{
-              fontWeight: 600,
-              width: 30,
-              fontSize: 14,
-              height: 30,
-              padding: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            {getSubNodeLength(direction)}
-          </div>
-        ) : (
-          <Icon size={22} name={'park-minus'} className={ClassName.circleButton(4, 999)} />
-        )}
+        {alreadyCollapse ? getSubNodeLength(direction) : <Icon size={22} name={'park-minus'} />}
       </div>
     )
   }
@@ -224,24 +126,21 @@ export default memo(({ node, containerRef }: { node: IWhiteboardNode; containerR
     }
     return (
       <div
-        data-disable-drag
-        onPointerDown={e => {
+        onClick={e => {
           e.button === 0 && handleAddSubNode(direction)
         }}
-        data-disable-add-sub
-        className={'border'}
+        className={'border rounded-full flex items-center justify-center size-9 bg-global'}
         style={{
-          borderRadius: 999,
-          cursor: 'pointer',
           color: Colors.Common.SelectColor,
-          backgroundColor: Colors.Background.Global
+          cursor: 'pointer'
         }}
       >
-        <Icon size={22} name={'park-plus'} className={ClassName.circleButton(4, 999)} />
+        <Icon size={22} name={'park-plus'} />
       </div>
     )
   }
   if (readOnly) return null
+  if (edgeState.isAdding || edgeState.isReposition) return null
   if (node.type === 'mindmap') {
     const rightCollapse = isCollapse('right')
     const leftCollapse = isCollapse('left')

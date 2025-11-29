@@ -2,31 +2,20 @@ import Id from '@/utils/id'
 import { FC, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { IForm } from './types'
-import useFlipForm from './useFlipForm'
 import { ObjectStore } from '@/api/stores'
-import { ObjectFamily } from '@/api/stores/object/object.store'
-import { useGlobalAtomValue } from '@/hooks'
-import OcrService from '@/api/services/ocr.service'
-import ClassName from '@/styles/classNames'
-import { Button } from '../base'
-import { toast } from 'react-hot-toast'
-import { TypeToRegisteredMetaObject } from '@/api/stores/meta/meta.store'
-import { IFile, MetaFormLayoutItem, MetaObject } from '~/typings'
-import { Rendevoz } from '@/core/rendevoz'
+import { MetaObject } from '~/typings'
+import trans from '@/consts/trans'
+import { AutosizeTextarea, Button, FormFooter, Icon } from '@/components'
+import { Colors, Icons } from '@/consts'
+import FileSystem from '@/api/fileSystem'
+import FormFilePathPicker from '@/components/form/objectEdit/FormFilePathPicker'
+import FormTagPicker from '@/components/form/objectEdit/FormTagPicker'
+import FormHiddenSwitcher from '@/components/form/objectEdit/FormHiddenSwitcher'
+import queueTurnUnhidden from '@/api/stores/meta/queueTurnUnhidden'
 
-const ObjectForm: FC<
-  IForm<MetaObject> & {
-    shouldPreviewGraph?: boolean
-  }
-> = ({ onBack, onSubmit, initialObject, shouldPreviewGraph }) => {
+const ObjectForm: FC<IForm<MetaObject>> = ({ onBack, onSubmit, initialObject }) => {
   const [object, setObject] = useState({ id: Id.getId(), ...initialObject })
   const { t } = useTranslation()
-  const [ocrLoading, toggleOcrLoading] = useState(false)
-  const objectAtom =
-    initialObject?.type && initialObject.objectId
-      ? ObjectStore(initialObject.type as keyof ObjectFamily).createAtom(initialObject.objectId)
-      : undefined
-  const targetObject = objectAtom && useGlobalAtomValue(objectAtom)
   const [originObject, setOriginObject] = useState<any>()
   useEffect(() => {
     if (object.objectId) {
@@ -59,194 +48,122 @@ const ObjectForm: FC<
       break
     }
   }
-  let showUrl = false
-  if (object.type === 'webpage') {
-    showUrl = true
-  }
-  if (object.type === 'tweet') {
-    showUrl = true
-  }
-
-  const defaultLayout: MetaFormLayoutItem[] = [
-    showUrl
-      ? {
-          type: 'input',
-          autoFocus: true,
-          text: t('general.url'),
-          value: originObject?.url,
-          onEnter: () => {
-            onSubmit?.(object)
-            if (originObject) {
-              ObjectStore(object.type).updateOne({ id: originObject.id, ...originObject })
+  const showFilePicker = object.type && ['localFile', 'webpage', 'pdf', 'video', 'audio', 'image', 'cloudFile'].includes(object.type)
+  return (
+    <div
+      style={{
+        width: 'min(90vw, 450px)',
+        borderRadius: 12,
+        overflow: 'hidden'
+      }}
+      className={'flex flex-col'}
+    >
+      <div style={{ maxHeight: '70vh' }} className={'flex flex-col w-full relative overflow-y-auto'}>
+        <div
+          style={{
+            backgroundImage: `url('${object.coverImgSrc}')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+          className={'bg-third h-24 mb-14 shrink-0 relative w-full'}
+        >
+          <div
+            onClick={() => {
+              Global.commonOps
+                ?.upload({
+                  accept: 'image/*'
+                })
+                .then(f => {
+                  if (f instanceof File) {
+                    FileSystem.saveImage(f).then(res => {
+                      setObject(s => ({ ...s, coverImgSrc: res }))
+                    })
+                  }
+                })
+            }}
+            style={{
+              borderColor: Colors.Background.Global
+            }}
+            className={
+              'absolute left-4 bg-popover bottom-0 translate-y-1/2 rounded-full overflow-hidden flex items-center justify-center cursor-pointer z-20 size-28 shadow-lg border-2 border-solid'
             }
-          },
-          onChange: async v => {
-            setOriginObject(o => ({ ...o, url: v }))
-            if (v) {
-              try {
-                new URL(v)
-              } catch (e) {
-                return
+          >
+            {object.coverImgSrc ? (
+              <img src={object.coverImgSrc} className={'w-full h-full object-cover'} />
+            ) : (
+              <Icon name={'park-upload-picture'} className={'opacity-30'} size={24} />
+            )}
+          </div>
+          <div className={'absolute transparent-font font-size-12 p-3 right-0 bottom-0 translate-y-full flex gap-2'}>
+            {object.coverImgSrc && (
+              <Button.IconButton text={t('general.Remove cover')} onClick={() => setObject(s => ({ ...s, coverImgSrc: undefined }))} />
+            )}
+            <Button.IconButton text={t(trans.Meta.ViewDetails)} onClick={() => Global.metaOps.openDetails?.(object.id)} />
+          </div>
+        </div>
+        <div className={'flex flex-col w-full p-5 gap-3'}>
+          <div className={'mb-1 w-full'}>
+            <AutosizeTextarea
+              className={'font-bold text-xl mb-2 w-full'}
+              onChange={v => setObject(s => ({ ...s, name: v }))}
+              value={object.name}
+              placeholder={t(trans.Unnamed)}
+            />
+            <AutosizeTextarea
+              placeholder={t('group.Add description')}
+              value={object.description}
+              className={'w-full transparent-font'}
+              onChange={v => setObject(s => ({ ...s, description: v }))}
+            />
+          </div>
+          {object.id ? (
+            <FormHiddenSwitcher hidden={!!object.hidden} onChange={v => setObject(s => ({ ...s, hidden: v }))} id={object.id} />
+          ) : null}
+          {showFilePicker && originObject && (
+            <FormFilePathPicker
+              value={originObject.url}
+              accept={fileAccept}
+              onChange={v => setOriginObject(s => ({ ...s, url: v }))}
+              enable={
+                object.type
+                  ? {
+                      local: ['video', 'audio', 'image', 'pdf'].includes(object.type),
+                      baidu: ['cloudFile', 'video'].includes(object.type),
+                      web: ['video', 'audio', 'image', 'webpage', 'tweet'].includes(object.type)
+                    }
+                  : undefined
               }
-              const result = await Rendevoz.Utils.Web.fetchDetails(v)
-              setObject(s => ({ ...s, name: result.title, coverImgSrc: result.image, description: result.description }))
-            }
-          }
-        }
-      : undefined,
-    {
-      type: 'nameInput',
-      autoFocus: !showUrl,
-      value: object.name,
-      onChange: v => setObject({ ...object, name: v })
-    },
-    {
-      type: 'descriptionInput',
-      value: object.description,
-      onChange: v => setObject({ ...object, description: v })
-    },
-    object?.type
-      ? {
-          type: 'fromDisplayer',
-          object,
-          onRemove: () => {
-            setObject(s => {
-              delete s.fromObject
-              return { ...s }
+            />
+          )}
+          <FormTagPicker tags={object.tags} onChange={v => setObject(s => ({ ...s, tags: v }))} />
+        </div>
+      </div>
+      <FormFooter
+        onCancel={onBack}
+        onConfirm={() => {
+          onSubmit?.(object)
+          if (initialObject?.hidden && !object.hidden) {
+            queueTurnUnhidden({
+              metaId: object.id,
+              type: 'object',
+              force: true
             })
           }
+        }}
+        className={'border-top p-4 px-5'}
+        left={
+          <div
+            className={
+              'dark:bg-red-900 bg-red-200 hover:!bg-opacity-40 font-medium !bg-opacity-30 text-red-500 gap-2.5 flex cursor-pointer items-center rounded-lg px-4 py-1.5'
+            }
+          >
+            <Icon name={Icons.Delete} />
+            <div>{t(trans.Delete)}</div>
+          </div>
         }
-      : undefined,
-    object?.type && ['localFile', 'pdf', 'video', 'audio', 'image'].includes(object.type)
-      ? {
-          type: 'filePathPicker',
-          accept: fileAccept,
-          onEnter: () => {
-            onSubmit?.(object)
-            if (originObject) {
-              ObjectStore(object.type).updateOne({ id: originObject.id, ...originObject })
-            }
-          },
-          filePath: (originObject as IFile)?.url,
-          enableWeb: ['video', 'audio', 'image'].includes(object.type),
-          enableBaidudisk: ['video'].includes(object.type),
-          onChange: async details => {
-            if (details.type === 'local' && details.file) {
-              try {
-                const result = await Rendevoz.Utils.Meta.normalizeLocalFileToMeta(details.file, {
-                  limitType: object.type !== 'localFile'
-                })
-                setObject(o => ({ ...o, ...result.meta }))
-                if (originObject) {
-                  setOriginObject(i => ({ ...i, ...result.object }))
-                }
-              } catch (e) {
-                toast.error(Rendevoz.Consts.Errors.NotSupportedFile())
-                console.error(e)
-              }
-            }
-            if (details.type === 'baidudisk') {
-              setObject(o => ({ ...o, name: details.name }))
-              if (originObject) {
-                setOriginObject(o => ({ ...o, url: `baidudisk${details.url}` }))
-              }
-            }
-            if (details.type === 'web') {
-              if (originObject) {
-                setOriginObject(o => ({ ...o, url: details.url }))
-              }
-              const result = await Rendevoz.Utils.Meta.normalizeWebFileToMeta(details.url, object.type)
-              console.log(result)
-              setObject(o => ({ ...o, ...result.meta }))
-              if (originObject) {
-                setOriginObject(i => ({ ...i, ...result.object }))
-              }
-            }
-            if (details.type === 'clear') {
-              if (originObject) {
-                setOriginObject(i => ({ ...i, url: undefined }))
-              }
-            }
-          }
-        }
-      : undefined,
-    object.attachments?.length ? { type: 'attachmentDisplayer', attachments: object.attachments } : undefined,
-    {
-      type: 'group',
-      children: [
-        initialObject?.type === 'image' && initialObject?.coverImgSrc
-          ? {
-              type: 'custom',
-              children: (
-                <Button.IconButton
-                  spin={ocrLoading}
-                  icon={ocrLoading ? 'park-loading-four' : 'park-text-recognition'}
-                  className={ClassName.flatButton()}
-                  text={ocrLoading ? t('general.loading') : t('general.recognize text in image')}
-                  onClick={async () => {
-                    if (ocrLoading) return
-                    toggleOcrLoading(true)
-                    try {
-                      const fileUrl = object.coverImgSrc!
-                      const image = await fetch(fileUrl).then(res => res.blob())
-                      const result = await OcrService.ocrImage(image)
-                      const desc = result?.result.map(i => i.words).join(' ')
-                      setObject(s => ({ ...s, description: desc }))
-                    } catch (e) {
-                      toast.error('Failed to recognize text!')
-                    } finally {
-                      toggleOcrLoading(false)
-                    }
-                  }}
-                ></Button.IconButton>
-              )
-            }
-          : undefined,
-        {
-          type: 'addDesc',
-          value: object.description
-        },
-        {
-          type: 'imagePicker',
-          imageUrl: object.coverImgSrc,
-          onChange: v => setObject({ ...object, coverImgSrc: v }),
-          name: object.name || ''
-        },
-        // {
-        //   type: 'colorPicker',
-        //   color: object.color,
-        //   onChange: c => setObject({ ...object, color: c })
-        // },
-        // {
-        //   type: 'iconPicker',
-        //   icon: object.icon,
-        //   onChange: i => setObject({ ...object, icon: i })
-        // },
-        {
-          type: 'tagPicker',
-          tags: object.tags,
-          onChange: v => setObject({ ...object, tags: v })
-        }
-      ]
-    }
-  ]
-  const customizedLayout = initialObject?.type
-    ? TypeToRegisteredMetaObject.get(initialObject?.type)?.customEditForm?.(object, setObject, targetObject)
-    : undefined
-  const { renderForm } = useFlipForm({
-    layout: customizedLayout || defaultLayout,
-    onBack,
-    onSubmit: () => {
-      onSubmit?.(object)
-      if (originObject) {
-        console.log(originObject)
-        ObjectStore(object.type).updateOne({ id: originObject.id, ...originObject })
-      }
-    },
-    formTitle: t('general.Edit details'),
-    submitText: initialObject?.id ? 'update' : 'create'
-  })
-  return renderForm()
+      />
+    </div>
+  )
 }
 
 export default ObjectForm

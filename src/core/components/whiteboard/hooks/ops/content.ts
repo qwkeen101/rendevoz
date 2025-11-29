@@ -2,7 +2,6 @@ import { IWhiteboardInstance, IWhiteboardMindmap, IWhiteboardNode, IWhiteboardOu
 import { assignProperties } from '@/utils'
 import { MetaStore } from '@/api/stores'
 import { Node } from 'slate'
-import { Rendevoz } from '@/core/rendevoz'
 
 const transformCommonNodeToOutline = (
   instance: IWhiteboardInstance,
@@ -19,9 +18,10 @@ const transformCommonNodeToOutline = (
         const object = metaMap.get(node.metaObjectId)
         if (object) {
           return {
-            name: object.name || object.placeholderName || 'Unnamed object',
-            icon: Rendevoz.Utils.Object.getMetaObjectIcon(object.type),
-            nodeId: node.id
+            name: object.name || (object.type.includes('Label') ? object.placeholderName : ''),
+            icon: Global.utils.getIcon(object.type),
+            nodeId: node.id,
+            type: object.type
           }
         }
       }
@@ -36,7 +36,8 @@ const transformCommonNodeToOutline = (
         return {
           name,
           nodeId: node.id,
-          icon: 'park-text'
+          icon: 'park-text',
+          type: 'whiteboard text'
         }
       }
       break
@@ -49,12 +50,12 @@ const transformMindmapToOutline = (instance: IWhiteboardInstance, node: IWhitebo
   const metaMap = MetaStore.getMetaObjectsMap()
   let children: Required<IWhiteboardOutline>['children'] = []
   if (node.nodeType === 'text') {
-    name = Node.string({ children: node.content }) || 'Unnamed mindmap'
+    name = Node.string({ children: node.content })
   }
   if (node.nodeType === 'metaObject') {
     const object = metaMap.get(node.metaObjectId)
     if (object) {
-      name = object.name || object.placeholderName || 'Unnamed object'
+      name = object.name || (object.type.includes('Label') ? object.placeholderName : '')
     }
   }
   const parseChildren = (children: IWhiteboardMindmap[]): IWhiteboardOutline[] => {
@@ -81,11 +82,13 @@ const transformMindmapToOutline = (instance: IWhiteboardInstance, node: IWhitebo
     name,
     icon,
     children,
-    nodeId: node.id
+    nodeId: node.id,
+    type: 'whiteboard mindmap'
   }
 }
 
 export default function assignContentOps(instance: IWhiteboardInstance) {
+  const groupType = 'whiteboard group'
   assignProperties(instance, {
     contentOps: {
       transformToOutline: () => {
@@ -126,8 +129,9 @@ export default function assignContentOps(instance: IWhiteboardInstance) {
             children.sort(a => (a.children ? -1 : 1))
             return {
               nodeId: groupId,
-              name: group.name || 'Unnamed group',
-              children
+              name: group.name,
+              children,
+              type: groupType
             }
           }
         }
@@ -144,7 +148,11 @@ export default function assignContentOps(instance: IWhiteboardInstance) {
             outlineArray.push(res)
           }
         })
-        return outlineArray
+        const record: Record<string, IWhiteboardOutline[]> = {}
+        outlineArray.forEach(a => {
+          record[a.type] = [...(record[a.type] || []), a]
+        })
+        return record
       }
     }
   })

@@ -1,6 +1,6 @@
 import { Content, Icon } from '@/components'
 import { CreditToYuan } from '@/api/services/ai/AI.service'
-import { memo, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import { Colors } from '@/consts'
 import { ClassName } from 'rendevoz'
 import { AIService } from '@/api/services'
@@ -10,191 +10,122 @@ import { useToggle } from '@/hooks'
 import WeixinPay from '@/components/WeixinPay'
 import UserService from '@/api/services/user.service'
 import toast from 'react-hot-toast'
-import { useIsUserPro } from '@/api/services/login.service'
+import { css } from '@emotion/css'
+import classnames from 'classnames'
+import CommonService from '@/api/services/common.service'
+import trans from '@/consts/trans'
 
 export default memo(() => {
-  const [selectedPlan, setSelectedPlan] = useState<string>()
+  const [selectedPlan, setSelectedPlan] = useState<string>('200')
   const [qrcode, setqrcode] = useState('')
   const [modalV, toggleModalV] = useToggle(false)
-  const canBuy = useIsUserPro(true)
+  const [orderId, setOrderId] = useState<string>()
   const { t } = useTranslation()
+  const checkOrderDetails = async (toastFail = false) => {
+    if (orderId) {
+      try {
+        const state = await CommonService.checkPayOrder(orderId)
+        if (state === 'SUCCESS') {
+          setOrderId(undefined)
+          setqrcode('')
+          toast.success(t(trans.Success.PaymentSuccessful))
+          setTimeout(() => {
+            UserService.getUserDetails()
+          }, 1000)
+          toggleModalV(false)
+          return
+        }
+      } catch (e) {
+        console.error(e)
+      }
+      if (toastFail) {
+        toast.error(t(trans.Errors.PaymentUnsuccessful))
+      }
+    }
+  }
+  useEffect(() => {
+    if (orderId) {
+      const interval = setInterval(async () => {
+        checkOrderDetails()
+      }, 3000)
+      return () => {
+        clearInterval(interval)
+      }
+    }
+  }, [orderId])
+  const canBuy = UserService.useIsUserPro(true)
   return (
-    <Content
-      style={{
-        padding: '12px 48px'
-      }}
-    >
-      <div
-        style={{
-          padding: '12px 0px',
-          borderBottom: '1px solid var(--border-background)',
-          fontSize: 22,
-          fontWeight: 600
-        }}
-      >
-        {t('settings.Pay for AI')}
+    <div className={'p-6 w-[90vw] max-w-xl'}>
+      <div className={'font-bold gap-2 flex text-2xl mb-1.5'}>
+        <Icon
+          className={css({
+            svg: {
+              fill: 'url(#aigradient)'
+            }
+          })}
+          name={'custom-stars'}
+        />
+        <span
+          style={{
+            backgroundImage: 'linear-gradient(270deg,#794aff,#0a7bff)',
+            backgroundClip: 'text',
+            color: 'transparent'
+          }}
+        >
+          {t('settings.AI can be your study copilot')}
+        </span>
       </div>
-      <Content flex gap={100}>
-        <Content
-          style={{
-            padding: '24px 12px 12px 0px'
-          }}
-          flex
-          column
-        >
+      <div className={'transparent-font font-size-13'}>
+        AI可以为您总结视频，PDF，网页与文档，快速提炼要点并生成导图，是您最好的学习助手。（100点数 ≈ 总结20个视频 / 转录30分钟音频）
+      </div>
+      <div className={'transparent-font'}></div>
+      <div className={'grid grid-cols-3 gap-4 mt-5'}>
+        {Object.entries(CreditToYuan).map((i, idx) => (
           <div
-            style={{
-              fontWeight: 500,
-              fontSize: 18,
-              marginBottom: 6
-            }}
+            className={classnames(
+              'border grow transition-all p-4 items-center rounded-lg flex flex-col cursor-pointer',
+              selectedPlan === i[0] && 'select-color-border select-color-font select-color-super-transparent-bg'
+            )}
+            onClick={() => setSelectedPlan(i[0])}
+            key={i[0]}
           >
-            {t('settings.AI can be your study copilot')}:
+            <div className={'whitespace-nowrap shrink-0 font-bold'}>
+              <span className={'font-size-16'}>{i[0]}</span> <span className={'font-size-13'}>{t('settings.Credits')}</span>
+            </div>
+            <div className={classnames('font-medium font-size-13', selectedPlan === i[0] ? 'select-color-font' : 'transparent-font')}>
+              ¥ {i[1]}
+            </div>
           </div>
-          {[t('settings.Summarize articles'), t('settings.Generate questions'), t('settings.Smart search')].map(i => (
-            <Content
-              flex
-              gap={10}
-              alignItems={'center'}
-              style={{
-                margin: '15px 0px'
-              }}
-            >
-              <Icon strokeWidth={5} name={'park-check'} />
-              {i}
-            </Content>
-          ))}
-        </Content>
-        <Content
-          flex
-          column
-          gap={6}
+        ))}
+      </div>
+      {selectedPlan !== undefined && (
+        <div
           style={{
-            padding: 24
+            padding: 1
+          }}
+          onClick={() => {
+            if (canBuy) {
+              AIService.buyAICredit(Number(selectedPlan)).then(res => {
+                setOrderId(res.orderId)
+                setqrcode(res.code)
+                toggleModalV()
+              })
+            }
           }}
         >
-          {Object.entries(CreditToYuan).map((i, idx) => (
-            <div
-              style={{
-                border: '1px solid var(--border-background)',
-                padding: '12px',
-                minWidth: 300,
-                cursor: 'pointer',
-                borderRadius: 12
-              }}
-              onClick={() => setSelectedPlan(i[0])}
-              key={i[0]}
-            >
-              <Content flex justifyContent={'space-between'} alignItems={'center'}>
-                <Content flex gap={8} alignItems={'center'}>
-                  <div
-                    style={{
-                      border: '1px solid var(--font-primary)',
-                      borderRadius: 999,
-                      padding: 2,
-                      width: '1em',
-                      height: '1em'
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        background: selectedPlan === i[0] ? 'var(--font-primary)' : undefined,
-                        borderRadius: 999
-                      }}
-                    ></div>
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 20,
-                      fontWeight: 600
-                    }}
-                  >
-                    {i[0]} {t('settings.Credits')}
-                  </div>
-                </Content>
-                <div
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 500
-                  }}
-                >
-                  ¥{i[1]}
-                </div>
-              </Content>
-              <Content
-                flex
-                justifyContent={'flex-end'}
-                alignItems={'center'}
-                gap={20}
-                style={{
-                  fontSize: 13,
-                  color: Colors.Font.Transparent
-                }}
-              >
-                {i[0] === '11500' && (
-                  <div
-                    style={{
-                      marginRight: 'auto'
-                    }}
-                  >
-                    {t('settings.Plus credits', { num: 1500 })}
-                  </div>
-                )}
-                {i[0] === '24000' && (
-                  <div
-                    style={{
-                      marginRight: 'auto'
-                    }}
-                  >
-                    {t('settings.Plus credits', { num: 4000 })}
-                  </div>
-                )}
-                {i[0] === '2000' && <div>≈ {t('settings.Sum articles', { num: 100 })}</div>}
-                {i[0] === '5000' && <div>≈ {t('settings.Sum articles', { num: 250 })}</div>}
-                {i[0] === '11500' && <div>≈ {t('settings.Sum articles', { num: 550 })}</div>}
-                {i[0] === '24000' && <div>≈ {t('settings.Sum articles', { num: 1200 })}</div>}
-              </Content>
-            </div>
-          ))}
-          {selectedPlan !== undefined && (
-            <div
-              style={{
-                textAlign: 'center',
-                fontWeight: 500,
-                fontSize: 16,
-                marginTop: 8
-              }}
-              onClick={() => {
-                if (canBuy) {
-                  AIService.buyAICredit(Number(selectedPlan)).then(res => {
-                    console.log(res)
-                    QRCode.toDataURL(document.createElement('canvas'), res).then(data => {
-                      setqrcode(data)
-                      toggleModalV()
-                    })
-                  })
-                }
-              }}
-              className={ClassName.selectButton(6, '8px 12px')}
-            >
-              {canBuy ? t('settings.Select plan') : t('settings.Subscribe to buy AI credits')}
-            </div>
-          )}
-        </Content>
-      </Content>
+          <div className={'select-button text-center text-lg font-medium !py-2 !rounded-lg mt-6'}>
+            <div>{canBuy ? t('settings.Select plan') : t('settings.Subscribe to buy AI credits')}</div>
+          </div>
+        </div>
+      )}
       <WeixinPay
         visible={modalV}
         onClose={toggleModalV}
         code={qrcode}
         onSubmit={() => {
-          toggleModalV(false)
-          UserService.getUserDetails().then(res => {
-            toast.success('You have ' + (res.availableAICredit ?? 0) + ' credits now!')
-          })
+          checkOrderDetails(true)
         }}
       />
-    </Content>
+    </div>
   )
 })

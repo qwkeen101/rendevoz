@@ -1,374 +1,107 @@
-import { AnimatePopover, Button, Content, Icon, IconWithPopover, Slider, WithBorder } from '@/components'
+import { Icon } from '@/components'
 import { useMediaInstance } from './hooks/useMediaInstance'
 import useMediaState from './hooks/useMediaState'
-import { useMemo, useRef } from 'react'
-import { css } from '@emotion/css'
-import MediaChapter from './components/sidebar/MediaChapter'
-import { AnimatePresence, motion } from 'framer-motion'
-import { normalizeSecondsToTime } from './utils'
-import ClassName from '@/styles/classNames'
+import { CSSProperties, useRef } from 'react'
 import useMediaToolbarState from './hooks/useMediaToolbarState'
-import Colors from '@/consts/colors'
-import MediaProgressLabelPin from './MediaProgressLabelPin'
-import { useSetAtom } from 'jotai'
-import { VideoSidebarStateAtom } from './hooks/useMediaSidebarState'
 import { useTranslation } from 'react-i18next'
+import classnames from 'classnames'
+import useRenderMediaControlBar from './useRenderMediaControlBar'
 
-const playerControlMask = css({
-  backgroundImage:
-    'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAEgCAYAAAB1khmuAAAAAXNSR0IArs4c6QAAATNJREFUOE9tyPdHJ3AAh/Fve++9995d1957iySSRBJJIokkkRznJM45kkQS6Y/M0y8PH71/ePG8I5HvF8Ut0aTEkBJLShwp8WRAAp8kkpJESjIpKaSkkgFpfJJOSgYpmaRkkZJNBuTwSS4peaTkk1JASiEZUMQnxaSUkFJKShkp5WRABZ9UklJFSjUpNaTUkgF1fFJPSgMpjaQ0kQHNfNJCSispbaS0k9JBBnTySRcp3aT8IKWHlJ9kQC+f9JHST8oAKYOkDJEBw3wyQsooKWOkjJMyQQZM8skUKdOkzJAyS8ocGTDPJwukLJKyRMoyKSvkF6uwBuuwAZuwBduwA7uwB/twAIdwBMdwAqdwBudwAZdwBddwA7fwC37DH7iDe/gL/+A/PMAjPMEzvMArvME7fHwCb3Y5NUwXcu0AAAAASUVORK5CYII=")',
-  bottom: 0,
-  position: 'absolute',
-  pointerEvents: 'none',
-  left: 0,
-  backgroundPosition: 'bottom',
-  backgroundRepeat: 'repeat-x',
-  width: '100%',
-  height: 288,
-  borderRadius: '0px 0px 12px 12px'
-})
-const playSpeed: number[] = [2, 1.5, 1.25, 1, 0.75, 0.5]
-const MediaBottomBar = () => {
-  const instance = useMediaInstance()
+const CLAZZ = 'opacity-80 hover:opacity-100 transition-opacity cursor-pointer'
+const MediaBottomBar = ({
+  style,
+  className,
+  controlBarStyle
+}: {
+  style?: CSSProperties
+  className?: string
+  controlBarStyle?: CSSProperties
+}) => {
   const [mediaState, setMediaState] = useMediaState()
   const [toolbarState, setToolbarState] = useMediaToolbarState()
-  const setSidebarState = useSetAtom(VideoSidebarStateAtom)
-  const { totalTime = 0, currentTime = 0, paused, volume, muted, mode, floated } = mediaState
-  const { showVolume, chooseTime, thumbnailUrl, thumbnailVisible, thumbnailPosition, currentHoverTime, draggingScrubber } = toolbarState
-  const { currDuration, totalDuration, currentChapter } = useMemo(() => {
-    setToolbarState(s => (s.draggingScrubber ? s : { ...s, currentScrubberTime: currentTime }))
-    const currentChapter = mediaState.sortedChapters?.findLast(i => i.startTime < currentTime)
-    return {
-      currDuration: normalizeSecondsToTime(currentTime),
-      totalDuration: normalizeSecondsToTime(totalTime),
-      percent: (currentTime || 0) / (totalTime || 0),
-      currentChapter
-    }
-  }, [totalTime, currentTime])
-  const audioMode = mode === 'audio'
+  const { paused } = mediaState
+  const { draggingScrubber } = toolbarState
+
   const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
-  const playerContainer = instance.getPlayerElement?.()
-  const opacity =
-    (!mediaState.labelPopoverVisible || audioMode) &&
-    (audioMode || toolbarState.visible || chooseTime || toolbarState.currentHoverLabelId || paused || draggingScrubber)
-      ? 1
-      : 0
+  const { renderPlayButton, renderController, renderCurrentTime, renderSpeed, renderTotalTime, renderVolume } = useRenderMediaControlBar()
+  const opacity = !mediaState.labelPopoverVisible && (paused || draggingScrubber) ? 1 : 0
   return (
-    <Content
-      flex
-      column
+    <div
       ref={containerRef}
       style={{
-        opacity
+        ...style
       }}
-      className={css([
-        {
-          transition: 'opacity 0.3s ease',
-          '.hover-progress, .load-progress': {
-            position: 'absolute',
-            left: 0,
-            bottom: 0,
-            width: '100%',
-            height: '100%',
-            transformOrigin: '0 0'
-          }
-        },
-        mediaState.mode !== 'audio' && {
-          '*': {
-            color: Colors.Font.White,
-            '--button-hover-background': 'rgba(255,255,255,0.2)'
-          },
-          '.react-tiny-popover-container': {
-            '--linear-background': Colors.Background.DarkLinear
-          }
-        }
-      ])}
+      className={classnames(className, 'text-white relative')}
     >
-      {!audioMode && <div role="player-control-mask" className={playerControlMask}></div>}
-      <AnimatePopover
-        disableNudge
-        backdropFilter={false}
-        containerStyle={{
-          pointerEvents: 'none',
-          zIndex: '9999'
-        }}
-        parentElement={mediaState.fullScreen ? playerContainer : undefined}
-        content={
-          <Content flex column alignItems="center" style={{ opacity }}>
-            <img width={200} src={thumbnailUrl} style={{ borderRadius: 10 }} />
-            <Content
-              flex
-              column
-              alignItems="center"
-              className={'font-size-12'}
-              style={{
-                textShadow: mediaState.mode !== 'audio' ? '0 0 4px rgba(0,0,0,0.45)' : undefined,
-                padding: '5px 9px',
-                color: mediaState.mode === 'audio' ? Colors.Font.Transparent : Colors.Font.White,
-                lineHeight: 1.3
-              }}
-            >
-              {toolbarState.thumbnailLabelName && (
-                <Content flex alignItems="center" gap={6}>
-                  <div
-                    style={{
-                      maxWidth: 160
-                    }}
-                    className={ClassName.ellipsisFont(1)}
-                  >
-                    {toolbarState.thumbnailLabelName}
-                  </div>
-                </Content>
-              )}
-              {toolbarState.thumbnailChapterName && (
-                <div
-                  className={ClassName.ellipsisFont(2)}
-                  style={{
-                    maxWidth: 160
-                  }}
-                >
-                  {toolbarState.thumbnailChapterName}
-                </div>
-              )}
-              <div>{normalizeSecondsToTime(currentHoverTime || 0)}</div>
-            </Content>
-          </Content>
-        }
-        visible={thumbnailVisible}
-        position={{
-          left: thumbnailPosition?.x,
-          top: thumbnailPosition?.y
-        }}
-        keepAlign
-        positions={['top']}
-      ></AnimatePopover>
       <div
-        role="video-process-marker"
         style={{
-          height: mediaState.styles?.progressHeight ?? 5
-        }}
-        className={css({
-          transformOrigin: '0 0',
+          height: 267,
+          position: 'absolute',
           width: '100%',
-          zIndex: 20,
-          display: 'flex',
-          position: 'relative'
-        })}
-      >
-        {mediaState.layout?.showProgressPins !== false && mediaState.labels?.map(i => <MediaProgressLabelPin labelId={i} key={i} />)}
-        <div
-          style={{ width: '100%', height: '100%', display: 'flex' }}
-          className={css({
-            '> div': {
-              ':not(:last-child)': {
-                paddingRight: 3
-              }
-            }
-          })}
-        >
-          {mediaState.sortedChapters?.length ? (
-            mediaState.sortedChapters.map((i, idx, arr) => {
-              const next = arr[idx + 1]
-              const endTime = next ? next.startTime : totalTime
-              const duration = endTime - i.startTime
-              return (
-                <MediaChapter chapter={i} idx={idx} key={i.id} startTime={i.startTime} endTime={endTime} percent={duration / totalTime} />
-              )
-            })
-          ) : (
-            <MediaChapter idx={0} startTime={0} endTime={totalTime} percent={1} />
-          )}
-        </div>
-        {/*<MediaScrubber />*/}
-      </div>
-      <Content
+          bottom: 0,
+          left: 0,
+          paddingTop: 37,
+          backgroundRepeat: 'repeat-x',
+          backgroundImage:
+            'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAELCAYAAAAY+exbAAAAAXNSR0IArs4c6QAAASpJREFUOE9lyOdHqAEARvH2rtve47b33nvv4XIlkkQSSSKJJJFEkkgiSSSR/sic98vx6vnw4zwREb8WySNRpESTEkNKLClxpMSTkkBKIilJZEBymBRSUklJI+UPKemkZJCSSUoWGZAdJoeUXFLySMknpYCUQlKKSCkmpYQMKA1TRspfUspJqSClkpQqUqpJqSGllgyoC1NPSgMpjaQ0kdJMSgspraS0kQHtYTpI6SSli5RuUnpI6SWlj5R+UgbIgMEwQ6QMkzJCyigpY6SMkzJByiQZMBVmmpQZUmZJmSNlnpQFUhZJWSJlmVyBf/AfVmEN1mEDNmELtmEHdmEP9uEADuEIjuEETuEMzuECLuEKruEGbuEO7uEBHuEJnuEFXuEN3uEDPuELvn8AQr82DJxd5k4AAAAASUVORK5CYII=")'
+        }}
+      ></div>
+      {renderController()}
+      <div
         style={{
-          height: 44,
-          padding: audioMode ? 0 : '0px 12px',
-          margin: audioMode ? '4px -6px 0px' : undefined,
+          ...controlBarStyle,
           ...mediaState.styles?.controlBarStyle
         }}
-        flex
-        justifyContent="space-between"
-        alignItems="center"
-        onPointerLeave={() => setToolbarState(s => ({ ...s, showVolume: false }))}
+        className='flex p-4 relative justify-between items-center z-20'
       >
-        <Content
-          style={{ flexShrink: 1, overflow: 'hidden', whiteSpace: 'nowrap' }}
-          flex
-          fullHeight
-          alignItems="center"
-          role="left-toolbar"
-        >
-          <Icon
-            className={ClassName.circleButton()}
-            size={20}
-            strokeWidth={8}
-            name={paused ? 'park-play-one' : 'park-pause'}
-            onClick={() => {
-              setMediaState(s => ({ ...s, paused: !s.paused }))
+        <div className='flex gap-6'>
+          {renderPlayButton({
+            className: CLAZZ,
+            size: 24
+          })}
+          {renderVolume({
+            iconClassname: CLAZZ,
+            iconSize: 22
+          })}
+          <div
+            style={{
+              letterSpacing: '-0.4px'
             }}
-            style={{ marginRight: 10 }}
-            theme="filled"
-          />
-          <Icon
-            className={ClassName.circleButton()}
-            size={20}
-            onPointerMove={() => {
-              setToolbarState(s => ({ ...s, showVolume: true }))
-            }}
-            style={{ marginRight: 10 }}
-            onClick={() => setMediaState(s => ({ ...s, muted: !s.muted }))}
-            name={volume === 0 || muted ? 'park-volume-mute' : volume < 0.3 ? 'park-volume-small' : 'park-volume-notice'}
-          />
-          <AnimatePresence>
-            {showVolume && (
-              <motion.div
-                initial={{ width: 0, opacity: 0, marginRight: 0 }}
-                animate={{ width: 72, opacity: 1, marginRight: 10 }}
-                exit={{ width: 0, opacity: 0, marginRight: 0 }}
-              >
-                <Slider
-                  handleStyle={{
-                    backgroundColor: mediaState.mode === 'audio' ? Colors.Font.Primary : Colors.Font.White
-                  }}
-                  trackStyle={{
-                    backgroundColor: mediaState.mode === 'audio' ? Colors.Font.Primary : Colors.Font.White
-                  }}
-                  railStyle={{
-                    backgroundColor: mediaState.mode === 'audio' ? Colors.Background.ButtonHover : Colors.Background.DarkButtonHover
-                  }}
-                  value={muted ? 0 : volume}
-                  onChange={v => typeof v === 'number' && setMediaState(s => ({ ...s, volume: v, muted: false }))}
-                  min={0}
-                  max={0.6}
-                  step={0.02}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-          {mediaState.loaded ? (
-            <Content
-              gap={6}
-              flex
-              alignItems="center"
-              className={'transparent-font font-size-12'}
-              style={{ marginLeft: 6, flexShrink: 1, overflow: 'hidden' }}
-            >
-              <div>
-                {currDuration} / {totalDuration}
-              </div>
-              {currentChapter && (
-                <>
-                  <div style={{ fontSize: 9 }}>•</div>
-                  <div style={{ cursor: 'pointer' }} onClick={() => setSidebarState(s => ({ ...s, showChapters: true }))}>
-                    {currentChapter.name}
-                  </div>
-                </>
-              )}
-            </Content>
-          ) : (
-            <Content flex gap={10} style={{ fontWeight: 600 }}>
-              <Icon name={'park-loading-four'} spin />
-              <div>{t('general.Loading')}...</div>
-            </Content>
-          )}
-        </Content>
-        <Content flex fullHeight alignItems="center" role="right-toolbar" gap={10} style={{ flexShrink: 0 }}>
-          {mediaState.subtitleList?.length && mediaState.mode !== 'audio' ? (
+            className={'flex gap-1.5 items-center font-bold font-size-12 opacity-80'}
+          >
+            {renderCurrentTime({ className: '' })}
+            <div>/</div>
+            {renderTotalTime({ className: '' })}
+          </div>
+        </div>
+        <div className={'flex items-center gap-7'}>
+          {renderSpeed({
+            className: classnames(CLAZZ, 'mr-1'),
+            size: 20
+          })}
+          {mediaState.subtitleList?.length ? (
             <Icon
               onClick={() => {
                 setMediaState(s => ({ ...s, showSubtitle: !s.showSubtitle }))
               }}
-              size={16}
-              data-pressed={!!mediaState.showSubtitle}
-              className={css({
-                cursor: 'pointer',
-                position: 'relative',
-                ':after': {
-                  content: '""',
-                  position: 'absolute',
-                  bottom: -4,
-                  borderRadius: 3,
-                  height: 2,
-                  left: -2,
-                  width: 0,
-                  background: Colors.Font.White,
-                  transition: 'all 0.2s ease'
-                },
-                "&[data-pressed='true']": {
-                  ':after': {
-                    width: 'calc(100% + 4px)'
-                  }
-                }
-              })}
-              name="custom-CC"
+              className={CLAZZ}
+              size={20}
+              name='custom-CC'
             />
           ) : null}
-          <AnimatePopover
-            parentElement={mediaState.fullScreen ? playerContainer : undefined}
-            padding={10}
-            content={setState => (
-              <WithBorder
-                className={css({
-                  width: 140,
-                  padding: 6,
-                  display: 'flex',
-                  gap: 4,
-                  flexDirection: 'column',
-                  alignItems: 'center'
-                })}
-              >
-                <div className={'font-size-12 transparent-font'}>Playback Speed</div>
-                {playSpeed.map(i => (
-                  <Button.IconButton
-                    text={`${i}`}
-                    selected={mediaState.speed === i ? true : undefined}
-                    key={i}
-                    className={'normal-font font-size-13'}
-                    style={{
-                      textAlign: 'center',
-                      width: '100%',
-                      padding: '2px 6px'
-                    }}
-                    onClick={() => {
-                      setMediaState(s => ({ ...s, speed: i }))
-                      setState(false)
-                    }}
-                  ></Button.IconButton>
-                ))}
-              </WithBorder>
-            )}
-          >
-            <div className={ClassName.flatButton()} style={{ fontWeight: 600, cursor: 'pointer', userSelect: 'none' }}>
-              {mediaState.speed}X
-            </div>
-          </AnimatePopover>
-          {mediaState.toolbar?.addLabel !== false && mediaState.fullScreen && (
-            <Button.IconButton
-              onClick={() => {
-                instance.insertLabel?.({
-                  time: mediaState.currentTime
-                })
-              }}
-              style={{ height: 30, fontWeight: 500 }}
-              text={t('general.Media highlight')}
-            ></Button.IconButton>
-          )}
-          {!audioMode && !mediaState.floated && (
-            <Icon
-              className={ClassName.flatButton(4, '5px')}
-              size={20}
-              onClick={() => {
-                instance.actionOps?.fullScreen()
-              }}
-              name={mediaState.fullScreen ? 'park-off-screen' : 'park-full-screen'}
-            />
-          )}
-        </Content>
-      </Content>
-    </Content>
+          <Icon
+            onClick={() => {
+              setMediaState(s => ({ ...s, focus: { ...s.focus, visible: true } }))
+            }}
+            className={classnames(CLAZZ, 'mr-1')}
+            strokeWidth={4}
+            size={20}
+            name='park-stretching'
+          />
+        </div>
+      </div>
+    </div>
   )
 }
 

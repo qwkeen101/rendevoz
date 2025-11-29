@@ -1,39 +1,23 @@
 import { MetaGroup, MetaGroupChild, MetaGroupProperty } from '~/typings'
 import { MetaStore } from '@/api/stores'
-import { Content, Icon, Tooltip } from '@/components'
+import { Icon, Tooltip, AutosizeTextarea } from '@/components'
 import ImageItem from '@/core/components/group/components/gallery/items/ImageItem'
 import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance'
 import { useIsIn, useMergedRef } from '@/hooks'
-import SelectProp from '@/core/object/renderer/properties/SelectProp'
 import { ClassName } from 'rendevoz'
-import MultiSelectProp from '@/core/object/renderer/properties/MultiSelectProp'
-import DateProp from '@/core/object/renderer/properties/DateProp'
 import useDragInGallery from '@/core/components/group/hooks/drag/useDragInGallery'
-import React, { CSSProperties, forwardRef, Fragment, memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { CSSProperties, forwardRef, Fragment, memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import useSelectCheck from '@/core/components/group/hooks/select/useSelectCheck'
-import { Colors } from '@/consts'
+import { Colors, Icons } from '@/consts'
 import useItemDrag from '@/core/components/group/hooks/drag/useItemDrag'
 import { useGlobalIsDragging } from '@/core'
-import TextProp from '@/core/object/renderer/properties/TextProp'
-import AutosizeTextarea from '@/components/custom/input/AutoSizeTextArea'
-import URLProp from '@/core/object/renderer/properties/URLProp'
-import CheckboxProp from '@/core/object/renderer/properties/CheckboxProp'
-import OriginalTextProp from '@/core/object/renderer/properties/OriginalTextProp'
-import AttCell from '@/core/components/group/components/table/cells/AttCell'
-import TypeCell from '@/core/components/group/components/table/cells/TypeCell'
 import { useTranslation } from 'react-i18next'
-import { css } from '@emotion/css'
 import classnames from 'classnames'
-import { FromCell, RelatedCell, TagCell } from '@/core/components/group/components/table/cells'
-import FileProp from '@/core/object/renderer/properties/FileProp'
 import ContentDisplayer from '@/core/components/group/components/gallery/items/FixedHeightContentDisplayer'
+import renderGroupItemProp from '@/core/components/group/components/basic/renderGroupItemProp'
+import trans from '@/consts/trans'
 
-export const WrapperClassName = css({
-  ':empty': {
-    padding: '0 !important'
-  }
-})
-
+const PropButtonClass = ClassName.flatButton(4, '4px')
 export default memo(
   forwardRef(
     (
@@ -111,6 +95,12 @@ export default memo(
           }
         }
       }, [isEditing, meta?.name, meta?.placeholderName, showOriginalText])
+
+      const handleClick = useCallback(() => {
+        if (isEditing) return
+        instance.openObject?.(meta.id, rowDetails.rowId)
+      }, [isEditing])
+
       const { t } = useTranslation()
 
       useItemDrag(bodyRef, rowDetails, {
@@ -120,144 +110,14 @@ export default memo(
       })
       if (!meta) return null
       if (!showDeleted && meta.deleted) return null
-      const render = (prop: MetaGroupProperty) => {
-        if (prop.type === 'custom') {
-          const v = meta.properties?.[prop.id]?.value
-          const n = `${prop.id}`
-          const realProp = MetaStore.property.getPropDetails(prop.id)
-          if (v === undefined && !isEditing && (!realProp || !['checkbox'].includes(realProp.propType))) return null
-          const handleChange = nv => {
-            instance.metaOps?.updateMetaProperty(
-              n,
-              {
-                value: nv
-              },
-              meta.id
-            )
-          }
-          switch (realProp?.propType) {
-            case 'number':
-            case 'string':
-            case 'AI summary':
-              return <TextProp value={v} mode={prop.propType === 'number' ? 'number' : 'text'} onChange={handleChange} />
-            case 'URL':
-              return <URLProp value={v} onChange={handleChange} />
-            case 'checkbox':
-              return <CheckboxProp checkBoxSize={14} value={v} onChange={handleChange} name={realProp.name} />
-            case 'reviewState':
-            case 'singleSelect':
-              return (
-                <SelectProp
-                  optionStyle={{
-                    fontSize: 12,
-                    lineHeight: '18px'
-                  }}
-                  metaId={meta.id}
-                  fieldName={n}
-                  value={v}
-                  onChange={handleChange}
-                />
-              )
-            case 'date':
-              return (
-                <DateProp
-                  value={v}
-                  style={{
-                    fontSize: 12,
-                    lineHeight: '18px'
-                  }}
-                  onChange={handleChange}
-                />
-              )
-            case 'multiSelect':
-              return (
-                <MultiSelectProp
-                  optionStyle={{
-                    fontSize: 12,
-                    lineHeight: '18px'
-                  }}
-                  metaId={meta.id}
-                  fieldName={n}
-                  value={v}
-                  onChange={handleChange}
-                />
-              )
-            case 'file':
-              return (
-                <FileProp
-                  value={v}
-                  onChange={handleChange}
-                  optionStyle={{
-                    height: 18,
-                    fontSize: 12,
-                    lineHeight: '18px'
-                  }}
-                />
-              )
-          }
-        }
-        if (prop.type === 'basic') {
-          const field = prop.name
-          const value = meta[field]
-          const handleChange = v => {
-            instance.metaOps?.updateMeta({ id: meta.id, [field]: v })
-          }
-          switch (prop.name) {
-            case 'type':
-              return !isEditing && <TypeCell style={{ fontSize: 12 }} value={value} />
-            case 'attachments':
-              return (
-                (meta.attachments?.length || isEditing) && (
-                  <AttCell
-                    style={{
-                      fontSize: 12,
-                      lineHeight: '18px',
-                      height: 18
-                    }}
-                    metaId={meta.id}
-                  />
-                )
-              )
-            case 'related':
-              return (
-                !isEditing && (
-                  <RelatedCell
-                    metaId={meta.id}
-                    nullIfNoRelated
-                    optionStyle={{
-                      fontSize: 12,
-                      lineHeight: '18px',
-                      height: 18
-                    }}
-                  />
-                )
-              )
-            case 'originalText':
-              return meta.objectId && <OriginalTextProp objectId={meta.objectId} type={meta.type} />
-            case 'description':
-              return (meta.description || isEditing) && <TextProp value={value} onChange={handleChange} />
-            case 'fromObject':
-              return !isEditing && <FromCell value={value} />
-            case 'tags':
-              return (
-                (meta.tags?.length || isEditing) && (
-                  <TagCell
-                    optionStyle={{
-                      fontSize: 12,
-                      lineHeight: '18px',
-                      height: 18
-                    }}
-                    value={value}
-                    metaId={meta.id}
-                  />
-                )
-              )
-          }
-        }
-      }
       const propRender = (prop: MetaGroupProperty) => {
         const realProp = MetaStore.property.getPropDetails(prop.id)
-        const rendered = render(prop)
+        const rendered = renderGroupItemProp({
+          meta,
+          instance,
+          prop,
+          isEditing
+        })
 
         const tooltipContent = prop.type === 'basic' ? t(prop.display) : realProp?.name
         if (!rendered) {
@@ -272,11 +132,11 @@ export default memo(
                     e.currentTarget.querySelector('[role="prop-container"]')?.click()
                   }
                 }}
-                className={classnames(ClassName.flatButton(3, '4px'), WrapperClassName)}
+                className={PropButtonClass}
                 style={{
                   width: 'auto',
                   margin: '0px 6px',
-                  transition: 'background 0.25s ease',
+                  transition: 'background 0.15s ease',
                   minHeight: 26,
                   overflow: 'hidden',
                   alignItems: 'flex-start',
@@ -289,8 +149,8 @@ export default memo(
                 {(realProp?.icon || prop.icon) && (
                   <Icon
                     name={realProp?.icon || prop.icon}
+                    className={'transparent-font'}
                     style={{
-                      color: Colors.Font.Transparent,
                       marginTop: 3
                     }}
                   />
@@ -314,13 +174,14 @@ export default memo(
           <Tooltip content={tooltipContent} positions={['left']}>
             <div
               role={'prop'}
-              className={classnames(ClassName.flatButton(3, '4px'), WrapperClassName)}
+              onClick={e => e.stopPropagation()}
+              className={classnames(PropButtonClass, 'empty:hidden')}
               style={{
                 width: 'fit-content',
                 maxWidth: '400px',
                 margin: '0px 6px',
                 overflow: 'hidden',
-                transition: 'background 0.25s ease',
+                transition: 'background 0.15s ease',
                 flexWrap: wrapContent ? 'wrap' : 'nowrap',
                 whiteSpace: wrapContent ? 'pre-wrap' : 'nowrap',
                 wordBreak: 'break-all',
@@ -336,9 +197,8 @@ export default memo(
       }
       const labelDetailsMode = meta.type.includes('Label') && ['content', 'cover or content'].includes(showCover)
       return (
-        <Content
-          fullWidth
-          fullHeight
+        <div
+          className={'w-full h-full relative'}
           {...rest}
           style={{
             padding: 10,
@@ -351,7 +211,8 @@ export default memo(
             }
           }}
         >
-          <Content
+          {renderIndicator()}
+          <div
             ref={ref}
             onContextMenu={e => {
               e.preventDefault()
@@ -371,76 +232,19 @@ export default memo(
                 }
               )
             }}
-            flex
-            column
-            className={'light-hover bg-popover border-box-shadow'}
+            onClick={handleClick}
+            className={classnames(
+              'overflow-hidden flex flex-col relative w-full cursor-pointer transition-colors rounded-xl bg-popover',
+              !thumbnailMode && 'light-hover border-box-shadow'
+            )}
             role={'group-item-content'}
             style={{
-              width: '100%',
-              height: '100%',
-              borderRadius: 3,
-              transition: 'background 0.25s ease',
-              cursor: 'pointer',
-              background: gDrag || isEditing ? Colors.Background.Popover : isSelected ? Colors.Common.SelectColorTransparent : undefined
+              height: thumbnailMode && !meta.type.includes('Label') ? 'auto' : '100%',
+              background: gDrag || isEditing ? Colors.Background.Popover : isSelected ? Colors.Common.SelectColorTransparentLight : undefined
             }}
           >
-            <Content
-              flex
-              style={{
-                position: 'absolute',
-                right: 4,
-                top: 4,
-                zIndex: 20,
-                opacity: isIn ? 1 : 0,
-                transition: 'opacity 0.2s ease',
-                background: Colors.Background.Popover,
-                boxShadow: Colors.Background.BorderBoxShadow,
-                borderRadius: 4,
-                overflow: 'hidden'
-              }}
-            >
-              <Icon
-                name={isEditing ? 'park-save' : 'park-edit'}
-                size={14}
-                className={ClassName.flatButton(0, '5px')}
-                onClick={e => {
-                  setIsEditing(!isEditing)
-                }}
-              />
-              <Icon
-                name={'park-more'}
-                size={20}
-                className={ClassName.flatButton(0, '2px')}
-                onClick={e => {
-                  if (instance.values.selectedRowIdSet.size === 1) {
-                    instance.selectOps?.clearAllSelect()
-                  }
-                  select()
-                  instance.overlayOps?.open(
-                    {
-                      type: 'itemContextMenu',
-                      details: rowDetails,
-                      align: 'start'
-                    },
-                    {
-                      x: e.clientX,
-                      y: e.clientY
-                    }
-                  )
-                }}
-              />
-            </Content>
-            {renderIndicator()}
             {(labelDetailsMode || showCover === 'content' || thumbnailMode || (showCover === 'cover or content' && !meta.coverImgSrc)) && (
-              <ContentDisplayer
-                onClick={e => {
-                  if (isEditing) return
-                  instance.openObject?.(meta.id, rowDetails.rowId)
-                }}
-                thumbnailMode={thumbnailMode}
-                hideCoverIfEmpty={hideCoverIfEmpty}
-                metaId={meta.id}
-              />
+              <ContentDisplayer thumbnailMode={thumbnailMode} hideCoverIfEmpty={hideCoverIfEmpty} metaId={meta.id} />
             )}
             {(showCover === 'cover' || (showCover === 'cover or content' && meta.coverImgSrc)) &&
               !labelDetailsMode &&
@@ -455,26 +259,17 @@ export default memo(
                   onClick={e => {
                     if (isEditing) return
                     if (!meta.coverImgSrc) {
+                      e.stopPropagation()
                       e.preventDefault()
                       instance.openObject?.(meta.id, rowDetails.rowId)
                     }
                   }}
                 />
               )}
-            {(!thumbnailMode || (thumbnailMode && isEditing)) && (
-              <div
-                style={{ width: '100%', flex: 1, paddingTop: labelDetailsMode && !isEditing ? '6px' : 0 }}
-                onClick={e => {
-                  if (isEditing) return
-                  if (e.target instanceof HTMLElement && e.target.closest('[role="prop"]')) return
-                  if (e.currentTarget.contains(e.target)) {
-                    instance.openObject?.(meta.id, rowDetails.rowId)
-                  }
-                }}
-              >
-                {isEditing ? (
+            {!thumbnailMode && (
+              <>
+                {labelDetailsMode ? null : isEditing ? (
                   <AutosizeTextarea
-                    disabled={!isEditing}
                     onBlur={e => {
                       instance.metaOps?.updateMeta({ id: meta.id, name: e.target.innerText })
                     }}
@@ -483,48 +278,86 @@ export default memo(
                     style={{
                       padding: '8px 10px 2px',
                       display: 'block',
-                      width: '100%',
-                      fontWeight: 500,
-                      fontSize: 14,
-                      color: meta.name ? undefined : Colors.Font.Transparent,
-                      overflow: 'hidden',
+                      color: meta.name ? undefined : Colors.Font.SuperTransparent,
                       cursor: isEditing ? 'text' : 'pointer',
                       pointerEvents: isEditing ? 'auto' : 'none'
                     }}
                     placeholder={t('general.Type a name')}
+                    className={'border-top font-medium overflow-hidden w-full first:!border-0'}
                   ></AutosizeTextarea>
-                ) : labelDetailsMode ? null : (
+                ) : (
                   <div
+                    className={'border-top w-full font-medium cursor-pointer first:!border-0'}
                     style={{
                       padding: '8px 10px 2px',
                       display: 'block',
-                      width: '100%',
-                      fontWeight: 500,
-                      color: meta.name ? undefined : Colors.Font.Transparent,
+                      color: meta.name ? undefined : Colors.Font.SuperTransparent,
                       overflow: 'hidden',
-                      resize: 'none',
-                      cursor: 'pointer',
                       wordBreak: 'break-word',
                       whiteSpace: 'pre-wrap',
-                      fontSize: 14,
                       pointerEvents: 'none'
                     }}
                   >
-                    {meta.name}
+                    {meta.name || t(trans.Unnamed)}
                   </div>
                 )}
                 <div
                   style={{
                     overflow: 'hidden',
-                    paddingBottom: 6
+                    paddingBottom: 6,
+                    paddingTop: labelDetailsMode ? 6 : undefined
                   }}
+                  className={classnames(labelDetailsMode && 'border-top empty:hidden')}
                 >
                   {visibleProps?.map(i => <Fragment key={i.id}>{propRender(i)}</Fragment>)}
                 </div>
+              </>
+            )}
+            {!thumbnailMode && (
+              <div
+                onClick={e => e.stopPropagation()}
+                className={'border-box-shadow flex bg-popover absolute transition-opacity overflow-hidden rounded-md'}
+                style={{
+                  right: 6,
+                  top: 6,
+                  zIndex: 20,
+                  opacity: isIn ? 1 : 0
+                }}
+              >
+                <Icon
+                  name={isEditing ? 'park-save' : 'park-edit'}
+                  size={14}
+                  className={ClassName.flatButton(0, '5px')}
+                  onClick={() => {
+                    setIsEditing(!isEditing)
+                  }}
+                />
+                <Icon
+                  name={Icons.More}
+                  size={14}
+                  className={ClassName.flatButton(0, '5px')}
+                  onClick={e => {
+                    if (instance.values.selectedRowIdSet.size === 1) {
+                      instance.selectOps?.clearAllSelect()
+                    }
+                    select()
+                    instance.overlayOps?.open(
+                      {
+                        type: 'itemContextMenu',
+                        details: rowDetails,
+                        align: 'start'
+                      },
+                      {
+                        x: e.clientX,
+                        y: e.clientY
+                      }
+                    )
+                  }}
+                />
               </div>
             )}
-          </Content>
-        </Content>
+          </div>
+        </div>
       )
     }
   )

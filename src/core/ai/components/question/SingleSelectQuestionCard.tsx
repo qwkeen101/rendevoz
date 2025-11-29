@@ -8,6 +8,7 @@ import { ClassName } from 'rendevoz'
 import produce from 'immer'
 import { css } from '@emotion/css'
 import { useTranslation } from 'react-i18next'
+import trans from '@/consts/trans'
 
 export default ({
   question,
@@ -44,10 +45,10 @@ export default ({
     }
   }
   return (
-    <Content flex column gap={8}>
+    <div className={'em:mt-2 em:gap-2 flex flex-col'}>
       {question.choices?.map((i, idx) => (
-        <Content
-          className={SelectOptionClass}
+        <div
+          className={'rounded-md border px-2 py-1'}
           key={idx}
           style={{
             boxShadow: getBoxShadow(i),
@@ -62,9 +63,9 @@ export default ({
           }}
         >
           {isEditing ? (
-            <Content flex gap={6} auto alignItems={'center'}>
+            <div className={'flex justify-between items-center w-full gap-3'}>
               <input
-                className={ClassName.noStyleInput}
+                className={'flex-1'}
                 defaultValue={i}
                 onBlur={e => {
                   const v = e.target.value
@@ -75,30 +76,24 @@ export default ({
                     ObjectStore('question').updateOne({ id: question.id, choices: newChoices })
                   }
                 }}
-                style={{
-                  width: '100%',
-                  fontWeight: 500
-                }}
               />
-              <Tooltip content={question.sAnswer === i ? t('general.Remove right answer') : t('general.Set as right answer')}>
+              <div className={'flex gap-3 icon-15'}>
+                <Tooltip content={question.sAnswer === i ? t('general.Remove right answer') : t('general.Set as right answer')}>
+                  <Icon
+                    className={'cursor-pointer'}
+                    style={{
+                      color: question.sAnswer === i ? Colors.Common.Red : Colors.Common.Green
+                    }}
+                    onClick={() => {
+                      ObjectStore('question').updateOne({ id: question.id, sAnswer: question.sAnswer === i ? undefined : i })
+                    }}
+                    name={question.sAnswer === i ? 'park-close' : 'park-check'}
+                  />
+                </Tooltip>
                 <Icon
-                  className={ClassName.circleButton()}
-                  style={{
-                    color: question.sAnswer === i ? Colors.Common.Red : Colors.Common.Green
-                  }}
-                  onClick={() => {
-                    ObjectStore('question').updateOne({ id: question.id, sAnswer: question.sAnswer === i ? undefined : i })
-                  }}
-                  name={question.sAnswer === i ? 'park-close' : 'park-check'}
-                />
-              </Tooltip>
-              <Tooltip content={t('general.delete')}>
-                <Icon
+                  tooltip={t(trans.Delete)}
                   name={'park-delete-one'}
-                  className={ClassName.circleButton()}
-                  style={{
-                    color: Colors.Common.Red
-                  }}
+                  className={'cursor-pointer text-red-500'}
                   onClick={() => {
                     const newChoices = produce(question.choices, draft => {
                       draft.splice(idx, 1)
@@ -106,36 +101,27 @@ export default ({
                     ObjectStore('question').updateOne({ id: question.id, choices: newChoices })
                   }}
                 />
-              </Tooltip>
-            </Content>
+              </div>
+            </div>
           ) : (
             i
           )}
-        </Content>
+        </div>
       ))}
       {isEditing && (
-        <Content
+        <div
           onClick={() => {
             ObjectStore('question').updateOne({ id: question.id, choices: [...question.choices, ''] })
           }}
-          className={SelectOptionClass}
-          flex
           style={{
-            cursor: 'pointer'
+            fontSize: styles?.contentFontSize
           }}
-          gap={6}
+          className={SelectOptionClass}
         >
-          <Icon
-            className={css({
-              svg: {
-                opacity: 1
-              }
-            })}
-            name={'park-plus'}
-          />
+          <Icon name={'park-plus'} />
           <div>{t('general.Add new option')}</div>
-        </Content>
+        </div>
       )}
-    </Content>
+    </div>
   )
 }

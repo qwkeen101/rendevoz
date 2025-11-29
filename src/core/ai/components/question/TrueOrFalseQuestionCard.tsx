@@ -41,19 +41,17 @@ export default memo(
       }
     }
     return (
-      <Content
-        flex
-        column
-        gap={6}
+      <div
+        className={'flex em:gap-2 flex-col em:mt-2'}
         style={{
-          marginTop: 6,
           fontSize: styles?.contentFontSize
         }}
       >
         <div
-          className={SelectOptionClass}
+          className={'rounded-md border px-2 py-1 cursor-pointer'}
           style={{
-            boxShadow: getBoxShadow(true)
+            boxShadow: getBoxShadow(true),
+            minHeight: '2em'
           }}
           onClick={() => {
             ObjectStore('question').updateOne({ id: question.id, answer: question.answer === true ? undefined : true })
@@ -62,8 +60,9 @@ export default memo(
           {t('general.True')}
         </div>
         <div
-          className={SelectOptionClass}
+          className={'rounded-md border px-2 py-1 cursor-pointer'}
           style={{
+            minHeight: '2em',
             boxShadow: getBoxShadow(false)
           }}
           onClick={() => {
@@ -72,7 +71,7 @@ export default memo(
         >
           {t('general.False')}
         </div>
-      </Content>
+      </div>
     )
   }
 )

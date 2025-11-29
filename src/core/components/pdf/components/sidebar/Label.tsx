@@ -1,51 +1,41 @@
-import { GlobalInstance, useMergedRef } from '@/hooks'
+import { useMergedRef } from '@/hooks'
 import { memo, useEffect, useRef } from 'react'
-import { IPdfDocument, IPdfLabel } from '~/typings'
+import { ILabelContainerProps, IPdfDocument, IPDFLabel } from '~/typings'
 import { useRenderLabel } from '@/core/object'
-import { Content, Image } from '@/components'
-import { useTranslation } from 'react-i18next'
+import { Icon } from '@/components'
+import { t } from 'i18next'
 import Colors from '@/consts/colors'
 import usePDFInstance from '../../hooks/usePDFInstance'
-import usePDFBarState from '@/core/components/pdf/hooks/usePDFBarState'
 import useRenderLabelContainer from '@/core/object/renderer/useRenderLabelContainer'
+import ToolTip from '@/components/base/Tooltip'
+import toast from 'react-hot-toast'
+import trans from '@/consts/trans'
+import ContextMenu from '@/components/contextMenu'
+import { useSetPDFState } from '@/core/components/pdf/hooks/usePDFState'
 
 const PDFLabel = memo(
   ({
     labelIds,
-    defaultSortMode = 'page',
-    defaultScrollOffset,
-    onOffsetChange,
-    defaultPriority = 'none',
-    onPriorityChange,
-    onSortModeChange
+    labelState,
+    onLabelStateChange
   }: {
     labelIds?: number[]
-    defaultSortMode?: IPdfDocument['labelSortMode']
-    defaultScrollOffset?: number
-    onOffsetChange?: (offset: number) => void
-    defaultPriority?: IPdfDocument['labelPriority']
-    onPriorityChange?: (p: IPdfDocument['labelPriority']) => void
-    onSortModeChange?: (sortMode: IPdfDocument['labelSortMode']) => void
+    labelState: ILabelContainerProps
+    onLabelStateChange: (state: Partial<ILabelContainerProps>) => void
   }) => {
-    const [pdfBarState, setPdfBarState] = usePDFBarState()
-    const { renderContainer, renderSort, renderSearch, virtualizerRef, setCurrentHighlight, sortedLabels } =
-      useRenderLabelContainer<IPdfLabel>('pdfLabel', labelIds, {
-        availableSorts: ['page', 'page reverse', 'created at', 'updated at'],
-        onOffsetChange,
-        onPriorityChange,
-        onSortModeChange,
-        defaultPriority,
-        defaultScrollOffset,
-        defaultSortMode
-      })
+    const setState = useSetPDFState()
     const instance = usePDFInstance()
+    const { renderContainer, renderHeader, setCurrentHighlight } = useRenderLabelContainer<IPDFLabel>('pdfLabel', {
+      labelIds,
+      onLabelStateChange,
+      onDelete: id => {
+        instance.deleteLabel?.(id)
+      },
+      labelState,
+      availableSorts: ['page', 'page reverse', 'created at', 'updated at']
+    })
     instance.jumpToLabelInSidebar = id => {
-      console.log(id)
-      setPdfBarState(s => ({ ...s, sidebarActive: 'label' }))
-      const idx = sortedLabels?.findIndex(i => i.id === id)
-      if (idx !== undefined && idx >= 0) {
-        virtualizerRef.current?.scrollToIndex(idx, { align: 'center' })
-      }
+      setState(s => ({ ...s, sidebarActive: 'label', sidebarVisible: true }))
       setCurrentHighlight(id)
       setTimeout(() => {
         setCurrentHighlight(undefined)
@@ -54,121 +44,101 @@ const PDFLabel = memo(
 
     return (
       <>
-        <Content
-          flex
-          column
-          style={{
-            height: '100%'
-          }}
-        >
-          <Content
-            flex
-            alignItems={'center'}
-            style={{
-              padding: '10px',
-              gap: 8
-            }}
-          >
-            {renderSearch()}
-            {renderSort()}
-          </Content>
-          {renderContainer((i, highlighted) => (
-            <Label id={i.id} key={i.id} highlight={!!highlighted} />
+        <div className={'flex flex-col h-full'}>
+          {renderHeader()}
+          {renderContainer((i, highlighted, onMove) => (
+            <Label
+              pageSortMode={labelState.labelSortMode === 'page' || labelState.labelSortMode === 'page reverse'}
+              id={i.id}
+              key={i.id}
+              highlight={!!highlighted}
+              onMove={onMove}
+            />
           ))}
-        </Content>
+        </div>
       </>
     )
   }
 )
 
-const Label = ({ id, highlight }: { id: number; highlight: boolean }) => {
-  const { label, ref, renderName, renderOriginalText, renderPopover, renderTags, setDraggingDetails } = useRenderLabel({
-    objectId: id,
-    type: 'pdfLabel',
-    onNavigate: () => {
-      instance.navigateOps?.jumpToLabel(id, false)
-    },
-    onDragStart: () => {
-      setDraggingDetails({
+const Label = memo(
+  ({ id, highlight, onMove, pageSortMode }: { id: number; highlight: boolean; onMove: VoidFunction; pageSortMode: boolean }) => {
+    const { label, labelMeta, ref, renderHeader, renderName, renderContextMenu, renderQuestions, renderOriginalText, renderTags } =
+      useRenderLabel({
+        objectId: id,
         type: 'pdfLabel',
-        labelId: pdfLabel.id
+        onDelete: () => {
+          instance.deleteLabel?.(id)
+        },
+        onMove
       })
-    }
-  })
-  const pdfLabel = label as IPdfLabel
-  const instance = usePDFInstance()
+    const pdfLabel = label as IPDFLabel
+    const instance = usePDFInstance()
 
-  const containerRef = useRef<HTMLDivElement>(null)
-  const mergedContainerRef = useMergedRef(ref, containerRef)
+    const containerRef = useRef<HTMLDivElement>(null)
+    const mergedContainerRef = useMergedRef(ref, containerRef)
 
-  useEffect(() => {
-    const container = containerRef.current
-    if (highlight && container) {
-      container.style.background = Colors.Common.SelectColorTransparent
-      container.scrollIntoView({
-        block: 'center'
-      })
-      return () => {
-        container.style.removeProperty('background')
+    useEffect(() => {
+      const container = containerRef.current
+      if (highlight && container) {
+        container.style.background = Colors.Common.SelectColorTransparent
+        return () => {
+          container.style.removeProperty('background')
+        }
       }
-    }
-  }, [highlight])
-  const { t } = useTranslation()
-  if (!label) return null
-  return (
-    <Content
-      flex
-      column
-      gap={5}
-      style={{ padding: 12, transition: 'background 0.25s ease' }}
-      className={'border-top'}
-      ref={mergedContainerRef}
-    >
-      {pdfLabel.imageUrl && (
-        <Image
-          onContextMenu={() => {
-            GlobalInstance.commonOps?.previewImage?.(pdfLabel.imageUrl!)
-          }}
-          width={'100%'}
-          src={pdfLabel.imageUrl}
-          style={{
-            maxWidth: '340px'
-          }}
-          withoutContainer
-          onClick={() => {
-            instance.navigateOps?.jumpToLabel(id, false)
-          }}
-          containerStyle={{ borderRadius: 4, overflow: 'hidden', marginBottom: 6, cursor: 'pointer', maxWidth: 300 }}
-        />
-      )}
-      {pdfLabel.selectedText &&
-        renderOriginalText({
-          text: pdfLabel.selectedText,
-          style: {
-            marginBottom: 4
-          }
-        })}
-      <Content flex>
-        {renderName({})}
-        {renderPopover({
-          showTag: true,
-          on: event => {
-            switch (event.type) {
-              case 'delete': {
-                instance.deleteLabel?.(id)
+    }, [highlight])
+    if (!label || labelMeta?.deleted) return null
+    return (
+      <ContextMenu ref={mergedContainerRef} content={setV => renderContextMenu(undefined, () => setV(false))}>
+        <div
+          onClick={e => {
+            if (!e.defaultPrevented) {
+              if (!window.getSelection()?.toString()) {
+                instance.navigateOps?.jumpToLabel(id, false)
               }
             }
-          }
-        })}
-      </Content>
-      <Content flex justifyContent={'space-between'} gap={10} alignItems={'flex-end'} style={{ flexWrap: 'wrap', marginTop: 4 }}>
-        {renderTags()}
-        <div style={{ lineHeight: 1 }} className={'font-size-12 super-transparent-font'}>
-          {t('general.Page', { num: (pdfLabel.page ?? 0) + 1 })}
+          }}
+          className={'flex flex-col light-hover gap-3 p-3.5 transition-colors'}
+        >
+          {renderHeader({
+            showPage: pageSortMode
+          })}
+          {pdfLabel.imageUrl && (
+            <div
+              style={{
+                maxWidth: 320
+              }}
+              className={'relative w-full mt-0.5'}
+            >
+              {pdfLabel.selectedText && (
+                <ToolTip
+                  content={pdfLabel.selectedText ? <div className={'whitespace-pre-wrap max-w-96'}>{pdfLabel.selectedText}</div> : null}
+                >
+                  <Icon
+                    onClick={e => {
+                      e.preventDefault()
+                      navigator.clipboard.writeText(pdfLabel.selectedText!)
+                      toast.success(t(trans.Copied))
+                    }}
+                    size={14}
+                    className={'!absolute cursor-pointer top-1.5 right-1.5 z-10 active-button p-1.5 rounded-md'}
+                    name={'park-font-size'}
+                  />
+                </ToolTip>
+              )}
+              <img src={pdfLabel.imageUrl} className={'overflow-hidden rounded-md max-w-full'} />
+            </div>
+          )}
+          {renderOriginalText({
+            text: pdfLabel.selectedText || ''
+          })}
+          {renderName({})}
+          {renderQuestions()}
+          {renderTags()}
         </div>
-      </Content>
-    </Content>
-  )
-}
+      </ContextMenu>
+    )
+  }
+)
 
 export default PDFLabel

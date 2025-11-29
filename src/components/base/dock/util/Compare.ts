@@ -1,42 +1,35 @@
-export function compareKeys(
-  a: { [key: string]: any },
-  b: { [key: string]: any },
-  keys: string[]
-) {
+export function compareKeys(a: { [key: string]: any }, b: { [key: string]: any }, keys: string[]) {
   if (a === b) {
-    return true;
+    return true
   }
-  if (a && b && typeof a === "object" && typeof b === "object") {
+  if (a && b && typeof a === 'object' && typeof b === 'object') {
     for (const key of keys) {
       if (a[key] !== b[key]) {
-        return false;
+        return false
       }
     }
-    return true;
+    return true
   }
-  return false;
+  return false
 }
 
-const isArray = Array.isArray;
+const isArray = Array.isArray
 
-export function compareArray(
-  a: { [key: string]: any }[],
-  b: { [key: string]: any }[]
-) {
+export function compareArray(a: { [key: string]: any }[], b: { [key: string]: any }[]) {
   if (a === b) {
-    return true;
+    return true
   }
   if (isArray(a) && isArray(b)) {
-    const len = a.length;
+    const len = a.length
     if (len !== b.length) {
-      return false;
+      return false
     }
     for (let i = 0; i < len; ++i) {
       if (a[i] !== b[i]) {
-        return false;
+        return false
       }
     }
-    return true;
+    return true
   }
-  return false;
+  return false
 }

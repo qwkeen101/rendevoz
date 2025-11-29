@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { Modal } from '@/components'
 import { assignProperties } from '@/utils'
-import { GlobalInstance } from '@/hooks'
 import ChooseCollectionForm from '@/components/form/quickAdd/ChooseCollectionForm'
 import { CollectionStore } from '@/api/stores'
+import { ICollection } from '~/typings'
 
 export default () => {
   const [collectionState, setCollectionState] = useState<{
@@ -13,7 +13,7 @@ export default () => {
       reject: any
     }
   }>()
-  assignProperties(GlobalInstance, {
+  assignProperties(Global, {
     collectionOps: {
       selectCollection: () => {
         return new Promise((resolve, reject) => {
@@ -27,7 +27,7 @@ export default () => {
         })
       },
       addMetaIntoCollection: async meta => {
-        const c = await new Promise((resolve, reject) => {
+        const c = (await new Promise((resolve, reject) => {
           setCollectionState({
             visible: true,
             promise: {
@@ -35,7 +35,7 @@ export default () => {
               resolve
             }
           })
-        })
+        })) as ICollection
         if (c) {
           CollectionStore.addItemToCollection({ type: 'meta', id: meta }, c.id)
         }
@@ -47,12 +47,22 @@ export default () => {
     setCollectionState(undefined)
   }
   return (
-    <Modal onClose={handleCancel} visible={!!collectionState?.visible} zIndex={8000}>
+    <Modal style={{ overflow: 'hidden' }} onClose={handleCancel} visible={!!collectionState?.visible} zIndex={8000}>
       <ChooseCollectionForm
-        onCancel={handleCancel}
-        onChoose={c => {
-          collectionState?.promise.resolve(c)
-          setCollectionState(undefined)
+        onClose={handleCancel}
+        enableRoot
+        onChange={c => {
+          if (c === 0) {
+            collectionState?.promise.resolve(0)
+            setCollectionState(undefined)
+          }
+          const cache = CollectionStore.getCachedCollectionById(c)
+          if (cache) {
+            collectionState?.promise.resolve(cache)
+            setCollectionState(undefined)
+          } else {
+            handleCancel()
+          }
         }}
       />
     </Modal>

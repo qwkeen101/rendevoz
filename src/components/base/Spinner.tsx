@@ -1,16 +1,16 @@
 import { FC } from 'react'
-import { Content, Icon } from '..'
-import { Colors } from '@/consts'
+import { Icon } from '..'
+import { Icons } from '@/consts'
 
 interface SpinnerProps {
   size?: number
   color?: string
 }
-const Spinner: FC<SpinnerProps> = ({ size = 20, color = Colors.Common.SelectColor }) => {
+const Spinner: FC<SpinnerProps> = ({ size = 48, color }) => {
   return (
-    <Content fullHeight fullWidth flex centered>
-      <Icon size={size} fill={color} name="park-loading-four" spin />
-    </Content>
+    <div className={'w-full h-full flex items-center justify-center'}>
+      <Icon size={size} fill={color} name={Icons.Loading} spin />
+    </div>
   )
 }
 

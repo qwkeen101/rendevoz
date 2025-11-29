@@ -3,7 +3,7 @@ import { CSSProperties, forwardRef, memo, ReactElement, useEffect, useImperative
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'
 import { Reorder } from 'framer-motion'
-import { GlobalInstance, useMemoizedFn } from '@/hooks'
+import { useMemoizedFn } from '@/hooks'
 type Props<T> = {
   items: T[]
   renderItem: (item: T, idx: number, selected?: boolean) => ReactElement
@@ -14,8 +14,12 @@ type Props<T> = {
   withKeyboardNavigation?: boolean
   onSelect?: (item: T, idex: number) => void
   onKeydown?: (e: KeyboardEvent) => void
+  onScroll?: React.UIEventHandler<HTMLDivElement>
+  onWheel?: React.WheelEventHandler<HTMLDivElement>
   initialOffset?: number
+  className?: string
   paddingEnd?: number
+  paddingStart?: number
   itemClassname?: string
   itemStyle?: CSSProperties
   itemContainerClassname?: string
@@ -23,9 +27,11 @@ type Props<T> = {
   reorder?: boolean
   scrollMargin?: number
   canReorder?: boolean
+  scrollPaddingEnd?: number
   onReorder?: (items: T[]) => void
   getKey?: (item: T) => string | number
   onOffsetChange?: (offset: number) => void
+  initialFocusIndex?: number
 }
 
 type VirtualListRef = Virtualizer<Element, Element> & {
@@ -35,14 +41,20 @@ function VirtualList<T>(
   {
     items = [],
     renderItem,
+    initialFocusIndex = 0,
+    scrollPaddingEnd,
     overscan = 3,
     onSelect,
+    onScroll,
+    paddingStart,
+    onWheel,
     itemStyle,
     itemClassname,
     itemContainerClassname,
     estimateSize,
     style,
     rangeExtractor,
+    className,
     initialOffset,
     reorder,
     canReorder = true,
@@ -57,20 +69,35 @@ function VirtualList<T>(
 ) {
   try {
     const contentRef = useRef<HTMLDivElement>(null)
+    const prevOffset = useRef<number>()
     const virtualizer = useVirtualizer({
       count: items.length,
       estimateSize: () => estimateSize,
       getScrollElement: () => contentRef.current,
       overscan: reorder ? items.length : overscan,
       paddingEnd,
+      paddingStart,
+      scrollPaddingEnd: scrollPaddingEnd,
       initialOffset,
+      measureElement: (ele, entry) => {
+        let size: number
+        if (entry) {
+          size = Math.round(entry.borderBoxSize[0].blockSize)
+        } else {
+          size = Math.round((ele as HTMLElement).offsetHeight)
+        }
+        return size
+      },
       onChange: instance => {
-        onOffsetChange?.(instance.scrollOffset)
+        if (instance.scrollOffset !== prevOffset.current) {
+          onOffsetChange?.(instance.scrollOffset)
+          prevOffset.current = instance.scrollOffset
+        }
       },
       getItemKey: getKey ? idx => getKey(items[idx]) : undefined,
       rangeExtractor: rangeExtractor || defaultRangeExtractor
     })
-    const [currentFocusIndex, setCurrentFocusIndex] = useState(0)
+    const [currentFocusIndex, setCurrentFocusIndex] = useState(initialFocusIndex)
     useImperativeHandle(ref, () => ({
       ...virtualizer,
       setFocus: i => {
@@ -82,6 +109,21 @@ function VirtualList<T>(
         }
       }
     }))
+    useEffect(() => {
+      if (initialFocusIndex !== 0) {
+        if (initialFocusIndex > 0) {
+          try {
+            setTimeout(() => {
+              virtualizer.scrollToIndex(initialFocusIndex, {
+                align: 'center'
+              })
+            }, 50)
+          } catch (e) {
+            console.error(e)
+          }
+        }
+      }
+    }, [])
     const itemzRef = useRef(items)
     itemzRef.current = items
     const itemz = virtualizer.getVirtualItems()
@@ -123,11 +165,9 @@ function VirtualList<T>(
     })
     useEffect(() => {
       if (withKeyboardNavigation) {
-        GlobalInstance.values.registeredKeynavigationHandlers.unshift(keydownHandler)
+        Global.values.registeredKeynavigationHandlers.unshift(keydownHandler)
         return () => {
-          GlobalInstance.values.registeredKeynavigationHandlers = GlobalInstance.values.registeredKeynavigationHandlers.filter(
-            i => i !== keydownHandler
-          )
+          Global.values.registeredKeynavigationHandlers = Global.values.registeredKeynavigationHandlers.filter(i => i !== keydownHandler)
         }
       }
     }, [withKeyboardNavigation])
@@ -179,7 +219,7 @@ function VirtualList<T>(
                 as={'div'}
                 key={i.id || JSON.stringify(i)}
                 data-index={idx}
-                data-selected={currentFocusIndex === idx}
+                data-selected={withKeyboardNavigation ? currentFocusIndex === idx : undefined}
                 ref={virtualizer.measureElement}
                 className={itemClassname}
                 onPointerEnter={() => {
@@ -192,7 +232,6 @@ function VirtualList<T>(
                   onSelect?.(i, idx)
                 }}
                 style={itemStyle}
-                tabIndex={0}
                 value={i}
               >
                 {renderItem(i, idx, currentFocusIndex === idx)}
@@ -209,6 +248,9 @@ function VirtualList<T>(
             overflowX: 'hidden',
             ...style
           }}
+          className={className}
+          onScroll={onScroll}
+          onWheel={onWheel}
         >
           <div
             style={{
@@ -220,9 +262,6 @@ function VirtualList<T>(
           >
             <div
               style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
                 width: '100%',
                 transform: `translateY(${itemz[0]?.start || 0}px)`
               }}
@@ -232,7 +271,7 @@ function VirtualList<T>(
                 <div
                   key={i.key}
                   data-index={i.index}
-                  data-selected={currentFocusIndex === i.index}
+                  data-selected={withKeyboardNavigation ? currentFocusIndex === i.index : undefined}
                   ref={virtualizer.measureElement}
                   className={itemClassname}
                   onPointerEnter={() => {
@@ -244,7 +283,6 @@ function VirtualList<T>(
                     onSelect?.(items[i.index], i.index)
                   }}
                   style={itemStyle}
-                  tabIndex={0}
                 >
                   {renderItem(items[i.index], i.index, currentFocusIndex === i.index)}
                 </div>

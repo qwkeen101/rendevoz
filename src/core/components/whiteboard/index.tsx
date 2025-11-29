@@ -1,16 +1,15 @@
 import { Provider, useAtomValue } from 'jotai/react'
 import { createStore } from 'jotai/vanilla'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
-import { FlowAtom, useFlow, useSetWhiteboardNodes, WhiteboardAtom } from './StateHooks'
+import { WhiteboardAtom } from './StateHooks'
 import TreeNodeContainer from './node/NodeContainer'
 import WhiteboardSelect from './hooks/WhiteboardSelect'
 import { globalStore, ObjectStore } from '@/api/stores'
-import FlowManager from './FlowManager'
-import { IWhiteboard, IWhiteboardNode, IWhiteboardProps } from '~/typings/data'
-import { Content } from '@/components'
-import { useClickOutside, useGlobalAtomValue, useSelectAtomValue } from '@/hooks'
+import { IWhiteboardEvent, IWhiteboardNode, IWhiteboardProps } from '~/typings/data'
+import { Content, Icon } from '@/components'
+import { useClickOutside, useSelectAtomValue } from '@/hooks'
 import WhiteboardRightbar, { WhiteboardSidebarStateAtom } from './sidebar/WhiteboardRightbar'
-import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
+import { useSelectWhiteboardState, WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
 import { useWhiteboardInstance, WhiteboardInstanceAtom } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
 import { IWhiteboardInstance } from '~/typings'
 import { assignProperties, waitFor } from '@/utils'
@@ -21,25 +20,30 @@ import FreeHandLayer from '@/core/components/whiteboard/freehand/FreeHandLayer'
 import WhiteboardPanzoom from '@/core/components/whiteboard/hooks/WhiteboardPanzoom'
 import WhiteboardControlBar from '@/core/components/whiteboard/toolbars/WhiteboardControlBar'
 import WhiteboardPenToolsBar from '@/core/components/whiteboard/toolbars/WhiteboardPenToolsBar'
-import { css } from '@emotion/css'
 import WhiteboardFloatBar from '@/core/components/whiteboard/toolbars/WhiteboardFloatBar'
 import WhiteboardLint from '@/core/components/whiteboard/WhiteboardLint'
-import WhiteboardHeader from '@/core/components/whiteboard/WhiteboardHeader'
 import { useSetAtom, useStore } from 'jotai'
 import WhiteboardFloatNodesLayer from '@/core/components/whiteboard/WhiteboardFloatNodesLayer'
 import WhiteboardHookContainer from '@/core/components/whiteboard/WhiteboardHookContainer'
-import SnapDragLayer from '@/core/components/whiteboard/snap/SnapDragLayer'
+import SnapDragLayer from '@/core/components/whiteboard/SnapDragLayer'
 import FakeMindmapDragLayer from '@/core/components/whiteboard/node/mindmap/FakeMindmapDragLayer'
 import WhiteboardSearch from '@/core/components/whiteboard/WhiteboardSearch'
 import WhiteboardPasteSelector from '@/core/components/whiteboard/WhiteboardPasteSelector'
-const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly, state }: IWhiteboardProps) => {
+import { debounce } from 'lodash'
+import useWhiteboardHideObjects from '@/core/components/whiteboard/hooks/useWhiteboardHideObjects'
+import { Icons } from '@/consts'
+import WhiteboardResizeObserver from '@/core/components/whiteboard/hooks/WhiteboardResizeObserver'
+
+const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly, state, name }: IWhiteboardProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
-  const flow = useFlow()
+  const outestContainerRef = useRef<HTMLDivElement>(null)
   const nodes = useSelectAtomValue(WhiteboardAtom, s => s?.nodes)
   const instance = useWhiteboardInstance()
-  const eventListeners = useRef(new Set())
+  const eventListeners = useRef<Record<IWhiteboardEvent['type'], Set<any>>>({})
+  useWhiteboardHideObjects()
   const store = useStore()
   const setWhiteboardState = useSetAtom(WhiteboardStateAtom)
+  const loaded = useSelectWhiteboardState(s => s.loaded)
   const [viewportInitialized, setViewportInitialized] = useState(false)
   const getLatestWhiteboard = () => {
     return store.get(WhiteboardAtom)
@@ -50,21 +54,32 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly, sta
       readOnly,
       layout,
       state,
+      name,
       currentTool: readOnly ? undefined : s.currentTool,
       pointerMode: readOnly ? 'pan' : s.pointerMode,
       toolbarPointerMode: readOnly ? 'pan' : s.toolbarPointerMode
     }))
-  }, [readOnly, layout, state])
+  }, [readOnly, layout, state, name])
   assignProperties(instance, {
+    getState: () => store.get(WhiteboardStateAtom),
     getContainerNode: () => containerRef.current!,
     getOutestContainerNode: () => containerRef.current?.parentElement,
     getAllNode: () => Array.from(getLatestWhiteboard()?.nodes?.values() || []),
     getEdge: edgeId => getLatestWhiteboard()?.edges?.get(edgeId),
     getAllEdge: () => Array.from(getLatestWhiteboard()?.edges?.values() || []),
-    isFocused: () => flow.focused,
+    isFocused: (includeInner = true) => {
+      if (includeInner) {
+        if (instance.values.isFocused) return true
+      } else {
+        if (instance.values.isFocused) {
+          if (instance.getOutestContainerNode?.() !== document.activeElement && document.activeElement !== document.body) return true
+        }
+      }
+      return false
+    },
     setFocused: f => {
-      flow.focused = f
-      if(f){
+      instance.values.isFocused = true
+      if (f) {
         instance.getOutestContainerNode?.()?.focus()
       }
     },
@@ -84,36 +99,18 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly, sta
         }
       })
     },
-    addEventListener: l => {
-      eventListeners.current.add(l)
+    addEventListener: (type, listener) => {
+      const set = eventListeners.current[type] || new Set()
+      set.add(listener)
+      eventListeners.current[type] = set
     },
     emit: e => {
-      eventListeners.current.forEach(l => l(e))
+      eventListeners.current[e.type]?.forEach(l => l(e))
     },
-    removeEventListener: l => {
-      eventListeners.current.delete(l)
+    removeEventListener: (type, listener) => {
+      eventListeners.current[type]?.delete(listener)
     }
   })
-  useEffect(() => {
-    waitFor(
-      () => !!instance.nodeOps,
-      () => {
-        onInstanceInitialized?.(instance)
-      },
-      {
-        timeout: 9999999
-      }
-    )
-  }, [])
-
-  useEffect(() => {
-    if (flow && containerRef.current) {
-      flow.containerEle = containerRef.current
-      flow.parentContainerEle = flow.containerEle.parentElement as HTMLElement
-      containerRef.current?.style.setProperty('--zoom-level', '1')
-    }
-  }, [])
-
   useEffect(() => {
     const noZNodes: IWhiteboardNode[] = []
     if (nodes?.size) {
@@ -131,43 +128,73 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly, sta
       }
     }
   }, [nodes])
-  const setNodes = useSetWhiteboardNodes()
-  flow.setNodes = setNodes
-
   const rightBarState = useAtomValue(WhiteboardSidebarStateAtom)
-
+  useEffect(() => {
+    const globalHandler = (e: Event) => {
+      if (e.type === 'keyup') {
+        instance.emit({
+          type: 'keyup',
+          e: e as KeyboardEvent
+        })
+      }
+      if (e.type === 'pointerup') {
+        instance.emit({
+          type: 'pointerup',
+          e: e as PointerEvent
+        })
+      }
+    }
+    document.addEventListener('keyup', globalHandler)
+    document.addEventListener('pointerup', globalHandler)
+    return () => {
+      document.removeEventListener('keyup', globalHandler)
+      document.removeEventListener('pointerup', globalHandler)
+    }
+  }, [])
   useClickOutside(
-    e => {
-      flow.focused = false
+    () => {
+      instance.setFocused(false)
     },
     {
-      current: flow.parentContainerEle
+      current: outestContainerRef.current
     }
   )
-  console.log('rerender')
   return (
     <>
-      <WhiteboardPanzoom onInitialized={() => setViewportInitialized(true)} />
+      <WhiteboardPanzoom
+        onInitialized={() => {
+          setViewportInitialized(true)
+          setTimeout(() => {
+            setWhiteboardState(s => ({ ...s, loaded: true }))
+            instance.startResizeObserving?.()
+            onInstanceInitialized?.(instance)
+            instance.setFocused(true)
+            instance.nodeOps?.updateRelatedEdges(Array.from(nodes?.keys() || []))
+          }, 200)
+        }}
+      />
+      <WhiteboardResizeObserver />
       {viewportInitialized && <WhiteboardHookContainer whiteboardId={id} />}
       <Content
         fullHeight
         fullWidth
         role="data-container"
-        ref={node => {
-          if (node) {
-            flow.parentContainerEle = node
-          }
-        }}
-        className={css({
-          '*': {
-            touchAction: 'none'
-          }
-        })}
+        ref={outestContainerRef}
         tabIndex={0}
         onPointerDown={e => {
+          instance.emit({
+            type: 'pointerdown',
+            e: e.nativeEvent
+          })
           if (e.target === e.currentTarget) {
             instance.selectOps?.deselectAll()
           }
+        }}
+        onPointerMove={e => {
+          instance.emit({
+            type: 'pointermove',
+            e: e.nativeEvent
+          })
         }}
         onPointerUpCapture={e => {
           const isPanning = store.get(WhiteboardStateAtom).isPanning
@@ -193,15 +220,15 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly, sta
           }
         }}
         onPointerDownCapture={() => {
-          flow.focused = true
+          instance.values.isFocused = true
         }}
         onFocus={() => {
-          flow.focused = true
+          instance.values.isFocused = true
         }}
         style={{
-          touchAction: 'none',
+          opacity: loaded ? 1 : 0,
+          transition: 'opacity 0.3s ease',
           overflow: 'clip',
-          transition: 'width 0.26s ease',
           width: rightBarState.visible ? `calc(100% - ${rightBarState.width})` : undefined
         }}
       >
@@ -216,13 +243,20 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly, sta
             left: 0,
             zIndex: 1,
             background: 'transparent',
-            pointerEvents: 'none'
+            pointerEvents: 'none',
+            '--zoom-level': '1'
+          }}
+          onClick={e => {
+            instance.emit({
+              type: 'dataContainerClick',
+              e: e.nativeEvent
+            })
           }}
         >
           {viewportInitialized && <TreeNodeContainer />}
           {!readOnly && (
             <>
-              <WhiteboardSelect containerRef={containerRef} />
+              <WhiteboardSelect />
               <SnapDragLayer />
               <FreeHandLayer />
             </>
@@ -235,13 +269,11 @@ const WhiteboardInner = memo(({ onInstanceInitialized, layout, id, readOnly, sta
         {layout?.showPencilToolbar !== false && !readOnly && layout?.showLeftToolbar !== false && <WhiteboardPenToolsBar />}
         {layout?.showControlBar !== false && <WhiteboardControlBar />}
       </Content>
-      <WhiteboardHeader />
       <WhiteboardFloatNodesLayer />
       <WhiteboardRightbar />
       <WhiteboardSearch />
       <WhiteboardPasteSelector />
       <FakeMindmapDragLayer />
-      {/*{layout?.showRename && <WhiteboardRename name={name} onRename={onRename} />}*/}
     </>
   )
 })
@@ -259,56 +291,61 @@ export const Whiteboard = memo(
     whiteboardId: number
     onInstanceInitialized?: (i: IWhiteboardInstance) => void
   } & Omit<IWhiteboardProps, 'id'>) => {
-    const previousWhiteboard = useRef<IWhiteboard>()
-    const whiteboardAtom = ObjectStore('whiteboard').createAtom(whiteboardId)
-    const whiteboard = useGlobalAtomValue(whiteboardAtom)
-    console.log(whiteboard)
+    const outerWhiteboardAtom = ObjectStore('whiteboard').createAtom(whiteboardId)
+    const whiteboard = ObjectStore('whiteboard').useValue(whiteboardId)
     const store = useMemo(() => {
       const store = createStore()
-      const whiteboard = globalStore.get(whiteboardAtom)
-      if (!whiteboard?.lineType) {
-        const setting = getSetting()
-        setTimeout(() => {
-          ObjectStore('whiteboard').updateOne({
-            id: whiteboardId,
-            lineType: setting.whiteboard.defaultLineType || 'curve',
-            backgroundType: setting.whiteboard.defaultBackgroundType || 'none'
-          })
-        }, 10)
-      }
-      previousWhiteboard.current = whiteboard
-      store.set(WhiteboardAtom, whiteboard)
       const instance: IWhiteboardInstance = {
         values: {
+          isFocused: false,
+          store,
           id: whiteboardId,
           copiedElements: [],
           ID_TO_NODE_MAP: new Map(),
           ID_TO_EDGE_MAP: new Map(),
           NODE_TO_EDGE_MAP: new Map(),
-          transformHistory: {
-            undos: [],
-            redos: []
-          }
+          mindmapChildrenToFlattenChildren: new WeakMap(),
+          mindmapLeftTreeWeakMap: new WeakMap(),
+          mindmapRightTreeWeakMap: new WeakMap()
         }
       }
-      const flowManager = new FlowManager(instance)
-      flowManager.whiteboardId = whiteboardId
-      store.set(FlowAtom, flowManager)
       store.set(WhiteboardInstanceAtom, instance)
       return store
     }, [whiteboardId])
-    useEffect(() => {
-      const unsub = globalStore.sub(whiteboardAtom, () => {
-        const whiteboard = globalStore.get(whiteboardAtom)
-        const prev = previousWhiteboard.current
-
-        previousWhiteboard.current = whiteboard
-        if (prev && prev !== whiteboard) {
-          store.set(WhiteboardAtom, whiteboard)
+    const unsub = useMemo(() => {
+      if (whiteboard) {
+        let w = { ...whiteboard }
+        if (!whiteboard.lineType) {
+          const setting = getSetting()
+          w.lineType = setting.whiteboard.defaultLineType || 'curve'
+          w.backgroundType = setting.whiteboard.defaultBackgroundType || 'none'
+          ObjectStore('whiteboard').updateOne({
+            id: whiteboardId,
+            lineType: setting.whiteboard.defaultLineType || 'curve',
+            backgroundType: setting.whiteboard.defaultBackgroundType || 'none'
+          })
         }
-      })
-      return unsub
-    }, [whiteboardId])
+        store.set(WhiteboardAtom, w)
+        const debounced = debounce(w => {
+          store.set(WhiteboardAtom, w)
+        }, 1000)
+        const unsub = globalStore.sub(outerWhiteboardAtom, () => {
+          const inner = store.get(WhiteboardAtom)
+          const whiteboard = globalStore.get(outerWhiteboardAtom)
+          if (whiteboard !== inner) {
+            debounced(whiteboard)
+          }
+        })
+        return unsub
+      }
+    }, [whiteboard?.id])
+    useEffect(() => {
+      return () => {
+        if (unsub) {
+          unsub()
+        }
+      }
+    }, [unsub])
     if (!whiteboard) return null
     return (
       <Provider store={store}>

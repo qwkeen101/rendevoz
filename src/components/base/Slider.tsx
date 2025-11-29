@@ -16,7 +16,7 @@ const Slider = (props: SliderProps & { disableOriginalClass?: boolean }) => {
                 '.rc-slider-handle': {
                   border: 'none !important',
                   cursor: 'grabbing',
-                  backgroundColor: Colors.Font.Secondary,
+                  backgroundColor: 'var(--font-primary-solid)',
                   opacity: 1,
                   ':hover': {
                     borderColor: 'transparent'
@@ -28,7 +28,7 @@ const Slider = (props: SliderProps & { disableOriginalClass?: boolean }) => {
                 },
                 '.rc-slider-track': {
                   height: 5,
-                  backgroundColor: Colors.Font.Secondary
+                  backgroundColor: Colors.Font.Transparent
                 },
                 '.rc-slider-rail': {
                   height: 5,

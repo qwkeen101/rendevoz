@@ -9,7 +9,7 @@ interface ToolbarItemProps {
   onClick?: MouseEventHandler
   className?: string
   title?: string
-  size?: number
+  iconSize?: string
   iconClassName?: string
   children?: ReactNode
   style?: CSSProperties
@@ -19,7 +19,7 @@ interface ToolbarItemProps {
   isActive?: boolean
   disabled?: boolean
   clickPreventDefault?: boolean
-  tooltip?: string
+  tooltip?: string | ReactElement
   radius?: number
   popover?: ReactElement
 }
@@ -30,24 +30,29 @@ const ToolbarItem: FC<ToolbarItemProps> = forwardRef(
       onClick,
       className,
       iconClassName,
-      size = 18,
+      iconSize,
       children,
       style,
+      radius,
       title,
       iconName,
       clickPreventDefault = false,
       isActive = false,
       tooltip,
       disabled,
-      strokeWidth,
-      radius
+      strokeWidth
     },
     ref
   ) => {
     const renderItem = () => {
       if (iconName) {
         return (
-          <Icon strokeWidth={strokeWidth} cursor={disabled ? 'inherit' : 'pointer'} className={iconClassName} size={size} name={iconName} />
+          <Icon
+            strokeWidth={strokeWidth}
+            cursor={disabled ? 'inherit' : 'pointer'}
+            className={classNames(iconClassName, iconSize)}
+            name={iconName}
+          />
         )
       }
       if (title) {
@@ -68,11 +73,10 @@ const ToolbarItem: FC<ToolbarItemProps> = forwardRef(
           {
             key: iconName,
             'data-disabled': disabled,
-            className: classNames(ClassName.circleButton(3, radius), className, isActive && 'active-button'),
+            className: classNames('square-button flex items-center', className, isActive && 'active-button'),
             style: {
               ...style,
-              display: 'flex',
-              alignItems: 'center',
+              borderRadius: style?.borderRadius ?? radius,
               cursor: disabled ? 'not-allowed' : style?.cursor
             },
             onPointerDown: clickPreventDefault ? e => e.preventDefault() : undefined,

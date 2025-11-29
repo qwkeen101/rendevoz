@@ -3,22 +3,15 @@ import { Button, WithBorder } from '@/components'
 import useFeedData from '@/core/components/feed/hooks/useFeedData'
 
 const viewToTranslate = {
+  title: 'general.Title view',
   magazine: 'general.Magazine view',
-  card: 'general.Card view',
-  title: 'general.Title view'
-}
-
-const openToTranslate = {
-  rightBar: 'general.Right bar',
-  center: 'general.Center',
-  sidePeek: 'general.Side peek',
-  newPage: 'general.New page'
+  card: 'general.Card view'
 }
 
 export default ({ onClose }: { onClose?: VoidFunction }) => {
   const { t } = useTranslation()
   const feedData = useFeedData()
-  const { cardView, openMode } = feedData
+  const { cardView } = feedData
   return (
     <WithBorder className={'px-1 py-1.5 min-w-48'}>
       <div className={'menu-sub-title pl-2 pb-1'}>{t('general.View')}</div>

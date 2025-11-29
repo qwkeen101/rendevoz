@@ -1,0 +1,539 @@
+[
+  {
+    "id": 21868410575557,
+    "state": "completed",
+    "query": "艾尔登法环 使用的游戏引擎",
+    "researchGoal": "确定《艾尔登法环》使用的主要游戏引擎。",
+    "sources": [
+      {
+        "content": "用的游戏引擎就是自家的祖传独门引擎外加Havok物理引擎和YEBIS光效引擎，主要介绍一下后两者。 1、Havok物理引擎：全称为Havok Game Dynamics SDK，译作Havok游戏-动力开发包。",
+        "url": "https://tieba.baidu.com/p/7867571405",
+        "title": "艾尔登法环是什么引擎？ - 百度贴吧",
+        "source": "百度贴吧",
+        "logo": "https://th.bing.com/th/id/ODLS.eaea8327-c48f-45ee-9c4c-af2e9fde9c0c?w=32&h=32&qlt=90&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "首先《艾尔登法环》所使用的游戏引擎，依旧是老三样，自家的祖传独门引擎外加Havok物理引擎和YEBIS光效引擎，首先简单介绍一下后两者。 Havok物理引擎：",
+        "url": "https://www.bilibili.com/opus/630079046790676537",
+        "title": "浅层解析《艾尔登法环》吃配置，烂画质 - 哔哩哔哩",
+        "source": "哔哩哔哩",
+        "logo": "https://th.bing.com/th/id/ODLS.1e67f861-d980-4c01-ba66-9450f90172f4?w=32&h=32&qlt=91&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2024年10月26日 · 《艾尔登法环》这款备受瞩目的游戏，依然采用的是F社自家的祖传引擎，辅以Havok物理引擎和YEBIS光效引擎。 尽管F社的这一自家引擎鲜少对外界透露，但玩家和业内 …",
+        "url": "https://zhidao.baidu.com/question/212221224249780845.html",
+        "title": "艾尔登法环用的什么引擎 - 百度知道",
+        "source": "百度知道",
+        "logo": "https://th.bing.com/th/id/ODLS.50657af4-3bbf-41a0-8f9a-2810bf76e39e?w=32&h=32&qlt=92&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "《艾尔登法环》老头环用的什么引擎？ - 电玩帮2024年10月19日 · 《艾尔登法环》所使用的游戏引擎，依旧是老三样，自家的祖传独门引擎外加Havok物理引擎和YEBIS光效引擎。 fs社自家的祖传引擎并未向外界有任何透露，所以这么多年来都一直不清楚到底",
+        "url": "https://www.vgover.com/topic/14945",
+        "title": "《艾尔登法环》老头环用的什么引擎？ - 电玩帮",
+        "source": "电玩帮",
+        "logo": "https://th.bing.com/th/id/ODLS.4c3c37d4-01a2-434b-9d33-9f761a781461?w=32&h=32&qlt=93&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2023年6月18日 · 我们使用的游戏引擎是自家独特的传统引擎，艾尔登法环爪痕圣印记结合了Havok物理引擎和YEBIS光效引擎。下面将详细介绍后两者。 下面将详细介绍后两者。",
+        "url": "https://www.5mouse.com/question/378874.html",
+        "title": "老头环是什么引擎 解析艾尔登法环引擎它与哪些游戏有关_五鼠游戏",
+        "source": "五鼠游戏",
+        "logo": "https://th.bing.com/th/id/ODLS.c65000f1-819b-42c9-9b89-97d2781061e1?w=32&h=32&qlt=94&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2022年6月13日 · 老头环游戏引擎用的游戏引擎就是自家的祖传独门引擎外加Havok物理引擎和YEBIS光效引擎，主要介绍一下后两者。 1、... 金符游戏-最新最好玩的游戏下载服务",
+        "url": "https://www.yikajinfu.com/gonglue/131549197.html",
+        "title": "艾尔登法环用什么引擎 艾尔登法环用什么引擎开发的-金符游戏",
+        "source": "金符游戏",
+        "logo": "https://th.bing.com/th/id/ODLS.389af88e-9f9a-44bb-911f-e11b98fddf4b?w=32&h=32&qlt=95&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "艾尔登法环采用的Luminous Engine是由Square Enix开发的一款游戏引擎。 虽然这款引擎最初是为最终幻想15所设计，但其高效的渲染能力和出色的环境构建特性，也被FromSoftware吸收并 …",
+        "url": "http://m.amaili.com/lxjc/69710eef6.html",
+        "title": "艾尔登法环是什么引擎-探索艾尔登法环背后的强大游戏引擎技术 …",
+        "source": "amaili.com",
+        "logo": "https://th.bing.com/th/id/ODLS.A2450BEC-5595-40BA-9F13-D9EC6AB74B9F?w=32&h=32&qlt=96&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2024年8月8日 · 艾尔登法环采用了自主研发的引擎，该引擎基于虚幻引擎进行深度优化。 虚幻引擎是一款备受好评的游戏开发工具，广泛应用于动作、射击、 角色扮演 等各种类型的游戏中。",
+        "url": "https://www.sousou.com/gl/1254801.html",
+        "title": "艾尔登法环是哪个引擎 - 搜搜游戏网",
+        "source": "sousou.com",
+        "logo": "https://th.bing.com/th/id/ODLS.aaf3db41-6854-4c17-a14b-a9f763b638fd?w=32&h=32&qlt=97&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "究其根本原因的话，可能是《艾尔登法环》构建的独特生态圈极具粘性。 新手在论坛上哭诉被大树守卫虐到退游时，总会有老玩家留下“前有绝景”的谏言；主播们反复挑战无伤速通的每个深 …",
+        "url": "https://zhuanlan.zhihu.com/p/1910347207065969127",
+        "title": "《艾尔登法环》真好玩，Steam上四成多的玩家投入时间超过100 …",
+        "source": "知乎专栏",
+        "logo": "https://th.bing.com/th/id/ODLS.e8bc2aae-9ddf-468e-9c1f-ce5a35fec9fb?w=32&h=32&qlt=98&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "只了十几年，画面跨度却如此之大，那我们可得出结论，游戏引擎也是可以随着版本升级越来越完善。 此外，这套引擎是免费商用引擎，15年被微软收购。",
+        "url": "https://tieba.baidu.com/p/7576548363",
+        "title": "FS社常用引擎揭秘：Havok物理引擎 - 百度贴吧",
+        "source": "百度贴吧",
+        "logo": "https://th.bing.com/th/id/ODLS.eaea8327-c48f-45ee-9c4c-af2e9fde9c0c?w=32&h=32&qlt=99&pcl=fffffa&o=6&pid=1.2"
+      }
+    ],
+    "learning": "好的，这是一份根据您提供的SERP搜索结果整理的关于《艾尔登法环》所使用游戏引擎的研究报告，旨在确定其主要游戏引擎。\n\n**研究目标：** 确定《艾尔登法环》使用的主要游戏引擎。\n\n**研究发现：**\n\n1.  **主要引擎：FromSoftware 自主研发的“祖传”引擎**\n    *   绝大多数来源一致指出，《艾尔登法环》主要使用的是开发商 FromSoftware (FS社) 自家研发的、被称为“祖传独门引擎”或“祖传引擎”的内部引擎 [1][2][3][4][5][6]。\n    *   这款自家引擎的详细信息很少对外透露 [3]，多年来其具体情况一直不清楚 [4]。\n    *   “祖传”一词可能暗示该引擎是基于 FromSoftware 过去作品（如《黑暗之魂》系列、《血源诅咒》、《只狼》）所使用的引擎迭代和改进而来 [10]。\n\n2.  **辅助引擎/中间件：Havok 物理引擎和 YEBIS 光效引擎**\n    *   除了自家的主引擎外，《艾尔登法环》还结合使用了 Havok 物理引擎和 YEBIS 光效引擎 [1][2][3][4][5][6]。\n    *   Havok Game Dynamics SDK 是一个专门的物理引擎，负责游戏中的物理模拟 [1][2]。Havok 引擎已被 FS社 使用了十多年 [10]，并于2015年被微软收购 [10]。\n    *   YEBIS 是一个光效引擎，负责处理游戏中的视觉效果，特别是光照和后处理效果 [1][2]。\n    *   多个来源在提及引擎组合时，会重点介绍或详细说明 Havok 和 YEBIS，这进一步突显了它们作为辅助技术的重要性 [1][2][5][6]。\n\n3.  **存在冲突信息（需谨慎对待）：**\n    *   有来源声称《艾尔登法环》采用了由 Square Enix 开发的 Luminous Engine [7]。该引擎最初是为《最终幻想15》设计的，据称 FromSoftware 吸收并使用了其渲染和环境构建特性 [7]。这与主流观点（使用 FS社 自家引擎）相悖。\n    *   另有来源提出，《艾尔登法环》采用了基于虚幻引擎进行深度优化的自主研发引擎 [8]。虚幻引擎是一款广泛应用于多种游戏类型的知名开发工具 [8]。这也与主流观点（使用 FS社 自家引擎，未提及基于虚幻）相悖。\n\n**总结与分析：**\n\n基于提供的搜索结果，最普遍且一致的结论是《艾尔登法环》的核心是 FromSoftware 自主研发的、迭代多年的“祖传”引擎，并辅以成熟的第三方中间件 Havok（物理）和 YEBIS（光效）来处理特定的技术领域。关于使用 Luminous Engine 或基于虚幻引擎的说法，在这些来源中属于少数派观点，且与多数来源的描述存在直接冲突，因此其准确性存疑，需要进一步查证。\n\n使用自家引擎的优势在于 FromSoftware 可以对其进行深度定制和优化，以满足其独特的游戏设计需求和艺术风格，但也意味着需要投入更多资源进行引擎本身的开发和维护。结合 Havok 和 YEBIS 则是在特定技术领域（物理、光照）利用了业界成熟且高效的解决方案，避免了重复造轮子。\n\n**进一步研究方向建议：**\n\n1.  深入查找 FromSoftware 自家引擎的技术细节或历史演变信息，尽管公开资料可能很少。可以尝试搜索与 FromSoftware 早期游戏（如《黑暗之魂》系列）引擎相关的技术分析或开发者访谈。\n2.  查证关于《艾尔登法环》使用 Luminous Engine 或基于虚幻引擎说法的来源和依据，评估其可信度。这可能涉及查找 Square Enix 或 Epic Games 的官方声明，或更权威的技术分析文章。\n3.  研究 Havok 和 YEBIS 在 FromSoftware 游戏中的具体应用案例和技术特点，了解它们如何增强了游戏的物理表现和视觉效果。\n4.  分析 FromSoftware 游戏在不同平台上的表现差异，这可能间接反映其引擎的跨平台能力和优化水平。\n\n希望这份详细的分析对您有所帮助。"
+  },
+  {
+    "id": 21868410575558,
+    "state": "completed",
+    "query": "艾尔登法环 开发 编程语言",
+    "researchGoal": "查明《艾尔登法环》开发过程中使用的主要编程语言。",
+    "sources": [
+      {
+        "content": "2024年3月12日 · 艾尔登法环什么语言开发的 答： 核心代码是用C++语音编程的 。 玩家所玩的游戏都是由一串串代码组成核心的，而艾尔登法环这款游戏的核心代码就是使用C++语言编程出 …",
+        "url": "https://gl.ali213.net/html/2024-3/1347923.html",
+        "title": "《艾尔登法环》开发语言介绍 - 游侠网",
+        "source": "游侠攻略",
+        "logo": "https://th.bing.com/th/id/ODLS.4eb46162-6402-4ce5-bce4-312167c03698?w=32&h=32&qlt=90&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "艾尔登法环是什么引擎..用的游戏引擎就是自家的祖传独门引擎外加Havok物理引擎和YEBIS光效引擎，主要介绍一下后两者。1、Havok物理引擎：全称为Havok Game Dynamics SDK，译 …",
+        "url": "https://tieba.baidu.com/p/7867571405",
+        "title": "艾尔登法环是什么引擎？ - 百度贴吧",
+        "source": "百度贴吧",
+        "logo": "https://th.bing.com/th/id/ODLS.eaea8327-c48f-45ee-9c4c-af2e9fde9c0c?w=32&h=32&qlt=91&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2024年9月13日 · Elden Ring FPS Unlock And More 是一个专为《艾尔登法环》设计的开源小工具，由 Uberhalit 使用 C# 编程语言开发。此项目旨在提升玩家的游戏体验，通过内存补丁的方 …",
+        "url": "https://blog.csdn.net/gitblog_07187/article/details/142221225",
+        "title": "Elden Ring FPS 解锁增强器 - 开源宝藏工具 - CSDN博客",
+        "source": "CSDN博客",
+        "logo": "https://th.bing.com/th/id/ODLS.3dc6f5f0-f66b-4880-893d-62d29cba6f62?w=32&h=32&qlt=92&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2024年6月3日 · 艾尔登法环（Alden Law Ring）是一款专门用于法律领域的软件工具，其开发过程中使用了多种编程语言。 首先，艾尔登法环的后端主要采用了Java语言。 Java是一种面向对 …",
+        "url": "https://worktile.com/kb/ask/2722554.html",
+        "title": "艾尔登法环用什么编程语言开发 - Worktile社区",
+        "source": "Worktile",
+        "logo": "https://th.bing.com/th/id/ODLS.876e6867-bcad-43dd-8740-94d8a006b368?w=32&h=32&qlt=93&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2022年12月5日 · 2022年2月，由日本From Software开发，万代南梦宫发行的幻想开放世界RPG游戏《艾尔登法环》迎来全球发售。 这部宫崎英高执掌下的From社历史上体量最大的游戏，在 …",
+        "url": "https://bbs.gameres.com/thread_898096_1_1.html",
+        "title": "《艾尔登法环》如何效率化、自动化地构筑宏大的开放世界地图？ …",
+        "source": "游戏开发论坛",
+        "logo": "https://th.bing.com/th/id/ODLS.84e7f8aa-ba60-4421-94ea-569a7f9d25fe?w=32&h=32&qlt=94&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "Ty Frank( 乔治马丁的个人助理)透露说他们从早一阵子就开始与FS合作一个未知项目（本应是装甲核心/与乔治马丁无关， 但之后看来更可能是艾尔登法环 ）。",
+        "url": "https://www.bilibili.com/opus/575712929777984383",
+        "title": "艾尔登法环开发时间线汇总 - 哔哩哔哩",
+        "source": "哔哩哔哩",
+        "logo": "https://th.bing.com/th/id/ODLS.1e67f861-d980-4c01-ba66-9450f90172f4?w=32&h=32&qlt=95&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2025年5月7日 · 开发前必看：工具包+避坑指南. 工具三件套： Mod引擎：必装《艾尔登法环》专用UE4 Mod引擎（网上搜“Elden Ring Mod Loader”），这是所有Mod的底层框架，装完直接解 …",
+        "url": "https://www.52gamers.com/news/49078.html",
+        "title": "紧急！艾尔登法环Mod开发完全指南 从零基础到快速上手技巧+全 …",
+        "source": "52gamers.com",
+        "logo": "https://th.bing.com/th/id/ODLS.A2450BEC-5595-40BA-9F13-D9EC6AB74B9F?w=32&h=32&qlt=96&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2024年11月18日 · 《艾尔登法环》是由日本游戏开发公司FromSoftware主导开发的。 这家公司以制作硬核动作游戏而闻名，如《黑暗之魂》系列和《血源诅咒》。 FromSoftware以其对游戏 …",
+        "url": "https://bk.taobao.com/k/aierdengfahuan_160/2af1f6b9ee3d09cffd6d951de3b95195.html",
+        "title": "艾尔登法环：开发语言揭秘-艾尔登法环-淘宝百科网",
+        "source": "taobao.com",
+        "logo": "https://th.bing.com/th/id/ODLS.03f8102d-667b-4400-9983-8f8afb4c3150?w=32&h=32&qlt=97&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2022年12月5日 · 《艾尔登法环》有着广阔开放世界，以及复杂且立体的迷宫。 因为几乎能无缝地在游戏里行动，即便与 FromSoftware 以往的作品《黑暗之魂》系列相比 ...",
+        "url": "https://news.qq.com/rain/a/20221205A084KV00",
+        "title": "FromSoftware如何为《艾尔登法环》打造开放世界 - 腾讯网",
+        "source": "腾讯网",
+        "logo": "https://th.bing.com/th/id/ODLS.eb37fcc5-7670-48e7-8c00-cda0f210ba5b?w=32&h=32&qlt=98&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "很多人不知道fs社用..只了十几年，画面跨度却如此之大，那我们可得出结论，游戏引擎也是可以随着版本升级越来越完善。此外，这套引擎是免费商用引擎，15年被微软收购。除了fs社，也有 …",
+        "url": "https://tieba.baidu.com/p/7576548363",
+        "title": "FS社常用引擎揭秘：Havok物理引擎 - 百度贴吧",
+        "source": "百度贴吧",
+        "logo": "https://th.bing.com/th/id/ODLS.eaea8327-c48f-45ee-9c4c-af2e9fde9c0c?w=32&h=32&qlt=99&pcl=fffffa&o=6&pid=1.2"
+      }
+    ],
+    "learning": "好的，作为一名专家研究员，我将根据您提供的SERP搜索结果，对《艾尔登法环》开发过程中使用的主要编程语言进行整理和分析。\n\n**研究目标：** 查明《艾尔登法环》开发过程中使用的主要编程语言。\n\n**分析与整理：**\n\n根据提供的搜索结果，我们可以提取出以下关于《艾尔登法环》开发技术的关键信息：\n\n1.  **核心开发语言：**\n    *   《艾尔登法环》的核心代码是使用C++语言编程的 [1]。这是游戏核心逻辑和性能密集部分常用的语言 [1]。\n\n2.  **使用的游戏引擎：**\n    *   游戏使用了FromSoftware自家的“祖传独门引擎” [2]。\n    *   此外，还集成了第三方引擎：Havok物理引擎（用于处理游戏中的物理效果，曾于2015年被微软收购） [2][10] 和 YEBIS光效引擎（用于处理游戏的光照和视觉效果） [2]。\n    *   值得注意的是，虽然游戏本身使用FromSoftware的自有引擎，但与游戏相关的Mod开发指南中提到了使用专用的“UE4 Mod引擎”和“Elden Ring Mod Loader”作为Mod的底层框架 [7]。这表明与游戏交互的工具或Modding社区可能使用了与核心开发不同的技术栈。\n\n3.  **第三方工具开发语言：**\n    *   一个名为“Elden Ring FPS Unlock And More”的开源工具，旨在提升玩家体验（通过内存补丁等方式），是由Uberhalit使用C#编程语言开发的 [3]。这并非游戏核心开发使用的语言，而是针对游戏开发的辅助工具或第三方增强功能。\n\n4.  **开发商与背景：**\n    *   《艾尔登法环》由日本游戏开发公司FromSoftware主导开发 [5][8]。FromSoftware以开发《黑暗之魂》系列和《血源诅咒》等硬核动作游戏而闻名 [8]。\n    *   游戏于2022年2月全球发售 [5]，是FromSoftware迄今为止体量最大的游戏之一 [5]。\n\n**排除的无关信息：**\n\n*   上下文 [4] 提到了一个名为“艾尔登法环（Alden Law Ring）”的软件工具，描述其为“专门用于法律领域的软件工具”，并提及后端使用Java语言 [4]。根据其他上下文和普遍认知，这显然不是指代FromSoftware开发的电子游戏《艾尔登法环》，因此该信息与本次研究目标无关，予以排除。\n\n**研究发现总结 (Learnings):**\n\n以下是从提供的上下文中提取的关于《艾尔登法环》开发编程语言和相关技术的详细发现：\n\n*   《艾尔登法环》的核心游戏代码是使用C++编程语言开发的 [1]。C++是游戏开发中常用的高性能语言，适合处理游戏的核心逻辑和渲染 [1]。\n*   游戏并非完全依赖于单一的第三方商业引擎，而是使用了FromSoftware自家研发的专有游戏引擎 [2]。\n*   为了增强特定功能，《艾尔登法环》集成了成熟的第三方中间件引擎，例如用于物理模拟的Havok物理引擎 [2][10] 和用于视觉效果处理的YEBIS光效引擎 [2]。Havok引擎在2015年被微软收购，并且FromSoftware已经使用了十几年，随着版本升级而完善 [10]。\n*   针对《艾尔登法环》开发的第三方工具可能使用不同的编程语言。例如，“Elden Ring FPS Unlock And More”这个开源工具就是使用C#语言开发的 [3]。这表明围绕游戏的生态系统可能涉及多种语言。\n*   《艾尔登法环》的Mod开发社区使用了特定的工具和框架，如专用的“UE4 Mod引擎”和“Elden Ring Mod Loader” [7]。虽然游戏本身并非基于虚幻引擎4开发，但Modding工具可能采用了相关的命名或技术思路 [7]。\n*   游戏由以开发硬核动作RPG闻名的FromSoftware公司开发 [5][8]，他们长期使用自己的引擎进行开发 [2][10]，这影响了其技术栈的选择。\n\n**主动建议与进一步思考：**\n\n1.  **脚本语言的可能性：** 虽然核心代码是C++，但大型游戏通常会使用一种或多种脚本语言来处理游戏逻辑、AI行为、UI交互等，以提高开发效率和迭代速度。提供的上下文没有提及具体的脚本语言（如Lua, Python,或者FromSoftware自家的脚本系统），但这是游戏开发中的常见实践。进一步的研究可以尝试查找是否有关于《艾尔登法环》或FromSoftware其他游戏中使用脚本语言的信息（但这需要超出当前提供的上下文）。\n2.  **工具链语言：** 游戏开发不仅仅是编写游戏代码，还包括大量的工具开发（如关卡编辑器、资源导入导出工具、动画工具等）。这些工具可能使用C#, Python, Java或其他适合工具开发的语言。上下文 [3] 提到了一个C#开发的工具，印证了工具链可能使用C++以外的语言。\n3.  **网络编程：** 作为一款包含多人联机元素的游戏，《艾尔登法环》必然涉及网络编程。虽然核心网络库可能用C++实现，但高层逻辑或服务器端可能使用其他语言。提供的上下文没有涉及这方面的信息。\n4.  **跨平台开发：** 《艾尔登法环》发布在多个平台（PC, PlayStation, Xbox）。C++是跨平台游戏开发的主力语言，但针对特定平台的优化或接口调用可能需要使用平台原生的API或语言特性。\n\n总而言之，根据提供的上下文，可以确定《艾尔登法环》的核心代码是使用C++开发的 [1]，并且使用了FromSoftware的自有引擎以及Havok和YEBIS等第三方引擎 [2]。与游戏相关的第三方工具和Modding可能涉及C# [3] 和特定的Mod引擎框架 [7]。虽然上下文没有提供更多细节，但基于行业惯例，游戏开发通常是一个多语言、多工具协同工作的复杂过程。"
+  },
+  {
+    "id": 21868410575559,
+    "state": "completed",
+    "query": "艾尔登法环 图形渲染技术 API",
+    "researchGoal": "了解《艾尔登法环》在图形渲染方面采用的关键技术或API。",
+    "sources": [
+      {
+        "content": "祖传的和最新的：聊一聊艾尔登法环的渲染系统 - 哔哩 …这种祖传与激进混搭导致了艾尔登法环的一大特色：既有渲染性能问题，又有渲染不稳定性问题。 前者来自老引擎在应对开放世界大量对象渲染的压力；后者来源于DX12 API自身的使用难度等。",
+        "url": "https://www.bilibili.com/opus/641783807628804117",
+        "title": "祖传的和最新的：聊一聊艾尔登法环的渲染系统 - 哔哩 …",
+        "source": "哔哩哔哩",
+        "logo": "https://th.bing.com/th/id/ODLS.1e67f861-d980-4c01-ba66-9450f90172f4?w=32&h=32&qlt=90&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "概览前言QML Canvas简介设计思路加上粒子效果效果展示一起养成写作习惯！这是我参与「掘金日新计划 · 4 月更文挑战」的第 14 天，点击查看活动详情。📒博客首页：何名取 的个人主页 - 文章 - 掘金 (juejin.cn)🎉欢迎关注🔎点赞👍收藏⭐️留言📝❤️期待一起交流！在juejin.cn上查看更多信息",
+        "url": "https://juejin.cn/post/7090142444053872654",
+        "title": "纯代码绘制艾尔登法环，并将其点燃 前面在学习使用QML粒子系 …",
+        "source": "稀土掘金",
+        "logo": "https://th.bing.com/th/id/ODLS.f8df3b32-cd9c-44e4-805e-59a6ef600bb6?w=32&h=32&qlt=91&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "我们通过《艾尔登法环》的开发，介绍了 FromSoftware 公司所进行的设计以及数据制作的案例和流程。还请您理解，本次所介绍的工作流程等内容，仅仅是《艾尔登法环》开发当时的相关工 …缺失: API必须包含: API",
+        "url": "https://www.kmhgame.com/ai-er-deng-fa-huan-de-zhi-zuo-liu-cheng/",
+        "title": "《艾尔登法环》的制作流程 - 软件技术分享",
+        "source": "kmhgame.com",
+        "logo": "https://th.bing.com/th/id/ODLS.A2450BEC-5595-40BA-9F13-D9EC6AB74B9F?w=32&h=32&qlt=92&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2024年1月24日 · 本文将使用 QML Canvas 绘制出艾尔登法环图形，并在其上添加火焰粒子，使法环熊熊燃烧，带来生动逼真的视觉效果。 我们还将探索 QML Canvas 的强大功能，以及它在 …",
+        "url": "https://www.bytezonex.com/archives/ySCmKf6r.html",
+        "title": "《使用QML Canvas 绘制艾尔登法环，让火焰熊熊燃烧》",
+        "source": "bytezonex.com",
+        "logo": "https://th.bing.com/th/id/ODLS.969c0dc0-6cef-4ed8-9c12-3c12d522f6a1?w=32&h=32&qlt=93&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2022年3月4日 · 在本项目中，\"QML实现的艾尔登法环动态logo效果\" 是一个使用Qt的QML技术来创建的视觉展示。QML是Qt框架的一部分，它允许开发者以声明式的方式编写用户界面，提供 …",
+        "url": "https://blog.csdn.net/sonichty/article/details/123282756",
+        "title": "揭秘三角圆环图形绘制：艾尔登法环中的数学奥秘-CSDN博客",
+        "source": "CSDN博客",
+        "logo": "https://th.bing.com/th/id/ODLS.3dc6f5f0-f66b-4880-893d-62d29cba6f62?w=32&h=32&qlt=94&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "艾尔登法环是什么引擎..用的游戏引擎就是自家的祖传独门引擎外加Havok物理引擎和YEBIS光效引擎，主要介绍一下后两者。 1、Havok物理引擎：全称为Havok Game Dynamics SDK，译 …缺失: API必须包含: API",
+        "url": "https://tieba.baidu.com/p/7867571405",
+        "title": "艾尔登法环是什么引擎？ - 百度贴吧",
+        "source": "百度贴吧",
+        "logo": "https://th.bing.com/th/id/ODLS.eaea8327-c48f-45ee-9c4c-af2e9fde9c0c?w=32&h=32&qlt=95&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2022年9月13日 · 《艾尔登法环》里的天空表现也广泛运用到了这套技术，其中用到的贴图，则是在3DCG软件《Terragen》中制作的图像和照片素材。 Skybox也可以随时间改变参数，不过 …缺失: API必须包含: API",
+        "url": "https://club.gamersky.com/activity/605957?club=163",
+        "title": "老头环制作组分享 艺术画级的场景美术塑造手法_百家争鸣|游民星空",
+        "source": "游民星空",
+        "logo": "https://th.bing.com/th/id/ODLS.0c5b428a-c14c-428b-967a-bd48465dd41f?w=32&h=32&qlt=96&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2024年6月21日 · 升级图形渲染画质mod，在艾尔登法环中这个mod通过集成nvidia dlss超分辨率技术，mod能够智能地重建图像细节，同时减少渲染过程中的计算负担，使得游戏在保持高帧率 …缺失: API必须包含: API",
+        "url": "https://patch.ali213.net/showpatch/245665.html",
+        "title": "《艾尔登法环》升级图形渲染MOD - 游侠网",
+        "source": "游侠网",
+        "logo": "https://th.bing.com/th/id/ODLS.68654f72-9db8-43ee-a421-3b6691bf2abd?w=32&h=32&qlt=97&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2022年3月22日 · 《艾尔登法环》是最近比较火的一款游戏，观察可以发现它的 Logo 是由几个圆弧和线段构成。本文使用 React + Three.js 技术栈，实现具有火焰效果艾尔登法环 Logo，本 …缺失: API必须包含: API",
+        "url": "https://www.45fan.com/article.php?aid=1CUhZVYtKY35u6Ka",
+        "title": "Three.js+React实现带火焰效果的艾尔登法环 - 路饭网",
+        "source": "路饭网",
+        "logo": "https://th.bing.com/th/id/ODLS.afbcced1-42fe-4858-882f-a1cf333f8954?w=32&h=32&qlt=98&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2023年6月20日 · 大家好，我自己翻译了一篇fs社发布的艾尔登法环开放世界制作技术的资料,角色篇也做完了，欢迎大家观看 艾尔登法环 NGA玩家社区 » 游戏综合讨论 » 游戏专版/合集 » 艾尔 …缺失: API必须包含: API",
+        "url": "https://bbs.nga.cn/read.php?tid=36711023",
+        "title": "大家好，我自己翻译了一篇FS社发布的艾尔登法环开放世界制作 …",
+        "source": "NGA玩家社区",
+        "logo": "https://th.bing.com/th/id/ODLS.7412ce6f-0122-4c3c-9e18-5e7568593c97?w=32&h=32&qlt=99&pcl=fffffa&o=6&pid=1.2"
+      }
+    ],
+    "learning": "好的，根据您提供的SERP搜索结果，以下是关于《艾尔登法环》图形渲染方面采用的关键技术或API的整理和分析：\n\n**《艾尔登法环》图形渲染技术与API研究发现**\n\n基于提供的搜索上下文，可以提炼出以下关于《艾尔登法环》图形渲染方面的关键信息：\n\n1.  **游戏引擎基础:** 《艾尔登法环》主要使用了FromSoftware自家“祖传”或“独门”的游戏引擎 [1][6]。这个引擎被描述为混合了“祖传”与“激进”的技术 [1]。\n2.  **图形API:** 游戏采用了DirectX 12 (DX12) API [1]。\n3.  **渲染性能与稳定性问题:**\n    *   游戏存在渲染性能问题，这部分归因于老引擎在应对开放世界中大量对象渲染时的压力 [1]。\n    *   游戏存在渲染不稳定性问题，这部分归因于DX12 API自身的使用难度 [1]。\n4.  **其他相关引擎/技术:**\n    *   游戏使用了Havok物理引擎（全称Havok Game Dynamics SDK）处理物理效果 [6]。\n    *   游戏使用了YEBIS引擎处理光效 [6]。\n    *   天空盒（Skybox）的渲染运用了特定的技术，其中使用的贴图可能是在3DCG软件《Terragen》中制作的图像和照片素材 [7]。天空盒的参数可以随时间改变 [7]。\n5.  **第三方渲染技术应用（通过Mod）:** 存在通过Mod集成NVIDIA DLSS超分辨率技术的案例，旨在升级图形渲染画质 [8]。该Mod通过DLSS智能重建图像细节，同时减少渲染计算负担，以维持高帧率 [8]。\n6.  **非游戏核心渲染技术的提及:** 搜索结果中也提到了使用QML Canvas [2][4][5]、Qt框架 [5]、Three.js+React [9] 等技术来绘制或实现《艾尔登法环》的Logo或动态效果，但这并非游戏实际运行时的核心3D渲染技术，而是用于其他应用场景（如UI、网页展示等） [2][4][5][9]。\n7.  **未明确提及的API细节:** 提供的上下文并未详细说明FromSoftware是如何具体使用DX12 API的，例如使用了哪些特定的DX12特性（如异步计算、Mesh Shaders、Ray Tracing等），或者其渲染管线的具体实现细节。部分上下文明确表示缺乏API信息 [3][6][7][10]。\n\n**总结与进一步研究方向建议:**\n\n*   《艾尔登法环》的核心渲染基于FromSoftware的自研引擎和DX12 API。\n*   引擎的“祖传”特性和DX12的使用难度可能是导致性能和稳定性问题的关键因素。\n*   游戏集成了专门的光效和物理引擎（YEBIS和Havok）。\n*   特定的渲染元素（如天空盒）使用了特定的工具和技术。\n*   第三方Mod展示了集成现代渲染技术（如DLSS）的可能性，这表明游戏引擎本身可能具备一定的扩展性或Modding社区找到了绕过限制的方法。\n\n**进一步研究可以关注：**\n\n*   FromSoftware自研引擎的历史演进和技术特点，尤其是在处理开放世界场景方面的能力。\n*   FromSoftware在《艾尔登法环》中具体是如何使用DX12的，以及其遇到的“使用难度”可能体现在哪些方面（例如，多线程渲染、资源管理、状态切换等）。\n*   YEBIS引擎在游戏中的具体应用效果和技术细节。\n*   Modding社区如何实现DLSS集成，这可能揭示游戏渲染管线的一些接口或结构。\n*   与其他使用DX12的同期开放世界游戏的渲染技术对比分析。\n\n请注意，以上分析完全基于您提供的有限上下文。要获得更全面的了解，需要查阅FromSoftware官方发布的技术文档（如果公开）、开发者访谈、技术分析文章或逆向工程研究。"
+  },
+  {
+    "id": 21868410575560,
+    "state": "completed",
+    "query": "艾尔登法环 资产创建工具 建模 纹理 动画",
+    "researchGoal": "识别《艾尔登法环》开发团队用于资产创建（如建模、纹理、动画）的主要工具。",
+    "sources": [
+      {
+        "content": "Graph：该动画的action数据。 Parameters：选中action的具体参数。 Entity：控制Entity的Transform、StateInfo（用来做多阶段）和NPC Param（用来替换模型）。如果自己做了角色 …",
+        "url": "https://zhuanlan.zhihu.com/p/713209874",
+        "title": "《艾尔登法环》Mod：解包工程篇 - 知乎 - 知乎专栏",
+        "source": "知乎专栏",
+        "logo": "https://th.bing.com/th/id/ODLS.e8bc2aae-9ddf-468e-9c1f-ce5a35fec9fb?w=32&h=32&qlt=90&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2025年1月11日 · [纹理材质提升MOD..已自测可用，对帧数影响很小，自用2K只下载了2K材质，有4K需求请去原帖下载。效果图：安装方法：将文件从我的模组解压缩到您的“Mod …",
+        "url": "https://tieba.baidu.com/p/8596016043",
+        "title": "[纹理材质提升MOD]画质增强补丁【艾尔登法环吧】_百度贴吧",
+        "source": "百度贴吧",
+        "logo": "https://th.bing.com/th/id/ODLS.eaea8327-c48f-45ee-9c4c-af2e9fde9c0c?w=32&h=32&qlt=91&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "观看视频34:052024年12月1日 · 简介：感觉讲的很乱，但这玩意就是这样的，我也不知道讲啥，多编辑下就；更多实用攻略教学，爆笑沙雕集锦，你所不知道的游戏知识，热门游戏视频7*24小时持续更新,尽在哔哩哔哩bilibili 视频播放量 …作者: KamiyamaShiki丶查看次数: 1908",
+        "url": "https://www.bilibili.com/video/BV1JzzdYwEt1/",
+        "title": "【艾尔登法环】动画编辑器基础教程？ - 哔哩哔哩",
+        "source": "哔哩哔哩",
+        "logo": "https://th.bing.com/th/id/ODLS.1e67f861-d980-4c01-ba66-9450f90172f4?w=32&h=32&qlt=92&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2023年4月12日 · 《艾尔登法环》Gideon用于mods的UI纹理部署程序MOD一个将松散的DDS和布局文件捆绑在一起的的艾尔登法环mod工具，并让mod的用户将它们与自己的游戏文件合并。",
+        "url": "https://dl.3dmgame.com/patch/250475.html",
+        "title": "《艾尔登法环》Gideon用于mods的UI纹理部署程序MOD - 3DM下载",
+        "source": "3DM下载",
+        "logo": "https://th.bing.com/th/id/ODLS.55f817b8-b4a2-46f4-bd76-8675f9bc0b4d?w=32&h=32&qlt=93&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2022年7月15日 · 大家好，我自己翻译了一篇fs社发布的艾尔登法环开放世界制作技术的资料,角色篇也做完了，欢迎大家观看",
+        "url": "https://ngabbs.com/read.php?tid=36711023",
+        "title": "大家好，我自己翻译了一篇FS社发布的艾尔登法环开放世界制作 …",
+        "source": "NGA玩家社区",
+        "logo": "https://th.bing.com/th/id/ODLS.2785a28a-37bd-4bcf-96c0-5acd7c1e48cd?w=32&h=32&qlt=94&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2022年10月4日 · 本次给大家分享的是《艾尔登法环》3D 角色建模师潘韦汛Wil Xan Phuah接受映CG的采访，与我们畅聊《艾尔登法环》角色模型的制作过程以及建模的小技巧。",
+        "url": "https://www.163.com/dy/article/HIR7L6930514CVVN.html",
+        "title": "《艾尔登法环》角色建模师不藏私教你如何打造高品质的游戏模 …",
+        "source": "网易",
+        "logo": "https://th.bing.com/th/id/ODLS.b2a258b9-89e4-410f-8046-3dd3e99e04c7?w=32&h=32&qlt=95&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "如果继续看4100动画，会发现5130361~5130364就是投机处决动画的ThrowAttack Behavior AtkParam_NPC ID。 配置了4个AtkParam，是因为梅瑟莫的投技伤害 …",
+        "url": "https://www.gcores.com/articles/186312",
+        "title": "《艾尔登法环》Mod：如何解读工程 | 机核 GCORES",
+        "source": "机核 GCORES",
+        "logo": "https://th.bing.com/th/id/ODLS.17424de7-45cc-499f-a62a-587e5c996610?w=32&h=32&qlt=96&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "6 天之前 · 3DM Mod站拥有全网最新最全的艾尔登法环 Mod资源,欢迎广大玩家来下载和分享自己喜欢的Mod作品,更多有趣好玩的 艾尔登法环Mod,艾尔登法环Mod管理,艾尔登法环Mod工具,艾 …",
+        "url": "https://mod.3dmgame.com/EldenRing",
+        "title": "艾尔登法环 Mod [Elden Ring] - 3DM MOD站",
+        "source": "3DM MOD站",
+        "logo": "https://th.bing.com/th/id/ODLS.b2788249-8a2b-4335-bbde-6afa5a17b03f?w=32&h=32&qlt=97&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "关于艾尔登法环，各角..建模大部分都来自外网老哥为爱发电，我会尽力帮大家搬运，都是免费开源的，大家有需要可以自取开源链接：网页链接提取码：9527链接：网页链接提取码：9527",
+        "url": "https://tieba.baidu.com/p/7802778105",
+        "title": "关于艾尔登法环，各角色为爱建模的分享 - 百度贴吧",
+        "source": "百度贴吧",
+        "logo": "https://th.bing.com/th/id/ODLS.eaea8327-c48f-45ee-9c4c-af2e9fde9c0c?w=32&h=32&qlt=98&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "观看视频6:162024年5月21日 · https://www.youtube.com/watch?v=Aj-Ea6v1kLc转~如何导出 《艾尔登法环》Elden Ring 模型：模型提取分步指南！喜欢++++关注 UXM 选择性解包 ...作者: CG小苏查看次数: 7906",
+        "url": "https://www.bilibili.com/video/BV1wi421S75w/",
+        "title": "如何导出 《艾尔登法环》Elden Ring 模型：模型提取分步指南！",
+        "source": "哔哩哔哩",
+        "logo": "https://th.bing.com/th/id/ODLS.1e67f861-d980-4c01-ba66-9450f90172f4?w=32&h=32&qlt=99&pcl=fffffa&o=6&pid=1.2"
+      }
+    ],
+    "learning": "好的，根据您提供的SERP搜索结果，以下是关于《艾尔登法环》资产创建工具（建模、纹理、动画）的分析和提炼出的要点：\n\n根据提供的上下文，直接提及FromSoftware开发团队用于资产创建的具体商业软件（如Maya, Blender, ZBrush, Substance Painter等）或其内部工具名称的信息非常有限。然而，我们可以从以下几个方面提炼出相关的洞察：\n\n1.  **开发团队成员访谈揭示流程：** 《艾尔登法环》的3D角色建模师潘韦汛（Wil Xan Phuah）曾接受映CG的采访，详细讨论了游戏角色模型的制作过程和相关技巧 [6]。这直接证实了FromSoftware在角色资产创建方面拥有专业的流程和人员 [6]。虽然采访内容本身未在提供的片段中，但其存在表明可以通过深入研究此类开发者访谈来获取关于所用工具和方法的线索 [6]。\n2.  **官方技术资料的存在：** FromSoftware曾发布过关于《艾尔登法环》开放世界制作技术的资料，其中包含了“角色篇”的内容 [5]。有用户对此进行了翻译和分享 [5]。这些官方技术资料可能详细阐述了角色及其他资产的创建方法和所使用的工具 [5]。\n3.  **游戏内资产结构和格式的线索：** 通过对游戏文件的分析和Modding活动，可以了解到《艾尔登法环》中资产（尤其是动画和模型）的数据结构和文件格式 [1][7][10]。例如，动画数据涉及Graph、Parameters、Entity（包含Transform、StateInfo、NPC Param等）[1][7]；UI纹理文件常以DDS格式存在 [4]；模型可以被提取和分析 [10]。这些信息间接反映了开发工具的输出结果以及游戏引擎对资产的处理方式 [1][4][7][10]。虽然这些不是创建工具本身，但了解游戏如何处理这些资产有助于推断其制作流程和兼容性要求。\n4.  **Modding工具与社区活动：** 搜索结果中大量提及了用于Modding的工具，例如用于解包和管理Mod的工具 [2][4][8][10]，以及用于编辑动画或纹理的工具（尽管这些可能是社区开发的，用于修改现有资产，而非FromSoftware的原始工具）[3][4]。这些Modding工具的存在和功能（如处理DDS纹理 [4]，提取模型 [10]，编辑动画数据结构 [1][3][7]）侧面反映了游戏资产的组织方式和可操作性，但不能直接等同于FromSoftware的内部开发工具。\n5.  **缺乏直接的工具名称信息：** 在提供的所有搜索结果片段中，没有直接明确指出FromSoftware在开发《艾尔登法环》时用于建模、纹理绘制或动画制作的具体商业软件名称（如Autodesk Maya, 3ds Max, ZBrush, Substance Painter/Designer等）或其内部专有工具的名称。大部分内容集中在Modding、游戏数据结构分析或开发者访谈的存在性上 [1][3][4][5][6][7][10]。\n\n**总结和进一步研究方向建议：**\n\n基于这些上下文，我们无法直接列出FromSoftware使用的具体资产创建工具列表。然而，最直接的线索来源于对开发者访谈（如潘韦汛的映CG采访 [6]）和FromSoftware官方技术资料（如开放世界制作技术资料的角色篇 [5]）的深入挖掘。这些资源最有可能包含关于他们实际使用的软件、内部工具链以及工作流程的详细信息。\n\n此外，分析游戏文件结构和Modding工具的功能 [1][4][7][10] 可以提供关于资产格式和引擎兼容性的技术细节，这有助于理解开发工具需要满足的技术要求。\n\n为了更准确地识别工具，建议下一步研究重点放在查找并分析以下内容：\n*   潘韦汛（Wil Xan Phuah）或其他FromSoftware技术美术师/工程师的完整访谈或演讲记录。\n*   FromSoftware官方发布的任何技术白皮书、会议演讲（如GDC）或博客文章，特别是关于《艾尔登法环》或其引擎技术的。\n*   招聘信息：FromSoftware的招聘广告有时会列出他们要求应聘者掌握的软件技能，这能反映他们使用的工具。\n*   行业报告或第三方对FromSoftware开发流程的分析。"
+  },
+  {
+    "id": 21868410575561,
+    "state": "completed",
+    "query": "艾尔登法环 多人联机 网络技术 中间件",
+    "researchGoal": "探究《艾尔登法环》在多人联机功能上可能使用的网络技术或中间件。",
+    "sources": [
+      {
+        "content": "《艾尔登法环》多人游戏机制详解：协力、入侵、PvP《艾尔登法环》网络测试已在上周末开启，随之而来的就是由联机合作与 PvP 对抗组成的多人联机系统。 召唤与入侵一向是 FromSoftware 作品重要的一环，《艾尔登法环》也没有打破这一传统。",
+        "url": "https://zhuanlan.zhihu.com/p/434874263",
+        "title": "《艾尔登法环》多人游戏机制详解：协力、入侵、PvP",
+        "source": "知乎专栏",
+        "logo": "https://th.bing.com/th/id/ODLS.e8bc2aae-9ddf-468e-9c1f-ce5a35fec9fb?w=32&h=32&qlt=91&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "明天尝试一下主机玩家选择地理位置在中间的，或者更改网络环境达到p2p直连效果，目前还没研究明白，不过我感觉这种程度的联机体验已经很不错了。",
+        "url": "https://tieba.baidu.com/p/9056645648",
+        "title": "家庭共享&MOD联机教程：突破老头环联机限制 - 百度贴吧",
+        "source": "百度贴吧",
+        "logo": "https://th.bing.com/th/id/ODLS.eaea8327-c48f-45ee-9c4c-af2e9fde9c0c?w=32&h=32&qlt=92&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "概览艾尔登法环联机机制介绍艾尔登法环如何和好友联机？艾尔登法环一共有两种联机方式，许多小伙伴不知道联机机制是怎样的，下面小编就带来艾尔登法环联机机制介绍，一起来看看吧。在gl.ali213.net上查看更多信息",
+        "url": "https://gl.ali213.net/html/2022-2/787931.html",
+        "title": "《艾尔登法环》如何和好友联机？联机机制介绍 - 游侠网",
+        "source": "游侠攻略",
+        "logo": "https://th.bing.com/th/id/ODLS.4eb46162-6402-4ce5-bce4-312167c03698?w=32&h=32&qlt=93&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "艾尔登法环联机机制—游戏联机及组队教程详解 - 艾尔 …一、艾尔登法环的联机机制—自己玩随机组队联机教程. 1、搜索【艾尔登法环】并完成加速. 2、启动并进入游戏. 如果在登陆的时候出现错误，可以参考解决教程：艾尔登法环无法连接服务器/掉帧/手柄按钮/Easy Anti报错办法. 3、点击进入 …",
+        "url": "https://www.caimogu.cc/post/115270.html",
+        "title": "艾尔登法环联机机制—游戏联机及组队教程详解 - 艾尔 …",
+        "source": "踩蘑菇游戏网",
+        "logo": "https://th.bing.com/th/id/ODLS.be77aa77-922e-453f-9526-e28e8164d470?w=32&h=32&qlt=94&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "艾尔登法环超级详细联机机制说明/多人联机步骤/道具 …2024年6月19日 · 联机道具说明+获取方法：点击查看>> 和熟人（好朋友）联机步骤： 双方进入游戏后呼出菜单（键鼠玩家按esc，手柄按菜单键） 呼出多人联机菜单之后右边有个暗号配置 需要先输入暗号，输入完成后点击配置（键鼠配置 …",
+        "url": "https://www.baomiao.cn/games/archives/39012",
+        "title": "艾尔登法环超级详细联机机制说明/多人联机步骤/道具 …",
+        "source": "暴喵加速器",
+        "logo": "https://th.bing.com/th/id/ODLS.265a1d3c-9299-4c82-b417-bf337f15eba3?w=32&h=32&qlt=95&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2022年2月17日 · （游戏中可以在多人联机菜单里设置密码，确保只有好友能够看到你的记号） 5、联机道具（pvp） 使用【斗士勾指】在地上画出红色记号，其他玩家看见后会把你召唤过 …",
+        "url": "https://club.gamersky.com/activity/490478?club=140&t=1",
+        "title": "《艾尔登法环》联机机制详解 - 游民星空",
+        "source": "游民星空",
+        "logo": "https://th.bing.com/th/id/ODLS.0c5b428a-c14c-428b-967a-bd48465dd41f?w=32&h=32&qlt=96&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "艾尔登法环联机机制—多人联机游玩和好友组队教程详 …一、艾尔登法环的联机机制 《艾尔登法环》游戏联机机制：pvp. 联机方式是按照你所在地图的位置发起联机请求，其他玩家匹配请求邀请一起组队联机。",
+        "url": "https://www.bilibili.com/opus/631537918337351680",
+        "title": "艾尔登法环联机机制—多人联机游玩和好友组队教程详 …",
+        "source": "哔哩哔哩",
+        "logo": "https://th.bing.com/th/id/ODLS.1e67f861-d980-4c01-ba66-9450f90172f4?w=32&h=32&qlt=97&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "艾尔登法环黑夜君临联机失败、联机不了、无法组队的 …4 天之前 · 在《艾尔登法环黑色君临》联机游玩时，不少玩家遇到无法联机、联机失败、组不了队的问题。 针对这些联机组队问题，下面给大家分享解决方法。 迅游网游加速器",
+        "url": "https://www.xunyou.com/366/102781.shtml",
+        "title": "艾尔登法环黑夜君临联机失败、联机不了、无法组队的 …",
+        "source": "迅游网游加速器",
+        "logo": "https://th.bing.com/th/id/ODLS.8a82c963-872e-4b61-ab56-b326bde50222?w=32&h=32&qlt=98&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2021年11月21日 · 在选完角色并迈进《艾尔登法环》的开放世界后，会有一个弹窗提示你可以进行多人游戏。 玩家可以通过菜单里的「多人联机游玩」选择自己想要的 ...",
+        "url": "https://news.qq.com/rain/a/20211121A01PPL00",
+        "title": "《艾尔登法环》多人游戏机制详解：协力、入侵、PvP 决斗",
+        "source": "腾讯网",
+        "logo": "https://th.bing.com/th/id/ODLS.eb37fcc5-7670-48e7-8c00-cda0f210ba5b?w=32&h=32&qlt=99&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "老头环地图 - Elden Ring Online Map时隔一年向大家问声好——！ 盼星星盼月亮终于盼来了万众瞩目的老头环第一份dlc! 因为现在还没有解包出的dlc地图，所以姑且使用了之前泄露的地图截图作为临时用的dlc地图. 用起来会很模糊，给大家带来不便深表歉意...",
+        "url": "https://www.elpwc.com/eldenringmap/",
+        "title": "老头环地图 - Elden Ring Online Map",
+        "source": "elpwc.com",
+        "logo": "https://th.bing.com/th/id/ODLS.A2450BEC-5595-40BA-9F13-D9EC6AB74B9F?w=32&h=32&qlt=90&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "艾尔登法环是以正统黑暗奇幻世界为舞台的动作rpg游戏。 走进辽阔的场景与地下迷宫探索未知，挑战困难重重的险境，享受克服困境时的成就感吧。 不仅如此，登场角色之间的利害关系谱 …",
+        "url": "https://store.steampowered.com/agecheck/app/1245620/?l=schinese",
+        "title": "Steam 上的 艾尔登法环",
+        "source": "Steam",
+        "logo": "https://th.bing.com/th/id/ODLS.1f66b5fc-1475-4b99-844f-cf6fe5bbb3b2?w=32&h=32&qlt=91&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "《艾尔登法环》全章节图文流程攻略 主线任务流程攻 …2022年2月26日 · 《艾尔登法环》是一款融入了开放世界玩法的魂类游戏，玩家们可以在大地图中体验与怪物厮杀的乐趣，想要了解任务流程的玩家请看下面“3dm心生双翼”带来的《艾尔登法环》全章节图文流程攻略，希望能够帮助大家。",
+        "url": "https://www.gamersky.com/handbook/202202/1463109.shtml",
+        "title": "《艾尔登法环》全章节图文流程攻略 主线任务流程攻 …",
+        "source": "游民星空",
+        "logo": "https://th.bing.com/th/id/ODLS.a99d1580-58fa-4a09-844a-1c7970e15b2f?w=32&h=32&qlt=92&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "以维克为主角的艺术封面. 艾尔登法环于2022年2月25日发布.. 游戏故事发生在名为“交界地”的地区，那伟大的艾尔登法环，已然破碎，“永恒女王”玛莉卡失去踪迹，在冰冷幽暗的“黑刀之夜”，“ …",
+        "url": "https://eldenring.fandom.com/zh/wiki/%E8%89%BE%E5%B0%94%E7%99%BB%E6%B3%95%E7%8E%AF_Wiki",
+        "title": "艾尔登法环 Wiki | Fandom",
+        "source": "fandom.com",
+        "logo": "https://th.bing.com/th/id/ODLS.bdee1971-8a15-488b-93fe-5eee45a35931?w=32&h=32&qlt=93&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2022年2月17日 · 1、平台互通 pc、xbox、ps各不互通，ps4和ps5平台互通. 2、最大联机人数 老头环 最大支持4人联机. 3、 联机机制 和之前的魂系列基本一致，最传统的画符召唤。",
+        "url": "https://club.gamersky.com/activity/490478?club=140&t=1",
+        "title": "《艾尔登法环》联机机制详解 - 游民星空",
+        "source": "游民星空",
+        "logo": "https://th.bing.com/th/id/ODLS.0c5b428a-c14c-428b-967a-bd48465dd41f?w=32&h=32&qlt=94&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "无缝联机mod中bu..一、坐火时间长，每次都需要十几秒钟的黑屏。这个是目前最影响游戏体验的。推测是新版无缝联机更改了地图加载方式有关。具体解决办法未知。如果不想看黑屏就只能 …",
+        "url": "https://tieba.baidu.com/p/9074004074",
+        "title": "无缝联机MOD常见BUG及解决方法汇总 - 百度贴吧",
+        "source": "百度贴吧",
+        "logo": "https://th.bing.com/th/id/ODLS.eaea8327-c48f-45ee-9c4c-af2e9fde9c0c?w=32&h=32&qlt=95&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "艾尔登法环是以正统黑暗奇幻世界为舞台的动作rpg游戏。游侠网艾尔登法环专区为大家带来最新的中文版下载，第一手资讯信息，详细的游戏攻略秘籍，专业的汉化补丁，最全的修改器及工 …",
+        "url": "https://www.ali213.net/zt/eldenring/",
+        "title": "艾尔登法环_艾尔登法环中文版下载_艾尔登法环攻略_汉化补丁_ …",
+        "source": "游侠网",
+        "logo": "https://th.bing.com/th/id/ODLS.7323f940-7a56-41aa-9da8-46eb3f828b59?w=32&h=32&qlt=96&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "文/伽蓝sk. 如果我是个新玩家，我该选什么职业？ 盼望了许久，终于等到了《艾尔登法环》的发售。作为魂系列作品中规模最大、内容最多、分量也最足一部作品，本次游戏依然保留了开局选 …",
+        "url": "https://www.bilibili.com/opus/631459771418935332",
+        "title": "《艾尔登法环》新手攻略：开局职业选择、遗物搭配指南 - 哔哩哔哩",
+        "source": "哔哩哔哩",
+        "logo": "https://th.bing.com/th/id/ODLS.1e67f861-d980-4c01-ba66-9450f90172f4?w=32&h=32&qlt=97&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "Network Test Code Eligibility. 2025.02.14; TIPS. 2025.02.14; ELDEN RING NIGHTREIGN Network Test Registration! 2025.01.10; In the Lands Between ruled by Queen Marika the Eternal,",
+        "url": "https://eldenring.bn-ent.net/en/",
+        "title": "ELDEN RING",
+        "source": "ELDEN RING",
+        "logo": "https://th.bing.com/th/id/ODLS.f88c499c-cd39-4e6a-8458-f4635f786753?w=32&h=32&qlt=98&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "游民星空艾尔登法环游戏专题,提供艾尔登法环中文版下载,艾尔登法环攻略,艾尔登法环修改器,艾尔登法环收集,艾尔登法环boss,技能,剧情,汉化,补丁等游戏资料。《艾尔登法环》是一款以正统 …",
+        "url": "https://www.gamersky.com/z/eldenring/",
+        "title": "艾尔登法环游戏专区_艾尔登法环中文版下载及攻略秘籍 _ 游民星 …",
+        "source": "游民星空",
+        "logo": "https://th.bing.com/th/id/ODLS.a99d1580-58fa-4a09-844a-1c7970e15b2f?w=32&h=32&qlt=99&pcl=fffffa&o=6&pid=1.2"
+      }
+    ],
+    "learning": "好的，作为一名专家研究员，我将根据您提供的SERP搜索结果，对《艾尔登法环》多人联机功能可能使用的网络技术或中间件进行探究和组织。请注意，根据提供的上下文，关于具体的底层网络技术和中间件的信息非常有限，大部分内容集中在玩家层面的联机机制和体验。\n\n以下是根据提供的上下文组织的研究发现：\n\n1.  **联机机制概述与类型：**\n    *   《艾尔登法环》的多人联机系统是其核心组成部分，继承了FromSoftware魂系列作品的传统，主要包括协力（Co-op）、入侵（Invasion）和PvP对抗（决斗）[1][9]。\n    *   游戏提供了两种主要的联机方式：随机组队联机和与熟人（好友）联机[4][5]。\n    *   联机过程通常通过在游戏世界中使用特定道具（如褪色者勾指、斗士勾指、血指等）在地面画下记号，其他玩家看到记号后进行召唤或被召唤来实现[5][6][7]。\n    *   与好友联机时，可以通过设置相同的“暗号”（密码）来确保只匹配到指定玩家[5][6]。\n    *   联机是基于玩家在地图上的位置发起的匹配请求[7]。\n\n2.  **潜在的网络技术线索 (基于用户观察和推测)：**\n    *   有用户尝试通过更改网络环境或选择地理位置居中的主机玩家来达到“p2p直连效果”[2]。这强烈暗示游戏的联机模式可能包含P2P（Peer-to-Peer，点对点）连接元素，至少在游戏数据传输层面是如此，因为用户试图优化直接连接的路径和延迟[2]。\n    *   尽管存在P2P的可能性，但考虑到游戏的匹配机制（随机匹配、密码匹配）以及处理玩家进出会话的需求，很可能存在一个服务器层来协助匹配、会话管理以及处理一些非游戏状态同步（如玩家列表、世界状态广播等）。上下文并未直接提及服务器，但这是实现复杂匹配逻辑的常见模式。\n\n3.  **联机体验与常见问题：**\n    *   玩家普遍反映会遇到联机失败、无法组队或无法连接服务器的问题[4][8]。\n    *   解决这些网络问题的方法通常包括使用网络加速器（如迅游网游加速器）[4][8]。网络加速器的作用通常是优化玩家到游戏服务器或玩家之间的网络路由，减少延迟和丢包，这进一步支持了游戏联机对网络环境的敏感性，无论是P2P还是客户端-服务器模式，良好的网络路径都是必需的。\n    *   非官方的“无缝联机MOD”在改变联机机制时，会遇到加载时间长等问题，这可能与MOD改变了原版游戏的地图加载和同步方式有关[15]。这侧面说明了官方联机机制在地图同步和状态管理上的复杂性。\n\n4.  **联机限制：**\n    *   《艾尔登法环》官方多人联机最大支持4名玩家同时在线[14]。\n    *   游戏不支持跨平台联机，PC、Xbox和PlayStation平台之间无法互通[14]。唯一的例外是PS4和PS5平台之间可以联机[14]。这些限制通常与不同平台的网络服务集成（如Steamworks, Xbox Live, PlayStation Network）以及游戏自身网络架构的设计有关。\n\n5.  **关于中间件的信息缺失：**\n    *   在提供的所有上下文信息中，**没有明确提及**《艾尔登法环》在多人联机功能上使用了哪些具体的网络中间件（例如，Steam Networking API, Epic Online Services (EOS), PlayFab, Photon等第三方网络引擎或FromSoftware/Bandai Namco自研的解决方案）[1-19]。上下文主要描述的是玩家可见的联机机制和操作流程，而非底层的技术实现[1][3][4][5][6][7][9][14]。\n\n**总结与进一步研究方向建议：**\n\n基于提供的上下文，我们可以推测《艾尔登法环》的官方多人联机可能采用了**P2P与服务器辅助相结合**的模式，其中服务器可能负责匹配和会话管理，而实际的游戏状态同步（如玩家位置、动作、战斗判定等）可能部分或主要依赖于P2P连接。这种模式在FromSoftware之前的魂系列游戏中也有应用。然而，具体的实现细节和所使用的网络中间件在这些公开信息中并未披露。\n\n为了更深入地探究其网络技术和中间件，可以考虑以下进一步的研究方向（这些是基于当前信息不足的推测和建议）：\n\n*   **技术分析报告：** 查找是否有第三方技术分析师或逆向工程师对游戏的网络流量进行过抓包分析，这通常能揭示连接模式（P2P vs. Client-Server）和可能使用的协议。\n*   **开发者访谈/技术文档：** 查阅FromSoftware或Bandai Namco发布的技术博客、开发者大会演讲（如GDC）或官方文档，有时会透露部分技术栈信息。\n*   **招聘信息：** 查看FromSoftware或Bandai Namco的网络程序员招聘信息，有时会列出所需的技能或熟悉的网络中间件。\n*   **游戏引擎：** 了解游戏使用的底层引擎（虽然FromSoftware通常使用自研引擎），有时引擎会自带或推荐特定的网络解决方案。\n*   **对比分析：** 对比FromSoftware之前的魂系列作品（如《黑暗之魂》系列、《血源诅咒》、《只狼》）的网络技术分析，FromSoftware可能在《艾尔登法环》中沿用了部分技术或进行了迭代。\n\n请注意，以上进一步研究方向的建议是基于当前信息不足的主动补充，超出了本次提供的上下文范围。"
+  },
+  {
+    "id": 21868410575562,
+    "state": "completed",
+    "query": "FromSoftware 艾尔登法环 专有技术 内部工具",
+    "researchGoal": "查找FromSoftware在开发《艾尔登法环》时是否使用了任何内部开发或专有技术。",
+    "sources": [
+      {
+        "content": "目前正在开发开放世界风格作品《艾尔登法环》（ELDEN RING）的 From Software，似乎多年以来也遇到了同样的开发上的烦恼。 抛开需要大量工作才能扩大地图规模这一既有事实，就制作 …",
+        "url": "https://www.gcores.com/articles/141069",
+        "title": "《艾尔登法环》关卡设计工具“至高工具”功能及工作方法介 …",
+        "source": "机核 GCORES",
+        "logo": "https://th.bing.com/th/id/ODLS.17424de7-45cc-499f-a62a-587e5c996610?w=32&h=32&qlt=90&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2022年12月5日 · 在 11 月 12 日的游戏开发者大会「CEDEC+KYUSHU 2022」上，FromSoftware 的 宮内淳 和 森田鉄平 以「欢迎来到狭间之地，《艾尔登法环》的开放世界技术分享 ...",
+        "url": "https://news.qq.com/rain/a/20221205A084KV00",
+        "title": "FromSoftware如何为《艾尔登法环》打造开放世界 - 腾讯网",
+        "source": "腾讯网",
+        "logo": "https://th.bing.com/th/id/ODLS.eb37fcc5-7670-48e7-8c00-cda0f210ba5b?w=32&h=32&qlt=91&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2025年4月22日 · 我们通过《艾尔登法环》的开发，介绍了 FromSoftware 公司所进行的设计以及数据制作的案例和流程。 还请您理解，本次所介绍的工作流程等内容，仅仅是《艾尔登法环》 …",
+        "url": "https://www.gameres.com/912069.html",
+        "title": "《艾尔登法环》的美术制作流程 - GameRes游资网",
+        "source": "GameRes游资网",
+        "logo": "https://th.bing.com/th/id/ODLS.84e7f8aa-ba60-4421-94ea-569a7f9d25fe?w=32&h=32&qlt=92&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "《艾尔登法环》开发者谈 FromSoftware 工作环境：如 …2022年11月30日 · 在《艾尔登法环》发售后，发行商万代南梦宫宣布为全体员工加薪，不知 FromSoftware 是否会效仿这种做法，提高开发者的待遇。 本文编译 …职业: Author作者: Logan Plant",
+        "url": "https://www.ign.com.cn/elden-ring-1/41810/news/ai-er-deng-fa-huan-kai-fa-zhe-tan-fromsoftware-gong-zuo-huan-jing-ru-tong-zai-wan-hei-an-zhi-hun",
+        "title": "《艾尔登法环》开发者谈 FromSoftware 工作环境：如 …",
+        "source": "IGN中国",
+        "logo": "https://th.bing.com/th/id/ODLS.ffd58756-720f-42b0-a8b1-0e5741812b46?w=32&h=32&qlt=93&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2022年12月5日 · 在日本CEDEC2022（今年的日本游戏开发者大会）上，来自From Software的系统设计总监松本龙，分享了《艾尔登法环》的地图设计理念，以及一些在开放世界游戏的地图 …",
+        "url": "https://bbs.gameres.com/thread_898096_1_1.html",
+        "title": "《艾尔登法环》如何效率化、自动化地构筑宏大的开放世界地图？ …",
+        "source": "游戏开发论坛",
+        "logo": "https://th.bing.com/th/id/ODLS.84e7f8aa-ba60-4421-94ea-569a7f9d25fe?w=32&h=32&qlt=94&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "艾尔登法环【CEDEC + KYUSHU 2021】From …2021年12月30日 · 目前，From Software 正在开发的最新作《艾尔登法环》（ELDEN RING）也会根据本讲座中介绍的内容，制作场景和人物等。 就我个人来说，这是一场能让我今后在玩 From Game 时，偶尔也能停下脚步，仔细欣 …",
+        "url": "https://www.vgbaike.com/elden_ring/baike7655",
+        "title": "艾尔登法环【CEDEC + KYUSHU 2021】From …",
+        "source": "VG百科",
+        "logo": "https://th.bing.com/th/id/ODLS.dbeeed1f-e820-49b7-89a6-70e2cf4c4346?w=32&h=32&qlt=95&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2023年10月25日 · 虽然对于《艾尔登法环》的任何DLC来说，在游戏的开放世界模式上进行创新可能为时已晚，但借鉴《艾尔登法环》格式的未来FromSoftware游戏应该接受挑战，优先考虑重 …",
+        "url": "https://www.bilibili.com/opus/856261881506037795",
+        "title": "FromSoftware的下一款《艾尔登法环》已经有了一个明显的改进 …",
+        "source": "哔哩哔哩",
+        "logo": "https://th.bing.com/th/id/ODLS.1e67f861-d980-4c01-ba66-9450f90172f4?w=32&h=32&qlt=96&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2022年12月5日 · 在 11 月 12 日的游戏开发者大会「CEDEC+KYUSHU 2022」上，FromSoftware 的 宮内淳 和 森田鉄平 以「欢迎来到狭间之地，《艾尔登法环》的开放世界技术分享」为题， …",
+        "url": "https://www.163.com/dy/article/HNRNQBRG05268D4T.html",
+        "title": "FromSoftware如何为《艾尔登法环》打造开放世界 - 网易",
+        "source": "网易",
+        "logo": "https://th.bing.com/th/id/ODLS.b2a258b9-89e4-410f-8046-3dd3e99e04c7?w=32&h=32&qlt=97&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "很多玩家并没有提前做好功课，对艾尔登法环（以下简称“环”）有足够的认识，以为只是普通的箱庭式或者流程式游戏，那么第一步就是要让玩家意识到：这是一个开放世界，不是只有一条路 …",
+        "url": "https://api.xiaoheihe.cn/maxnews/app/share/detail/2453874",
+        "title": "从艾尔登法环看FromSoftware对于开放世界的设计 - xiaoheihe.cn",
+        "source": "xiaoheihe.cn",
+        "logo": "https://th.bing.com/th/id/ODLS.c3547046-cda4-4bd7-985f-4e8c68044c8a?w=32&h=32&qlt=98&pcl=fffffa&o=6&pid=1.2"
+      },
+      {
+        "content": "2024年6月24日 · FromSoftware社长宫崎英高，最近接受“滚石”杂志采访时谈到：《艾尔登法环》的开发规模，自然而然地使内部创意团队获得了成长。现在，团队能够更加独立地制作游戏。",
+        "url": "https://www.ali213.net/news/html/2024-6/846755.html",
+        "title": "《艾尔登法环》的成功 为FromSoftware的开发团队带来成长 未来 …",
+        "source": "游侠网",
+        "logo": "https://th.bing.com/th/id/ODLS.7323f940-7a56-41aa-9da8-46eb3f828b59?w=32&h=32&qlt=99&pcl=fffffa&o=6&pid=1.2"
+      }
+    ],
+    "learning": "根据您提供的搜索结果，以下是关于FromSoftware在开发《艾尔登法环》时使用的内部开发或专有技术的信息提炼和组织：\n\n**研究目标：** 查找FromSoftware在开发《艾尔登法环》时是否使用了任何内部开发或专有技术。\n\n**研究发现：**\n\n1.  **存在内部关卡设计工具：** FromSoftware在开发《艾尔登法环》这款开放世界风格作品时，使用了内部开发的关卡设计工具，被称为“至高工具”（“至高工具”）[1]。这个工具被提及与解决开发中的烦恼，特别是扩大地图规模所需的大量工作有关 [1]。\n2.  **开发了针对开放世界的技术和流程：** FromSoftware为《艾尔登法环》的开放世界开发了特定的技术和流程。在游戏开发者大会CEDEC+KYUSHU 2022上，FromSoftware的宮内淳和森田鉄平就以“欢迎来到狭间之地，《艾尔登法环》的开放世界技术分享”为题进行了演讲，表明他们有专门针对开放世界开发的技术方案 [2][8]。\n3.  **实现了宏大地图构建的效率化和自动化：** 在CEDEC2022上，FromSoftware的系统设计总监松本龙分享了《艾尔登法环》的地图设计理念，并提到了如何“效率化、自动化地构筑宏大的开放世界地图” [5]。这暗示了他们开发或采用了能够提高大型开放世界地图生成和整合效率的内部工具或流程 [5]。\n4.  **形成了特定的美术制作和数据制作流程：** 《艾尔登法环》的开发过程中，FromSoftware公司形成了一套特定的美术制作流程以及设计和数据制作的案例和流程 [3]。这些流程是公司内部为该项目或其系列游戏所建立的工作方法 [3]。\n5.  **在技术会议上分享了场景和人物制作方法：** 在CEDEC+KYUSHU 2021会议上，FromSoftware也分享了与《艾尔登法环》相关的技术内容，包括如何制作场景和人物等 [6]。这进一步表明他们在游戏开发的各个环节都有其内部的技术和方法 [6]。\n\n**总结：**\n\n基于提供的搜索结果，可以确认FromSoftware在开发《艾尔登法环》时确实使用了内部开发或专有的技术和工具。这包括一个名为“至高工具”的关卡设计工具 [1]，以及为应对开放世界开发挑战而专门设计的技术、流程和自动化方法 [2][5][8]。此外，他们在美术、数据制作、场景和人物生成等方面也形成了特定的内部流程和技术方法 [3][6]。这些内部技术和流程是FromSoftware能够高效构建《艾尔登法环》庞大且复杂的开放世界的重要支撑。"
+  }
+]

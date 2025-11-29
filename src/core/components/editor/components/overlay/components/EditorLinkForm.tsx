@@ -1,29 +1,32 @@
-import { Content, WithBorder } from '@/components'
+import { WithBorder } from '@/components'
 import { CustomTransforms } from '@/core/components/editor/utils/transform'
-import { useEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { CustomEditor } from '~/typings'
 import { EditorOverlayManager } from '../useEditorOverlay'
 import { ReactEditor } from '@/core'
 import { Editor, Text, Transforms } from 'slate'
-import isHotkey from 'is-hotkey'
-import { KEY } from '@/consts'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
-import MetaFilterer, { isValidUrl } from '@/core/object/filter/MetaFilterer'
+import MetaFilterer, { isValidUrl } from '@/core/object/filter/MetaFilter'
 import { MetaStore } from '@/api/stores'
+import { useTranslation } from 'react-i18next'
 
 const EditorLinkForm = ({ editor, manager }: { editor: CustomEditor; manager: EditorOverlayManager }) => {
   const [link, setLink] = useState('')
   const instance = useEditorInstance()
+  const { t } = useTranslation()
   manager.setCurrentLink = s => {
     console.log(s)
     setLink(s)
   }
   const inputRef = useRef()
-  useEffect(() => {
-    console.log('mount')
+  useLayoutEffect(() => {
+    instance.highlightCurrentSelection?.()
     setTimeout(() => {
       inputRef.current?.focus()
     }, 100)
+    return () => {
+      instance.dehighlightSelection?.()
+    }
   }, [])
   const handlerInsertLink = (currentL?: string) => {
     const aboveNode = Editor.above(editor)
@@ -108,16 +111,9 @@ const EditorLinkForm = ({ editor, manager }: { editor: CustomEditor; manager: Ed
           onChange={e => {
             setLink(e.target.value)
           }}
-          className={'border-box-shadow focus-input'}
-          style={{
-            borderRadius: 4,
-            width: '100%',
-            fontSize: 13,
-            padding: '3px 8px',
-            background: 'transparent'
-          }}
+          className={'border-box-shadow rounded-md w-full px-2 py-1 focus-input'}
           value={link}
-          placeholder="Paste link or search objects"
+          placeholder={t('editor.Paste link or search')}
         ></input>
       </div>
       <MetaFilterer
@@ -131,7 +127,15 @@ const EditorLinkForm = ({ editor, manager }: { editor: CustomEditor; manager: Ed
         }}
         onChange={metaId => {
           if (metaId) {
-            editor.on({ type: 'linkToMeta', targetMetaId: metaId })
+            instance.on({
+              type: 'getMeta',
+              onSuccess: id => {
+                MetaStore.addMetaLink({
+                  sourceId: id,
+                  targetId: metaId
+                })
+              }
+            })
             handlerInsertLink('rendevoz://object/' + metaId)
           }
         }}

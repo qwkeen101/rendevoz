@@ -1,26 +1,18 @@
 import { Box, IWhiteboardInstance, IWhiteboardNode } from '~/typings'
 import { assignProperties, boxContain, boxesIntersect } from '@/utils'
-import { WhiteboardAtom } from '@/core/components/whiteboard/StateHooks'
 import { getBoxOfNodes } from '@/core/components/whiteboard/utils'
 import Id from '@/utils/id'
-import useUpdateWhiteboard from '@/core/components/whiteboard/hooks/useUpdateWhiteboard'
 import { MetaStore } from '@/api/stores'
 import { enlargeBox } from '@/core/components/whiteboard/hooks/ops/group'
-import { Rendevoz } from '@/core/rendevoz'
-import { GlobalInstance } from '@/hooks'
-import { useStore } from 'jotai'
 import { getFlattenChildrenOfNode } from '@/core/components/whiteboard/node/mindmap/utils/tree'
 import { canCloneMindmap, cloneMindmap } from '@/core/components/whiteboard/node/mindmap/utils/cloneMindmap'
-import cloneNodes from '@/core/components/whiteboard/hooks/ops/cloneNodes'
 import pasteImage from '@/core/components/whiteboard/hooks/ops/paste/pasteImage'
 import pasteNodes from '@/core/components/whiteboard/hooks/ops/paste/pasteNodes'
 import pastePlainText from '@/core/components/whiteboard/hooks/ops/paste/pastePlainText'
-import { getSetting } from '@/core'
 import { useRef } from 'react'
+import pasteObjects from '@/core/components/whiteboard/hooks/ops/paste/pasteObjects'
 
 const assignNodeOps = (instance: IWhiteboardInstance) => {
-  const updateWhiteboard = useUpdateWhiteboard()
-  const store = useStore()
   const metaMap = MetaStore.getMetaObjectsMap()
   const needUpdateEdges = useRef<Set<number>>(new Set())
   assignProperties(instance, {
@@ -87,25 +79,26 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
           }
         })
         const idArr = Array.from(idArrSet.values())
-        Array.from(instance.values.ID_TO_NODE_MAP.values()).forEach(i => {
-          i.onNodesDelete?.(idArr)
+        instance.emit({
+          type: 'nodeDeleted',
+          deleted: idArr
         })
         idArr.forEach(id => {
           const origin = instance.getNode?.(id)
           if (origin) {
-            const whiteboardId = store.get(WhiteboardAtom)?.id
+            const whiteboardId = instance.values.id
             if (origin.type === 'metaObject' && whiteboardId) {
               const whiteboardMeta = MetaStore.getMetaObjectByObjectId(whiteboardId)
               if (whiteboardMeta) {
                 const link = MetaStore.getMetaLinkBySourceAndTarget(origin.metaObjectId, whiteboardMeta.id)
                 if (link) {
-                  MetaStore.deleteMetaLink(link, true)
+                  MetaStore.deleteMetaLink(link)
                 }
               }
             }
           }
         })
-        updateWhiteboard(w => {
+        instance.updateWhiteboard(w => {
           idArr.forEach(i => {
             w.nodes?.delete(i)
             instance.values.NODE_TO_EDGE_MAP.get(i)?.forEach(l => {
@@ -122,9 +115,8 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
         return element
       },
       expand: nodeId => {
-        const setting = getSetting()
         const idArr = Array.isArray(nodeId) ? nodeId : [nodeId]
-        updateWhiteboard(w => {
+        instance.updateWhiteboard(w => {
           idArr.forEach(id => {
             const origin = w.nodes?.get(id)
             if (origin && origin.width) {
@@ -133,7 +125,7 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
                 expanded: true,
                 height: undefined,
                 resized: false,
-                fixedExpanded: setting.whiteboard.expandToFixedSize
+                fixedExpanded: true
               })
             }
           })
@@ -152,7 +144,7 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
       },
       fold: nodeId => {
         const idArr = Array.isArray(nodeId) ? nodeId : [nodeId]
-        updateWhiteboard(w => {
+        instance.updateWhiteboard(w => {
           idArr.forEach(id => {
             w.nodes?.has(id) && w.nodes?.set(id, { ...w.nodes!.get(id)!, expanded: false, height: undefined, resized: false })
           })
@@ -180,7 +172,7 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
           return false
         }
         if (metaObject.type.includes('Label')) return false
-        const registered = GlobalInstance.layoutOps?.getRegisteredTabData(metaObject.type)
+        const registered = Global.layoutOps?.getRegisteredTabData(metaObject.type)
         if (registered) {
           return true
         }
@@ -200,7 +192,7 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
               if (root) {
                 const nodes = getFlattenChildrenOfNode(root, instance, ele.side)
                 // if ancestor is copied, do not process this node
-                if (nodes.some(i => i.root !== ele.id && idSet.has(i.root))) {
+                if (nodes?.some(i => i.root !== ele.id && idSet.has(i.root))) {
                   return
                 }
               }
@@ -217,8 +209,7 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
             }
           })
           const newNodes = elements.map(n => ({ ...n, x: n.x - box.left, y: n.y - box.top }))
-          GlobalInstance.values.copiedWhiteboardData = newNodes
-          console.log(newNodes)
+          Global.values.copiedWhiteboardData = newNodes
         }
       },
       paste: position => {
@@ -231,6 +222,9 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
           }
           if (res === 'nodes') {
             pasteNodes(instance, position)
+          }
+          if (res === 'objects') {
+            pasteObjects(instance, position)
           }
         })
       },
@@ -255,15 +249,11 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
         if (!node || node.type !== 'metaObject' || !node.metaObjectId) return
         switch (type) {
           case 'newTab': {
-            Rendevoz.Actions.Open.Meta.openMetaObject(node.metaObjectId)
+            Global.layoutOps?.openObject(node.metaObjectId)
             return
           }
           case 'sidePeek': {
             instance.sidebarOps?.openNodeAtSidebar(nodeId)
-            return
-          }
-          case 'center': {
-            GlobalInstance.metaOps?.preview(node.metaObjectId)
             return
           }
           case 'float': {
@@ -274,7 +264,7 @@ const assignNodeOps = (instance: IWhiteboardInstance) => {
       },
       fitContent: nodeId => {
         const idArr = Array.isArray(nodeId) ? nodeId : [nodeId]
-        updateWhiteboard(w => {
+        instance.updateWhiteboard(w => {
           if (w.nodes) {
             idArr.forEach(id => {
               const origin = w.nodes?.get(id)

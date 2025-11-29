@@ -1,20 +1,12 @@
 import { atom } from 'jotai/index'
 import { XYPosition } from '~/typings'
 import { Rnd } from 'react-rnd'
-import { memo } from 'react'
-import { GlobalInstance, useGlobalAtom, useShortcut } from '@/hooks'
-import { assignProperties } from '@/utils'
+import { ReactNode, useEffect, useRef } from 'react'
 import { getPanelPosition } from '@/core/global/utils'
-import Id from '@/utils/id'
-import { AIService } from '@/api/services'
 import { createPortal } from 'react-dom'
-import KeyvalueStore from '@/api/stores/keyvalue.store'
 import { Zindexes } from '@/consts'
 import { ResizeAndDrag, WithBorder } from '@/components'
-import TranslatePanel from '@/core/global/generalAIHelpers/TranslatePanel'
-import ExplainPanel from '@/core/global/generalAIHelpers/ExplainPanel'
-import ChatPanel from '@/core/global/generalAIHelpers/ChatPanel'
-import { panels } from '@uiw/react-codemirror'
+import { useAtom } from 'jotai'
 
 const PanelStateAtom = atom<{
   draggable: boolean
@@ -23,73 +15,59 @@ const PanelStateAtom = atom<{
     width: number
     height: number
   }
-  ref?: Rnd
   visible: boolean
-  active?: 'translate' | 'chat' | 'explain'
 }>({
   draggable: true,
-  visible: false,
-  active: 'chat'
+  visible: false
 })
 
 const PanelDefaultSize = {
   x: window.innerWidth / 2 - 200,
   y: window.innerHeight / 2 - 200,
-  width: 380,
-  height: 400
+  width: 320,
+  height: 300
 }
 
-export default memo(() => {
-  const floated = KeyvalueStore.useValue('aiFloated') ?? true
-  const [panelState, setPanelState] = useGlobalAtom(PanelStateAtom)
-
-  assignProperties(GlobalInstance, {
-    commonOps: {
-      ...GlobalInstance.commonOps,
-      toggleExplainer: v => {
-        setPanelState(s => ({ ...s, visible: v, active: 'explain' }))
-      },
-      toggleTranslator: v => {
-        setPanelState(s => ({ ...s, visible: v, active: 'translate' }))
-      },
-      toggleChat: v => {
-        setPanelState(s => ({ ...s, visible: v, active: 'chat' }))
-      }
-    }
-  })
+export default (opts?: {
+  pinned?: boolean
+  size?: {
+    width?: number
+    height?: number
+  }
+}) => {
+  const defaultSize = opts?.size
+  const [panelState, setPanelState] = useAtom(PanelStateAtom)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const resizeRef = useRef<Rnd>(null)
   const handlePosChange = (opts: { e?: PointerEvent; pos?: XYPosition }) => {
     if (panelState.visible === false) {
       const pos = getPanelPosition({
         e: opts.e,
         pos: opts.pos,
-        defaultSize: panelState.size || PanelDefaultSize
+        defaultSize: panelState.size || {
+          ...PanelDefaultSize,
+          width: defaultSize?.width ?? PanelDefaultSize.width,
+          height: defaultSize?.height ?? PanelDefaultSize.height
+        }
       })
       if (pos) {
         setPanelState(s => ({ ...s, currentPosition: pos }))
       }
     }
   }
-  useShortcut('openTranslatePanel', () => {})
-  const renderContent = () => {
-    const active = panelState.active
-    return (
-      <>
-        <TranslatePanel onPositionChange={handlePosChange} active={active === 'translate'} />
-        <ExplainPanel onPositionChange={handlePosChange} active={active === 'explain'} />
-        <ChatPanel active={active === 'chat'} />
-      </>
-    )
-  }
-  if (floated) {
+  const renderFloated = (children: ReactNode) => {
+    if (!panelState.visible) return null
     return createPortal(
       <ResizeAndDrag
         role="global-translate-panel"
-        ref={r => {
-          r && !panelState.ref && setPanelState(s => ({ ...s, ref: r }))
+        ref={resizeRef}
+        default={{
+          ...PanelDefaultSize,
+          width: defaultSize?.width ?? PanelDefaultSize.width,
+          height: defaultSize?.height ?? PanelDefaultSize.height
         }}
-        default={PanelDefaultSize}
         style={{
-          borderRadius: 8,
+          borderRadius: 12,
           display: panelState.visible ? undefined : undefined,
           zIndex: Zindexes.GeneralPanel
         }}
@@ -117,9 +95,35 @@ export default memo(() => {
         }}
         dragHandleClassName="drag-handle"
       >
-        <WithBorder className={'w-full h-full flex flex-col'}>{renderContent()}</WithBorder>
+        <WithBorder borderRadius={12} ref={containerRef} className={'w-full h-full flex flex-col'}>
+          {children}
+        </WithBorder>
       </ResizeAndDrag>,
       document.body
     )
   }
-})
+  useEffect(() => {
+    if (panelState.visible) {
+      const h = (e: MouseEvent) => {
+        const ele = resizeRef.current?.getSelfElement?.()
+        if (ele) {
+          if (e.target instanceof Element && !ele.contains(e.target)) {
+            if (!opts?.pinned) {
+              setPanelState(s => ({ ...s, visible: false }))
+            }
+          }
+        }
+      }
+      document.addEventListener('pointerdown', h)
+      return () => {
+        document.removeEventListener('pointerdown', h)
+      }
+    }
+  }, [panelState.visible, opts?.pinned])
+  return {
+    setVisible: (v: boolean) => setPanelState(s => ({ ...s, visible: v })),
+    renderFloated,
+    handlePosChange,
+    panelState
+  }
+}

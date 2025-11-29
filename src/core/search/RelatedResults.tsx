@@ -1,12 +1,11 @@
 import { ISearchResult } from '@/api/textSearch/types'
-import { Content, Icon, VirtualList } from '@/components'
+import { Icon, VirtualList } from '@/components'
 import SearchItemRenderer from '@/core/search/SearchItemRenderer'
 import { MetaStore } from '@/api/stores'
-import { Rendevoz } from '@/core/rendevoz'
 import { memo, useEffect, useState } from 'react'
-import { ClassName } from 'rendevoz'
-import { Colors } from '@/consts'
-import { GlobalInstance } from '@/hooks'
+import classnames from 'classnames'
+import { useTranslation } from 'react-i18next'
+import trans from '@/consts/trans'
 
 export default memo(({ results, onNumChange }: { results: ISearchResult; onNumChange: (num: number) => void }) => {
   useEffect(() => {
@@ -45,29 +44,18 @@ const RelatedItem = ({ item }: { item: ISearchResult[0] }) => {
   const selfRelated = related.get(item.metaId)
   if (!selfRelated?.size) return null
   return (
-    <Content flex column>
-      <Content
-        className={ClassName.flatButton()}
-        style={{
-          padding: '6px 4px'
-        }}
-        flex
-        alignItems={'flex-start'}
-      >
+    <div className={'flex flex-col'}>
+      <div className={'button flex items-center !p-1.5'}>
         <Icon
           size={18}
           onClick={() => setToggled(!toggled)}
-          style={{
-            transition: 'all 0.16s ease',
-            transform: toggled ? undefined : 'rotate(90deg)',
-            padding: 3
-          }}
+          className={classnames('p-1 transition-transform', !toggled && 'rotate-90')}
           name={'park-right'}
         />
         <SearchItemRenderer
           onClick={() => {
-            GlobalInstance.layoutOps?.openObject(item.metaId)
-            GlobalInstance.searchOps?.closeSearchPanel()
+            Global.layoutOps?.openObject(item.metaId)
+            Global.searchOps?.closeSearchPanel()
           }}
           size={selfRelated.size}
           hit={item}
@@ -76,57 +64,39 @@ const RelatedItem = ({ item }: { item: ISearchResult[0] }) => {
             padding: 0
           }}
         />
-      </Content>
+      </div>
       {!toggled && (
-        <Content
-          flex
-          column
-          gap={4}
-          style={{
-            paddingLeft: '30px'
-          }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              left: 15,
-              top: 0,
-              height: '100%',
-              width: 1,
-              background: Colors.Background.Border
-            }}
-          ></div>
+        <div className={'flex flex-col pl-8 relative'}>
+          <div className={'absolute top-0 h-full border-right -translate-x-[1px] left-5'}></div>
           {Array.from(selfRelated.values()).map(i => (
             <ChildItem metaId={i} key={i} />
           ))}
-        </Content>
+        </div>
       )}
-    </Content>
+    </div>
   )
 }
 const ChildItem = ({ metaId }: { metaId: number }) => {
   const m = MetaStore.getCachedMetaObject(metaId)
+  const { t } = useTranslation()
   if (m && !m.deleted) {
     return (
-      <Content
+      <div
         onClick={() => {
-          GlobalInstance.layoutOps?.openObject(metaId)
-          GlobalInstance.searchOps?.closeSearchPanel()
+          Global.layoutOps?.openObject(metaId)
+          Global.searchOps?.closeSearchPanel()
         }}
-        gap={6}
-        flex
-        alignItems={'center'}
-        className={ClassName.flatButton(4, '4px 8px')}
+        className={'button !p-1.5 gap-2 flex items-center'}
       >
         {m.coverImgSrc ? (
-          <img src={m.coverImgSrc} width={16} height={16} style={{ objectFit: 'cover', borderRadius: 4 }} />
+          <img src={m.coverImgSrc} width={16} height={16} className={'rounded object-cover'} />
         ) : (
-          <Icon name={Rendevoz.Utils.Object.getMetaObjectIcon(m.type)} size={16} />
+          <Icon name={Global.utils.getIcon(m.type)} size={16} />
         )}
-        <div className={'ellipsis-font-1 font-size-14 bold-font'} title={m.name || m.placeholderName}>
-          {m.name || m.placeholderName}
+        <div className={'font-semibold line-clamp-1'} title={m.name}>
+          {m.name || t(trans.Unnamed)}
         </div>
-      </Content>
+      </div>
     )
   }
   return null

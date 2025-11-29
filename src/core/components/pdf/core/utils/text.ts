@@ -3,6 +3,7 @@ import { PageViewport } from 'pdfjs-dist'
 import { Point } from '../types'
 import { TextContentBound, TextContentOffset, TextContentTrans } from '../types/text'
 import { result } from 'lodash'
+import { Box, TextItemChar } from '~/typings'
 
 export const getCoordAfterTrans = (point: Point, trans: TextContentTrans) => {
   if (!trans) return point
@@ -120,6 +121,7 @@ export const getTargetTextBound = (
     pointRelativeX = pointCoord.x - boundCoord.x
   const chars = bound.textItem.chars || []
   ctx.font = `${bound.style.fontSize} ${bound.style.fontFamily}`
+  const fontWidth = bound.offset.size[0] / ctx.measureText(bound.str).width
   // not in bound
   if (pointRelativeX <= 0)
     return {
@@ -139,9 +141,13 @@ export const getTargetTextBound = (
       if (charRelativeRight >= pointRelativeX) break
       resultChars.push(char), (relativeRight = charRelativeRight)
     } else {
-      resultChars.push(char)
-      relativeRight = charRelativeRight
-      if (charRelativeRight >= pointRelativeX) break
+      const charRelativeLeft = charRelativeRight - ctx.measureText(char.unicode as string).width * fontWidth
+      if (pointRelativeX >= charRelativeLeft) {
+        resultChars.push(char)
+        relativeRight = charRelativeRight
+      } else {
+        break
+      }
     }
   }
 
@@ -152,7 +158,6 @@ export const getTargetTextBound = (
       width: relativeRight,
       chars: resultChars
     }
-  const fontWidth = bound.offset.size[0] / ctx.measureText(bound.str).width
   let resultStr = ''
   const str = bound.str
   let resultStrWidth = 0
@@ -182,9 +187,7 @@ export const getStartTextRect = (bound: TextContentBound, ctx: CanvasRenderingCo
   let width = bound.offset.size[0] - textBound.width
   let x = offset.left + textBound.width
   if (targetStr.startsWith(' ') && textBound.chars) {
-    ctx.font = `${bound.style.fontSize} ${bound.style.fontFamily}`
-    const fontWidth = bound.offset.size[0] / ctx.measureText(bound.str).width
-    const whitespaceWidth = ctx.measureText(' ').width * fontWidth
+    const whitespaceWidth = getSpaceWidth(ctx, bound)
     x += whitespaceWidth
     width -= whitespaceWidth
     targetStr = targetStr.trimStart()
@@ -249,9 +252,15 @@ export const getTextRect = (bound: TextContentBound, ctx: CanvasRenderingContext
       [realStart, realEnd] = startPointCoord.x >= endPointCoord.x ? [endPoint, startPoint] : [startPoint, endPoint],
       startTextBound = getTargetTextBound(bound, realStart, true, viewport, ctx),
       endTextBound = getTargetTextBound(bound, realEnd, false, viewport, ctx)
+    console.log(startTextBound, endTextBound)
     let width = endTextBound.width - startTextBound.width
     let targetText = str.substring(startTextBound.text.length, endTextBound.text.length)
     let x = offset.left + startTextBound.width
+    if (targetText.startsWith(' ')) {
+      const spaceWidth = getSpaceWidth(ctx, bound)
+      width -= spaceWidth
+      x += spaceWidth
+    }
     return trans
       ? {
           x: trans[4],
@@ -327,8 +336,7 @@ export const getWordRect = (bound: TextContentBound, point: Point, viewport: Pag
     const targetChar = chars[tempIdx]
     const prevChar = chars[tempIdx - 1]
     if (prevChar && targetChar) {
-      const char = targetChar.str.substring(prevChar.str.length)
-      if (/\s/.test(char) || /\x00/.test(char)) {
+      if (isBeforeSpace(prevChar, targetChar)) {
         result.push({
           idx: tempIdx,
           char: prevChar
@@ -395,4 +403,69 @@ export const getWordRect = (bound: TextContentBound, point: Point, viewport: Pag
         height: bound.offset.size[1],
         text
       }
+}
+
+export function getSpaceWidth(ctx: CanvasRenderingContext2D, bound: TextContentBound) {
+  const fontWidth = bound.offset.size[0] / ctx.measureText(bound.str).width
+  return ctx.measureText(' ').width * fontWidth
+}
+
+export function rotateBox({
+  x,
+  y,
+  width,
+  height,
+  offset
+}: {
+  x: number
+  y: number
+  width: number
+  height: number
+  offset: {
+    angle: number
+    dx: number
+    dy: number
+  }
+}) {
+  const angle = offset.angle
+  const points = [
+    { x: x, y: y }, // 左上
+    { x: x + width, y: y }, // 右上
+    { x: x + width, y: y + height }, // 右下
+    { x: x, y: y + height } // 左下
+  ]
+  const cos = Math.cos(angle)
+  const sin = Math.sin(angle)
+  // 旋转矩形的顶点
+  const rotatedPoints = points.map(point => {
+    return {
+      x: cos * (point.x - x) - sin * (point.y - y) + x,
+      y: sin * (point.x - x) + cos * (point.y - y) + y
+    }
+  })
+  const rotatedDx = offset.dx * cos - sin * offset.dy
+  const rotatedDy = offset.dx * sin + cos * offset.dy
+  const minX = Math.min(...rotatedPoints.map(p => p.x))
+  const maxX = Math.max(...rotatedPoints.map(p => p.x))
+  const minY = Math.min(...rotatedPoints.map(p => p.y))
+  const maxY = Math.max(...rotatedPoints.map(p => p.y))
+  const box = {
+    x: minX + rotatedDx,
+    y: minY + rotatedDy,
+    width: maxX - minX,
+    height: maxY - minY
+  }
+  return box
+}
+export function isBeforeSpace(prev: TextItemChar, current: TextItemChar) {
+  const char = current.str.substring(prev.str.length)
+  if (/\s/.test(char) || /\x00/.test(char)) {
+    return true
+  }
+  return false
+}
+
+export const getCharWidth = (char: TextItemChar, ctx: CanvasRenderingContext2D, bound: TextContentBound) => {
+  const fontWidth = bound.offset.size[0] / ctx.measureText(bound.str).width
+  return ctx.measureText(char.unicode).width * fontWidth
 }

@@ -5,8 +5,10 @@ import { ReactEditor, useSlate } from '@/core'
 import useToggleList from '@/core/components/editor/elements/listItem/useToggleList'
 import { Colors } from '@/consts'
 import classnames from 'classnames'
+import { memo } from 'react'
 
-const BorderIndent = ({ index }: { index: number }) => {
+const BorderIndent = memo(({ index }: { index: number }) => {
+  return null
   // 20: initial margin left, 15: indent
   const offset = 24 * (index + 1)
   return (
@@ -18,13 +20,13 @@ const BorderIndent = ({ index }: { index: number }) => {
       }}
     ></div>
   )
-}
+})
 
 export const ListItem = ({ children, element }: RenderElementProps) => {
   const { containerRef, canToggle, toggle } = useToggleList(element)
   return (
     <div ref={containerRef} style={{ display: 'flex' }}>
-      {element.level && element.level > 0 ? (
+      {element.level ? (
         <>
           {Array.from(Array(element.level)).map((i, index) => (
             <BorderIndent index={index} key={index} />
@@ -149,11 +151,14 @@ export const OrderListItem = ({ children, element }: RenderElementProps) => {
     try {
       let previous = Editor.node(editor, previousPath)
       let num = 1
-      while (
-        (previous && (previous[0] as CustomElement).type === 'order-list-item') ||
-        (previous[0].type !== 'list-item' && previous[0].level !== undefined && previous[0].level >= 0)
-      ) {
+      while (previous && (previous[0].type === 'order-list-item' || previous[0].type === 'list-item')) {
         const el = previous[0] as CustomElement
+        if (el.type === 'list-item') {
+          if (!Path.hasPrevious(previousPath)) break
+          previousPath = Path.previous(previous[1])
+          previous = Editor.node(editor, previousPath)
+          continue
+        }
         if ((el.level || 0) < (element.level || 0)) break
         if ((el.level || 0) !== (element.level || 0)) {
           if (!Path.hasPrevious(previousPath)) break
@@ -196,12 +201,12 @@ export const OrderListItem = ({ children, element }: RenderElementProps) => {
       }}
       ref={containerRef}
     >
-      {element.level && element.level > 0 ? (
-        <div contentEditable={false}>
+      {element.level ? (
+        <>
           {Array.from(Array(element.level)).map((i, index) => (
             <BorderIndent index={index} key={index} />
           ))}
-        </div>
+        </>
       ) : null}
       <span
         contentEditable={false}

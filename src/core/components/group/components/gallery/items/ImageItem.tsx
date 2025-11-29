@@ -12,20 +12,16 @@ export default ({
   value,
   onChange,
   onClick,
-  paddingBottom = '50%',
   isEditing
 }: {
   value?: string
   onChange: (filePath?: string) => void
   onClick?: React.MouseEventHandler
   isEditing?: boolean
-  paddingBottom?: string
 }) => {
   const ref = useRef(null)
   const fitImage = useSelectAtomValue(GroupStateAtom, s => s.currentView?.options.fitImage) ?? false
   const { openPopover, renderPopover, closePopover } = usePopoverCell({
-    onClose: () => {},
-    onOpen: () => {},
     targetRef: ref
   })
   const { t } = useTranslation()
@@ -44,8 +40,9 @@ export default ({
         }}
         style={{
           width: '100%',
-          paddingBottom: paddingBottom,
-          position: 'relative'
+          position: 'relative',
+          aspectRatio: '16 / 9',
+          overflow: 'hidden'
         }}
       >
         {value && (
@@ -54,12 +51,8 @@ export default ({
             style={{
               objectFit: fitImage ? 'contain' : 'cover',
               width: '100%',
-              height: '100%',
-              position: 'absolute',
-              top: 0,
-              left: 0
+              height: '100%'
             }}
-            className={'border-bottom'}
             src={value}
           />
         )}
@@ -75,7 +68,6 @@ export default ({
               alignItems: 'center',
               justifyContent: 'center'
             }}
-            className={'border-bottom'}
           >
             <AnimatePopover
               reposition
@@ -108,7 +100,13 @@ export default ({
         )}
       </Content>
       {renderPopover(box => (
-        <PopupWrapper box={{ ...box, width: Math.max(600, Math.min(box.width, 400)) }}>
+        <PopupWrapper
+          box={{ ...box, width: Math.min(500, Math.max(box.width, 320)) }}
+          style={{
+            borderRadius: '0.75rem',
+            overflow: 'hidden'
+          }}
+        >
           <ImageRenderer
             value={value}
             onDelete={() => {

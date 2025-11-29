@@ -105,10 +105,6 @@ export type IYoutubeVideoItem = {
     title: string
     description: string
     playlistId?: string
-    resourceId: {
-      kind: 'youtube#video'
-      videoId: string
-    }
     thumbnails: {
       default: {
         url: string
@@ -124,6 +120,7 @@ export type IYoutubeVideoItem = {
     channelId: string
     tags: string[]
   }
+  statistics?: IYoutubeStatistics
   contentDetails?: {
     // youtube iso 8601 format duration, eg: PT1H5M10S
     duration: string
@@ -208,7 +205,6 @@ const YoutubeServices = {
     options?: {
       type?: ('playlist' | 'channel' | 'video')[]
       token?: string
-      stats?: boolean
       channelId?: string
       details?: boolean
     }
@@ -234,40 +230,33 @@ const YoutubeServices = {
     const res = await fetch(url, {}).then(i => i.json())
     if (res) {
       const result = res as CommonYoutubeResult<IYoutubeSearchResultItem>
-      if (options?.stats) {
-        const channelIds = result.items.map(i => i.id.kind === 'youtube#channel' && i.id.channelId).filter(i => i) as string[]
-        const channelStats = channelIds.length ? await YoutubeServices.getStatistics(channelIds, 'channel') : undefined
-        const videoIds = result.items.map(i => i.id.kind === 'youtube#video' && i.id.videoId).filter(i => i) as string[]
-        const videoStats = videoIds.length ? await YoutubeServices.getStatistics(videoIds, 'video') : undefined
-        const playlistIds = result.items.map(i => i.id.kind === 'youtube#playlist' && i.id.playlistId).filter(i => i) as string[]
-        const playlistStats = playlistIds.length ? await YoutubeServices.getStatistics(playlistIds, 'playlist') : undefined
-        const channelMap = channelStats?.items ? new Map(channelStats.items.map(i => [i.id, i])) : undefined
-        const videoMap = videoStats?.items ? new Map(videoStats.items.map(i => [i.id, i])) : undefined
-        const playlistMap = playlistStats?.items ? new Map(playlistStats.items.map(i => [i.id, i])) : undefined
-        result.items.forEach(i => {
-          switch (i.id.kind) {
-            case 'youtube#channel': {
-              channelMap?.has(i.id.channelId) && (i.statistics = channelMap.get(i.id.channelId)?.statistics)
-              break
-            }
-            case 'youtube#video': {
-              videoMap?.has(i.id.videoId) && (i.statistics = videoMap.get(i.id.videoId)?.statistics)
-              break
-            }
-            case 'youtube#playlist': {
-              playlistMap?.has(i.id.playlistId) && (i.statistics = playlistMap.get(i.id.playlistId)?.statistics)
-              break
-            }
-          }
-        })
-      }
       if (options?.details !== false) {
         const videoIds = result.items.map(i => i.id.kind === 'youtube#video' && i.id.videoId).filter(i => i) as string[]
         const videoDetails = videoIds.length ? await YoutubeServices.getVideo(videoIds) : undefined
-        const m = new Map(videoDetails?.items.map(i => [i.id, i]))
+        const playlistIds = result.items.map(i => i.id.kind === 'youtube#playlist' && i.id.playlistId).filter(i => i) as string[]
+        const playlistDetails = playlistIds.length ? await YoutubeServices.getPlaylist(playlistIds) : undefined
+        const channelIds = result.items.map(i => i.id.kind === 'youtube#channel' && i.id.channelId).filter(i => i) as string[]
+        const channelDetails = channelIds.length ? await YoutubeServices.getChannel(channelIds) : undefined
+        const m = new Map(
+          [...(videoDetails?.items || []), ...(playlistDetails?.items || []), ...(channelDetails?.items || [])].map(i => [i.id, i])
+        )
         result.items.forEach(i => {
           if (i.id.kind === 'youtube#video') {
             const details = m.get(i.id.videoId)
+            if (details) {
+              i.contentDetails = details.contentDetails
+              i.statistics = details.statistics
+            }
+          }
+          if (i.id.kind === 'youtube#channel') {
+            const details = m.get(i.id.channelId)
+            if (details) {
+              i.contentDetails = details.contentDetails
+              i.statistics = details.statistics
+            }
+          }
+          if (i.id.kind === 'youtube#playlist') {
+            const details = m.get(i.id.playlistId)
             if (details) {
               i.contentDetails = details.contentDetails
             }
@@ -333,14 +322,9 @@ const YoutubeServices = {
       const result = res as CommonYoutubeResult<IYoutubeVideoItem>
       result.items = result.items.filter(i => i.snippet.thumbnails?.high)
       if (options?.details && result.items.length) {
-        const videoDetails = await YoutubeServices.getVideo(result.items.map(i => i.snippet.resourceId.videoId))
-        if (videoDetails) {
-          const m = new Map(videoDetails.items.map(i => [i.id, i]))
-          result.items.forEach(r => {
-            if (m.has(r.snippet.resourceId.videoId)) {
-              r.contentDetails = m.get(r.snippet.resourceId.videoId)?.contentDetails
-            }
-          })
+        const res = await YoutubeServices.getVideo(result.items.map(i => i.snippet.resourceId.videoId))
+        if (res) {
+          result.items = res.items
         }
       }
       return {
@@ -391,6 +375,7 @@ const YoutubeServices = {
     const params = new URLSearchParams()
     params.append('part', 'snippet')
     params.append('part', 'contentDetails')
+    params.append('part', 'statistics')
     params.append('maxResults', '50')
     params.append('key', key)
     ids.forEach(id => {
@@ -407,7 +392,7 @@ const YoutubeServices = {
   }
 }
 
-function iso8601DurationToSeconds(duration) {
+function iso8601DurationToSeconds(duration: string | undefined) {
   if (!duration) return undefined
   if (typeof duration === 'number') return duration
   // 正则表达式用于解析ISO 8601持续时间

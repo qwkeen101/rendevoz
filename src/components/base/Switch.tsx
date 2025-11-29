@@ -25,7 +25,7 @@ const Switch: FC<SwitchProps> = ({ onChange, defaultValue = false, value, small 
   const [on, toggleOn] = useToggle(value ?? defaultValue)
   const realOn = value !== undefined ? value : on
   const switchStyle: CSSProperties = {
-    backgroundColor: realOn ? Colors.Common.SelectColor : '#00000040',
+    backgroundColor: realOn ? Colors.Common.SelectColor : Colors.Background.ButtonActive,
     // justifyContent: realOn ? 'flex-end' : 'flex-start',
     height: small ? 16 : 22,
     width: small ? 32 : 44,

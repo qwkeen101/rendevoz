@@ -1,16 +1,16 @@
-import useYoutubeData from '@/core/components/feed/youtube/useYoutubeData'
-import { Button, IconWithPopover, useElementScrollRestore } from '@/components'
-import useYoutubeState from '@/core/components/feed/youtube/useYoutubeState'
-import { memo, useEffect, useLayoutEffect, useRef } from 'react'
-import YoutubeItemsContainer from '@/core/components/feed/youtube/YoutubeItemsContainer'
+import useYoutubeData from '@/core/components/youtube/hooks/useYoutubeData'
+import useYoutubeState from '@/core/components/youtube/hooks/useYoutubeState'
+import { memo, useEffect, useLayoutEffect } from 'react'
+import YoutubeItemsContainer from '@/core/components/youtube/YoutubeItemsContainer'
 import { useUpdate } from 'react-use'
 import { useTranslation } from 'react-i18next'
 import trans from '@/consts/trans'
-import { Icons } from '@/consts'
-import useFeedInstance from '@/core/components/feed/hooks/useFeedInstance'
 import useLibrarySearchAll from '@/core/components/common/useLibrarySearchAll'
 import { ObjectStore } from '@/api/stores'
-import YoutubeFolderMenu from '@/core/components/feed/youtube/YoutubeFolderMenu'
+import useYoutubeInstance from '@/core/components/youtube/hooks/useYoutubeInstance'
+import classnames from 'classnames'
+import ClearSearchButton from '@/core/components/common/ClearSearchButton'
+import { Icon } from '@/components'
 
 export default memo(
   ({
@@ -40,7 +40,6 @@ export default memo(
     const playlists = ObjectStore('youtubePlaylist').useMultiple(playlistIds)
     const channels = ObjectStore('youtubeChannel').useMultiple(channelIds)
     const folders = ObjectStore('youtubeFolder').useMultiple(folderIds)
-    const ref = useRef<HTMLDivElement>(null)
     const update = useUpdate()
     useLayoutEffect(() => {
       update()
@@ -51,10 +50,10 @@ export default memo(
       }
     }, [cache?.active])
     const { t } = useTranslation()
-    const instance = useFeedInstance()
+    const instance = useYoutubeInstance()
     const {
-      renderSearch,
-      state: { results }
+      state: { results, query },
+      setSearch
     } = useLibrarySearchAll(cacheKey, {
       videos: videos.map(i => ({ id: i.id, searchable: `${i.name},${i.description}` })),
       channels: channels.map(i => ({ id: i.id, searchable: `${i.name},${i.description}` })),
@@ -62,49 +61,25 @@ export default memo(
       folders: folders.map(i => ({ id: i.id, searchable: i.name })),
       objects: objects.map(i => ({ id: i.id, searchable: `${i.name},${i.description}` }))
     })
-    useElementScrollRestore({
-      elementKey: sk,
-      elementRef: ref
-    })
     return (
-      <div className={'h-full overflow-y-auto px-6'} ref={ref}>
-        <div className={'container-7xl flex flex-col min-h-full py-6'}>
-          <div className={'flex items-start pl-2 gap-3 mb-4'}>
-            <div className={'text-3xl font-bold mr-auto'}>{name ?? t(trans.Feed.Library)}</div>
-            {!parentFolderId && (
-              <Button.IconButton
-                onClick={() => {
-                  instance.youtubeOps?.createFolder()
-                }}
-                icon={Icons.Create}
-                text={t(trans.Feed.CreateFolder)}
-                className={'border-round-icon-button shrink-0'}
-              />
-            )}
-            {renderSearch({
-              alwaysVisible: true
-            })}
-            {parentFolderId && (
-              <IconWithPopover
-                content={setV => <YoutubeFolderMenu onClose={() => setV(false)} id={parentFolderId} />}
-                name={Icons.More}
-                placement={['bottom']}
-                className={'border-rounded-button'}
-              />
-            )}
+      <div className={'flex flex-col min-h-full p-6 w-full'}>
+        <div className={'flex items-center gap-3 mb-6 justify-between'}>
+          <div className={classnames('text-2xl font-bold', !name && 'super-transparent-font')}>{name || t(trans.Unnamed)}</div>
+          <div>
+            <ClearSearchButton />
           </div>
-          <YoutubeItemsContainer
-            searchedVideos={results?.['objects']}
-            defaultTab={data.libraryActive?.[cacheKey]}
-            scrollElementRef={ref}
-            folders={results?.['folders'] || folderIds}
-            cacheKey={sk}
-            parentFolderId={parentFolderId}
-            videos={results?.['videos'] || videoIds}
-            playlists={results?.['playlists'] || playlistIds}
-            channels={results?.['channels'] || channelIds}
-          />
         </div>
+        <YoutubeItemsContainer
+          searchedVideos={results?.['objects']}
+          defaultTab={data.libraryActive?.[cacheKey]}
+          scrollElementRef={instance.scrollElementRef}
+          folders={results?.['folders'] || folderIds}
+          cacheKey={sk}
+          parentFolderId={parentFolderId}
+          videos={results?.['videos'] || videoIds}
+          playlists={results?.['playlists'] || playlistIds}
+          channels={results?.['channels'] || channelIds}
+        />
       </div>
     )
   }

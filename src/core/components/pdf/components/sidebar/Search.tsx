@@ -1,15 +1,14 @@
 import { atom, useAtom } from 'jotai'
 import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { css } from '@emotion/css'
-import { Content, Icon, VirtualList } from '@/components'
-import Colors from '@/consts/colors'
+import { Content, Icon, VirtualList, Virtualizer } from '@/components'
 import { useTranslation } from 'react-i18next'
 import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
 import isHotkey from 'is-hotkey'
-import { KEY } from '@/consts'
-import { ClassName } from 'rendevoz'
-import { Virtualizer } from '@tanstack/react-virtual'
+import { Icons, KEY } from '@/consts'
 import { useAtomValue } from 'jotai/react'
+import classnames from 'classnames'
+import BetterInput from '@/components/base/BetterInput'
 
 const searchAtom = atom<{
   total: number
@@ -29,10 +28,22 @@ const PDFSearch = () => {
   const [result, setResult] = useAtom(searchAtom)
   const { t } = useTranslation()
   const clickedRef = useRef(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    const keydown = (e: KeyboardEvent) => {
+      if (isHotkey('mod+f', e) && instance.isFocused) {
+        inputRef.current?.focus()
+      }
+    }
+    document.addEventListener('keydown', keydown)
+    return () => {
+      document.removeEventListener('keydown', keydown)
+    }
+  }, [])
   useEffect(() => {
     if (result.results) {
       const keydownHandler = (e: KeyboardEvent) => {
-        if (instance.isFocused) {
+        if (inputRef.current === document.activeElement) {
           setTimeout(() => {
             if (!e.defaultPrevented) {
               if (isHotkey(KEY.Enter, e)) {
@@ -78,103 +89,66 @@ const PDFSearch = () => {
   const virtualizer = useRef<Virtualizer<any, any>>()
   const thumbnailURLMap = useAtomValue(instance.values.thumbnailAtom)
   return (
-    <div
-      style={{
-        width: '100%',
-        maxHeight: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 6,
-        height: '100%'
-      }}
-    >
-      <div style={{ padding: '10px 10px 0px', width: '100%' }}>
-        <input
-          onCompositionStart={e => {
-            e.currentTarget.setAttribute('composing', 'true')
-          }}
-          onCompositionEnd={e => {
-            e.currentTarget.removeAttribute('composing')
-            const value = e.currentTarget.value
-            setSearchStr(value)
-            if (value.length) {
-              const r = instance?.search?.(value)
-              if (r) {
-                r.sort((b, a) => b.pageIndex - a.pageIndex)
-                let num = 0
-                r.forEach(i => {
-                  num += i.num
-                })
+    <div className={'w-full h-full max-h-full flex flex-col gap-2'}>
+      <div className={'p-3 pb-0 w-full'}>
+        <div className={'flex items-center gap-2 rounded-md bg-input px-2.5 py-1 border-box-shadow focus-within-input'}>
+          <Icon name={Icons.Search} size={16} />
+          <BetterInput
+            ref={inputRef}
+            className={'flex-1'}
+            onChange={e => {
+              if (e.target.hasAttribute('composing')) return
+              const value = e.target.value
+              setSearchStr(value)
+              if (value.length) {
+                const r = instance?.search?.(value)
+                if (r) {
+                  r.sort((b, a) => b.pageIndex - a.pageIndex)
+                  let num = 0
+                  r.forEach(i => {
+                    num += i.num
+                  })
+                  setResult({
+                    total: num,
+                    results: r.map(i => ({
+                      str: i.searchText,
+                      pageIndex: i.pageIndex,
+                      num: i.num
+                    }))
+                  })
+                }
+              } else {
                 setResult({
-                  total: num,
-                  results: r.map(i => ({
-                    str: i.searchText,
-                    pageIndex: i.pageIndex,
-                    num: i.num
-                  }))
+                  total: 0,
+                  results: []
                 })
               }
-            } else {
-              setResult({
-                total: 0,
-                results: []
-              })
-            }
-          }}
-          className={'focus-input border-box-shadow font-size-14'}
-          onChange={e => {
-            if (e.target.hasAttribute('composing')) return
-            const value = e.target.value
-            setSearchStr(value)
-            if (value.length) {
-              const r = instance?.search?.(value)
-              if (r) {
-                r.sort((b, a) => b.pageIndex - a.pageIndex)
-                let num = 0
-                r.forEach(i => {
-                  num += i.num
-                })
-                setResult({
-                  total: num,
-                  results: r.map(i => ({
-                    str: i.searchText,
-                    pageIndex: i.pageIndex,
-                    num: i.num
-                  }))
-                })
-              }
-            } else {
-              setResult({
-                total: 0,
-                results: []
-              })
-            }
-          }}
-          placeholder={t('general.search')}
-          style={{ padding: '4px 8px', borderRadius: 4, width: '100%' }}
-        ></input>
+            }}
+            autoFocus
+            placeholder={t('general.search')}
+          ></BetterInput>
+        </div>
         {searchStr && (
-          <Content flex justifyContent={'space-between'} style={{ userSelect: 'none', marginTop: 6 }} alignItems={'center'}>
-            <div className={'transparent-font font-size-12'}>{t('general.find results', { num: result.total })}</div>
+          <div className={'flex justify-between mt-2 h-6 items-center select-none'}>
             {(result.results?.length ?? 0) > 1 ? (
-              <Content flex gap={4}>
+              <div className={'flex gap-1'}>
                 <Icon
                   name={'park-left'}
-                  className={ClassName.flatButton(4, '3px')}
+                  className={'square-button-small'}
                   onClick={() => {
                     setResult(s => ({ ...s, selectedNum: s.selectedNum === 0 ? 0 : (s.selectedNum ?? 1) - 1 }))
                   }}
                 />
                 <Icon
                   name={'park-right'}
-                  className={ClassName.flatButton(4, '3px')}
+                  className={'square-button-small'}
                   onClick={() => {
                     setResult(s => ({ ...s, selectedNum: s.selectedNum === s.total - 1 ? 0 : (s.selectedNum ?? -1) + 1 }))
                   }}
                 />
-              </Content>
+              </div>
             ) : null}
-          </Content>
+          </div>
         )}
       </div>
       <div
@@ -192,9 +166,8 @@ const PDFSearch = () => {
         })}
       >
         <VirtualList
-          style={{ width: '100%', height: '100%', padding: '0px 10px 10px' }}
+          className={'w-full h-full pt-0 p-3'}
           estimateSize={100}
-          childrenContainerClassname={'font-size-14'}
           items={result.results || []}
           paddingEnd={200}
           ref={virtualizer}
@@ -247,29 +220,18 @@ const ResultRenderer = ({
     instance.getThumbnail?.(pageIndex)
   }, [])
   return (
-    <Content
-      onClick={onClick}
-      flex
-      style={{
-        padding: '8px 10px',
-        borderRadius: 4,
-        fontSize: 13,
-        minHeight: 80
-      }}
-      className={selected ? 'active-button' : undefined}
-      gap={10}
-    >
-      <div>
-        <img style={{ marginTop: 4 }} src={imgURL} width={36} />
+    <div onClick={onClick} className={classnames(selected && 'active-button', 'p-3 flex gap-3 rounded font-size-13 min-h-24')}>
+      <div className={'shrink-0'}>
+        <img className={'w-11 mt-1'} src={imgURL} />
       </div>
-      <div style={{ flexGrow: 1 }}>
+      <div className={'grow'}>
         <Content className={'font-size-12'} flex justifyContent={'space-between'}>
           <div className={'bold-font'}>{t('general.Page', { num: pageIndex + 1 })}</div>
           <div className={selected ? undefined : 'transparent-font'}>{t('general.Matched', { num })}</div>
         </Content>
-        <div className={'ellipsis-font-3'} dangerouslySetInnerHTML={{ __html: str }}></div>
+        <div className={'line-clamp-3'} dangerouslySetInnerHTML={{ __html: str }}></div>
       </div>
-    </Content>
+    </div>
   )
 }
 export default memo(PDFSearch)

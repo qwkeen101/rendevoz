@@ -2,12 +2,4 @@ import { css } from '@emotion/css'
 import { Colors } from '@/consts'
 import { ClassName } from 'rendevoz'
 
-export const SelectOptionClass = css({
-  border: `1px solid ${Colors.Background.Border}`,
-  borderRadius: 6,
-  display: 'flex',
-  alignItems: 'center',
-  padding: '5px 12px',
-  fontSize: 14,
-  fontWeight: 500
-})
+export const SelectOptionClass = 'button border !rounded-md flex items-center gap-2'

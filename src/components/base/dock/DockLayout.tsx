@@ -1,32 +1,23 @@
 import React, { CSSProperties } from 'react'
 import ReactDOM from 'react-dom'
-import debounce from 'lodash/debounce'
 import {
   BoxData,
-  defaultGroup,
   DockContext,
   DockContextProvider,
   DropDirection,
   GlobalData,
   LayoutBase,
   LayoutData,
-  PanelBase,
   PanelData,
-  placeHolderGroup,
-  placeHolderStyle,
   TabBase,
   TabData,
-  TabGroup,
   TabPaneCache
 } from './DockData'
 import { DockBox } from './DockBox'
-import { DockPanel } from './DockPanel'
 import * as Algorithm from './Algorithm'
 import * as Serializer from './Serializer'
 import * as DragManager from './dragdrop/DragManager'
-import { clearObjectCache } from './Algorithm'
 import { LayoutIdToTabMap } from '@/components/layout'
-import './index.less'
 export interface LayoutProps {
   /**
    * when there are multiple DockLayout, by default, you can't drag panel between them
@@ -47,11 +38,6 @@ export interface LayoutProps {
   layout?: LayoutData
 
   /**
-   * Tab Groups, defines additional configuration for different groups
-   */
-  groups?: { [key: string]: TabGroup }
-
-  /**
    * @param newLayout layout data can be set to [[LayoutProps.layout]] directly when used as controlled component
    * @param currentTabId id of current tab
    * @param direction direction of the dock change
@@ -66,37 +52,13 @@ export interface LayoutProps {
   dropMode?: 'default' | 'edge'
 
   /**
-   * override the default saveTab behavior
-   * @return must at least have an unique id
-   */
-  saveTab?(tab: TabData): TabBase
-
-  /**
    * override the default loadTab behavior
    * - when loadTab is not defined, [[LayoutProps.defaultLayout]] will be used to find a tab to load, thus defaultLayout must contain the titles and contents for TabData
    * - when loadTab is defined, [[LayoutProps.defaultLayout]] can ignore all those and only keep id and other custom data
    */
   loadTab?(tab: TabBase): TabData
 
-  /**
-   * modify the savedPanel, you can add additional data into the savedPanel
-   */
-  afterPanelSaved?(savedPanel: PanelBase, panel: PanelData): void
-
-  /**
-   * modify the loadedPanel, you can retrieve additional data into the panel
-   * - modifying panel tabs is allowed, make sure to add or replace full TabData with title and content, because loadTab won't be called after this
-   * - if tabs is empty, but still remaining in layout because of panelLock, make sure also set the group if it's not null
-   */
-  afterPanelLoaded?(savedPanel: PanelBase, loadedPanel: PanelData): void
-
   style?: CSSProperties
-
-  /**
-   * when specified, docklayout will create a react portal for the maximized panel
-   * use dom element as the value, or use the element's id
-   */
-  maximizeTo?: string | HTMLElement
 }
 
 interface LayoutState {
@@ -139,7 +101,7 @@ class DockPortalManager extends React.PureComponent<LayoutProps, LayoutState> {
     if (!cache) {
       const div = document.createElement('div')
       div.className = 'dock-pane-cache'
-      cache = { div, id, owner, scrollPreserver: new Map() }
+      cache = { div, id, owner }
       this._caches.set(id, cache)
     } else {
       cache.owner = owner
@@ -191,27 +153,13 @@ export class DockLayout extends DockPortalManager implements DockContext {
   /** @ignore */
   prepareInitData(data: LayoutData): LayoutData {
     const layout = { ...data }
-    Algorithm.fixLayoutData(layout, this.props.groups, this.props.loadTab)
+    Algorithm.fixLayoutData(layout)
     return layout
   }
 
   /** @ignore */
   getDockId(): any {
     return this.props.dockId || this
-  }
-
-  /** @inheritDoc */
-  getGroup(name: string) {
-    if (name) {
-      const { groups } = this.props
-      if (groups && name in groups) {
-        return groups[name]
-      }
-      if (name === placeHolderStyle) {
-        return placeHolderGroup
-      }
-    }
-    return defaultGroup
   }
 
   /**
@@ -263,7 +211,7 @@ export class DockLayout extends DockPortalManager implements DockContext {
       }
     }
     if (layout !== this.getLayout()) {
-      layout = Algorithm.fixLayoutData(layout, this.props.groups)
+      layout = Algorithm.fixLayoutData(layout)
       let currentTabId: string = null
       if (source.hasOwnProperty('tabs')) {
         currentTabId = (source as PanelData).activeId
@@ -332,10 +280,8 @@ export class DockLayout extends DockPortalManager implements DockContext {
           if (!makeActive) {
             // restore the previous activeId
             panelData.activeId = activeId
-            this.panelToFocus = panelData.id
           } else {
             panelData.activeId = newTab.id
-            this.panelToFocus = panelData.id
           }
         } else if (makeActive && panelData.activeId !== id) {
           layout = Algorithm.replacePanel(layout, panelData, {
@@ -344,7 +290,7 @@ export class DockLayout extends DockPortalManager implements DockContext {
           })
         }
 
-        layout = Algorithm.fixLayoutData(layout, this.props.groups)
+        layout = Algorithm.fixLayoutData(layout)
         this.changeLayout(layout, newTab?.id ?? id, 'update')
         this.setLayout(layout)
         return true
@@ -363,52 +309,13 @@ export class DockLayout extends DockPortalManager implements DockContext {
         if (newPanel) {
           layout = Algorithm.replacePanel(layout, panel, newPanel)
         }
-        layout = Algorithm.fixLayoutData(layout, this.props.groups)
+        layout = Algorithm.fixLayoutData(layout)
         this.changeLayout(layout, id, 'update')
         return true
       }
     }
     return false
   }
-  /** @inheritDoc */
-  navigateToPanel(fromElement?: HTMLElement, direction?: string) {
-    if (!direction) {
-      if (!fromElement) {
-        fromElement = this._ref.querySelector('.dock-tab-active>.dock-tab-btn')
-      }
-      fromElement.focus()
-      return
-    }
-    let targetTab: HTMLElement
-    // use panel rect when move left/right, and use tabbar rect for up/down
-    const selector = direction === 'ArrowUp' || direction === 'ArrowDown' ? '.dock>.dock-bar' : '.dock-box>.dock-panel'
-    const panels = Array.from(this._ref.querySelectorAll(selector))
-
-    const currentPanel = panels.find(panel => panel.contains(fromElement))
-    const currentRect = currentPanel.getBoundingClientRect()
-    const matches: any[] = []
-    for (const panel of panels) {
-      if (panel !== currentPanel) {
-        const rect = panel.getBoundingClientRect()
-        const distance = Algorithm.findNearestPanel(currentRect, rect, direction)
-        if (distance >= 0) {
-          matches.push({ panel, rect, distance })
-        }
-      }
-    }
-    matches.sort((a, b) => a.distance - b.distance)
-    for (const match of matches) {
-      targetTab = match.panel.querySelector('.dock-tab-active>.dock-tab-btn')
-      if (targetTab) {
-        break
-      }
-    }
-
-    if (targetTab) {
-      targetTab.focus()
-    }
-  }
-
   constructor(props: LayoutProps) {
     super(props)
     const { layout, defaultLayout, loadTab } = props
@@ -433,13 +340,11 @@ export class DockLayout extends DockPortalManager implements DockContext {
     }
 
     DragManager.addDragStateListener(this.onDragStateChange)
-    globalThis.addEventListener?.('resize', this._onWindowResize)
   }
 
   /** @ignore */
   onDragStateChange = (draggingScope: any) => {
     if (draggingScope == null) {
-      DockPanel.droppingPanel = null
       if (this.state.dropRect) {
         this.setState({ dropRect: null })
       }
@@ -447,18 +352,7 @@ export class DockLayout extends DockPortalManager implements DockContext {
   }
 
   /** @ignore */
-  useEdgeDrop() {
-    return this.props.dropMode === 'edge'
-  }
-
-  /** @ignore */
-  setDropRect(
-    element: HTMLElement,
-    direction?: DropDirection,
-    source?: any,
-    event?: { clientX: number; clientY: number },
-    panelSize: [number, number] = [300, 300]
-  ) {
+  setDropRect(element: HTMLElement, direction?: DropDirection, source?: any) {
     const { dropRect } = this.state
     if (dropRect) {
       if (direction === 'remove') {
@@ -489,15 +383,6 @@ export class DockLayout extends DockPortalManager implements DockContext {
       ratio = 0.3
     }
     switch (direction) {
-      case 'float': {
-        const x = (event.clientX - layoutRect.left) * scaleX
-        const y = (event.clientY - layoutRect.top) * scaleY
-        top = y - 15
-        width = panelSize[0]
-        height = panelSize[1]
-        left = x - (width >> 1)
-        break
-      }
       case 'right':
         left += width * (1 - ratio)
       case 'left': // tslint:disable-line no-switch-case-fall-through
@@ -527,7 +412,7 @@ export class DockLayout extends DockPortalManager implements DockContext {
     // clear tempLayout
     this.tempLayout = null
 
-    const { style, maximizeTo } = this.props
+    const { style } = this.props
     const { layout, dropRect } = this.state
     let dropRectStyle: CSSProperties
     if (dropRect) {
@@ -564,39 +449,9 @@ export class DockLayout extends DockPortalManager implements DockContext {
     )
   }
 
-  _onWindowResize: any = debounce(() => {
-    const layout = this.getLayout()
-
-    if (this._ref) {
-      let newLayout = Algorithm.fixFloatPanelPos(layout, this._ref.offsetWidth, this._ref.offsetHeight)
-      if (layout !== newLayout) {
-        newLayout = Algorithm.fixLayoutData(newLayout, this.props.groups) // panel parent might need a fix
-        this.changeLayout(newLayout, null, 'move')
-      }
-    }
-  }, 200)
-
-  /** @ignore */
-  panelToFocus: string
-
-  /** @ignore
-   * move focus to panelToFocus
-   */
-  componentDidUpdate(prevProps: Readonly<LayoutProps>, prevState: Readonly<LayoutState>, snapshot?: any) {
-    // if (this.panelToFocus) {
-    //   const panel = this._ref.querySelector(`.dock-panel[data-dockid="${this.panelToFocus}"]`) as HTMLElement
-    //   if (panel && !panel.contains(this._ref.ownerDocument.activeElement)) {
-    //     ;(panel.querySelector('.dock-bar') as HTMLElement)?.focus()
-    //   }
-    //   this.panelToFocus = null
-    // }
-  }
-
   /** @ignore */
   componentWillUnmount(): void {
-    globalThis.removeEventListener?.('resize', this._onWindowResize)
     DragManager.removeDragStateListener(this.onDragStateChange)
-    this._onWindowResize.cancel()
   }
 
   /** @ignore
@@ -649,7 +504,7 @@ export class DockLayout extends DockPortalManager implements DockContext {
   // public api
 
   saveLayout(): LayoutBase {
-    return Serializer.saveLayoutData(this.getLayout(), this.props.saveTab, this.props.afterPanelSaved)
+    return Serializer.saveLayoutData(this.getLayout())
   }
 
   /**
@@ -661,10 +516,8 @@ export class DockLayout extends DockPortalManager implements DockContext {
   }
 
   /** @ignore */
-  static loadLayoutData(layout: LayoutData, props: LayoutProps, width = 0, height = 0): LayoutData {
-    const { defaultLayout, loadTab, afterPanelLoaded, groups } = props
-    // let layout = Serializer.loadLayoutData(savedLayout, defaultLayout, loadTab, afterPanelLoaded)
-    layout = Algorithm.fixLayoutData(layout, groups)
+  static loadLayoutData(layout: LayoutData, props: LayoutProps): LayoutData {
+    layout = Algorithm.fixLayoutData(layout)
     return layout
   }
 

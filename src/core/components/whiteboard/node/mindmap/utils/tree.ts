@@ -92,10 +92,37 @@ export const flattenTree = (children: IWhiteboardMindmap[]) => {
   children.forEach(c => loop(c))
   return nodes
 }
+
+const buildRootTree = (
+  rootId: number,
+  direction: 'right' | 'left',
+  instance: IWhiteboardInstance
+): Map<number, IWhiteboardMindmap> | undefined => {
+  const node = instance.getNode?.(rootId)
+  if (node) {
+    const rightTreeWeakMap = instance.values.mindmapRightTreeWeakMap
+    const leftTreeWeakMap = instance.values.mindmapLeftTreeWeakMap
+    const alreadyMap = (direction === 'right' ? rightTreeWeakMap : leftTreeWeakMap).get(node)
+    if (alreadyMap) return alreadyMap
+    const children = (node as IWhiteboardNode & { type: 'mindmap' })[direction === 'right' ? 'rightChildren' : 'leftChildren']
+    if (children) {
+      const flattened = flattenTree(children)
+      const m = new Map(flattened.map(i => [i.root, i]))
+      ;(direction === 'right' ? rightTreeWeakMap : leftTreeWeakMap).set(node, m)
+      return m
+    }
+  }
+}
+
 export const getFlattenChildrenOfNode = (node: IWhiteboardNode, instance: IWhiteboardInstance, direction?: 'right' | 'left') => {
   const children = getChildrenOfNode(node, instance, direction)
   if (children) {
-    return flattenTree(children)
+    const childrenToFlattenChildren = instance.values.mindmapChildrenToFlattenChildren
+    const alreadyChildren = childrenToFlattenChildren.get(children)
+    if (alreadyChildren) return alreadyChildren
+    const flattened = flattenTree(children)
+    childrenToFlattenChildren.set(children, flattened)
+    return flattened
   }
 }
 export const getChildrenOfNode = (node: IWhiteboardNode, instance: IWhiteboardInstance, direction?: 'right' | 'left') => {
@@ -107,10 +134,9 @@ export const getChildrenOfNode = (node: IWhiteboardNode, instance: IWhiteboardIn
   }
   if (node.rootId) {
     try {
-      const root = instance.getNode?.(node.rootId)
-      console.log(root)
-      if (root && root.type === 'mindmap') {
-        return getSubChildren({ root: root.id, children: root[node.side === 'left' ? 'leftChildren' : 'rightChildren'] || [] }, node.id)
+      const treeMap = buildRootTree(node.rootId, node.side ?? 'right', instance)
+      if (treeMap) {
+        return treeMap.get(node.id)?.children
       }
     } catch (e) {
       console.log(e)
@@ -148,7 +174,7 @@ export const getParentNodeOfNode = (node: IWhiteboardNode, instance: IWhiteboard
   if (root && root.type === 'mindmap') {
     const rootNodes = node.side === 'right' ? root.rightChildren : root.leftChildren
     if (rootNodes) {
-      if (rootNodes.some(i => i.root === node.rootId)) {
+      if (rootNodes.some(i => i.root === node.id)) {
         return {
           id: root.id,
           children: rootNodes

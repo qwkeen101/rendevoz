@@ -26,8 +26,9 @@ export default (instanceRef?: RefObject<IEditorInstance | undefined>, metaId?: n
           })
           deletedMetas.forEach(i => {
             const link = MetaStore.getMetaLinkBySourceAndTarget(i, metaId) || MetaStore.getMetaLinkBySourceAndTarget(metaId, i)
+            console.log(link, i)
             if (link) {
-              MetaStore.deleteMetaLink(link, true)
+              MetaStore.deleteMetaLink(link)
             }
           })
           prevMetas.current = relatedMetas

@@ -1,7 +1,6 @@
-import ReactDOM from 'react-dom'
-import { BaseEditor, Editor, Node, Operation, Path, Point, Range, Transforms } from 'slate'
+import { BaseEditor, Element, Editor, Node, Operation, Path, Point, Range, Transforms } from 'slate'
 import { TextDiff, transformPendingPoint, transformPendingRange, transformTextDiff } from '../utils/diff-text'
-import { getPlainText, getSlateFragmentAttribute, isDOMText } from '../utils/dom'
+import { getPlainText, getSlateFragmentAttribute } from '../utils/dom'
 import { Key } from '../utils/key'
 import { findCurrentLineRange } from '../utils/lines'
 import {
@@ -17,7 +16,8 @@ import {
   NODE_TO_KEY
 } from '../utils/weak-maps'
 import { ReactEditor } from './react-editor'
-import { EDITOR_TO_CHANGED } from '../../weakMaps'
+import slateToHTML from '@/core/components/editor/plugins/slateToHTML'
+import { CustomEditor } from '~/typings'
 
 /**
  * `withReact` adds React and DOM specific behaviors to the editor.
@@ -89,7 +89,7 @@ export const withReact = <T extends BaseEditor>(editor: T): T & ReactEditor => {
   // This attempts to reset the NODE_TO_KEY entry to the correct value
   // as apply() changes the object reference and hence invalidates the NODE_TO_KEY entry
   e.apply = (op: Operation) => {
-    EDITOR_TO_CHANGED.set(e, false)
+    ;(e as CustomEditor).changeHandled = false
     const matches: [Path, Key][] = []
 
     const pendingDiffs = EDITOR_TO_PENDING_DIFFS.get(e)
@@ -162,31 +162,18 @@ export const withReact = <T extends BaseEditor>(editor: T): T & ReactEditor => {
     if (!selection) {
       return
     }
-
     const [start, end] = Range.edges(selection)
     const startVoid = Editor.void(e, { at: start.path })
     const endVoid = Editor.void(e, { at: end.path })
-
-    if (Range.isCollapsed(selection) && !startVoid) {
+    if (Range.isCollapsed(selection)) {
+      data.setData('text/plain', window.getSelection()?.toString() ?? '')
       return
     }
-
     // Create a fake selection so that we can add a Base64-encoded copy of the
     // fragment to the HTML, to decode on future pastes.
     const domRange = ReactEditor.toDOMRange(e, selection)
     let contents = domRange.cloneContents()
-    let attach = contents.childNodes[0] as HTMLElement
 
-    // Make sure attach is non-empty, since empty nodes will not get copied.
-    contents.childNodes.forEach(node => {
-      if (node.textContent && node.textContent.trim() !== '') {
-        attach = node as HTMLElement
-      }
-    })
-
-    // COMPAT: If the end node is a void node, we need to move the end of the
-    // range from the void node's spacer span, to the end of the void node's
-    // content, since the spacer is before void's content in the DOM.
     if (endVoid) {
       const [voidNode] = endVoid
       const r = domRange.cloneRange()
@@ -194,15 +181,6 @@ export const withReact = <T extends BaseEditor>(editor: T): T & ReactEditor => {
       r.setEndAfter(domNode)
       contents = r.cloneContents()
     }
-
-    // COMPAT: If the start node is a void node, we need to attach the encoded
-    // fragment to the void node's content node instead of the spacer, because
-    // attaching it to empty `<div>/<span>` nodes will end up having it erased by
-    // most browsers. (2018/04/27)
-    if (startVoid) {
-      attach = contents.querySelector('[data-slate-spacer]')! as HTMLElement
-    }
-
     // Remove any zero-width space spans from the cloned DOM so that they don't
     // show up elsewhere when pasted.
     Array.from(contents.querySelectorAll('[data-slate-zero-width]')).forEach(zw => {
@@ -210,80 +188,31 @@ export const withReact = <T extends BaseEditor>(editor: T): T & ReactEditor => {
       zw.textContent = isNewline ? '\n' : ''
     })
 
-    // Set a `data-slate-fragment` attribute on a non-empty node, so it shows up
-    // in the HTML, and can be used for intra-Slate pasting. If it's a text
-    // node, wrap it in a `<span>` so we have something to set an attribute on.
-    if (isDOMText(attach)) {
-      const span = attach.ownerDocument.createElement('span')
-      // COMPAT: In Chrome and Safari, if we don't add the `white-space` style
-      // then leading and trailing spaces will be ignored. (2017/09/21)
-      span.style.whiteSpace = 'pre'
-      span.appendChild(attach)
-      contents.appendChild(span)
-      attach = span
+    const above = Editor.above(e, {
+      mode: 'highest',
+      match: n => Element.isElement(n)
+    })
+    const isSelectFromStart = above && Editor.isStart(e, start, above[1])
+    let fragment = [...e.getFragment()]
+    if (startVoid) {
+      fragment.shift()
+    } else {
+      if (!isSelectFromStart && fragment.length) {
+        fragment[0] = { ...fragment[0], type: 'paragraph' }
+      }
     }
-
-    const fragment = e.getFragment()
-    const string = JSON.stringify(fragment)
-    const encoded = window.btoa(encodeURIComponent(string))
-
-    attach.setAttribute('data-slate-fragment', encoded)
-    data.setData('application/x-rendevoz-slate-fragment', encoded)
-    // Add the content to a <div> so that we can get its inner HTML.
+    if (fragment.length) {
+      const { html } = slateToHTML(fragment)
+      console.log(fragment, html)
+      data.setData('text/html', html)
+    }
     const div = contents.ownerDocument.createElement('div')
     div.appendChild(contents)
-
     div.setAttribute('hidden', 'true')
     contents.ownerDocument.body.appendChild(div)
-    // replace li elements
-    Array.from(div.children || []).forEach(n => {
-      console.log(n)
-      if (n.hasAttribute('data-spec-type')) {
-        const specType = n.getAttribute('data-spec-type')
-        if (specType === 'order-list-item') {
-          const li = document.createElement('li')
-          n.querySelector('[role="list-item-marker"]')?.remove()
-          li.innerHTML = n.innerHTML
-          li.setAttribute('data-spec-type', 'order-list-item')
-          n.parentNode?.replaceChild(li, n)
-        }
-        if (specType === 'list-item') {
-          const li = document.createElement('li')
-          li.innerHTML = n.innerHTML
-          li.setAttribute('data-spec-type', 'list-item')
-          n.parentNode?.replaceChild(li, n)
-        }
-      }
-    })
-    Array.from(div.childNodes || []).forEach(n => {
-      const ele = n as Element
-      if (ele.hasAttribute('data-spec-type')) {
-        const specType = ele.getAttribute('data-spec-type')
-        if (specType === 'order-list-item') {
-          const prev = n.previousSibling
-          if (prev?.nodeName === 'OL') {
-            prev.appendChild(n)
-          } else {
-            const ol = document.createElement('ol')
-            n.before(ol)
-            ol.appendChild(n)
-          }
-        }
-        if (specType === 'list-item') {
-          const prev = n.previousSibling
-          if (prev?.nodeName === 'UL') {
-            prev.appendChild(n)
-          } else {
-            const ul = document.createElement('ul')
-            n.before(ul)
-            ul.appendChild(n)
-          }
-        }
-      }
-    })
-    data.setData('text/html', div.innerHTML)
-    console.log(div)
-    data.setData('text/plain', getPlainText(div))
+    const text = getPlainText(div)
+    console.log(text, div)
+    data.setData('text/plain', text)
     contents.ownerDocument.body.removeChild(div)
     return data
   }
@@ -296,9 +225,9 @@ export const withReact = <T extends BaseEditor>(editor: T): T & ReactEditor => {
 
   e.insertFragmentData = (data: DataTransfer): boolean => {
     /**
-     * Checking copied fragment from application/x-slate-fragment or data-slate-fragment
+     * Checking copied fragment from data-slate-fragment
      */
-    const fragment = data.getData('application/x-slate-fragment') || getSlateFragmentAttribute(data)
+    const fragment = getSlateFragmentAttribute(data)
 
     if (fragment) {
       const decoded = decodeURIComponent(window.atob(fragment))
@@ -330,19 +259,13 @@ export const withReact = <T extends BaseEditor>(editor: T): T & ReactEditor => {
   }
 
   e.onChange = () => {
-    // COMPAT: React doesn't batch `setState` hook calls, which means that the
-    // children and selection can get out of sync for one render pass. So we
-    // have to use this unstable API to ensure it batches them. (2019/12/03)
-    // https://github.com/facebook/react/issues/14259#issuecomment-439702367
-    ReactDOM.unstable_batchedUpdates(() => {
-      const onContextChange = EDITOR_TO_ON_CHANGE.get(e)
+    const onContextChange = EDITOR_TO_ON_CHANGE.get(e)
 
-      if (onContextChange) {
-        onContextChange()
-      }
+    if (onContextChange) {
+      onContextChange()
+    }
 
-      onChange()
-    })
+    onChange()
   }
 
   return e

@@ -1,9 +1,8 @@
 import { useAtom } from 'jotai'
 import { EditorOverlayStateAtom } from '@/core/components/editor/components/overlay/useEditorOverlay'
 import { useEffect, useRef } from 'react'
-import { Rendevoz } from '@/core/rendevoz'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
-import { Editor, Node, Range } from 'slate'
+import { Editor, Range } from 'slate'
 import { useMemoizedFn } from '@/hooks'
 
 // 键入搜索添加块

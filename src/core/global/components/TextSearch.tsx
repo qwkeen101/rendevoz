@@ -1,13 +1,13 @@
 import { Modal } from '@/components'
-import { GlobalSearchInputAtom, SearchDialog } from '../../search/SearchDialog'
-import { GlobalInstance, useGlobalSetAtom, useToggle } from '@/hooks'
+import SearchDialog from '../../search/SearchDialog'
+import { useGlobalSetAtom, useToggle } from '@/hooks'
 import { memo, useEffect } from 'react'
 import { assignProperties } from '@/utils'
 
 const TextSearch = memo(() => {
   const [modalVisible, toggleModalVisible] = useToggle(false)
-  const setSearchInput = useGlobalSetAtom(GlobalSearchInputAtom)
-  assignProperties(GlobalInstance, {
+  const setSearchInput = useGlobalSetAtom(SearchDialog.search)
+  assignProperties(Global, {
     searchOps: {
       openSearchPanel: query => {
         if (query) {
@@ -30,7 +30,7 @@ const TextSearch = memo(() => {
     }
   }, [modalVisible])
   return (
-    <Modal enableClickEvent zIndex={1000} disableAnimation notUnmount noStyle visible={modalVisible} onClose={toggleModalVisible}>
+    <Modal zIndex={1000} disableAnimation notUnmount noStyle visible={modalVisible} onClose={toggleModalVisible}>
       <SearchDialog onClose={toggleModalVisible} visible={modalVisible} />
     </Modal>
   )

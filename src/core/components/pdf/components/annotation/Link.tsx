@@ -1,16 +1,7 @@
-import { Content } from "@/components/base";
-import { MouseEventHandler } from "react";
-import styles from "./index.module.less";
+import { MouseEventHandler } from 'react'
 
 const Link = ({ onClick }: { onClick: MouseEventHandler }) => {
-  return (
-    <Content
-      onClick={onClick}
-      fullWidth
-      fullHeight
-      className={styles.link}
-    ></Content>
-  );
-};
+  return <div onClick={onClick} className={'w-full h-full transition-colors cursor-pointer hover-bg-super-transparent-select-color'}></div>
+}
 
-export default Link;
+export default Link

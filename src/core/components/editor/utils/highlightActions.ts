@@ -1,18 +1,10 @@
 import { Editor, Node } from 'slate'
 import { goToBlock } from './blockActions'
 import { CustomEditor, CustomElement } from '~/typings'
-import { css, keyframes } from '@emotion/css'
+import { css } from '@emotion/css'
 import { ReactEditor } from '../slate-react'
 import { Colors } from '@/consts'
 
-const animationKeyframes = keyframes({
-  '0%': {
-    backgroundColor: 'rgba(247, 219, 106, 0.5)'
-  },
-  '100%': {
-    backgroundColor: `transparent`
-  }
-})
 export const blinkBg = css({
   backgroundColor: `${Colors.Emphasis.Emphasis}`
 })
@@ -36,7 +28,6 @@ export const goToTextHighlight = (highlightId: number, editor: CustomEditor) => 
       const [v, path] = value
       const outermostBlock = Editor.node(editor, [path[0]])[0] as CustomElement
       if (path) {
-        console.log(path)
         goToBlock(outermostBlock.id, editor).then(() => {
           blinkHighlights(ReactEditor.toDOMNode(editor, editor), highlightId)
         })

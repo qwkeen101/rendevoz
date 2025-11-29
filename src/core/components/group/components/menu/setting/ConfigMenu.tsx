@@ -5,6 +5,8 @@ import { useGroupInstance } from '@/core/components/group/hooks/useGroupInstance
 import { Content } from '@/components'
 import ButtonSelect from '@/components/base/ButtonSelect'
 import ButtonSwitch from '@/components/base/ButtonSwitch'
+import { ObjectCreateHandler } from '@/core/global/components/ObjectCreator'
+import { MetaObject } from '~/typings'
 export default memo(() => {
   const [groupState, setGroupState] = useGroupState()
   const { t } = useTranslation()
@@ -25,20 +27,7 @@ export default memo(() => {
       children: t('general.Center')
     }
   ]
-  const createObjectTypes = [
-    'none',
-    'note',
-    'whiteboard',
-    'group',
-    'code',
-    'question',
-    'pdf',
-    'webpage',
-    'video',
-    'audio',
-    'image',
-    'tweet'
-  ]
+  const createObjectTypes = ['none', ...Object.keys(ObjectCreateHandler)]
   return (
     <Content style={{ padding: '0 0.25rem 0.4rem' }}>
       {!groupStateState?.onlyCreateType && groupLayout?.showAddNew !== false && (
@@ -48,7 +37,7 @@ export default memo(() => {
           value={groupState.data?.onlyCreate || 'none'}
           options={createObjectTypes.map(i => ({ value: i, children: t(`general.${i}`) }))}
           onSelect={v => {
-            instance.updateGroupData?.(s => ({ ...s, onlyCreate: v[0] }))
+            instance.updateGroupData?.(s => ({ ...s, onlyCreate: v[0] === 'none' ? undefined : (v[0] as MetaObject['type']) }))
           }}
         />
       )}
@@ -95,20 +84,6 @@ export default memo(() => {
           value={!!groupState.data?.hideObjectsInside}
         ></ButtonSwitch>
       )}
-      {groupState.data?.hideObjectsInside &&
-        groupStateState?.canHideObjectsInside !== false &&
-        groupStateState?.canHideGroupsInside !== false && (
-          <ButtonSwitch
-            onChange={v => {
-              instance.updateGroupData?.(s => ({
-                ...s,
-                hideGroupsInside: v
-              }))
-            }}
-            name={t('general.Hide groups')}
-            value={!!groupState.data?.hideGroupsInside}
-          ></ButtonSwitch>
-        )}
     </Content>
   )
 })

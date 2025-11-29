@@ -4,19 +4,17 @@ import { CustomEditor, CustomElement } from '~/typings'
 import { useEffect, useRef } from 'react'
 import { Editor, Path, Transforms } from 'slate'
 import { EditorOverlayManager } from '../overlay/useEditorOverlay'
-import BlockColorPicker from '../BlockColorPicker'
 import { useTranslation } from 'react-i18next'
-import { defaultBgColor } from '@/components/picker/colorPicker'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import { useUpdate } from 'react-use'
 import { Menu } from '@/components'
 import GetEditorTransformMenu from '@/core/components/editor/components/overlay/components/getEditorTransformMenu'
 import { IMenuLayoutItem } from '@/components/base/menu'
 import toast from 'react-hot-toast'
-import { Colors } from '@/consts'
 import getExpandMetaMenu from '@/core/components/editor/components/blockMenu/getMetaMenu'
 import getIframeMenu from '@/core/components/editor/components/blockMenu/getIframeMenu'
 import getMenuDisplayOption from '@/core/components/editor/components/blockMenu/getMenuDisplayOption'
+import EditorColorPicker from '@/core/components/editor/components/EditorColorPicker'
 
 export type EditorBlockDisplayOptions =
   | 'copy link to original'
@@ -54,6 +52,7 @@ const EditorBlockMenu = ({ editor, manager }: { editor: CustomEditor; manager: E
     const selected = instance.values.selectedBlocks
     const transformType = 'type' in newProps
     const allPaths: Path[] = []
+    instance.selectOps?.deselectAll()
     if (selected.size > 0) {
       const selectedElements = Array.from(selected.values())
         .map(i => i.element)
@@ -129,17 +128,14 @@ const EditorBlockMenu = ({ editor, manager }: { editor: CustomEditor; manager: E
                   popOver: {
                     key: 'colorPop',
                     node: (
-                      <BlockColorPicker
-                        showFont={showFontColor}
-                        showBorder={showBorderColor}
-                        onPickBorderColor={c => {
-                          handleMutateProps({ borderColor: c === defaultBgColor ? undefined : c })
+                      <EditorColorPicker
+                        color={currentEle?.color}
+                        background={currentEle?.background}
+                        onColorChange={c => {
+                          handleMutateProps({ color: c })
                         }}
-                        onPickFontColor={c => {
-                          handleMutateProps({ color: c === Colors.Font.Blank ? undefined : c })
-                        }}
-                        onPickBackgroundColor={c => {
-                          handleMutateProps({ background: c === Colors.Background.Blank ? undefined : c })
+                        onBackgroundChange={c => {
+                          handleMutateProps({ background: c })
                         }}
                       />
                     )
@@ -155,9 +151,10 @@ const EditorBlockMenu = ({ editor, manager }: { editor: CustomEditor; manager: E
               key: 'copyLink',
               type: 'item',
               icon: 'park-link-one',
-              text: selected.size > 1 ? t('general.Copy links to all') : t('general.Copy link to block'),
+              text: selected.size > 1 ? t('general.Copy links to all') : t('editor.Copy link to block'),
               onSelect: () => {
                 instance.blockOps?.copyLink()
+                instance.selectOps?.deselectAll()
                 toast.success(t('general.Copied'))
                 instance.overlayOps?.close()
               }

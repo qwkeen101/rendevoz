@@ -1,16 +1,10 @@
 import { useMediaInstance } from '@/core/components/media/hooks/useMediaInstance'
 import { assignProperties } from '@/utils'
-import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { memo, useRef } from 'react'
 import { useMemoizedFn, useSelectAtomValue } from '@/hooks'
 import { MediaStateAtom } from '@/core/components/media/hooks/useMediaState'
 import { MetaStore, ObjectStore } from '@/api/stores'
-import { IMediaLabel, XYPosition } from '~/typings'
-import { createPortal } from 'react-dom'
-import { Colors } from '@/consts'
-import { useTranslation } from 'react-i18next'
-import { AnimatePopover, Content, ContentEditor, Icon } from '@/components'
-import { normalizeSecondsToTime } from '@/core/components/media/utils'
-import { ClassName } from 'rendevoz'
+import { IMediaLabel } from '~/typings'
 import { useSetAtom, useStore } from 'jotai'
 import useRenderLabelEditor from '@/core/object/renderer/useRenderLabelEditor'
 import { getSetting } from '@/core'
@@ -80,15 +74,34 @@ export default memo(() => {
         setTimeout(() => handleInsertNote(l))
         return
       }
-      const mediaContainer = instance.getMediaContainer?.()
-      if (!mediaContainer) return
-      const bounding = mediaContainer.getBoundingClientRect()
-      open(l, {
-        width: 0,
-        height: 0,
-        left: position?.x ?? bounding.left + bounding.width / 2,
-        top: position?.y ?? bounding.bottom
-      })
+      const state = instance.getMediaState?.()
+      const mediaContainer = state?.layout?.floatBarMode ? instance.getFloatBarElement?.() : instance.getMediaContainer?.()
+      if (!mediaContainer && !position) return
+      if (position) {
+        open(
+          l,
+          {
+            width: 0,
+            height: 0,
+            left: position?.x,
+            top: position?.y
+          },
+          'top'
+        )
+      } else if (mediaContainer) {
+        const bounding = mediaContainer.getBoundingClientRect()
+        open(
+          l,
+          {
+            width: 0,
+            height: 0,
+            left: bounding.left + bounding.width / 2,
+            top: state?.layout?.floatBarMode ? bounding.top - 16 : bounding.bottom - (state?.mode === 'audio' ? 12 : 0)
+          },
+          state?.layout?.floatBarMode ? 'top' : undefined
+        )
+      }
+
       setMediaState(s => ({ ...s, labelPopoverVisible: true }))
       isPlayRef.current = !store.get(MediaStateAtom).paused
       instance.actionOps?.pause()
@@ -96,16 +109,7 @@ export default memo(() => {
   })
   return renderPopover({
     extra: labelDetails?.selectedText ? (
-      <div
-        className={'font-size-12 transparent-font'}
-        style={{
-          borderLeft: '2px solid var(--emphasis)',
-          padding: '3px 6px',
-          marginBottom: 4
-        }}
-      >
-        {labelDetails.selectedText}
-      </div>
+      <div className={'font-size-13 border px-3 py-2 rounded-lg mb-3 transparent-font'}>{labelDetails.selectedText}</div>
     ) : null
   })
 })

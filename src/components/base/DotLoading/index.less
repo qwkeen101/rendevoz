@@ -1,0 +1,47 @@
+@color: var(--font-primary);
+@size: var(--dot-size);
+.dot-flashing {
+  position: relative;
+  width: @size;
+  height: @size;
+  border-radius: 5px;
+  background-color: @color;
+  color: @color;
+  animation: dot-flashing 1s infinite linear alternate;
+  animation-delay: 0.5s;
+}
+.dot-flashing::before, .dot-flashing::after {
+  content: "";
+  display: inline-block;
+  position: absolute;
+  top: 0;
+}
+.dot-flashing::before {
+  left: calc(@size * -1.5);
+  width: @size;
+  height: @size;
+  border-radius: 5px;
+  background-color: @color;
+  color: @color;
+  animation: dot-flashing 1s infinite alternate;
+  animation-delay: 0s;
+}
+.dot-flashing::after {
+  left: calc(@size * 1.5);
+  width: @size;
+  height: @size;
+  border-radius: 5px;
+  background-color: @color;
+  color: @color;
+  animation: dot-flashing 1s infinite alternate;
+  animation-delay: 1s;
+}
+
+@keyframes dot-flashing {
+  0% {
+    background-color: @color;
+  }
+  50%, 100% {
+    background-color: rgba(from @color r g b / 0.2);
+  }
+}

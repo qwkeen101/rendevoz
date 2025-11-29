@@ -6,7 +6,6 @@ import { useMemo } from 'react'
 import EmojiPicker from '@/components/picker/emojiPicker'
 import { ReactEditor, useSlateStatic } from '../slate-react'
 import { Transforms } from 'slate'
-import ClassName from '@/styles/classNames'
 import tinycolor from 'tinycolor2'
 import { Colors } from '@/consts'
 
@@ -26,27 +25,25 @@ const HighlightBlock = ({ element, children }: RenderElementProps) => {
     return ''
   }, [highlightBlockEle.borderColor])
   return (
-    <Content
+    <div
+      className={'bg-third flex'}
       style={{
-        padding: 12,
+        padding: '0.75em',
         border: highlightBlockEle.borderColor ? `2px solid ${highlightBlockEle.borderColor}` : '2px solid transparent',
-        backgroundColor: element.background
-          ? Colors.getAlphaColor(Colors.getAdaptColor(element.background), 0.6)
-          : Colors.Background.ButtonHover,
-        borderRadius: 8,
+        backgroundColor: element.background ? Colors.getAlphaColor(Colors.getAdaptColor(element.background), 0.6) : undefined,
+        borderRadius: '0.5em',
+        gap: '1em',
         margin: highlightBlockEle.borderColor ? 2 : 0,
         boxShadow: highlightBlockEle.borderColor ? `0 0 0 4px #${alphaBorder}` : undefined
       }}
-      flex
-      gap={12}
     >
       <AnimatePopover
         positions={['bottom', 'top']}
         padding={10}
-        content={
+        content={setV => (
           <WithBorder style={{ width: 400, height: 300 }}>
             <EmojiPicker
-              onPick={v =>
+              onPick={v => {
                 Transforms.setNodes(
                   editor,
                   {
@@ -56,21 +53,18 @@ const HighlightBlock = ({ element, children }: RenderElementProps) => {
                     at: ReactEditor.findPath(editor, element)
                   }
                 )
-              }
+                setV(false)
+              }}
             />
           </WithBorder>
-        }
+        )}
       >
-        <div
-          contentEditable={false}
-          className={ClassName.circleButton(4, 4)}
-          style={{ lineHeight: 1, flexShrink: 0, height: 'fit-content' }}
-        >
+        <div contentEditable={false} className={'square-button'} style={{ lineHeight: 1, flexShrink: 0, height: 'fit-content' }}>
           <img
             src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
             style={{
-              width: '32px',
-              height: '32px',
+              width: '2em',
+              height: '2em',
               backgroundImage: `url(${emoji?.imageSrc})`,
               backgroundPositionX: `${((emoji?.x ?? 0) * 100) / 60}%`,
               backgroundPositionY: `${((emoji?.y ?? 0) * 100) / 60}%`,
@@ -81,8 +75,8 @@ const HighlightBlock = ({ element, children }: RenderElementProps) => {
           />
         </div>
       </AnimatePopover>
-      <div>{children}</div>
-    </Content>
+      <div className={'flex-1'}>{children}</div>
+    </div>
   )
 }
 

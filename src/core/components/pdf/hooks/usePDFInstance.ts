@@ -1,11 +1,13 @@
 import { ObjectStore } from '@/api/stores'
-import { assignProperties, calculateImageAspectRatio, waitFor } from '@/utils'
+import { assignProperties, waitFor } from '@/utils'
 import { atom, useAtomValue, useStore } from 'jotai'
-import { IPDFInstance } from '~/typings'
+import { IPDFInstance, TextItem, TextItemChar } from '~/typings'
 import { renderPageInDarkMode } from '@/core/components/pdf/core/utils/renderer'
 import search from './ops/search'
 import captureImage from './ops/captureImage'
 import produce from 'immer'
+import assignAIOps from '@/core/components/pdf/hooks/assignAIOps'
+import { normalizeChars } from '@/core/components/pdf/core/utils/search'
 
 export const PdfInstanceAtom = atom<IPDFInstance>({})
 
@@ -15,8 +17,21 @@ export const useAssignPdfInstance = (pdfId: number) => {
   const pdf = ObjectStore('pdf').useValue(pdfId)
   const instance = usePDFInstance()
   const store = useStore()
+  assignAIOps(instance)
   assignProperties(instance, {
-    getPdfId: () => pdfId,
+    getPDF: () => pdf,
+    getId: () => pdfId,
+    getPageFuncs: pageIndex => instance.values.INDEX_TO_PAGE_LAYER[pageIndex],
+    getTextContent: async pageIndex => {
+      const doc = await instance.getDocument?.()
+      if (doc) {
+        const page = await doc.getPage(pageIndex + 1)
+        const textContent = await page.getTextContent()
+        page.cleanup()
+        return (textContent.items as TextItem[]).map(i => (i.hasEOL ? `${i.str} ` : i.str)).join('')
+      }
+      return Promise.reject()
+    },
     getDocument: async () => {
       return await new Promise((res, rej) => {
         if (instance.values.document) {
@@ -49,7 +64,7 @@ export const useAssignPdfInstance = (pdfId: number) => {
       const doc = instance.values.thumbnailDocument
       if (doc) {
         renderPageInDarkMode()
-        const desiredWidth = size?.width ?? 300
+        const desiredWidth = size?.width ?? 600
         const canvas = document.createElement('canvas')
         const firstPage = await doc.getPage(pageIdx + 1)
         const viewport = firstPage.getViewport({ scale: 1 })
@@ -89,14 +104,12 @@ export const useAssignPdfInstance = (pdfId: number) => {
         )
     },
     deleteLabel: async label => {
-      await ObjectStore('pdfLabel')
-        .deleteOneById(label, { force: true })
-        .then(() =>
-          ObjectStore('pdf').updateOne({
-            id: pdfId,
-            labels: pdf?.labels?.filter(i => i !== label)
-          })
-        )
+      const ids = Array.isArray(label) ? label : [label]
+      await ObjectStore('pdf').updateOne({
+        id: pdfId,
+        labels: pdf?.labels?.filter(i => !ids.includes(i))
+      })
+      await Promise.allSettled(ids.map(async i => await ObjectStore('pdfLabel').deleteOneById(i, { force: true })))
     },
     getOutline: async () => {
       const doc = await instance.getDocument?.()

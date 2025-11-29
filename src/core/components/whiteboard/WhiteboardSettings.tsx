@@ -1,31 +1,33 @@
-import { AnimatePopover, Button, Content, Icon, Modal, Tooltip, WithBorder } from '@/components'
+import { AnimatePopover, Button, Icon, WithBorder } from '@/components'
 import { GlobalSetting } from '@/core'
 import produce from 'immer'
-import { ClassName } from 'rendevoz'
 import { useTranslation } from 'react-i18next'
 import { WhiteboardAtom } from '@/core/components/whiteboard/StateHooks'
-import { useSelectAtomValue, useToggle } from '@/hooks'
-import { ObjectStore } from '@/api/stores'
-import ExportPanel from '@/core/components/whiteboard/toolbars/ExportPanel'
+import { useSelectAtomValue } from '@/hooks'
 import { memo } from 'react'
-
+import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
+import { Icons } from '@/consts'
+import { exportWhiteboardAsImage } from '@/core/components/whiteboard/utils/exportAsImage'
+import { downloadImg } from '@/utils'
+import { WhiteboardStateAtom } from '@/core/components/whiteboard/hooks/useWhiteboardState'
+import trans from '@/consts/trans'
 const WhiteboardSettings = memo(() => {
+  const name = useSelectAtomValue(WhiteboardStateAtom, s => s.name)
   const [setting, setSetting] = GlobalSetting.useSetting()
   const { t } = useTranslation()
-  const [exportModalVisible, toggleExportModalVisible] = useToggle(false)
+  const whiteboardHideObjects = useSelectAtomValue(WhiteboardAtom, s => s?.hideObjects)
   const whiteboardLineType = useSelectAtomValue(WhiteboardAtom, s => s?.lineType)
   const whiteboardBackgroundType = useSelectAtomValue(WhiteboardAtom, s => s?.backgroundType)
-  const whiteboardId = useSelectAtomValue(WhiteboardAtom, s => s?.id)
-
+  const instance = useWhiteboardInstance()
   const setLineType = t => {
     setSetting(
       produce(setting, draft => {
         draft.whiteboard.defaultLineType = t
       })
     )
-    if (whiteboardId) {
-      ObjectStore('whiteboard').updateOne({ id: whiteboardId, lineType: t })
-    }
+    instance.updateWhiteboard?.(w => {
+      w.lineType = t
+    })
   }
   const setBackgroundType = t => {
     setSetting(
@@ -33,30 +35,21 @@ const WhiteboardSettings = memo(() => {
         draft.whiteboard.defaultBackgroundType = t
       })
     )
-    if (whiteboardId) {
-      ObjectStore('whiteboard').updateOne({ id: whiteboardId, backgroundType: t })
-    }
+    instance.updateWhiteboard?.(w => {
+      w.backgroundType = t
+    })
   }
-  const buttonClazz = ClassName.flatButton(4, '2px 6px')
   return (
     <>
-      <Modal visible={exportModalVisible} onClose={() => toggleExportModalVisible(false)}>
-        <ExportPanel
-          onBack={() => {
-            toggleExportModalVisible(false)
-          }}
-        />
-      </Modal>
       <AnimatePopover
-        padding={6}
-        closeOnClickOutside={true}
-        align="start"
-        content={
-          <WithBorder className={'font-size-13'} padding={6} width={220}>
+        padding={16}
+        align="end"
+        content={setV => (
+          <WithBorder className={'p-1.5'} width={220}>
             <Button.IconButton
               icon="park-horizontally-centered"
               text={t('settings.snap to objects')}
-              className={setting.whiteboard.snapToObject ? 'bg-hover' : ''}
+              enabled={setting.whiteboard.snapToObject}
               onClick={() => {
                 setSetting(s =>
                   produce(s, draft => {
@@ -65,56 +58,81 @@ const WhiteboardSettings = memo(() => {
                 )
               }}
             />
+            <Button.IconButton
+              icon={'park-preview-close'}
+              text={t('general.Hide objects')}
+              enabled={whiteboardHideObjects}
+              onClick={() => {
+                instance.updateWhiteboard?.(w => {
+                  w.hideObjects = !whiteboardHideObjects
+                })
+              }}
+            />
             <div className={'menu-sub-title'} style={{ margin: '4px 6px' }}>
               {t('whiteboard.Line type')}
             </div>
             <Button.IconButton
-              className={whiteboardLineType === 'straight' ? 'bg-hover' : ''}
+              enabled={whiteboardLineType === 'straight'}
               icon="custom-straight"
               onClick={() => setLineType('straight')}
               text={t('whiteboard.Straight line')}
             />
             <Button.IconButton
-              className={whiteboardLineType === 'curve' ? 'bg-hover' : ''}
+              enabled={whiteboardLineType === 'curve'}
               icon="custom-curve"
               onClick={() => setLineType('curve')}
               text={t('whiteboard.Curve line')}
             />
             <Button.IconButton
-              className={whiteboardLineType === 'polyline' ? 'bg-hover' : ''}
+              enabled={whiteboardLineType === 'polyline'}
               icon="park-connection"
               onClick={() => setLineType('polyline')}
               text={t('whiteboard.Step line')}
             />
             <div className={'menu-sub-title'} style={{ margin: '4px 6px' }}>
-              {t('general.Background type')}
+              {t('whiteboard.Background type')}
             </div>
             <Button.IconButton
-              className={whiteboardBackgroundType === 'none' ? 'bg-hover' : ''}
+              enabled={whiteboardBackgroundType === 'none'}
               icon="park-close"
               onClick={() => setBackgroundType('none')}
               text={t('general.None')}
             />
             <Button.IconButton
-              className={whiteboardBackgroundType === 'dot' ? 'bg-hover' : ''}
+              enabled={whiteboardBackgroundType === 'dot'}
               icon="custom-dots"
               onClick={() => setBackgroundType('dot')}
-              text={t('general.Dots')}
+              text={t('whiteboard.Dots')}
             />
             <Button.IconButton
-              className={whiteboardBackgroundType === 'line' ? 'bg-hover' : ''}
+              enabled={whiteboardBackgroundType === 'line'}
               icon="park-grid-two"
               onClick={() => setBackgroundType('line')}
               text={t('general.Line')}
             />
+            <div className={'my-1.5 border-top w-full'}></div>
+            <Button.IconButton
+              icon="park-download-four"
+              onClick={() => {
+                setV(false)
+                const allNodes = instance.getAllNode?.()
+                const container = instance.getContainerNode?.()
+                if (allNodes && container) {
+                  exportWhiteboardAsImage(allNodes, container, instance).then(i => {
+                    downloadImg(i, name || t(trans.Unnamed))
+                  })
+                }
+              }}
+              text={t('general.Export as image')}
+            />
           </WithBorder>
-        }
-        positions={['left']}
+        )}
+        positions={['top']}
       >
         <Icon
-          className={'button p-4'}
-          size={18}
-          name="park-more"
+          className={'square-button-small'}
+          size={17}
+          name={Icons.More}
           containerStyle={{
             pointerEvents: 'auto'
           }}

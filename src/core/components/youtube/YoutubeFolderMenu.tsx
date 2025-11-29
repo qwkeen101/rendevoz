@@ -1,15 +1,15 @@
 import { WithBorder, Menu } from '@/components'
-import useFeedInstance from '@/core/components/feed/hooks/useFeedInstance'
 import { useTranslation } from 'react-i18next'
 import trans from '@/consts/trans'
 import { Icons } from '@/consts'
 import { ObjectStore } from '@/api/stores'
+import useYoutubeInstance from '@/core/components/youtube/hooks/useYoutubeInstance'
 
 export default ({ id, onClose }: { id: number; onClose?: VoidFunction }) => {
-  const instance = useFeedInstance()
   const { t } = useTranslation()
+  const instance = useYoutubeInstance()
   return (
-    <WithBorder className={'py-[0.4rem] min-w-48'} onClick={e => e.stopPropagation()}>
+    <WithBorder className={'py-1 min-w-48'} onClick={e => e.stopPropagation()}>
       <Menu.NavigationMenu
         layout={[
           {
@@ -21,7 +21,7 @@ export default ({ id, onClose }: { id: number; onClose?: VoidFunction }) => {
               onClose?.()
               const folder = await ObjectStore('youtubeFolder').getOneById(id)
               if (folder) {
-                instance.youtubeOps?.createFolder(folder)
+                instance.createFolder?.(folder)
               }
             }
           },

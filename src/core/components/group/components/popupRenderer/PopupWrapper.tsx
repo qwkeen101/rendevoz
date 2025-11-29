@@ -15,7 +15,7 @@ const PopupWrapper = forwardRef(({ box, children, style }: { box: Box; children:
         width: box.width,
         background: Colors.Background.Popover,
         boxShadow: Colors.Background.PopoverBoxShadow,
-        borderRadius: 4,
+        borderRadius: '0.5rem',
         ...style
       }}
     >

@@ -1,17 +1,15 @@
 import { IWhiteboardNode } from '~/typings'
 import SyncedBlockEditor from '@/core/components/editor/SyncedBlockEditor'
 import { useEffect } from 'react'
-import { useFlow } from '@/core/components/whiteboard/StateHooks'
 import { MetaStore, ObjectStore } from '@/api/stores'
 import { pushNumberIntoUnrepeatableArray } from '@/utils'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
 
 const SyncedBlockNode = ({ node }: { node: IWhiteboardNode }) => {
-  const flow = useFlow()
   const instance = useWhiteboardInstance()
   useEffect(() => {
     const check = async () => {
-      const whiteboardId = flow.whiteboardId
+      const whiteboardId = instance.values.id
       if (whiteboardId) {
         const syncMeta = await MetaStore.getMetaObjectById(node.metaObjectId)
         if (syncMeta?.objectId) {
@@ -47,7 +45,6 @@ const SyncedBlockNode = ({ node }: { node: IWhiteboardNode }) => {
       <SyncedBlockEditor syncedBlockMetaId={node.metaObjectId} />
     </div>
   )
-  return
 }
 
 export default SyncedBlockNode

@@ -32,7 +32,7 @@ const WhiteboardEmptyIndicator = () => {
       }}
       className={'transparent-font normal-font'}
     >
-      <div>{t('general.whiteboard indicator 1')}</div>
+      <div className={'text-center'}>{t('general.whiteboard indicator 1')}</div>
     </div>
   )
 }

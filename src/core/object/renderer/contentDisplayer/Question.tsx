@@ -10,13 +10,14 @@ function QuestionDisplayer({ id }: { id: number }) {
       }}
       styles={{
         contentFontSize: 12,
-        smallFontSize: 10
+        smallFontSize: 10,
+        titleFontSize: 13
       }}
+      autoFocus={false}
       display={{
         headBar: false,
         pointers: false,
-        from: false,
-        title: false
+        from: false
       }}
     />
   )

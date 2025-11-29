@@ -7,7 +7,8 @@ export default (
   defaultNode: Partial<IWhiteboardNode>,
   sourceNode: IWhiteboardNode,
   direction: 'right' | 'left',
-  instance: IWhiteboardInstance
+  instance: IWhiteboardInstance,
+  idx?: number
 ) => {
   const defaultWidth = 100
   let defaultHeight = 34.6875
@@ -30,7 +31,7 @@ export default (
         rightIds: rightIds,
         leftIds: leftIds,
         currNode: root,
-        idx: 0,
+        idx: idx ?? 0,
         direction,
         newNode: newNode,
         targetId: sourceNode.id

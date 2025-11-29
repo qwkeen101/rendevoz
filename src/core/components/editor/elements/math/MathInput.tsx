@@ -1,6 +1,4 @@
-import { Content, Icon } from '@/components'
-import AutosizeTextarea from '@/components/custom/input/AutoSizeTextArea'
-import { ClassName } from 'rendevoz'
+import { Content, Icon, AutosizeTextarea } from '@/components'
 import { memo, useEffect, useRef } from 'react'
 import isHotkey from 'is-hotkey'
 import { KEY } from '@/consts'

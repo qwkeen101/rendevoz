@@ -1,645 +1,193 @@
-import { FC, memo, RefObject, useEffect, useLayoutEffect, useRef } from 'react'
+import { FC, memo, useRef } from 'react'
 import { useIsomorphicLayoutEffect } from 'react-use'
-import { TextContent, TextStyle } from 'pdfjs-dist/types/src/display/api'
 import { PageViewport, PDFPageProxy } from 'pdfjs-dist'
-import { getNearestDistanceBetweenPointAndRect, getTextRect, getWordRect, isInBounds, isInRect } from '../utils/text'
-import { useMousePositionWithRef } from '@/hooks/utils/useMousePositionRef'
-import { useMemoizedFn, useUnMount, useUpdateEffect } from '@/hooks'
-import { ITextLayerInstance, PageFunctionRef, TextContentBound, TextItem, TextRect, Point } from '~/typings'
-import useSelectingText from '../hooks/useIsSelectingText'
-import { Rect } from '@/types'
-import usePdfjs from '@/hooks/utils/usePdfjs'
-import { deleteTextContent, getTextContent, PAGE_INDEX_TO_PAGE_FUNCTION, PAGE_INDEX_TO_TEXT_LAYER, PDF_IS_SELECTING } from '../weakMaps'
-import { CanvasOriginFillRect } from './CanvasLayer'
+import { rotateBox } from '../utils/text'
+import { useMemoizedFn } from '@/hooks'
+import { TextContentBound, SelectedTextEvent, TextItemChar } from '~/typings'
 import usePDFInstance from '@/core/components/pdf/hooks/usePDFInstance'
-import highlightTextBoundText from '@/core/components/pdf/core/utils/highlightTextBoundText'
-
+import getSearchedTextChars from '@/core/components/pdf/core/utils/getSearchedTextChars'
+import { normalizeChars } from '@/core/components/pdf/core/utils/search'
+import TextRenderTask from './TextRenderTask'
+import useTextLayerPointerMethods from '@/core/components/pdf/core/layers/useTextLayerPointerMethods'
+import { waitFor } from '@/utils'
 interface TextLayerProps {
-  page: PDFPageProxy
   pageIndex: number
   scale: number
   rotation: number
   width: number
   height: number
   viewport: PageViewport
-  pageFunctionRef: RefObject<PageFunctionRef>
   transformScale?: number
+  onTextSelected?: (e: SelectedTextEvent) => void
+  onClearTextSelect: VoidFunction
+  page: PDFPageProxy
 }
 
 const DEFAULT_DISTANCE_TOLERANCE = 6
 const DEFAULT_HIGHLIGHT_COLOR = 'rgba(39, 158, 255)'
-const DEFAULT_SELECT_COLOR = 'rgba(39, 158, 255)'
-const DEFAULT_EMPHASIS_COLOR = '#D20062'
-const TextLayer: FC<TextLayerProps> = ({ scale, rotation, width, height, pageIndex, viewport, pageFunctionRef, transformScale = 1 }) => {
+
+const TextLayer: FC<TextLayerProps> = ({
+  scale,
+  rotation,
+  onClearTextSelect,
+  onTextSelected,
+  width,
+  height,
+  pageIndex,
+  viewport,
+  transformScale = 1,
+  page
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const renderTaskRef = useRef<TextLayerRenderTask>()
-  const tempTextCanvasCtx = document.createElement('canvas').getContext('2d', { alpha: false })
+  const renderTaskRef = useRef<TextRenderTask>()
   const textContentBounds = useRef<TextContentBound[]>([])
-  const rectsRef = useRef<Rect[]>([])
-  const mousePos = useRef<Point | null>(null)
-  const mousePosRef = useMousePositionWithRef(canvasRef)
-  const selectedTextRef = useRef('')
-  const [globalSelectingText, setGlobalSelectingText] = useSelectingText()
   const distanceToleranceAfterScale = Math.min(16, DEFAULT_DISTANCE_TOLERANCE * scale)
   const instance = usePDFInstance()
-  const highlightText = useMemoizedFn(async (text, index) => {
+  const highlightText = useMemoizedFn(async (text: string, index = 0, paintRed = true) => {
     const ctx = canvasRef.current?.getContext('2d')
     if (!ctx) return
     await buildText()
-    emptyTextLayer()
-    const allItems = textContentBounds.current.filter(i => i.str.includes(text))
-    const all = allItems
-      .map(i => {
-        const rect = highlightTextBoundText(text, i, viewport, ctx)
-        if (rect) {
-          return rect
-        }
-      })
+    emptyAllPagesTextSelect()
+    const lowerText = text.toLowerCase()
+    const allChars = textContentBounds.current
+      .map(i => i.textItem.chars?.map((c, index) => (c ? { ...c, bound: i, index } : undefined)))
       .flat()
-      .filter(Boolean)
-    all.forEach((i, idx) => {
+      .filter(i => i)
+    const rects = getSearchedTextChars(allChars, lowerText, viewport, ctx)
+    rects.forEach((i, idx) => {
       if (i) {
         if (index === idx) {
-          instance.navigateOps?.jumpToPage(pageIndex, 'center', i.top)
+          const box = i[0]
+          const containerOffset = (instance.virtualizer?.scrollElement?.clientHeight ?? 0) / 2
+          if (box.offset) {
+            const rotated = rotateBox({
+              x: box.left,
+              y: box.top,
+              width: box.width,
+              height: box.height,
+              offset: box.offset
+            })
+            instance.navigateOps?.jumpToPage(pageIndex, 'start', rotated.y - containerOffset)
+          } else {
+            instance.navigateOps?.jumpToPage(pageIndex, 'start', i[0].top - containerOffset)
+          }
         }
-        paint(
-          {
-            x: i.left,
-            y: i.top,
-            width: i.width,
-            height: i.height
-          },
-          idx === index ? DEFAULT_EMPHASIS_COLOR : DEFAULT_HIGHLIGHT_COLOR
-        )
+        i.forEach(rect => {
+          if (paintRed) {
+            if (idx === index) {
+              paint(
+                {
+                  x: rect.left,
+                  y: rect.top,
+                  width: rect.width,
+                  height: rect.height,
+                  offset: rect.offset
+                },
+                DEFAULT_HIGHLIGHT_COLOR
+              )
+            }
+          } else {
+            paint(
+              {
+                x: rect.left,
+                y: rect.top,
+                width: rect.width,
+                offset: rect.offset,
+                height: rect.height
+              },
+              DEFAULT_HIGHLIGHT_COLOR
+            )
+          }
+        })
       }
     })
   })
-  useLayoutEffect(() => {
-    instance.values.INDEX_TO_TEXT_LAYER[pageIndex] = {
-      highlightText,
-      clear: () => {
-        emptyTextLayer()
-      }
-    }
-    return () => {
-      delete instance.values.INDEX_TO_TEXT_LAYER[pageIndex]
-    }
-  })
-
-  const mouseEventHandler = useMemoizedFn(async (e: MouseEvent) => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const type = e.type as 'mousedown' | 'mouseup' | 'mousemove' | 'dblclick' | 'mouseenter' | 'mouseleave'
-    if (type === 'mousedown') {
-      mousePos.current = null
-    }
-    const { elX: unTrX, elY: unTrY } = mousePosRef.current
-    const elX = unTrX / transformScale
-    const elY = unTrY / transformScale
-
-    if (type === 'mousedown') {
-      if (e.button !== 0) return
-      if (isInTextBound({ x: elX, y: elY }, distanceToleranceAfterScale)) {
-        mousePos.current = {
-          x: elX,
-          y: elY
-        }
-        PDF_IS_SELECTING.set(instance, true)
-      }
-      if (rectsRef.current.length != 0) {
-        PDF_IS_SELECTING.set(instance, false)
-        pageFunctionRef.current?.onTextSelectEnd?.()
-      }
-      setGlobalSelectingText({
-        ...globalSelectingText,
-        emptyAll: globalSelectingText.emptyAll + 1
-      })
-    }
-    if (type === 'dblclick') {
-      if (isInTextBound({ x: elX, y: elY }, distanceToleranceAfterScale)) {
-        mousePos.current = {
-          x: elX,
-          y: elY
-        }
-        chooseWord(mousePos.current, distanceToleranceAfterScale)
-        pageFunctionRef.current?.onTextSelected?.({
-          selectedText: selectedTextRef.current,
-          rects: rectsRef.current.map(rect => {
-            return {
-              left: rect.left,
-              top: rect.top,
-              percentageLeft: rect.left / width,
-              percentageTop: rect.top / height,
-              width: rect.width,
-              height: rect.height,
-              percentageHeight: rect.height / height,
-              percentageWidth: rect.width / width
-            }
-          })
-        })
-        mousePos.current = null
-      }
-    }
-    if (type === 'mousemove' || type === 'mouseup') {
-      await buildText()
-      if (!mousePos.current || type === 'mouseup') {
-        if (isInTextBound({ x: elX, y: elY }, 6)) {
-          canvas.style.cursor = 'text'
-        } else {
-          canvas.style.cursor = 'default'
-        }
-      }
-      if (type === 'mousemove' && mousePos.current) {
-        const isSelecting = PDF_IS_SELECTING.get(instance)
-        if (isSelecting) {
-          selectText(
-            mousePos.current,
-            {
-              x: mousePosRef.current.elX / transformScale,
-              y: mousePosRef.current.elY / transformScale
-            },
-            distanceToleranceAfterScale
-          )
-          if (!globalSelectingText.isSelecting) {
-            instance.values.selectedText = {}
-            setGlobalSelectingText({
-              ...globalSelectingText,
-              startPage: pageIndex,
-              endPage: pageIndex,
-              isSelecting: true,
-              startPagePoint: mousePos.current
-            })
-          }
-        }
-      }
-      if (type === 'mouseup' && mousePos.current && rectsRef.current.length !== 0) {
-        const selectedText = Object.values(instance.values.selectedText).join(' ')
-        pageFunctionRef.current?.onTextSelected?.({
-          selectedText,
-          rects: rectsRef.current.map(rect => {
-            return {
-              left: rect.left,
-              top: rect.top,
-              percentageLeft: rect.left / width,
-              percentageTop: rect.top / height,
-              width: rect.width,
-              height: rect.height,
-              percentageHeight: rect.height / height,
-              percentageWidth: rect.width / width
-            }
-          })
-        })
-        setGlobalSelectingText({
-          ...globalSelectingText,
-          isSelecting: false,
-          emptyAll: globalSelectingText.emptyAll
-        })
-      }
-      if (type === 'mouseup') {
-        mousePos.current = null
-        PDF_IS_SELECTING.set(instance, false)
-        PAGE_INDEX_TO_PAGE_FUNCTION.get(instance)?.forEach(v => {
-          v.current.clearAllSelect?.()
-        })
-      }
-    }
-    if (type === 'mouseleave' && mousePos.current) {
-      const { elX, elY, elH, elW } = mousePosRef.current
-      // leave from bottom
-
-      if (Math.abs(elH - elY) < 10) {
-        if (globalSelectingText.startPage === pageIndex) {
-          selectText(mousePos.current, { x: width, y: height }, distanceToleranceAfterScale)
-        }
-        if (globalSelectingText.startPage! > pageIndex) {
-          emptyTextLayer()
-        }
-      }
-      // leave from top
-      if (Math.abs(elY) < 10) {
-        if (globalSelectingText.startPage === pageIndex) {
-          selectText(mousePos.current, { x: 0, y: 0 }, distanceToleranceAfterScale)
-        }
-        if (globalSelectingText.startPage! < pageIndex) {
-          emptyTextLayer()
-        }
-      }
+  const highlightSentence = useMemoizedFn(async idx => {
+    await buildText()
+    emptyAllPagesTextSelect()
+    const bound = textContentBounds.current[idx]
+    if (bound) {
+      instance.navigateOps?.jumpToPage(pageIndex, 'center', bound.offset.top)
+      const i = bound.offset
+      paint(
+        {
+          x: i.left,
+          y: i.top,
+          width: i.size[0],
+          height: i.size[1]
+        },
+        DEFAULT_HIGHLIGHT_COLOR
+      )
     }
   })
-  useUpdateEffect(() => {
-    emptyTextLayer()
-  }, [globalSelectingText.emptyAll])
-  useEffect(() => {
-    if (globalSelectingText.isSelecting) {
-      // cross page select
-      if (globalSelectingText.startPage !== undefined && globalSelectingText.startPage !== pageIndex) {
-        // from top to bottom
-        if (globalSelectingText.startPage < pageIndex) {
-          mousePos.current = {
-            x: 0,
-            y: 0
-          }
-        }
-        // from bottom to top
-        if (globalSelectingText.startPage > pageIndex) {
-          mousePos.current = {
-            x: width,
-            y: height
-          }
-        }
-      }
-    } else {
-      mousePos.current = null
-    }
-  }, [globalSelectingText.isSelecting])
-  const emptyTextLayer = () => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
-    rectsRef.current = []
+  const { paint, emptyAllPagesTextSelect, emptyTextLayer } = useTextLayerPointerMethods({
+    ref: canvasRef,
+    textContentBounds: textContentBounds,
+    viewport,
+    width,
+    height,
+    pageIndex,
+    onTextSelected,
+    distanceTolerance: distanceToleranceAfterScale,
+    transformScale
+  })
+  instance.values.INDEX_TO_PAGE_LAYER[pageIndex] = {
+    ...instance.values.INDEX_TO_PAGE_LAYER[pageIndex],
+    clearTextSelect: () => {
+      emptyTextLayer()
+      onClearTextSelect()
+    },
+    highlightText,
+    highlightSentence
   }
-
-  if (pageFunctionRef.current) {
-    pageFunctionRef.current.clearTextLayer = emptyTextLayer
-    pageFunctionRef.current.clearAllSelect = () => {
-      mousePos.current = null
-    }
-    pageFunctionRef.current.getTextLayerCanvas = () => canvasRef.current
-  }
-  useUnMount(() => {
-    if (instance) {
-      deleteTextContent(instance, pageIndex)
-      pageFunctionRef.current = undefined
-      renderTaskRef.current = undefined
-    }
-  })
-
   useIsomorphicLayoutEffect(() => {
-    renderTaskRef.current = new TextLayerRenderTask(viewport)
     textContentBounds.current = []
-    console.log('rerender text layer' + pageIndex)
-    const globalMouseUpHandler = () => {
-      setTimeout(() => {
-        mousePos.current = null
-      })
-    }
-    if (instance) {
-      emptyTextLayer()
-      const canvas = canvasRef.current
-      if (canvas) {
-        canvas.addEventListener('mousedown', mouseEventHandler)
-        canvas.addEventListener('mousemove', mouseEventHandler)
-        canvas.addEventListener('mouseup', mouseEventHandler)
-        canvas.addEventListener('dblclick', mouseEventHandler)
-        canvas.addEventListener('mouseleave', mouseEventHandler)
-        canvas.addEventListener('mouseenter', mouseEventHandler)
-        document.addEventListener('pointerup', globalMouseUpHandler)
-        canvas.width = width
-        canvas.height = height
-        const instance = {
-          paint,
-          paintBounds: (bounds, color) => {
-            emptyTextLayer()
-            const rects = bounds.map(i => ({
-              x: i.offset.left,
-              y: i.offset.top,
-              width: i.offset.size[0],
-              height: i.offset.size[1],
-              offset: i.offset.trans
-            })) as TextRect[]
-            const opti = optimizeRects(rects)
-            opti.forEach(i => {
-              paint(i, color || DEFAULT_SELECT_COLOR)
-            })
-          },
-          paintItems: (items, color) => {
-            const textBounds = textContentBounds.current
-            const bounds = items
-              .map(i => {
-                return textBounds.find(o => o.str === i.str)
-              })
-              .filter(i => i !== undefined) as TextContentBound[]
-            instance.paintBounds(bounds, color)
-          }
-        } as ITextLayerInstance
-      }
+    renderTaskRef.current = undefined
+    buildText()
+    emptyTextLayer()
+    const canvas = canvasRef.current
+    if (canvas) {
+      canvas.width = width
+      canvas.height = height
     }
     return () => {
-      document.removeEventListener('pointerup', globalMouseUpHandler)
       emptyTextLayer()
       const canvas = canvasRef.current
       if (canvas) {
-        canvas.removeEventListener('mousedown', mouseEventHandler)
-        canvas.removeEventListener('mousemove', mouseEventHandler)
-        canvas.removeEventListener('mouseup', mouseEventHandler)
-        canvas.removeEventListener('dblclick', mouseEventHandler)
-        canvas.removeEventListener('mouseleave', mouseEventHandler)
-        canvas.removeEventListener('mouseenter', mouseEventHandler)
         canvas.width = 0
         canvas.height = 0
-      }
-      if (instance) {
-        PAGE_INDEX_TO_TEXT_LAYER.get(instance)?.delete(pageIndex)
       }
     }
   }, [viewport.height, viewport.width, viewport.scale])
   const buildText = async () => {
     if (instance && !textContentBounds.current.length) {
-      await new Promise(res => {
-        const task = renderTaskRef.current
-        if (!task) return
-        getTextContent(instance, pageIndex).then(item => {
+      await new Promise((res, rej) => {
+        if (renderTaskRef.current) {
+          waitFor(
+            () => textContentBounds.current.length > 0,
+            () => res(null),
+            {
+              onTimeout: () => rej(),
+              requestAnimationFrame: true
+            }
+          )
+          return
+        }
+        const task = new TextRenderTask(viewport)
+        renderTaskRef.current = task
+        page.getTextContent().then(item => {
           if (item) {
-            const { textContentBounds: bounds } = task.render(item?.textContent)
+            const { textContentBounds: bounds } = task.render(item)
             textContentBounds.current = bounds
+            res(null)
+            return
           }
-          res(null)
+          rej()
         })
       })
     }
   }
-  const isInTextBound = (point: Point, distanceTolerance: number) => {
-    return !textContentBounds.current.length || point.x < 0 || point.y < 0
-      ? false
-      : isInBounds(textContentBounds.current, point, distanceTolerance)
-  }
-  const selectText = (startPoint: Point, endPoint: Point, distanceTolerance: number, shouldEmpty = true, color = DEFAULT_SELECT_COLOR) => {
-    // out of bounds
-    if (startPoint.x < 0 || startPoint.y < 0) return
-    // no text / too short select distance
-    if (!textContentBounds.current.length || (Math.abs(startPoint.x - endPoint.x) <= 1 && Math.abs(startPoint.y - endPoint.y) <= 1)) return
-
-    let startIndex = -1
-    let distance = Infinity
-    startPoint.x === 0 && startPoint.y === 0 && (startIndex = 0)
-
-    const length = textContentBounds.current.length
-    startPoint.x === width && startPoint.y === height && (startIndex = length)
-    const indexes = {
-      // tolerance index
-      insideBoundIndex: -1,
-      possibleIndex: -1,
-      // no tolerance index
-      insideIndex: -1
-    }
-    for (let i = 0; i < length; i += 1) {
-      const textContent = textContentBounds.current[i]
-      // get start index
-      if (isInRect(textContent.offset, startPoint, distanceTolerance)) {
-        const distanceBetweenPointAndRect = getNearestDistanceBetweenPointAndRect(textContent.offset, startPoint)
-        if (distanceBetweenPointAndRect < distance) {
-          startIndex = i
-          distance = distanceBetweenPointAndRect
-        }
-      }
-      if (Math.abs(endPoint.x - viewport.width) <= 1 && Math.abs(endPoint.y - viewport.height) <= 1) {
-        indexes.possibleIndex = textContentBounds.current.length - 1
-      } else if (isInRect(textContent.offset, endPoint, distanceTolerance)) {
-        if (isInRect(textContent.offset, endPoint, 0)) {
-          indexes.insideIndex = i
-        } else {
-          indexes.insideIndex !== 0 && (indexes.insideBoundIndex = i)
-        }
-      }
-    }
-    let endIndex =
-      indexes.insideIndex >= 0 ? indexes.insideIndex : indexes.insideBoundIndex >= 0 ? indexes.insideBoundIndex : indexes.possibleIndex
-    endPoint.x === 0 && endPoint.y === 0 && (endIndex = 0)
-    endPoint.x === width && endPoint.y === height && (endIndex = length)
-    startIndex >= 0 &&
-      endIndex >= 0 &&
-      (startIndex <= endIndex
-        ? paintRects(textContentBounds.current.slice(startIndex, endIndex + 1), startPoint, endPoint, shouldEmpty, color)
-        : paintRects(textContentBounds.current.slice(endIndex, startIndex + 1), endPoint, startPoint, shouldEmpty, color))
-  }
-  const paint = (coordinate: { x: any; y: any; width: any; height: any; offset?: any }, color: string, opacity = 0.4) => {
-    CanvasRenderingContext2D.prototype.fillRect = CanvasOriginFillRect
-
-    const { x, y, width, height, offset } = coordinate
-    let rect
-    const canvas = canvasRef.current
-    const ctx = canvas?.getContext('2d')
-    if (!canvas || !ctx) return
-    ctx.fillStyle = color
-    ctx.globalAlpha = opacity
-    if (offset && offset.angle) {
-      ctx.fillRect(x + offset.dx, y + offset.dy, width, height)
-      rect = {
-        left: x + offset.dx,
-        top: y + offset.dy,
-        width,
-        height
-      }
-    } else {
-      ctx.fillRect(x, y, width, height)
-      canvas.getContext('2d')
-      rect = {
-        left: x,
-        top: y,
-        width,
-        height
-      }
-    }
-    rectsRef.current.push(rect)
-  }
-  const optimizeRects = (rects: TextRect[]) => {
-    const optimized: any[] = []
-    rects.reduce((prev, curr) => {
-      const last = prev[prev.length - 1]
-      last && last.y === curr.y ? ((last.width = curr.x - last.x + curr.width), (last.text += curr.text)) : prev.push(curr)
-      return prev
-    }, optimized)
-    optimized.forEach(op => {
-      ;['x', 'y', 'width', 'height'].forEach(i => {
-        op[i] = Math.round(op[i] * 100) / 100
-      })
-    })
-    return optimized
-  }
-  const chooseWord = (point: Point, distanceTolerance: number) => {
-    if (!textContentBounds.current.length || point.x < 0 || point.y < 0 || !canvasRef.current) return
-    let targetIndex = -1,
-      distance = Infinity
-    for (let i = 0; i < textContentBounds.current.length; i += 1) {
-      const textContentBound = textContentBounds.current[i]
-      if (isInRect(textContentBound.offset, point, distanceTolerance)) {
-        const distanceBetweenPointAndRect = getNearestDistanceBetweenPointAndRect(textContentBound.offset, point)
-        distanceBetweenPointAndRect < distance && ((targetIndex = i), (distance = distanceBetweenPointAndRect))
-      }
-    }
-    const targetBound = textContentBounds.current[targetIndex]
-    if (!targetBound) return
-    const wordRect = getWordRect(targetBound, point, viewport)
-    if (!wordRect) return
-    selectedTextRef.current = wordRect?.text
-    instance.values.selectedText = {}
-    instance.values.selectedText[pageIndex] = wordRect?.text
-    paint(
-      {
-        x: wordRect?.x,
-        y: wordRect?.y,
-        width: wordRect?.width,
-        height: wordRect?.height,
-        offset: wordRect?.offset
-      },
-      DEFAULT_SELECT_COLOR
-    )
-  }
-  const paintRects = useMemoizedFn((bounds: TextContentBound[], p1: Point, p2: Point, shouldEmpty = true, color = DEFAULT_SELECT_COLOR) => {
-    if (!bounds.length) return
-    if (shouldEmpty) {
-      emptyTextLayer()
-    }
-    const isEnd = (point: Point) => {
-      return point.x === viewport.width && point.y === viewport.height
-    }
-    const rects: TextRect[] = []
-    if (bounds.length === 1) {
-      rects.push(getTextRect(bounds[0], tempTextCanvasCtx, [p1, p2], viewport))
-    } else {
-      const first = bounds.shift()
-      const end = bounds.pop()
-      rects.push(getTextRect(first, tempTextCanvasCtx, [p1, null], viewport))
-      bounds.forEach((be: any) => {
-        rects.push(getTextRect(be, tempTextCanvasCtx, [null, null], viewport))
-      })
-      rects.push(getTextRect(end, tempTextCanvasCtx, [null, isEnd(p2) ? null : p2], viewport))
-    }
-    const optimizedRects = optimizeRects(rects)
-    selectedTextRef.current = ''
-    optimizedRects.forEach(rect => {
-      const text = rect.text as string
-      selectedTextRef.current += text + ''
-    })
-    instance.values.selectedText[pageIndex] = selectedTextRef.current
-    optimizedRects.forEach(rect => {
-      paint(rect, color)
-    })
-  })
-
   return <canvas ref={canvasRef} style={{ position: 'absolute' }} role="text-layer" />
 }
-class TextLayerRenderTask {
-  private viewport
-  private ctx
-  constructor(viewport: PageViewport) {
-    this.viewport = viewport
-    const canvas = document.createElement('canvas')
-    canvas.height = canvas.width = DEFAULT_FONT_SIZE
-    this.ctx = canvas.getContext('2d', { alpha: false })
-  }
-  isTextItem = (ti: any) => {
-    return ti?.['str'] !== undefined
-  }
-  buildTextBounds = (
-    textContent: TextContent
-  ): {
-    textContentBounds: TextContentBound[]
-  } => {
-    const textContentBounds: TextContentBound[] = []
-    textContent.items.forEach(item => {
-      if (this.isTextItem(item)) {
-        const i = item as TextItem
-        const bound = getTextBound(this.viewport, i, this.ctx, textContent.styles)
-        if (bound) {
-          textContentBounds.push({ ...bound, str: i.str, textItem: i })
-        }
-      }
-    })
-    return { textContentBounds }
-  }
-  render = (textContent: TextContent) => {
-    return this.buildTextBounds(textContent)
-  }
-}
 
-type styleType = {
-  [x: string]: TextStyle
-}
-function getTextBound(viewport: PageViewport, textItem: TextItem, ctx: CanvasRenderingContext2D, styles: styleType) {
-  const textItemTransform = usePdfjs().Util.transform(viewport.transform, textItem.transform)
-  let angle = Math.atan2(textItemTransform[1], textItemTransform[0])
-  const style = styles[textItem.fontName]
-  if (style.vertical) {
-    angle += Math.PI / 2
-  }
-  const height = Math.hypot(textItemTransform[2], textItemTransform[3])
-  const ascentFontSize = height * getAscent(style.fontFamily, ctx)
-  let left, top
-  if (
-    (angle === 0
-      ? ((left = textItemTransform[4]), (top = textItemTransform[5] - ascentFontSize))
-      : ((left = textItemTransform[4] + ascentFontSize * Math.sin(angle)), (top = textItemTransform[5] - ascentFontSize * Math.cos(angle))),
-    textItem.str !== '')
-  ) {
-    let angleCos = 1,
-      angleSin = 0
-    angle !== 0 && ((angleCos = Math.cos(angle)), (angleSin = Math.sin(angle)))
-    const afterScaleWidth = (style.vertical ? textItem.height : textItem.width) * viewport.scale
-    let trans, bound
-    angle !== 0
-      ? ((trans = [angleCos, angleSin, -angleSin, angleCos, left, top]),
-        (bound = usePdfjs().Util.getAxialAlignedBoundingBox([0, 0, afterScaleWidth, height], trans)))
-      : (bound = [left, top, left + afterScaleWidth, top + height])
-    return {
-      offset: {
-        left: bound[0],
-        top: bound[1],
-        right: bound[2],
-        bottom: bound[3],
-        size: [afterScaleWidth, height],
-        trans,
-        angle
-      },
-      style: { ...style, fontSize: height }
-    }
-  }
-  return null
-}
-const ascentCache = new Map()
-const DEFAULT_FONT_SIZE = 30
-
-const DEFAULT_FONT_ASCENT = 0.8
-function getAscent(fontFamily: string, ctx: CanvasRenderingContext2D) {
-  const ascent = ascentCache.get(fontFamily)
-  if (ascent) {
-    return ascent
-  }
-  ctx.save()
-  ctx.font = `${DEFAULT_FONT_SIZE}px ${fontFamily}`
-  const blankWidth = ctx.measureText('')
-  let fontAscent = blankWidth.fontBoundingBoxAscent
-  let fontDescent = Math.abs(blankWidth.fontBoundingBoxDescent)
-  if (fontAscent) {
-    ctx.restore()
-    const realAscent = fontAscent / (fontAscent + fontDescent)
-    ascentCache.set(fontFamily, realAscent)
-    return realAscent
-  }
-  ctx.strokeStyle = 'red'
-  ctx.clearRect(0, 0, DEFAULT_FONT_SIZE, DEFAULT_FONT_SIZE)
-  ctx.strokeText('g', 0, 0)
-  let imgData = ctx.getImageData(0, 0, DEFAULT_FONT_SIZE, DEFAULT_FONT_SIZE).data
-  fontDescent = 0
-  for (let i = imgData.length - 4; i >= 0; i -= 4) {
-    if (imgData[i] > 0) {
-      fontDescent = Math.ceil(i / 4 / DEFAULT_FONT_SIZE)
-      break
-    }
-  }
-  ctx.clearRect(0, 0, DEFAULT_FONT_SIZE, DEFAULT_FONT_SIZE)
-  ctx.strokeText('A', 0, DEFAULT_FONT_SIZE)
-  imgData = ctx.getImageData(0, 0, DEFAULT_FONT_SIZE, DEFAULT_FONT_SIZE).data
-  fontAscent = 0
-  for (let i = 0; i < imgData.length; i += 4) {
-    if (imgData[i] > 0) {
-      fontAscent = DEFAULT_FONT_SIZE - Math.floor(i / 4 / DEFAULT_FONT_SIZE)
-      break
-    }
-  }
-  if ((ctx.restore(), fontAscent)) {
-    const _realAscent = fontAscent / (fontAscent + fontDescent)
-    return ascentCache.set(fontFamily, _realAscent), DEFAULT_FONT_ASCENT
-  }
-}
 export default memo(TextLayer)

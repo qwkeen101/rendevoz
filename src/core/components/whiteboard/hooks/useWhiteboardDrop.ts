@@ -1,176 +1,131 @@
-import { GlobalInstance, useMemoizedFn } from '@/hooks'
-import { globalStore, MetaStore, ObjectStore } from '@/api/stores'
-import { saveFileLocally } from '@/utils/file'
+import { useMemoizedFn } from '@/hooks'
+import { MetaStore, ObjectStore } from '@/api/stores'
 import Id from '@/utils/id'
 import { useEffect } from 'react'
 import { IWhiteboardNode } from '~/typings/data'
-import { useFlow } from '../StateHooks'
 import { isPointerOnContainer } from '../utils'
-import { metaObjectsAtom } from '@/api/stores/meta/meta.store'
-import { useEventHandler } from '@/events'
-import { Rendevoz } from '@/core/rendevoz'
-import { getSetting } from '@/core'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks/useWhiteboardInstance'
 import { pushNumberIntoUnrepeatableArray, waitFor } from '@/utils'
 import toast from 'react-hot-toast'
+import { IGlobalEvents } from '~/typings'
+import trans from '@/consts/trans'
+import { t } from 'i18next'
 
 const useWhiteboardDrop = (whiteboardId: number) => {
   const whiteboardMeta = MetaStore.useObjectToMetaValue(whiteboardId)
-  const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
-  const handler = useEventHandler('global')
-  const flow = useFlow()
   const instance = useWhiteboardInstance()
-  handler.on('globalDragPointerUp', async data => {
-    const { draggingElement, event } = data
+  const handleGlobalDragEnd = async (data: IGlobalEvents['dragEnd']) => {
+    const { event } = data
+    if (event instanceof DragEvent) {
+      dropHandler(event)
+      return
+    }
+    const draggingElement = Global.values.draggingDetails
+    if (!draggingElement) return
     if (instance.getOutestContainerNode?.()?.contains(event.target)) {
       event.preventDefault()
-      if (draggingElement.type === 'metaObjects') {
-        instance.emit?.({
-          type: 'drop',
-          itemType: 'object',
-          metaId: draggingElement.ids
+      if (draggingElement.type === 'noteBlock') {
+        insertNodeAtPointer(event, {
+          type: 'text',
+          content: draggingElement.elements.map(i => ({ ...i, id: Id.getId() })),
+          id: Id.getId()
         })
-        insertMetasAtPointer(event, draggingElement.ids)
+        return
       }
-      GlobalInstance.metaOps?.addDraggableAsMeta(draggingElement).then(m => {
+      Global.metaOps.addDraggableAsMeta(draggingElement).then(m => {
+        const ids = m.map(i => i.id)
         instance.emit?.({
           type: 'drop',
           itemType: 'object',
-          metaId: m.id
+          metaId: ids
         })
-        insertMetaObjectAtPointer(event, m.id, false)
+        insertMetasAtPointer(event, ids)
         if (whiteboardMeta) {
-          MetaStore.addMetaLink({ sourceId: m.id, targetId: whiteboardMeta.id })
+          ids.forEach(id => {
+            MetaStore.addMetaLink({ sourceId: id, targetId: whiteboardMeta.id })
+          })
         }
       })
     }
-  })
-
+  }
   const dropHandler = useMemoizedFn(async (e: DragEvent) => {
     if (!isPointerOnContainer(e, instance)) return
     e.preventDefault()
     const { clientX, clientY } = e
     const transformedXY = instance.coordOps?.transformWindowPositionToPosition({ x: clientX, y: clientY })
-    if (e.dataTransfer?.items.length) {
-      let whiteboardNode: Partial<IWhiteboardNode> = {}
-      const fileItem = Array.from(e.dataTransfer.items).find(i => i.kind === 'file')
-      if (fileItem) {
-        const file = fileItem.getAsFile()
-        if (!file) return
-        const setting = getSetting()
-        if (setting.whiteboard.dropFileAutoObject) {
-          try {
-            const result = await Rendevoz.Utils.Meta.normalizeLocalFileToMeta(file)
-            if (result.meta) {
-              const meta = (
-                await ObjectStore(result.meta.type).addOneWithMeta({ ...result.object }, { currentMeta: { ...result.meta }, silent: true })
-              ).meta
-              setTimeout(() => {
-                insertMetaObjectAtPointer(e, meta.id, false)
-              }, 100)
-              return
-            }
-          } catch (e) {
-            toast.error(Rendevoz.Consts.Errors.NotSupportedFile())
-            console.error(e)
-          }
-        }
-        const { name, path } = file
-        const res = await saveFileLocally(path, name)
-        if (file.type.startsWith('image')) {
-          whiteboardNode = {
-            type: 'image',
-            imageUrl: res,
-            name
-          }
-        }
-        if (file.type.startsWith('audio')) {
-          whiteboardNode = {
-            type: 'audio',
-            audioUrl: res,
-            name
-          }
-        }
-        if (file.type.startsWith('video')) {
-          whiteboardNode = {
-            type: 'video',
-            videoUrl: res,
-            name
-          }
-        }
-      } else {
-        const plainText = e.dataTransfer?.getData('text/plain')
-        if (plainText) {
-          try {
-            new URL(plainText)
-          } catch (error) {
-            console.log(plainText)
-            insertNodeAtPointer(e, {
-              content: [
-                {
-                  type: 'paragraph',
-                  children: [{ text: plainText }],
-                  id: Id.getId()
+    if (!transformedXY) return
+    const normalized = await Global.utils.normalizeDragEvent(e)
+    if (normalized) {
+      switch (normalized.type) {
+        case 'files': {
+          const convertedWhiteboardNodes = (await Promise.all(
+            normalized.files
+              .map(async file => {
+                try {
+                  const result = await Global.utils.normalizeFile(file)
+                  if (result.meta) {
+                    const m = (
+                      await ObjectStore(result.meta.type).addOneWithMeta(
+                        { ...result.object },
+                        { currentMeta: { ...result.meta }, silent: true }
+                      )
+                    ).meta
+                    return {
+                      type: 'metaObject',
+                      metaObjectId: m.id
+                    } as IWhiteboardNode
+                  }
+                } catch (e) {
+                  toast.error(t(trans.Errors.NotSupportedFile))
                 }
-              ],
-              type: 'text'
-            })
-            return
-          }
+              })
+              .filter(Boolean)
+          )) as IWhiteboardNode[]
+          instance.insertNode?.(convertedWhiteboardNodes.map(i => ({ ...i, id: Id.getId(), x: transformedXY.x, y: transformedXY.y })))
+          break
         }
-        const meta = await emitter.emitWithCallback('global', {
-          type: 'globalDropNeedFurtherProcess',
-          data: {
-            dropOn: {
-              dropOn: 'whiteboard',
-              whiteboardId: flow.whiteboardId!
-            },
-            e
-          }
-        })
-        insertMetaObjectAtPointer(e, meta.id, false)
-        return
+        case 'images': {
+          instance.insertNode?.(
+            normalized.imgs.map(i => ({
+              type: 'image',
+              name: i.name,
+              imageUrl: i.path,
+              id: Id.getId(),
+              x: transformedXY.x,
+              y: transformedXY.y
+            }))
+          )
+          break
+        }
+        case 'link': {
+          instance.insertNode?.({
+            type: 'text',
+            content: [
+              {
+                type: 'paragraph',
+                children: [{ children: [{ text: normalized.url }], url: normalized.url, type: 'link', id: Id.getId() }],
+                id: Id.getId()
+              }
+            ]
+          })
+          break
+        }
+        case 'text': {
+          instance.insertNode?.({
+            type: 'text',
+            content: [
+              {
+                type: 'paragraph',
+                children: [{ text: normalized.text }],
+                id: Id.getId()
+              }
+            ]
+          })
+          break
+        }
       }
-      if (!whiteboardNode.type) return
-      whiteboardNode.x = transformedXY?.x
-      whiteboardNode.y = transformedXY?.y
-      whiteboardNode.id = Id.getId()
-      instance.insertNode?.(whiteboardNode)
     }
   })
-  const insertMetaObjectAtPointer = (e: PointerEvent, metaId: number, expanded = false) => {
-    const transformedXY = instance.coordOps?.transformWindowPositionToPosition({
-      x: e.clientX,
-      y: e.clientY
-    })
-    console.log(transformedXY)
-    const targetMeta = globalStore.get(metaObjectsAtom).get(metaId)
-    const whiteboardMeta = MetaStore.getMetaObjectByObjectId(flow.whiteboardId)
-    if (targetMeta?.type === 'syncedBlock' && whiteboardMeta) {
-      if (targetMeta.objectId) {
-        ObjectStore('syncedBlock')
-          .getOneById(targetMeta.objectId)
-          .then(o => {
-            if (o) {
-              ObjectStore('syncedBlock').updateOne({
-                id: targetMeta.objectId,
-                syncedMetaIds: pushNumberIntoUnrepeatableArray(whiteboardMeta.id, o.syncedMetaIds)
-              })
-            }
-          })
-      }
-    }
-    if (transformedXY) {
-      instance.insertNode?.({
-        x: transformedXY.x,
-        y: transformedXY.y,
-        metaObjectId: metaId,
-        type: 'metaObject',
-        name: '',
-        expanded
-      })
-    }
-  }
   const insertNodeAtPointer = (e: PointerEvent, node: Partial<IWhiteboardNode>) => {
     const transformed = instance.coordOps?.transformWindowPositionToPosition({
       x: e.clientX,
@@ -191,7 +146,7 @@ const useWhiteboardDrop = (whiteboardId: number) => {
     })
     if (!transformedXY) return
     const metaMap = MetaStore.getMetaObjectsMap()
-    const whiteboardMeta = MetaStore.getMetaObjectByObjectId(flow.whiteboardId)
+    const whiteboardMeta = instance.values.id ? MetaStore.getMetaObjectByObjectId(instance.values.id) : undefined
     if (!whiteboardMeta) return
     const nodes: Partial<IWhiteboardNode>[] = []
     metaId.forEach(id => {
@@ -246,16 +201,9 @@ const useWhiteboardDrop = (whiteboardId: number) => {
   }
   instance.insertMetasAtPointer = insertMetasAtPointer
   useEffect(() => {
-    const dragOverHandler = (e: DragEvent) => {
-      e.preventDefault()
-    }
-    emitter.addListener('global', handler)
-    flow.parentContainerEle?.addEventListener('drop', dropHandler)
-    flow.parentContainerEle?.addEventListener('dragover', dragOverHandler)
+    Global.addEventListener('dragEnd', handleGlobalDragEnd)
     return () => {
-      emitter.removeListener('global', handler)
-      flow.parentContainerEle?.removeEventListener('drop', dropHandler)
-      flow.parentContainerEle?.removeEventListener('dragover', dragOverHandler)
+      Global.removeEventListener('dragEnd', handleGlobalDragEnd)
     }
   })
 }

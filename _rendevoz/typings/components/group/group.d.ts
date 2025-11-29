@@ -135,8 +135,11 @@ export interface MetaGroup extends IBase {
   lastViewId?: number
   lastUpdated?: number
   descriptionVisible?: boolean
-  hideGroupsInside?: boolean
   hideObjectsInside?: boolean
   onlyShowCustomProperties?: boolean
   enableReview?: boolean
+  reviewCollections?: {
+    id: number
+    metas: number[]
+  }[]
 }

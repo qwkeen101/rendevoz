@@ -1,11 +1,10 @@
 // pull remote transactions and replace local
 import { syncDB } from '@/utils'
 import { IDBTransaction } from '@/api/sync/db/types'
-import { GlobalInstance, useDb } from '@/hooks'
+import { useDb } from '@/hooks'
 import { needSkipKeys } from '@/api/sync/db/commitDbActions'
 import refreshLocalFromDB from '@/api/stores/refreshLocalFromDB'
 import removeFromCacheAtom from '@/api/stores/removeFromCacheAtom'
-import SyncAPI from '@/api/sync'
 
 export default async (dbTransactions: IDBTransaction[]) => {
   const dbKeys = new Set<string | number>()
@@ -84,7 +83,7 @@ export default async (dbTransactions: IDBTransaction[]) => {
 }
 
 const processDeleteMeta = (id: number) => {
-  GlobalInstance.layoutOps?.closeObjectTab(id)
+  Global.layoutOps?.closeObjectTab(id)
 }
 const shouldProcessLabels = (value: any) => {
   if (typeof value === 'object') {

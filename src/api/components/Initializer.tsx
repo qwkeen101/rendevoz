@@ -1,29 +1,21 @@
 import { atom } from 'jotai'
 import { useEffect } from 'react'
-import { toast } from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
-import { loginStateAtom } from '@/components/Login'
 import { GlobalSetting } from '@/core'
-import { useGlobalAtom } from '@/hooks'
 import { ipcInstance } from '@/electron'
-import LoginService, { userAtom } from '../services/login.service'
+import LoginService from '../services/login.service'
 import { globalStore } from '@/api/stores'
-import { Rendevoz } from '@/core/rendevoz'
 import '@/api/lifycycle/close/close'
 import initializeApp from '@/api/lifycycle/startup/initialize'
 import GlobalStates from '@/api/global/states'
+import UserService from '@/api/services/user.service'
 export const updateInfoAtom = atom<
   | {
       version: string
     }
   | undefined
 >(undefined)
-let autoLogined = false
 
 const Initializer = () => {
-  const [loginState] = useGlobalAtom(loginStateAtom)
-  const [, setUser] = useGlobalAtom(userAtom)
-  const { t } = useTranslation()
   const [setting] = GlobalSetting.useSetting()
   useEffect(() => {
     if (setting.general.userFilePath) {
@@ -47,46 +39,23 @@ const Initializer = () => {
   useEffect(() => {
     ipcInstance.on('openObject', data => {
       if (data.url) {
-        Rendevoz.Actions.Open.openRendevozLink(data.url)
+        Global.layoutOps?.openDeekLink(data.url)
       }
     })
-    if (loginState.autoLogin && loginState.password && !autoLogined) {
-      const email = localStorage.getItem('email')
-      if (email) {
-        // try login first, otherwise switch to offline mode
-        LoginService.login(email, loginState.password)
-          .then(data => {
-            LoginService.getUserDetails(email, data.data.token)
-              .then(user => {
-                localStorage.setItem('email', user.data.email || '')
-                setUser({ ...user.data, password: loginState.password })
-              })
-              .catch(e => toast.error(`${t('login.failed to get user details')}!`))
-              .finally(() => {
-                if (loginState.autoLogin) {
-                  autoLogined = true
-                }
-              })
-          })
-          .catch(() => {
-            LoginService.loadUserDetailsFromCache()
-              .then(i => {
-                if (i) {
-                  setUser(i)
-                }
-              })
-              .catch(e => {
-                toast.error(`${t('login.failed to login')}!`)
-              })
-          })
-      } else {
+    // try login first, otherwise switch to offline mode
+    LoginService.loginWithRefreshToken()
+      .then(() => {
+        UserService.getUserDetails().finally(() => {
+          UserService.autoLogined = true
+        })
+      })
+      .catch(() => {
         LoginService.loadUserDetailsFromCache().then(i => {
           if (i) {
-            setUser(i)
+            UserService.updateLocalUserDetails(i)
           }
         })
-      }
-    }
+      })
 
     initializeApp().then(() => {
       setTimeout(() => {

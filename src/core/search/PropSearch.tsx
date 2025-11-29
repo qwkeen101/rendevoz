@@ -1,13 +1,9 @@
 import { ISearchResult } from '@/api/textSearch/types'
 import { useEffect, useState, memo } from 'react'
-import { Content, Icon, VirtualList } from '@/components'
-import { ClassName } from 'rendevoz'
+import { Icon, VirtualList } from '@/components'
 import SearchItemRenderer from '@/core/search/SearchItemRenderer'
-import { Colors } from '@/consts'
-import { GlobalInstance } from '@/hooks'
 import { globalStore, MetaStore, ObjectStore } from '@/api/stores'
-import Tag from '@/core/object/ObjectTag'
-import { Rendevoz } from '@/core/rendevoz'
+import classnames from 'classnames'
 
 export default memo(({ results, onNumChange }: { results: ISearchResult; onNumChange?: (n: number) => void }) => {
   const [propState, setPropState] = useState<Record<number, ISearchResult>>({})
@@ -43,7 +39,7 @@ export default memo(({ results, onNumChange }: { results: ISearchResult; onNumCh
   return (
     <VirtualList
       estimateSize={100}
-      items={Object.entries(propState)}
+      items={Object.entries(propState).sort((a, b) => b[1].length - a[1].length)}
       renderItem={i => <ParentChildItem items={i[1]} propId={Number(i[0])} key={i[0]} />}
       style={{
         padding: '6px',
@@ -59,18 +55,13 @@ const ParentChildItem = ({ items, propId }: { items: ISearchResult; propId: numb
   const prop = ObjectStore('metaProp').useValue(propId)
   if (items.length === 0 || !prop) return null
   return (
-    <Content flex column>
-      <Content
-        className={ClassName.flatButton()}
-        style={{
-          padding: 4
-        }}
-        flex
+    <div className={'flex flex-col'}>
+      <div
+        className={'button flex items-center font-medium !p-1.5'}
         onClick={() => {
-          Rendevoz.Actions.Open.Group.openPropGroup(propId)
-          GlobalInstance.searchOps?.closeSearchPanel()
+          Global.layoutOps?.openPage('propGroup', { id: propId })
+          Global.searchOps?.closeSearchPanel()
         }}
-        alignItems={'center'}
       >
         <Icon
           size={18}
@@ -78,56 +69,34 @@ const ParentChildItem = ({ items, propId }: { items: ISearchResult; propId: numb
             setToggled(!toggled)
             e.stopPropagation()
           }}
-          style={{
-            marginRight: 6,
-            transition: 'all 0.16s ease',
-            transform: toggled ? undefined : 'rotate(90deg)',
-            padding: 3
-          }}
+          className={classnames('p-1 mr-2 transition-transform', !toggled && 'rotate-90')}
           name={'park-right'}
         />
-        <Content flex alignItems={'center'} className={'font-size-14'} gap={8}>
+        <div className={'flex items-center gap-2'}>
           <Icon name={prop?.icon} />
           <div>{prop.name}</div>
-        </Content>
-        <div style={{ marginLeft: 4 }} className={'transparent-font font-size-12'}>
-          ({items.length})
         </div>
-      </Content>
+        <div className={'px-1 ml-2 text-sm rounded bg-border'}>{items.length}</div>
+      </div>
       {!toggled && (
-        <Content
-          flex
-          column
-          style={{
-            paddingLeft: '30px'
-          }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              left: 15,
-              top: 0,
-              height: '100%',
-              width: 1,
-              background: Colors.Background.Border
-            }}
-          ></div>
+        <div className={'flex flex-col relative pl-8'}>
+          <div className={'absolute top-0 h-full border-right -translate-x-[1px] left-5'}></div>
           {items.map(i => (
             <SearchItemRenderer
               style={{
                 background: undefined
               }}
               onClick={() => {
-                GlobalInstance.searchOps?.closeSearchPanel()
-                GlobalInstance.layoutOps?.openObject(i.metaId)
+                Global.searchOps?.closeSearchPanel()
+                Global.layoutOps?.openObject(i.metaId)
               }}
               selected={false}
               hit={i}
               key={i.id}
             />
           ))}
-        </Content>
+        </div>
       )}
-    </Content>
+    </div>
   )
 }

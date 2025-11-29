@@ -1,106 +1,72 @@
-import { AvaliableGlobalDraggingElements, GlobalDragOverlayInstance, useGlobalIsDragging } from '@/core'
-import { GlobalEventHandler } from '@/events/globalEvent'
-import { useMemoizedFn, useRafFn } from '@/hooks'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { Editor, Path, Transforms } from 'slate'
+import { useGlobalIsDragging } from '@/core'
+import { useAutoScroll, useMemoizedFn, useRafFn } from '@/hooks'
+import { useEffect, useRef } from 'react'
+import { Path, Transforms } from 'slate'
 import useDragIndicator from '../../components/useDragIndicator'
-import ScrollManager from '../../ScrollManager'
 import { ReactEditor } from '../../slate-react'
-import { BuiltInDraggableElement, CustomEditor, CustomElement, IEditorInstance } from '~/typings'
+import { BuiltInDraggableElement, CustomEditor, CustomElement, IEditorInstance, IGlobalEvents } from '~/typings'
 import moveMultiElements from '../../utils/moveMultiElements'
-import { ID_TO_ELEMENTS_MAP, ID_TO_PATH_MAP } from '../../weakMaps'
 import useIsDragging from '../useIsDragging'
-import { Rendevoz } from '@/core/rendevoz'
 import useEditorInstance from '@/core/components/editor/hooks/useEditorInstance'
 import useDropToNoteElements from '@/core/components/editor/hooks/drag/useDropToNoteElements'
 import useMoveElements from '@/core/components/editor/hooks/drag/useMoveElements'
 import useReadOnlyEditor from '@/core/components/editor/hooks/useReadOnly'
-import { MetaStore } from '@/api/stores'
 import dragInColumnLike from '@/core/components/editor/hooks/drag/indicator/dragInColumnLike'
 
-export const normalizeEditorDragBlocksToGlobalDraggingDetails = async (instance: IEditorInstance) => {
-  let normalizedGlobalDraggingDetails: Partial<AvaliableGlobalDraggingElements> = {}
-  const editor = instance.getSlateEditor?.()
-  if (!editor) return
+export const normalizeEditorDragBlocksToGlobalDraggingDetails = async (
+  instance: IEditorInstance
+): Promise<
+  BuiltInDraggableElement & {
+    type: 'noteBlock'
+  }
+> => {
+  let normalizedGlobalDraggingDetails: Partial<BuiltInDraggableElement> & { type: 'noteBlock' } = {
+    type: 'noteBlock'
+  }
+  const editor = instance.getSlateEditor()
+  const dragElement = editor.currentEnterElement
   const selected = instance.values.selectedBlocks
-  console.log(editor.on({ type: 'blockDragged' }))
+  const elements = (selected.size > 0 ? Array.from(selected.values().map(i => i.element)) : [dragElement]).filter(i => i) as CustomElement[]
+  if (!elements.length || !dragElement) return Promise.reject()
+  const extended = (instance.toggleOps?.extendElements(elements) || []).filter(i => !['column', 'columnList'].includes(i[0].type))
+  // sort by paths
+  extended.sort((b, a) => {
+    return Path.isBefore(b[1], a[1]) ? -1 : 1
+  })
   normalizedGlobalDraggingDetails = {
     type: 'noteBlock',
-    element: editor.currentEnterElement,
-    blockId: editor.currentEnterElement?.id,
+    element: dragElement,
+    elements: extended.map(i => i[0]),
+    blockId: dragElement.id,
     editorId: editor.id,
-    path: ReactEditor.findPath(editor, editor.currentEnterElement),
-    ...(await editor.on({ type: 'blockDragged' }))
+    path: ReactEditor.findPath(editor, dragElement)
   }
-  console.log(normalizedGlobalDraggingDetails)
-  if (editor.currentEnterElement?.type === 'metaObject' && !(selected.size > 0)) {
-    normalizedGlobalDraggingDetails.metaId = editor.currentEnterElement.originId
+  if (dragElement.type === 'metaObject' && !(selected.size > 0)) {
+    normalizedGlobalDraggingDetails.metaId = dragElement.originId
   }
-  if (selected.size > 0) {
-    const elements = Array.from(selected.values())
-      .map(i => i.element)
-      .filter(i => i.type !== 'column' && i.type !== 'columnList')
-    elements.sort((b, a) => {
-      const bPath = instance.getElementPathById?.(b.id) ?? []
-      const aPath = instance.getElementPathById?.(a.id) ?? []
-      return Path.isBefore(bPath, aPath) ? -1 : 1
-    })
-    console.log(elements)
-    normalizedGlobalDraggingDetails.elements = elements
-  }
-  if (normalizedGlobalDraggingDetails.elements?.length) {
-    normalizedGlobalDraggingDetails.elements.forEach((i, idx) => {
-      if (i.type.startsWith('heading')) {
-        const normalized = normalizeHeadingToHeadingWithHidenElements(i, editor)
-        // remove first
-        normalized.shift()
-        normalizedGlobalDraggingDetails.elements.splice(idx, 0, ...normalized)
-      }
-    })
-  } else {
-    // right now we need to get elements hided by this heading and move together
-    if (normalizedGlobalDraggingDetails.element?.type.startsWith('heading')) {
-      const headingEle = editor.currentEnterElement
-      if (headingEle) {
-        const elements = normalizeHeadingToHeadingWithHidenElements(headingEle, editor)
-        normalizedGlobalDraggingDetails.elements = elements.filter(i => i !== undefined) as CustomElement[]
-      }
-    }
-  }
-
   return normalizedGlobalDraggingDetails
 }
-
-const normalizeHeadingToHeadingWithHidenElements = (element: CustomElement, editor: CustomEditor) => {
-  const parentEle = Editor.node(editor, Path.parent(ID_TO_PATH_MAP.get(editor)?.get(element?.id)))[0] as CustomElement
-  let headingEleIdx = parentEle.children.findIndex(i => i === element) + 1
-  const elements = [element]
-  while (parentEle.children[headingEleIdx] && parentEle.children[headingEleIdx].hide === true) {
-    elements.push(parentEle.children[headingEleIdx])
-    headingEleIdx += 1
-  }
-  return elements
-}
-
 const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null) => {
   const [isDraggingInsideEditor, setIsDragging] = useIsDragging()
   const [globalIsDragging] = useGlobalIsDragging()
-  const emitter = Rendevoz.Events.Emit.GlobalEventEmitter
   const readonly = useReadOnlyEditor()
-  const scrollManager = useMemo(() => new ScrollManager(), [])
   const preventLastMouseMoveRef = useRef(false)
   const { renderIndicator, indicatorManager } = useDragIndicator()
   const instance = useEditorInstance()
+  const startScroll = useAutoScroll({
+    scrollElementRef: instance.values.scrollElementRef
+  })
   const handleProcessDrop = useDropToNoteElements(instance, editor)
   const handleMoveElements = useMoveElements(instance, editor)
 
   const handleDrop = async (e: PointerEvent | DragEvent) => {
     // this process doesn't change editor's value
     const indicator = instance.values.indicator
-    const { shouldAddElements, shouldMoveElements } = await handleProcessDrop(e)
-    console.log(shouldAddElements, shouldMoveElements)
+    const res = await handleProcessDrop(e)
+    if (!res) return
+    const { shouldAddElements, shouldMoveElements } = res
     // avoid adding elements and moving elements at the same time
-    if (shouldMoveElements.length && shouldAddElements.length) return
+    if (shouldMoveElements?.length && shouldAddElements.length) return
     // this process change layout
     if (shouldAddElements.length && indicator) {
       const length = editor.children.length
@@ -117,31 +83,33 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
         isNested: !!indicator.isNested
       })
     }
-    if (shouldMoveElements.length) {
+    if (shouldMoveElements?.length) {
       handleMoveElements(shouldMoveElements)
     }
   }
 
-  const mouseMoveHandler = useMemoizedFn((e: MouseEvent) => {
+  const mouseMoveHandler = useMemoizedFn((e: PointerEvent | DragEvent) => {
+    if (!scrollElement) return
+    if (!(e.target instanceof HTMLElement) || !scrollElement.contains(e.target)) {
+      if (isDraggingInsideEditor) {
+        setIsDragging(false)
+      }
+      return
+    }
     if (readonly) return
     if (!isDraggingInsideEditor) {
       setIsDragging(true)
     }
-
-    if (scrollManager.isScrolling()) {
-      scrollManager.endScroll()
-    }
-    if (scrollManager.canScroll()) {
-      scrollManager.startScroll(e)
-    }
+    startScroll.run(e as PointerEvent)
     const editorNode = ReactEditor.toDOMNode(editor, editor)
     const indicator = dragInColumnLike(e, editorNode, { instance, editor })
-    console.log(indicator)
     const targetPath = indicator?.path
+    console.log(targetPath)
     if (!targetPath) return
 
-    const draggingElement = Rendevoz.Actions.State.Drag.getDraggingDetails() as BuiltInDraggableElement
-    if (draggingElement.type === 'noteBlock') {
+    const draggingElement = Global.values.draggingDetails
+    if (!draggingElement && !(e && e instanceof DragEvent)) return
+    if (draggingElement?.type === 'noteBlock') {
       if (editor.id === draggingElement.editorId) {
         const element = draggingElement.element
         const path = instance.getElementPathById?.(element.id)
@@ -154,12 +122,6 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
       if (draggingElement.element.type === 'synced' && e.target instanceof HTMLElement && e.target.closest('[data-spec-type="synced"]')) {
         return
       }
-      if (draggingElement.element.type === 'metaElement') {
-        const type = MetaStore.getMetaObjectsMap().get(draggingElement.metaId)?.type
-        if (type === 'syncedBlock' && e.target instanceof HTMLElement && e.target.closest('[data-spec-type="synced"]')) {
-          return
-        }
-      }
     }
     if (indicator) {
       if (indicator.element && indicator.path) {
@@ -167,8 +129,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
       }
 
       if (indicator.direction) {
-        const indicatorPosition = ID_TO_ELEMENTS_MAP.get(editor)?.get(indicator.id)?.getIndicatorPosition(indicator.direction)
-
+        const indicatorPosition = instance.blockOps?.getBlockFuncs(indicator.id)?.getIndicatorPosition(indicator.direction)
         if (indicatorPosition && !preventLastMouseMoveRef.current) {
           indicatorManager.setIndicatorState({
             ...indicatorPosition,
@@ -180,65 +141,38 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
     }
   })
 
-  const dropHandler = useMemoizedFn((e: DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-  })
   const throttledMouseMove = useRafFn(mouseMoveHandler)
-  const realMouseMoveHandler = useCallback((e: MouseEvent) => {
-    e.preventDefault()
-    throttledMouseMove(e)
-  }, [])
+  const handleDragMove = (e: IGlobalEvents['dragMove']) => {
+    const { event } = e
+    throttledMouseMove(event)
+  }
   useEffect(() => {
     if (scrollElement) {
-      scrollManager.registerScrollElement(scrollElement)
-      scrollElement.addEventListener('pointerleave', pointerLeaveAndEnterHandler)
-      scrollElement.addEventListener('pointerenter', pointerLeaveAndEnterHandler)
-      scrollElement.addEventListener('drop', dropHandler, true)
-      scrollElement.addEventListener('dragover', realMouseMoveHandler, true)
+      Global.addEventListener('dragEnd', handleDragEnd)
+      Global.addEventListener('dragMove', handleDragMove)
       return () => {
-        scrollElement.removeEventListener('pointerleave', pointerLeaveAndEnterHandler)
-        scrollElement.removeEventListener('pointerenter', pointerLeaveAndEnterHandler)
-        scrollElement.removeEventListener('drag', dropHandler, true)
-        scrollElement.removeEventListener('dragover', realMouseMoveHandler, true)
+        Global.removeEventListener('dragMove', handleDragMove)
+        Global.removeEventListener('dragEnd', handleDragEnd)
       }
     }
   })
-  const pointerLeaveAndEnterHandler = useMemoizedFn((e: PointerEvent) => {
-    if (e.type === 'pointerleave') {
-      setIsDragging(false)
-    }
-    if (e.type === 'pointerenter') {
-      if (globalIsDragging) {
-        setIsDragging(true)
-      }
-    }
-  })
+
   useEffect(() => {
-    if (readonly) return
-    if (isDraggingInsideEditor && editor.currentEnterElement) {
-      if (GlobalDragOverlayInstance.draggingDetails === undefined) {
-        const normalized = normalizeEditorDragBlocksToGlobalDraggingDetails(instance)
-        Rendevoz.Actions.State.Drag.setDraggingDetails(normalized)
-      }
-    } else {
+    if (!isDraggingInsideEditor) {
       indicatorManager.setIndicatorState(s => ({ ...s, visible: false }))
     }
   }, [isDraggingInsideEditor])
 
   // listen to global dragging state change
   useEffect(() => {
-    if (readonly) return
     if (globalIsDragging) {
+      if (readonly) return
       preventLastMouseMoveRef.current = false
-      scrollElement?.addEventListener('pointermove', realMouseMoveHandler)
       const textBox = scrollElement?.querySelector('[role="textbox"]') as HTMLElement | undefined
       if (textBox) {
         textBox.style.pointerEvents = 'none'
       }
-
       return () => {
-        scrollElement?.removeEventListener('pointermove', realMouseMoveHandler)
         if (textBox) {
           textBox.style.pointerEvents = 'auto'
         }
@@ -247,23 +181,15 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
       setIsDragging(false)
     }
   }, [globalIsDragging])
-
-  useEffect(() => {
-    const globalEventHandler = new GlobalEventHandler()
-    globalEventHandler.on('globalDragPointerUp', ({ event }) => {
-      preventLastMouseMoveRef.current = true
-      if (scrollElement?.contains(event.target as HTMLElement)) {
-        handleDrop(event)
-      }
-      scrollManager.endScroll()
-      setIsDragging(false)
-      indicatorManager.setIndicatorState(s => ({ ...s, visible: false }))
-    })
-    emitter.addListener('global', globalEventHandler)
-    return () => {
-      emitter.removeListener('global', globalEventHandler)
+  const handleDragEnd = ({ event }: IGlobalEvents['dragEnd']) => {
+    preventLastMouseMoveRef.current = true
+    if (scrollElement?.contains(event.target as HTMLElement)) {
+      handleDrop(event)
     }
-  }, [scrollElement])
+    startScroll.end()
+    setIsDragging(false)
+    indicatorManager.setIndicatorState(s => ({ ...s, visible: false }))
+  }
 
   return { renderIndicator }
 }

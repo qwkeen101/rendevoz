@@ -34,7 +34,12 @@ export default memo(
           {...rest}
           flex
           column
-          style={{ height: enableVirtualizer ? 0 : 'auto', flex: 1, padding: '0px var(--page-padding-right) 0px var(--page-padding-right)', width: '100%' }}
+          style={{
+            height: enableVirtualizer ? 0 : 'auto',
+            flex: 1,
+            padding: '0px var(--page-padding-right) 0px var(--page-padding-right)',
+            width: '100%'
+          }}
         >
           <Content style={{ width: '100%', height: 'auto', marginBottom: bodyVisible ? 40 : undefined }}>
             <GroupTableHeader visible={bodyVisible} grouperId={grouperId} extraNode={extraHeaderNode} key={currentViewId} />

@@ -1,4 +1,3 @@
-import { md5 } from 'js-md5'
 import Id from '@/utils/id'
 import FileSystem from '@/api/fileSystem/index'
 
@@ -56,7 +55,7 @@ export const saveImageLocally = async (
     data = await fetch(imgData).then(i => i.blob())
   }
   if (data) {
-    const path = await fs.writeFile(data, `/imgs/${imgName ?? md5(await data.text())}.png`)
+    const path = await fs.writeFile(data, `/imgs/${imgName ?? (await calculateImageHash(data))}.png`)
     return path
   }
   throw new Error('Failed to save image!')
@@ -71,4 +70,23 @@ export const saveFileLocally = async (filePath: string, fileName: string): Promi
   } else {
     return `file://${filePath}`
   }
+}
+
+export const saveFile = async (file: File, type: 'files' | 'imgs' = 'files') => {
+  const path = FileSystem.getPathForFile(file)
+  if (path) {
+    return await FileSystem.copyFile(path, file.name)
+  } else {
+    return await FileSystem.fs.writeFile(file, `/${type}/${file.name}`)
+  }
+}
+
+async function calculateImageHash(file: Blob) {
+  const arrayBuffer = await file.arrayBuffer()
+  const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer)
+
+  // 将哈希转换为十六进制字符串并截取前 32 个字符（128 位）
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  return hashHex.slice(0, 32)
 }

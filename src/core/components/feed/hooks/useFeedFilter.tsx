@@ -1,85 +1,89 @@
-import { useEffect, useRef, useState } from 'react'
-import { Icon } from '@/components'
-import { Icons, KEY } from '@/consts'
-import isHotkey from 'is-hotkey'
 import { ObjectStore } from '@/api/stores'
 import { IFeedItem } from '~/typings'
-import fuzzysort from 'fuzzysort'
-import { atom } from 'jotai'
-import { useAtomValue, useSetAtom } from 'jotai/react'
+import useFeedData from '@/core/components/feed/hooks/useFeedData'
+import { useTranslation } from 'react-i18next'
+import trans from '@/consts/trans'
+import useItemsFilter from '@/core/components/common/useItemsFilter'
+import { noRepeatArray } from '@/utils'
+import { orderBy } from 'lodash'
 
-const FeedSearchCache = atom<
-  Record<
-    number | string,
-    {
-      query?: string
-      result?: number[]
-      visible?: boolean
-    }
-  >
->({})
+export default (
+  currItems: number[] | undefined,
+  id: number | string | undefined,
+  filters?: Partial<{
+    read: boolean
+    unread: boolean
+    isObject: boolean
+    hasHighlight: boolean
+  }>,
+  feedGroup?: boolean
+) => {
+  const { t } = useTranslation()
 
-export default (currItems: number[], id: number | string | undefined) => {
-  const state = useAtomValue(FeedSearchCache)[id] || {
-    visible: false
-  }
-  const setCacheState = useSetAtom(FeedSearchCache)
-  const setState = (updater: (curr: typeof state) => typeof state) => {
-    if (!id) return
-    setCacheState(s => ({ ...s, [id]: updater(s[id] ?? state) }))
-  }
-  const calculateSearch = async () => {
-    if (!state.query) {
-      setState(s => ({ ...s, result: undefined }))
-      return
-    }
-    const items = (await Promise.all(currItems.map(async i => await ObjectStore('feed').fetchOneById(i)))).filter(i => i) as IFeedItem[]
-    const res = fuzzysort.go(state.query, items, {
-      key: 'title',
-      threshold: -100000
-    })
-    setState(s => ({ ...s, result: res.map(i => i.obj.id) }))
-  }
-  const inputRef = useRef<HTMLInputElement>(null)
-  useEffect(() => {
-    if (state.visible) {
-      inputRef.current?.focus()
-    }
-  }, [state.visible])
-  const renderSearch = () => {
-    return (
-      <div className={'flex items-center gap-3'}>
-        <Icon
-          name={Icons.Search}
-          className={'!rounded-full !p-1.5 icon-18 !h-auto button border'}
-          onClick={() => {
-            setState(s => ({ ...s, visible: !s.visible }))
-          }}
-        />
-        <input
-          ref={inputRef}
-          className={'border-bottom'}
-          value={state.query}
-          onKeyDown={e => {
-            if (isHotkey(KEY.Enter, e)) {
-              calculateSearch()
+  const history = useFeedData().history
+  const { renderFilter, renderSearch, renderGrouperChooser, finalResults, state, setState } = useItemsFilter<IFeedItem>(currItems, id, {
+    itemType: 'feed',
+    getURL: i => i.link,
+    filters,
+    searchKeys: ['title', 'description'],
+    customFilters: [
+      // @ts-ignore
+      filters?.unread
+        ? {
+            text: t(trans.Feed.Unread),
+            value: 'unread'
+          }
+        : undefined,
+      // @ts-ignore
+      filters?.read
+        ? {
+            text: t(trans.Feed.Read),
+            value: 'read'
+          }
+        : undefined
+    ].filter(i => i),
+    getCustomFilter: async (v, items) => {
+      const historySet = new Set(history.map(i => i.id))
+      switch (v) {
+        case 'read':
+          return items.filter(i => i && historySet.has(i.id)).map(i => i.id)
+        case 'unread':
+          return items.filter(i => i && !historySet.has(i.id)).map(i => i.id)
+      }
+      return []
+    },
+    grouperOpts: {
+      getCustomGrouper: async (v, feeds: IFeedItem[]) => {
+        if (v === 'feed') {
+          const collectionIdToFeeds = new Map<number, number[]>()
+          feeds.forEach(v => {
+            if (v.collectionId) {
+              collectionIdToFeeds.set(v.collectionId, [...(collectionIdToFeeds.get(v.collectionId) ?? []), v.id])
             }
-            if (isHotkey(KEY.Escape, e)) {
-              setState(s => ({ ...s, query: undefined, visible: false }))
-            }
-          }}
-          onChange={e => setState(s => ({ ...s, query: e.target.value }))}
-          style={{
-            width: state.visible ? 160 : 0,
-            transition: 'width 0.3s ease'
-          }}
-        />
-      </div>
-    )
-  }
+          })
+          const allCollections = await ObjectStore('feedCollection').getMultipleByIds(noRepeatArray(feeds.map(i => i.collectionId)))
+          const sorted = orderBy(allCollections, i => collectionIdToFeeds.get(i.id)?.length ?? 0, 'desc')
+          return sorted.map(i => ({
+            name: i.name ?? 'Unnamed feed',
+            count: collectionIdToFeeds.get(i.id)?.length ?? 0,
+            id: i.id,
+            items: collectionIdToFeeds.get(i.id) ?? []
+          }))
+        }
+        return []
+      },
+      groupers: [['none', t(trans.NoGrouping)], feedGroup !== false ? ['feed', t(trans.Feed.feed)] : undefined, ['tag', t('general.Tag')]]
+        .filter(i => i)
+        .map(i => ({ value: i[0], text: i[1] }))
+    }
+  })
+
   return {
     state,
     setState,
-    renderSearch
+    finalResults,
+    renderFilter,
+    renderSearch,
+    renderGrouperChooser
   }
 }

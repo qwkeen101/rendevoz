@@ -12,7 +12,7 @@ const PDFDisplayer = memo(({ id }: { id: number }) => {
       state={{
         enableSearch: false
       }}
-      styles={{ paddingTop: 0, paddingEnd: 0, pagePadding: 0, pageGap: 5, pageBoxShadowName: 'var(--border-box-shadow)' }}
+      styles={{ pageGap: 5, minPagePadding: 8, pageBoxShadowName: 'var(--border-box-shadow)' }}
       autoWidth={true}
     />
   )

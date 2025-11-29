@@ -38,7 +38,7 @@ export interface TextItem {
   chars: Array<TextItemChar>
 }
 export interface TextContentBound {
-  offset: { left: number; right: number; top: number; bottom: number; size: number[]; trans: TextContentTrans }
+  offset: { left: number; right: number; top: number; bottom: number; size: number[]; trans: TextContentTrans; angle?: number }
   textItem: TextItem
   style: CSSProperties
   str: string

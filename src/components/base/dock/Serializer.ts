@@ -131,7 +131,6 @@ export function loadLayoutData(
       panelData = { id, size, activeId, tabs }
     }
     if (savedPanel.id === maximePlaceHolderId) {
-      panelData.panelLock = {}
     } else if (afterPanelLoaded) {
       afterPanelLoaded(savedPanel, panelData)
     } else if (cache.panels.has(id)) {

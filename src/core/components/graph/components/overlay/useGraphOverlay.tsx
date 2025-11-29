@@ -1,22 +1,18 @@
 import { Noop } from '@/common/types'
-import { Dispatch, ReactNode, SetStateAction, useEffect, useMemo, useState } from 'react'
+import { Dispatch, ReactNode, SetStateAction, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePopover, WithBorder } from '@/components'
 import { GraphEdge } from '../../types/edge'
 import EdgeAttributeCard from './EdgeAttributeCard'
-import NodePopover from './NodePopover'
 import { LeftTopPosition, Size } from '~/typings'
-import { Zindexes } from '@/consts'
-import PathIndicator from './PathIndicator'
 import useGraph from '../../hooks/useGraph'
+import { ObjectActionMenu } from '@/core'
+import GraphContentDisplayer from '@/core/components/graph/components/overlay/GraphContentDisplayer'
 
-interface GraphOverlayProps {
-  onAddLink: Noop
-  onDeleteNode: Noop
-  onShowMore: Noop
-}
 export type GraphOverlayManager = {
   open: VoidFunction
+  isOpen: () => boolean
+  getState: () => OverlayState
   setContent: (content: OverlayState['content']) => void
   setPosition: (position: LeftTopPosition) => void
   setSize: (size: Size) => void
@@ -36,37 +32,33 @@ type OverlayState = {
   | {
       content?: 'pathIndicator'
     }
+  | {
+      content?: 'contentDisplayer'
+      metaId: number
+    }
 )
 const useGraphOverlay = () => {
   const [overlayState, setOverlayState] = useState<OverlayState>({
     visible: false
   })
-  const [enableTransition, setEnableTransition] = useState(false)
   const renderContent = () => {
     switch (overlayState.content) {
       case 'edgeToolbar':
         return <EdgeAttributeCard currentEdge={overlayState.object} />
+      case 'contentDisplayer':
+        return <GraphContentDisplayer id={overlayState.metaId} />
       case 'nodePopover':
         return (
-          <NodePopover
-            metaId={overlayState.metaId}
-            nodeId={overlayState.nodeId}
-            onClose={() => {
-              setOverlayState(s => ({ ...s, visible: false }))
+          <ObjectActionMenu
+            visibility={{
+              showGraph: true
             }}
+            metaObjectId={overlayState.metaId}
+            onClose={() => setOverlayState(s => ({ ...s, visible: false }))}
           />
         )
-      case 'pathIndicator':
-        return <PathIndicator />
     }
   }
-  useEffect(() => {
-    if (!overlayState.visible) {
-      setEnableTransition(false)
-    } else {
-      setTimeout(() => setEnableTransition(true), 300)
-    }
-  }, [overlayState.position, overlayState.visible])
 
   const graph = useGraph()
   const positions = () => {
@@ -86,15 +78,21 @@ const useGraphOverlay = () => {
           align={overlayState.content === 'nodePopover' ? 'start' : 'center'}
           reposition
           keepAlign={true}
-          withClickCover
+          withClickCover={overlayState.content !== 'contentDisplayer'}
           position={{
             left: overlayState.position?.left,
             top: overlayState.position?.top
           }}
+          boundaryInset={40}
           positions={positions()}
           visible={!!overlayState.visible}
           onVisiblityChange={v => setOverlayState(s => ({ ...s, visible: v }))}
-          content={<WithBorder style={{ maxWidth: 400 }}>{renderContent()}</WithBorder>}
+          content={
+            <WithBorder className={'!rounded-lg'} style={{ maxWidth: 400 }}>
+              {renderContent()}
+            </WithBorder>
+          }
+          padding={overlayState.content === 'contentDisplayer' ? -2 : 0}
           onClickOutside={e => {
             if (graph?.currentClickNodeId) return
             if (graph?.currentClickEdgeId) return
@@ -115,7 +113,9 @@ const useGraphOverlay = () => {
       setOverlayState,
       setPosition: p => setOverlayState(s => ({ ...s, position: p })),
       close: () => setOverlayState(s => ({ ...s, visible: false })),
-      setContent: c => setOverlayState(s => ({ ...s, content: c }))
+      setContent: c => setOverlayState(s => ({ ...s, content: c })),
+      isOpen: () => overlayState.visible,
+      getState: () => overlayState
     }),
     [overlayState, setOverlayState]
   )

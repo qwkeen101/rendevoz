@@ -1,55 +1,45 @@
-import { AnimatePopover, Button, Toolbar, WithBorder, Content } from '@/components'
-import IconWithPopover from '@/components/base/IconWithPopover'
+import { AnimatePopover, WithBorder, ToolbarV2, Menu } from '@/components'
 import { CSSProperties, FC, useEffect, useMemo, useRef, useState, memo } from 'react'
 import { Editor, Element, Range, Transforms } from 'slate'
-import { ReactEditor, useSlate } from '../slate-react'
+import { ReactEditor, useSlateStatic } from '../slate-react'
 import { useTranslation } from 'react-i18next'
 import { createPortal } from 'react-dom'
-import { motion } from 'framer-motion'
-import BlockColorPicker from './BlockColorPicker'
 import { useMemoizedFn, useSelectAtomValue } from '@/hooks'
-import { css } from '@emotion/css'
-import { Colors, KEY, Zindexes } from '@/consts'
+import { Colors, Icons, KEY, Zindexes } from '@/consts'
 import useEditorInstance from '../hooks/useEditorInstance'
 import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
 import useReadOnlyEditor from '@/core/components/editor/hooks/useReadOnly'
-import { EditorTypeToElementMap } from '@/core/components/editor/maps'
-import { Icon } from '@/components'
 import isHotkey from 'is-hotkey'
 import { XYPosition } from '~/typings'
-import { ObjectStore } from '@/api/stores'
+import { MetaStore, ObjectStore } from '@/api/stores'
+import useExplainButton from '@/core/global/components/useExplainButton'
+import trans from '@/consts/trans'
+import toast from 'react-hot-toast'
+import { getSelectionDirection } from '@/utils/text'
+import classnames from 'classnames'
+import { useUpdate } from 'react-use'
+import EditorColorPicker from '@/core/components/editor/components/EditorColorPicker'
+import LabelNoteRenderer from '@/core/object/renderer/LabelNoteRenderer'
+import MetaTagPicker from '@/core/object/MetaTagPicker'
+import EditorElements from '@/core/components/editor/elements/EditorElements'
 
-type EditorToolbarEvents =
-  | {
-      action: 'redo' | 'undo' | 'bold' | 'italic' | 'underline' | 'code' | 'link' | 'highlight' | 'cloze'
-      currentToolbarPosition?: XYPosition
-      toolbarDirection: 'top' | 'bottom'
-    }
-  | {
-      action: 'changeFontSize'
-      fontSize: string
-    }
-  | {
-      action: 'changeFontColor'
-      fontColor: string
-    }
-  | {
-      action: 'changeBackgroundColor'
-      backgroundColor: string
-    }
+type EditorToolbarEvents = {
+  action: 'link' | 'highlight'
+  currentToolbarPosition?: XYPosition
+  toolbarDirection: 'top' | 'bottom'
+}
 interface EditorToolbarProps {
   scrollElement?: HTMLElement | null
   on: (event: EditorToolbarEvents) => Promise<any>
   style?: CSSProperties
 }
-const MAX_TOLERANT_DISTANCE = 15
-const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => {
-  const showToolbar = useSelectAtomValue(EditorStateAtom, s => s.layout?.showToolbar)
+
+const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, on }) => {
   const toolbarOptions = useSelectAtomValue(EditorStateAtom, s => s.toolbar)
   const enableShowRightBar = useSelectAtomValue(EditorStateAtom, s => s.layout?.showHeader) !== false
   const { t } = useTranslation()
-  const editor = useSlate()
-  const toolbarRef = useRef<HTMLElement>(null)
+  const editor = useSlateStatic()
+  const toolbarRef = useRef<HTMLDivElement>(null)
   const position = 'float'
   const labelType = useSelectAtomValue(EditorStateAtom, s => s.labelType)
   const [floatPosition, setFloatPosition] = useState<{
@@ -59,37 +49,48 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
     visible: boolean
     highlightId?: number
   }>()
+  const labelMeta = MetaStore.useObjectToMetaValue(floatPosition?.highlightId)
   const isOnHighlightRef = useRef(false)
   const instance = useEditorInstance()
   const readOnly = useReadOnlyEditor()
   const disableShowHighlight = useMemo(() => {
-    return (
-      Array.from(
-        Editor.nodes(editor, {
-          match: n => {
-            return 'type' in n && n.type === 'synced'
-          }
-        })
-      ).length > 0
-    )
+    if (floatPosition?.visible) {
+      return (
+        Array.from(
+          Editor.nodes(editor, {
+            match: n => {
+              return 'type' in n && n.type === 'synced'
+            }
+          })
+        ).length > 0
+      )
+    }
+    return false
   }, [floatPosition?.visible])
   const [currentElementName, setCurrentElementName] = useState<string>()
   useEffect(() => {
     if (floatPosition?.visible) {
       const currentElement = instance.blockOps?.getAboveBlock()
-      const name = EditorTypeToElementMap.get(currentElement?.[0]?.type)?.name
-      setCurrentElementName(name)
+      if (currentElement) {
+        const type = currentElement?.[0]?.type
+        if (type) {
+          const name = EditorElements[type]?.name
+          setCurrentElementName(name)
+        }
+      }
     }
   }, [floatPosition?.visible])
-  editor.onHighlightClick = id => {
+  editor.onHighlightClick = (id, e) => {
+    if (floatPosition?.visible && id === floatPosition?.highlightId) {
+      setFloatPosition(s => ({ ...s, visible: false }))
+      return
+    }
     const location = instance.getHighlightLocation?.(id)
     if (location?.length) {
       const first = location[0]
       const last = location[location.length - 1]
       const range = Editor.range(editor, first[1], last[1])
       if (range) {
-        const domRange = ReactEditor.toDOMNode(editor, first[0])
-        const bounding = domRange.getBoundingClientRect()
         Transforms.setSelection(editor, range)
         editor.selection = range
         selectionRef.current = range
@@ -98,8 +99,8 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
           () => {
             setFloatPosition({
               direction: 'top',
-              left: bounding.left + bounding.width / 2,
-              top: bounding.top,
+              left: e.clientX,
+              top: e.clientY,
               visible: true,
               highlightId: id
             })
@@ -116,10 +117,9 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
       const { selection } = editor
       const windowSelection = window.getSelection()
       const target = e.target
-      const container = ReactEditor.toDOMNode(editor, editor).closest('[role="editor-container"]')
+      const container = instance.values.scrollElementRef.current
       if (!container?.contains(target)) return
       if (
-        showToolbar !== false &&
         selection &&
         windowSelection &&
         windowSelection.toString().trim().length > 0 &&
@@ -127,28 +127,17 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
         !toolbarRef.current?.contains(e.target)
       ) {
         const targetNode = Editor.node(editor, selection)
-        console.log(targetNode)
         if (Editor.isVoid(editor, targetNode)) {
           return
         }
-        const anchorPoint = ReactEditor.toDOMPoint(editor, selection.anchor)
-        const focusPoint = ReactEditor.toDOMPoint(editor, selection.focus)
-        const anchorRange = document.createRange()
-        anchorRange.setStart(anchorPoint[0], anchorPoint[1])
-        anchorRange.setEnd(anchorPoint[0], anchorPoint[1])
-        const anchorRect = anchorRange.getBoundingClientRect()
-        const focusRange = document.createRange()
-        focusRange.setStart(focusPoint[0], focusPoint[1])
-        focusRange.setEnd(focusPoint[0], focusPoint[1])
-        const focusRect = focusRange.getBoundingClientRect()
-        let direction = 'top'
-        if (anchorRect.bottom < focusRect.bottom && Math.abs(anchorRect.bottom - focusRect.bottom) > MAX_TOLERANT_DISTANCE) {
-          direction = 'bottom'
-        }
+        const range = windowSelection.getRangeAt(0)
+        const direction = getSelectionDirection()
+        const bounding = range.getClientRects()[direction === 'down' ? range.getClientRects().length - 1 : 0]
+        if (!bounding) return
         setFloatPosition({
-          left: focusRect.left + focusRect.width / 2,
-          top: direction === 'top' ? focusRect.top : focusRect.bottom,
-          direction,
+          left: direction === 'down' ? bounding.right : bounding.left,
+          top: direction === 'down' ? bounding.bottom : bounding.top,
+          direction: direction === 'down' ? 'bottom' : 'top',
           visible: true
         })
       }
@@ -168,8 +157,6 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
           clickCloseToolbar.current = false
         }, 100)
         isOnHighlightRef.current = false
-      } else {
-        e.preventDefault()
       }
     }
   }
@@ -177,7 +164,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
   const selectionRef = useRef<typeof editor.selection>()
   const toolbarClicked = useRef(false)
   const handleScroll = e => {
-    setFloatPosition(s => ({ ...s, visible: false }))
+    closeToolbar()
   }
   const handleHighlight = async () => {
     const marks = Editor.marks(editor)
@@ -196,12 +183,8 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
         toolbarDirection: floatPosition.direction || 'bottom'
       })
     }
-    setFloatPosition(s => ({ ...s, visible: false }))
     window.getSelection()?.empty()
-    ReactEditor.blur(editor)
-    setTimeout(() => {
-      Transforms.deselect(editor)
-    }, 150)
+    setFloatPosition(s => ({ ...s, visible: false }))
   }
   useEffect(() => {
     if (position === 'float') {
@@ -228,6 +211,8 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
     }
     const handleSelectionChange = () => {
       if (toolbarClicked.current) return
+      const target = window.getSelection()?.anchorNode
+      if (target && toolbarRef.current?.contains(target)) return
       setFloatPosition(s => ({ ...s, visible: false }))
     }
     if (floatPosition?.visible) {
@@ -241,6 +226,7 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
       selectionRef.current = undefined
     }
   }, [floatPosition?.visible])
+  const update = useUpdate()
   const isMarkActive = format => {
     try {
       const marks = Editor.marks(editor)
@@ -258,32 +244,260 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
       console.log(e)
     }
   }
+  const toggleMark = (mark: string) => {
+    const isActive = isMarkActive(mark)
+    if (isActive) {
+      Editor.removeMark(editor, mark)
+    } else {
+      Editor.addMark(editor, mark, true)
+    }
+    update()
+  }
+  const closeToolbar = () => {
+    if (floatPosition?.visible) {
+      setFloatPosition(s => ({ ...s, visible: false }))
+    }
+  }
 
+  const getSelectedText = () => {
+    return (window.getSelection()?.toString() || (editor.selection ? Editor.string(editor, editor.selection) : '')).replace(
+      /\n\s*\n/g,
+      '\n'
+    )
+  }
+
+  const getAboveBlock = () => {
+    if (editor.selection) {
+      const blocks = Array.from(
+        Editor.nodes(editor, {
+          at: editor.selection,
+          mode: 'highest',
+          match: n => Element.isElement(n) && 'id' in n
+        })
+      )
+      console.log(blocks)
+      return blocks.map(i => i[0].id)
+    }
+  }
+
+  const explainItem = useExplainButton({
+    onGetExplain: async () => {
+      const text = getSelectedText()
+      closeToolbar()
+      if (text) {
+        const source = await instance.on({
+          type: 'getSource'
+        })
+        if (source) {
+          return {
+            query: text,
+            initialMessages: instance.aiOps?.getInitialMessages(),
+            targetChatId: instance.aiOps?.getActiveChatId(),
+            source: {
+              ...source,
+              labelId: floatPosition?.highlightId,
+              selectedText: text,
+              blockId: getAboveBlock(),
+              selection: editor.selection
+            }
+          }
+        }
+      }
+    }
+  })
+  const renderReadOnlyToolbar = () => {
+    const hasTag = Global.metaOps.hasTag(labelMeta)
+    return (
+      <ToolbarV2
+        layout={[
+          toolbarOptions?.highlight !== false &&
+            !disableShowHighlight &&
+            !floatPosition?.highlightId && {
+              icon: Icons.Highlight,
+              type: 'button',
+              key: 'highlight',
+              onPointerDown: e => e.preventDefault(),
+              onClick: () => handleHighlight(),
+              text: t('general.highlight')
+            },
+          floatPosition?.highlightId && {
+            icon: Icons.Edit,
+            type: 'button',
+            key: 'edit-highlight',
+            text: t(trans.Edit),
+            onClick: () => {
+              closeToolbar()
+              ObjectStore(labelType)
+                .getOneById(floatPosition!.highlightId!)
+                .then(i => {
+                  if (i) {
+                    instance.labelOps?.openLabelEditor?.(
+                      i,
+                      {
+                        width: 0,
+                        height: 0,
+                        top: floatPosition.top - 16,
+                        left: floatPosition!.left
+                      },
+                      editor.selection,
+                      'top'
+                    )
+                  }
+                })
+            }
+          },
+          explainItem,
+          {
+            type: 'button',
+            key: 'translate',
+            icon: Icons.Translate,
+            text: t(trans.Translate),
+            onClick: async e => {
+              closeToolbar()
+              const text = getSelectedText()
+              if (text) {
+                const source = await instance.on({
+                  type: 'getSource'
+                })
+                if (source) {
+                  Global.commonOps?.translate?.({
+                    query: text,
+                    e,
+                    targetChatId: instance.aiOps?.getActiveChatId(),
+                    source: {
+                      ...source,
+                      selectedText: text,
+                      blockId: getAboveBlock(),
+                      selection: editor.selection
+                    }
+                  })
+                }
+              }
+            }
+          },
+          floatPosition?.highlightId && {
+            type: 'separator',
+            key: 's-2'
+          },
+          floatPosition?.highlightId && {
+            icon: Icons.Tag,
+            key: 'tag',
+            type: 'button',
+            theme: hasTag ? 'filled' : undefined,
+            className: hasTag ? 'text-yellow-500' : undefined,
+            popover: () => (
+              <WithBorder className={'min-w-72'}>
+                <MetaTagPicker
+                  alreadyTags={labelMeta?.tags || []}
+                  onChange={v => {
+                    if (labelMeta) {
+                      MetaStore.updateMetaObject({ id: labelMeta.id, tags: v })
+                    }
+                  }}
+                />
+              </WithBorder>
+            )
+          },
+          floatPosition?.highlightId && {
+            icon: Icons.Link,
+            tooltip: t(trans.CopyLink),
+            key: 'copy-link',
+            type: 'button',
+            onClick: () => {
+              closeToolbar()
+              const m = MetaStore.getMetaObjectByObjectId(floatPosition!.highlightId!)
+              if (m) {
+                Global.metaOps?.copyLink(m.id)
+              }
+            }
+          },
+          floatPosition?.highlightId && {
+            type: 'button',
+            key: 'copy',
+            icon: Icons.Copy,
+            tooltip: t(trans.Copy),
+            onClick: () => {
+              closeToolbar()
+              const text = getSelectedText()
+              if (text) {
+                navigator.clipboard.writeText(text)
+                toast.success(t(trans.Copied))
+              }
+            }
+          },
+          floatPosition?.highlightId && {
+            key: 'remove-highlight',
+            icon: Icons.Delete,
+            tooltip: t(trans.Delete),
+            type: 'button',
+            onClick: () => {
+              closeToolbar()
+              handleHighlight()
+            }
+          },
+          floatPosition?.highlightId && {
+            icon: Icons.More,
+            strokeWidth: 6,
+            key: 'highlight-more',
+            type: 'button',
+            popover: (
+              <WithBorder className={'py-1 min-w-52'}>
+                <Menu.NavigationMenu
+                  layout={[
+                    {
+                      icon: Icons.Info,
+                      text: t(trans.Meta.ViewDetails),
+                      key: 'view-info',
+                      type: 'item',
+                      onSelect: () => {
+                        closeToolbar()
+                        const m = MetaStore.getMetaObjectByObjectId(floatPosition!.highlightId!)
+                        if (m) {
+                          Global.metaOps?.openDetails(m.id)
+                        }
+                      }
+                    },
+                    enableShowRightBar && {
+                      icon: 'custom-right-bar',
+                      text: t('general.Open in sidebar'),
+                      type: 'item',
+                      key: 'open-highlight-in-sidebar',
+                      onSelect: () => {
+                        closeToolbar()
+                        instance.labelOps?.openLabelInSidebar(floatPosition.highlightId!)
+                      }
+                    },
+                    {
+                      icon: Icons.MoveTo,
+                      text: t(trans.Meta.MoveTo),
+                      key: 'move-to',
+                      type: 'item',
+                      onSelect: () => {
+                        closeToolbar()
+                        const m = MetaStore.getMetaObjectByObjectId(floatPosition!.highlightId!)
+                        if (m) {
+                          Global.metaOps?.quickAdd(m.id)
+                        }
+                      }
+                    }
+                  ]}
+                />
+              </WithBorder>
+            )
+          }
+        ]}
+      />
+    )
+  }
   const renderToolbar = () => (
-    <Toolbar
-      itemRadius={0}
-      innerRef={toolbarRef}
-      style={{
-        ...style,
-        gap: 0,
-        height: '32px',
-        overflow: 'hidden',
-        borderRadius: 5
-      }}
-      itemStyle={{
-        padding: '0px 8px',
-        height: '100%'
-      }}
-      itemClickPreventDefault
-      itemSize={12}
-    >
-      {currentElementName && !readOnly && (
-        <Toolbar.Item
-          style={{
-            paddingLeft: 12,
-            borderRight: '1px solid var(--border-background)'
-          }}
-          onClick={e => {
+    <ToolbarV2
+      layout={[
+        currentElementName && {
+          type: 'button',
+          key: 'transform',
+          suffixIcon: 'park-down',
+          suffixIconClassName: '-ml-5',
+          onClick: e => {
             const bounding = e.currentTarget.getBoundingClientRect()
             if (bounding) {
               instance.overlayOps?.open('transformMenu', {
@@ -291,265 +505,166 @@ const EditorToolbar: FC<EditorToolbarProps> = ({ scrollElement, style, on }) => 
                 y: bounding.bottom - 14
               })
             }
-          }}
-        >
-          <Content flex gap={4} alignItems={'center'}>
-            <div style={{ fontSize: 14, marginRight: 6 }}>
-              {typeof currentElementName === 'string' ? currentElementName : currentElementName()}
-            </div>
-            <Icon name={'park-down'} style={{ color: 'var(--font-transparent)' }} />
-          </Content>
-        </Toolbar.Item>
-      )}
-      {toolbarOptions?.highlight !== false && !disableShowHighlight && (
-        <Toolbar.Item
-          style={{
-            borderRight: '1px solid var(--border-background)',
-            padding: '0px 12px 0 10px'
-          }}
-          onClick={async () => {
-            handleHighlight()
-          }}
-        >
-          <Button.IconButton
-            style={{
-              background: 'unset',
-              padding: '0px'
-            }}
-            iconColor={floatPosition?.highlightId ? Colors.Emphasis.Emphasis : undefined}
-            theme={floatPosition?.highlightId ? 'filled' : undefined}
-            icon={'park-high-light'}
-            text={floatPosition?.highlightId ? t('general.remove highlight') : t('general.highlight')}
-          />
-        </Toolbar.Item>
-      )}
-      {floatPosition?.highlightId && (
-        <Toolbar.Item
-          style={{
-            borderRight: '1px solid var(--border-background)',
-            padding: '0px 12px 0px 10px'
-          }}
-          onClick={async () => {
-            setFloatPosition(s => ({ ...s, visible: false }))
-            ObjectStore(labelType)
-              .getOneById(floatPosition!.highlightId!)
-              .then(i => {
-                if (i) {
-                  instance.labelOps?.openLabelEditor?.(
-                    i,
-                    {
-                      width: 0,
-                      height: 0,
-                      top: floatPosition.top - 16,
-                      left: floatPosition!.left
-                    },
-                    editor.selection,
-                    'top'
-                  )
-                }
+          },
+          text: currentElementName
+        },
+        {
+          type: 'button',
+          key: 'link',
+          text: t('editor.link'),
+          icon: 'park-link-one',
+          onClick: () => {
+            if (floatPosition) {
+              on({
+                action: 'link',
+                currentToolbarPosition: {
+                  x: floatPosition.left,
+                  y: floatPosition.top
+                },
+                toolbarDirection: floatPosition.direction
               })
-          }}
-        >
-          <Button.IconButton
-            style={{
-              background: 'unset',
-              padding: '0px'
-            }}
-            icon={'park-edit'}
-            text={t('general.edit')}
-          />
-        </Toolbar.Item>
-      )}
-      {floatPosition?.highlightId && enableShowRightBar && (
-        // sometimes we hide sidebar, so don't need this
-        <Toolbar.Item
-          iconName="park-arrow-left-up"
-          style={{
-            borderRight: '1px solid var(--border-background)',
-            padding: '0px 6px'
-          }}
-          tooltip={t('general.Open in sidebar')}
-          onClick={() => {
-            setFloatPosition(s => ({ ...s, visible: false }))
-            instance.labelOps?.openLabelInSidebar(floatPosition.highlightId)
-          }}
-        />
-      )}
-      <Toolbar.Item
-        onClick={() => {
-          on({ action: 'link' })
-          setFloatPosition(s => ({ ...s, visible: false }))
-        }}
-        style={{
-          padding: '0px 8px',
-          borderRight: '1px solid var(--border-background)'
-        }}
-      >
-        <Button.IconButton
-          style={{
-            background: 'unset',
-            padding: '0px'
-          }}
-          icon={'park-link-one'}
-          text={t('editor.link')}
-        />
-      </Toolbar.Item>
-      <Toolbar.Item
-        tooltip={t('editor.bold')}
-        style={{
-          color: isMarkActive('bold') ? Colors.Common.SelectColor : undefined
-        }}
-        onClick={() => on({ action: 'bold' })}
-      >
-        <span
-          style={{
-            fontWeight: 600
-          }}
-        >
-          B
-        </span>
-      </Toolbar.Item>
-      <Toolbar.Item
-        tooltip={t('editor.italic')}
-        style={{
-          color: isMarkActive('italic') ? Colors.Common.SelectColor : undefined
-        }}
-        onClick={() => on({ action: 'italic' })}
-      >
-        <span style={{ fontStyle: 'italic' }}>i</span>
-      </Toolbar.Item>
-      <Toolbar.Item
-        tooltip={t('editor.underline')}
-        style={{
-          color: isMarkActive('underline') ? Colors.Common.SelectColor : undefined
-        }}
-        onClick={() => on({ action: 'underline' })}
-      >
-        <span style={{ textDecoration: 'underline' }}>U</span>
-      </Toolbar.Item>
-      <Toolbar.Item
-        tooltip={t('editor.code')}
-        iconName="park-code"
-        size={13}
-        style={{
-          padding: '0px 6px',
-          color: isMarkActive('code') ? Colors.Common.SelectColor : undefined
-        }}
-        onClick={() => on({ action: 'code' })}
-      />
-      <Toolbar.Item style={{ padding: '0px' }} tooltip={t('editor.font color')}>
-        <AnimatePopover
-          withClickCover={true}
-          positions={['bottom', 'top']}
-          align="start"
-          padding={6}
-          containerStyle={{
-            zIndex: `${Zindexes.EditorSelectionToolbar + 10}`
-          }}
-          content={
-            <BlockColorPicker
+            }
+            closeToolbar()
+          }
+        },
+        {
+          type: 'separator',
+          key: 's-1'
+        },
+        {
+          type: 'button',
+          key: 'font-color',
+          popover: setV => (
+            <EditorColorPicker
               onClick={() => {
                 toolbarClicked.current = true
               }}
-              onPickBackgroundColor={f => on({ action: 'changeBackgroundColor', backgroundColor: f })}
-              onPickFontColor={f => on({ action: 'changeFontColor', fontColor: f })}
-            />
-          }
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              padding: '0px 6px',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center'
-            }}
-          >
-            <Icon
-              style={{
-                color: getMark('fontColor'),
-                background: Colors.getAdaptColor(getMark('backgroundColor')),
-                borderRadius: 2,
-                padding: getMark('backgroundColor') ? 2 : 0,
-                fontSize: getMark('backgroundColor') ? 11 : 13
+              color={getMark('fontColor')}
+              background={getMark('backgroundColor')}
+              onBackgroundChange={f => {
+                if (f === undefined) {
+                  Editor.removeMark(editor, 'backgroundColor')
+                } else {
+                  Editor.addMark(editor, 'backgroundColor', f)
+                }
+                update()
               }}
-              name={'park-font-size-two'}
+              onColorChange={f => {
+                if (f === undefined) {
+                  Editor.removeMark(editor, 'fontColor')
+                } else {
+                  Editor.addMark(editor, 'fontColor', f)
+                }
+                update()
+              }}
             />
-          </div>
-        </AnimatePopover>
-      </Toolbar.Item>
-      <Toolbar.Item
-        tooltip={'Cloze'}
-        style={{
-          padding: '0px 8px',
-          color: isMarkActive('cloze') ? Colors.Common.SelectColor : undefined,
-          borderLeft: '1px solid var(--border-background)'
-        }}
-        size={13}
-        iconName={'park-code-brackets'}
-        onClick={e => {
-          if (editor.selection) {
-            on({ action: 'cloze' })
+          ),
+          element: (
+            <div className={'square-button !w-8 flex items-center justify-center !h-8'}>
+              <div
+                style={{
+                  color: getMark('fontColor'),
+                  background: `rgb(from ${Colors.getAdaptColor(getMark('backgroundColor'))} r g b / var(--editor-bg-opacity))`,
+                  borderRadius: 4,
+                  padding: 4,
+                  lineHeight: 1,
+                  width: '1.4rem',
+                  height: '1.4rem',
+                  flexShrink: 0,
+                  display: 'flex',
+                  fontWeight: 700,
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                className={'font-size-13'}
+              >
+                A
+              </div>
+            </div>
+          )
+        },
+        {
+          type: 'button',
+          key: 'bold',
+          text: 'B',
+          className: 'w-8 justify-center !px-0 font-bold',
+          textClassName: isMarkActive('bold') ? 'select-color-font' : undefined,
+          onClick: () => {
+            toggleMark('bold')
           }
-        }}
-      />
-      <Toolbar.Item
-        tooltip={'Search online'}
-        style={{
-          padding: '0px 8px'
-        }}
-        size={13}
-        iconName={'park-search'}
-        onClick={e => {
-          setFloatPosition(s => ({ ...s, visible: false }))
-          if (editor.selection) {
-            const str = Editor.string(editor, editor.selection)
-            if (str) {
-              const block = Editor.above(editor, {
-                match: n => Element.isElement(n) && 'id' in n,
-                at: editor.selection.anchor
-              })?.[0]
-              if (!block?.id) return
-              editor.on({
-                type: 'search',
-                searchedText: str
-              })
-            }
+        },
+        {
+          type: 'button',
+          key: 'italic',
+          text: 'i',
+          className: 'w-8 justify-center !px-0 font-bold',
+          textClassName: isMarkActive('italic') ? 'select-color-font italic' : 'italic',
+          onClick: () => {
+            toggleMark('italic')
           }
-        }}
-      />
-    </Toolbar>
+        },
+        {
+          type: 'button',
+          key: 'underline',
+          text: 'U',
+          className: classnames('w-8 underline justify-center !px-0 font-bold', isMarkActive('underline') && 'select-color-font'),
+          onClick: () => {
+            toggleMark('underline')
+          }
+        },
+        {
+          type: 'button',
+          key: 'code',
+          icon: 'park-code',
+          className: classnames('w-8', isMarkActive('code') ? 'select-color-font' : undefined),
+          onClick: () => {
+            toggleMark('code')
+          }
+        },
+        {
+          type: 'button',
+          key: 'cloze',
+          className: classnames('w-8', isMarkActive('cloze') ? 'select-color-font' : undefined),
+          icon: 'park-code-brackets',
+          onClick: () => {
+            toggleMark('cloze')
+          }
+        }
+      ]}
+    ></ToolbarV2>
   )
   // only render when have noteid
   const renderFloatToolbar = () =>
     createPortal(
       <AnimatePopover
-        borderRadius={5}
         padding={10}
-        visible={!!(floatPosition?.visible && showToolbar !== false)}
+        visible={!!floatPosition?.visible}
         position={{
           left: floatPosition?.left,
           top: floatPosition?.top
         }}
         positions={[floatPosition?.direction || 'top']}
         containerStyle={{ zIndex: String(Zindexes.EditorSelectionToolbar), borderRadius: 5 }}
-        content={
+        content={() => (
           <WithBorder
-            onClick={() => {
-              console.log('yes')
+            onPointerDown={() => {
               toolbarClicked.current = true
+            }}
+            onClick={() => {
               setTimeout(() => {
                 toolbarClicked.current = false
               }, 100)
             }}
-            borderRadius={5}
+            className={'!rounded-lg'}
             style={{
               width: 'fit-content'
             }}
+            ref={toolbarRef}
           >
-            <motion.div>{renderToolbar()}</motion.div>
+            {floatPosition?.highlightId && <LabelNoteRenderer id={floatPosition.highlightId} />}
+            {readOnly ? renderReadOnlyToolbar() : renderToolbar()}
           </WithBorder>
-        }
+        )}
       />,
       document.body,
       'editorToolbar'

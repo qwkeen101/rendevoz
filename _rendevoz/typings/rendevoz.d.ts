@@ -3,14 +3,21 @@
  */
 
 import { ReactElement } from 'react'
-import { GlobalInstances } from './globalInstances'
 import { ILayoutTab, OpenTabOptions, TabData } from './layout'
-import { IWebpageInstance, IVideoInstance, IPDFInstance, IEditorInstance, IWhiteboardInstance } from './components'
-import { EditorEventMap, GlobalEventMap, IEventEmitter, IEventHandler, PdfEventMap, WhiteboardEventMap } from './event'
+import {
+  IWebpageInstance,
+  IVideoInstance,
+  IPDFInstance,
+  IEditorInstance,
+  IWhiteboardInstance,
+  IFeedInstance,
+  IYoutubeInstance
+} from './components'
 import { NoteStore } from './stores'
 import { SearchStore } from './stores/search.store'
-import { MetaObject } from './data'
+import { IChatInstance, MetaObject } from './data'
 import { Descendant } from 'slate'
+import { IPodcastInstance } from '../../src/core/components/podcast/hooks/usePodcastInstance'
 
 export type IRendevoz = {
   Actions: typeof Action
@@ -47,16 +54,6 @@ declare const Layout: {
  * State actions Api
  */
 declare const State: {
-  Translate: {
-    translate: GlobalInstances.TranslateInstance['translate']
-  }
-  Drag: {
-    startDrag: GlobalInstances.DragDropInstance['startDrag']
-    endDrag: GlobalInstances.DragDropInstance['endDrag']
-    setDraggingDetails: GlobalInstances.DragDropInstance['setDraggingDetails']
-    getDraggingDetails: GlobalInstances.DragDropInstance['getDraggingDetails']
-    addDragElements: GlobalInstances.DragDropInstance['addDragElements']
-  }
 }
 
 /**
@@ -66,7 +63,11 @@ declare const Open: {
   openHome: VoidFunction
   openDatabase: VoidFunction
   openImage: (id: number) => void
+  openChat: (id: number) => Promise<IChatInstance>
   openRecycleBin: VoidFunction
+  openPodcast: () => Promise<IPodcastInstance>
+  openFeed: () => Promise<IFeedInstance>
+  openYoutube: () => Promise<IYoutubeInstance>
   Group: {
     openTypeGroup: (type: MetaObject['type']) => void
     openTagGroup: (tag: number) => void
@@ -101,13 +102,6 @@ declare const Open: {
     openVideoLabel: (id: number) => Promise<void>
     openVideoAtTime: (id: number, time: number) => Promise<void>
   }
-  Search: {
-    openTextSearch: (opts?: Parameters<GlobalInstances.TextSearchInstance['open']>[0]) => void
-    openWebSearch: (opts: Parameters<GlobalInstances.WebSearchInstance['open']>[0]) => void
-  }
-  Translate: {
-    openTranslate: (opts: Parameters<GlobalInstances.TranslateInstance['open']>[0]) => void
-  }
 }
 
 declare const Notification: {
@@ -116,9 +110,6 @@ declare const Notification: {
   error: (data: { message: string | ReactElement }) => void
 }
 
-declare const ActionUtils: {
-  uploadFile: (options?: { accept?: string; multiple?: boolean; dir?: boolean }) => Promise<File | File[]>
-}
 /**
  * Actions Api
  */
@@ -127,47 +118,12 @@ declare const Action: {
   State: typeof State
   Open: typeof Open
   Notification: typeof Notification
-  Utils: typeof ActionUtils
   Store: typeof Store
-}
-
-type TypeToEventMap = {
-  editor: EditorEventMap
-  global: GlobalEventMap
-  pdf: PdfEventMap
-  whiteboard: WhiteboardEventMap
 }
 
 /**
  *
  */
-
-declare const EmitEvents: {
-  emitEventGlobally: (...params: Parameters<IEventEmitter['emit']>) => void
-  GlobalEventEmitter: IEventEmitter
-  useScopedEventEmitter: () => IEventEmitter
-  /**
-   * Context scoped event emitter
-   */
-  useEventHandler: <T extends keyof TypeToEventMap>(type: T) => IEventHandler<TypeToEventMap[T]>
-}
-
-type DOMPointerEvent =
-  | MouseEvent
-  | PointerEvent
-  | TouchEvent
-  | MouseEvent<Element, MouseEvent>
-  | MouseEvent<Element, PointerEvent>
-  | MouseEvent<Element, TouchEvent>
-
-declare const DOMEvents: {
-  hasButton: (e: DOMPointerEvent) => boolean
-}
-
-declare const Events: {
-  Emit: typeof EmitEvents
-  DOM: typeof DOMEvents
-}
 
 /**
  * Utils Api for inner states like object and meta-object
@@ -202,10 +158,7 @@ declare const MetaUtils: {
   ) => Promise<IImportResult>
   normalizeBaiduDiskFileToMeta: () => IImportResult
   normalizeWebFileToMeta: (url: string, type: string) => IImportResult
-  findPathsBetweenTwoMetaObjects: (sourceMetaId: number, targetMetaId: number) => number[][]
   getTypeName: (type: MetaObject['type']) => string
-  getTypeRadius: (type: MetaObject['type']) => number
-  fetchWebpageAndParseAsMeta: (url: string) => void
 }
 
 declare const FileUtils: {}
@@ -217,6 +170,8 @@ declare const WebUtils: {
     image?: string
     author?: string
     audio?: string
+    icon?: string
+    html?: string
   }>
   // parse webpage as editor content
   parseWebpage: (

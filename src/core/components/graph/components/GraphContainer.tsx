@@ -1,127 +1,61 @@
-import { css } from '@emotion/css'
 import { createStore, Provider } from 'jotai'
-import { FC, useEffect, useMemo, useRef } from 'react'
+import { FC, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import D3GraphManager from '../D3GraphManager'
-import useEdges from '../hooks/useEdges'
+import useEdges, { GraphEdgesAtom } from '../hooks/useEdges'
 import useGraph, { graphAtom } from '../hooks/useGraph'
-import useGraphNodes from '../hooks/useGraphNodes'
+import useGraphNodes, { GraphNodesAtom } from '../hooks/useGraphNodes'
 import useGraphOverlay from './overlay/useGraphOverlay'
 import { GraphEdge } from '../types/edge'
 import { GraphNode } from '../types/node'
 import EdgeContainer from './EdgeContainer'
 import NodeContainer from './NodeContainer'
-import GraphSettingPanel from './setting'
-import { globalStore } from '@/api/stores'
 import { Stage } from '@pixi/react'
 import PixiViewport from '@/core/components/graph/components/PixiViewport'
 import PixiRenderer from '@/core/components/graph/components/PixiRenderer'
-import { metaLinksAtom, metaObjectsAtom } from '@/api/stores/meta/meta.store'
-import { useGlobalAtomValue, useUpdateEffect } from '@/hooks'
-import { getAllEdgesOfNodes, getRelatedNodesOfNode } from '@/core'
-
+import GraphSidebar from '@/core/components/graph/components/GraphSidebar'
+import useGraphLayout from '@/core/components/graph/hooks/useGraphLayout'
 interface GraphContainerProps {
   edges?: GraphEdge[]
   nodes?: GraphNode[]
-  type: 'canvas' | 'svg'
   store: any
 }
-const GraphInner: FC<GraphContainerProps> = ({ edges, nodes, type, store }) => {
+const GraphInner: FC<GraphContainerProps> = ({ edges, nodes, store }) => {
   const graph = useGraph()
-  const containerRef = useRef<HTMLDivElement>(null)
-
   const [, setEdges] = useEdges()
   const [, setNodes] = useGraphNodes()
-  const allMetaObjects = useGlobalAtomValue(metaObjectsAtom)
-  const allMetaLinks = useGlobalAtomValue(metaLinksAtom)
-
-  const isAllMode = useRef(false)
-  // add more nodes and links when change
-  useUpdateEffect(() => {
-    if (graph) {
-      const nodesMap = graph.nodesMap
-      if (!nodesMap) return
-      const allMetaObjects = globalStore.get(metaObjectsAtom)
-      setTimeout(() => {
-        if (isAllMode.current) {
-          const allEdges = getAllEdgesOfNodes(new Set(allMetaObjects.keys()))
-          const extraNodes = Array.from(allMetaObjects.values()).filter(i => !nodesMap?.has(i.id))
-          graph.addEdges(allEdges)
-          graph.addNodes(extraNodes)
-          setTimeout(() => {
-            graph.slightRestartSimu?.()
-          })
-        }
-        // only show new added around center node
-        else {
-          const centerNode = nodes.find(i => i.isCenter)
-          if (centerNode) {
-            const related = getRelatedNodesOfNode(centerNode.id)
-            const extraNodes = related.filter(i => !nodesMap?.has(i.id))
-            console.log(extraNodes)
-            const keys = Array.from(nodesMap.keys())
-            const allEdges = getAllEdgesOfNodes(new Set([...keys, ...extraNodes.map(i => i.id)]))
-            const originNode = nodesMap.get(centerNode.id)
-            originNode.fx = originNode.x
-            originNode.fy = originNode.y
-            graph.addNodes(extraNodes)
-            graph.addEdges(allEdges)
-            setTimeout(() => {
-              graph.slightRestartSimu()
-            })
-          }
-        }
-      }, 1000)
-    }
-  }, [allMetaLinks.size, allMetaObjects.size])
   const { graphOverlayManager, renderPortal } = useGraphOverlay()
+  useGraphLayout()
   graph && (graph.overlayManager = graphOverlayManager)
-  graph && (graph.setEdges = setEdges)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (graph && nodes && edges) {
-      graph.clear()
-      graph.originNodes = null
-      graph.originEdges = null
-
-      graph.nodesMap = null
-      graph.edgesMap = null
-      graph.registerEdges(edges)
-      graph.registerNodes(nodes)
-      setEdges(edges)
-      setNodes(nodes)
-      if (nodes.length === allMetaObjects.size) {
-        isAllMode.current = true
-      } else {
-        isAllMode.current = false
-      }
-      setTimeout(() => {
-        if (containerRef.current) {
-          graph.registerContainer(containerRef.current)
+      let updateLayout = false
+      setEdges(currEdges => {
+        if (edges.length !== currEdges.length) {
+          updateLayout = true
         }
-        graph.updateLayout(true, true)
-      }, 0)
+        const existed = new Map(currEdges?.map(i => [i.id, i]))
+        return edges.map(i => ({ ...existed.get(i.id), ...i }))
+      })
+      setNodes(currNodes => {
+        if (currNodes.length !== nodes.length) {
+          updateLayout = true
+        }
+        const existed = new Map(currNodes?.map(i => [i.id, i]))
+        return nodes.map(i => ({ ...existed.get(i.id), ...i }))
+      })
+      if (updateLayout) {
+        graph.updateLayout(true)
+      }
     }
   }, [edges, nodes])
-  if (graph) {
-    graph.setNodes = setNodes
-  }
-
+  const [sidebarVisible, setSidebarVisible] = useState(false)
   const stageRef = useRef<Stage>(null)
-  const outerContainerRef = useRef<HTMLElement>(null)
+  const outerContainerRef = useRef<HTMLDivElement>(null)
   return (
     <>
-      <div
-        style={{
-          position: 'absolute',
-          top: 20,
-          left: 20,
-          zIndex: 10
-        }}
-      >
-        <GraphSettingPanel />
-      </div>
-
-      <div style={{ width: '100%', height: '100%', position: 'relative' }} ref={outerContainerRef}>
+      <div className={'relative w-full h-full'} ref={outerContainerRef}>
+        <GraphSidebar visible={sidebarVisible} onVisiblityChange={v => setSidebarVisible(v)} />
         <Stage
           onClick={() => console.log(graph)}
           ref={stageRef}
@@ -136,8 +70,8 @@ const GraphInner: FC<GraphContainerProps> = ({ edges, nodes, type, store }) => {
         >
           <Provider store={store}>
             <PixiViewport width={1000} height={1000}>
-              <EdgeContainer type={type} />
-              <NodeContainer type={type} />
+              <EdgeContainer />
+              <NodeContainer />
               <PixiRenderer />
             </PixiViewport>
           </Provider>
@@ -147,8 +81,27 @@ const GraphInner: FC<GraphContainerProps> = ({ edges, nodes, type, store }) => {
     </>
   )
 }
-const GraphContainer: FC<GraphContainerProps> = ({ edges, nodes }) => {
-  const graphManager = useMemo(() => new D3GraphManager(), [])
+const GraphContainer: FC<Omit<GraphContainerProps, 'store'>> = ({ edges, nodes }) => {
+  const graphManager = useMemo(
+    () =>
+      new D3GraphManager(
+        () => {
+          return {
+            nodes: (store.get(GraphNodesAtom) || []).map(i => ({ ...i })),
+            edges: (store.get(GraphEdgesAtom) || []).map(i => ({ ...i }))
+          }
+        },
+        data => {
+          if (data.nodes) {
+            store.set(GraphNodesAtom, data.nodes)
+          }
+          if (data.edges) {
+            store.set(GraphEdgesAtom, data.edges)
+          }
+        }
+      ),
+    []
+  )
   const store = useMemo(() => {
     const store = createStore()
     store.set(graphAtom, graphManager)
@@ -157,8 +110,9 @@ const GraphContainer: FC<GraphContainerProps> = ({ edges, nodes }) => {
 
   return (
     <Provider store={store}>
-      <GraphInner edges={edges} nodes={nodes} type="canvas" store={store} />
+      <GraphInner edges={edges} nodes={nodes} store={store} />
     </Provider>
   )
 }
+
 export default GraphContainer

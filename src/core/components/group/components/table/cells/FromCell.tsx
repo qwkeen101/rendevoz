@@ -1,8 +1,6 @@
 import { MetaObject } from '~/typings'
 import { MetaStore } from '@/api/stores'
-import { Content, Image } from '@/components'
-import { ClassName } from 'rendevoz'
-import { Rendevoz } from '@/core/rendevoz'
+import { Content } from '@/components'
 
 const FromCell = ({ value }: { value: MetaObject['fromObject'] }) => {
   const meta = MetaStore.useValue(value?.metaId)
@@ -14,7 +12,7 @@ const FromCell = ({ value }: { value: MetaObject['fromObject'] }) => {
       alignItems="center"
       role={'prop-container'}
       onClick={() => {
-        Rendevoz.Actions.Open.Meta.openMetaObject(meta.id)
+        Global.layoutOps?.openObject(meta.id)
       }}
     >
       {meta.coverImgSrc && <img src={meta.coverImgSrc} width={24} height={24} style={{ borderRadius: 4, objectFit: 'cover' }} />}

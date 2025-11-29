@@ -1,387 +1,319 @@
-import { useDebounceFn, useGlobalAtomValue, useMemoizedFn, useSelectAtomValue, useSelectGlobalAtomValue } from '@/hooks'
+import { useDebounceFn, useMemoizedFn } from '@/hooks'
 import isHotkey from 'is-hotkey'
-import { CSSProperties, FC, memo, RefObject, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Descendant, Editor, Node, Path, Transforms } from 'slate'
-import { Editable, ReactEditor, RenderElementProps, RenderLeafProps, Slate, useSlateStatic } from './slate-react'
+import { CSSProperties, forwardRef, memo, RefObject, useCallback, useLayoutEffect, useRef } from 'react'
+import { Descendant, Editor, Node, NodeEntry, Path, Transforms } from 'slate'
+import { Editable, ReactEditor, RenderElementProps, RenderLeafProps, Slate } from './slate-react'
 import EditorToolbar from './components/EditorSelectionToolbar'
 import HOTKEYS from './consts/hotkeys'
-import { CustomEditor } from '~/typings'
-import Divider from './Divider'
-import { Block } from './elements'
+import { CustomEditor, IEditorInstance } from '~/typings'
+import Divider from './components/Divider'
+import { Block, Leaf } from './elements'
 import Id from '@/utils/id'
-import { InlineElements } from './consts/elements'
-import { EDITOR_TO_CHANGED, ID_TO_FIRST_LAYER_EXCEPET_HIDEN_MAP, ID_TO_FIRST_LAYER_MAP, ID_TO_PATH_MAP } from './weakMaps'
-import useScopedEventEmitter from '@/events/useEventEmitter'
-import { defaultScrollSelectionIntoView, EditableProps } from './slate-react/components/editable'
+import { useEditorComposing } from './slate-react/components/editable'
 import classNames from 'classnames'
-import useEditorSlashMenu from './hooks/useEditorSlashMenu'
-import { DraggableElement, DraggingElement } from '../../global'
-import { Element } from './renderer/renderElement'
+import { useGlobalIsDragging } from '../../global'
 import useEditorInstance from './hooks/useEditorInstance'
-import useEditorMention from '@/core/components/editor/hooks/useEditorMention'
-import useEditorDeleteKey from '@/core/components/editor/hooks/keyboards/useEditorDeleteKey'
-import useEditorArrowKey from '@/core/components/editor/hooks/keyboards/useEditorArrowKey'
-import useEditorCopyKey from '@/core/components/editor/hooks/keyboards/useEditorCopyKey'
-import useEditorSelectAllKey from '@/core/components/editor/hooks/keyboards/useEditorSelectAllKey'
-import useEditorTabKey from '@/core/components/editor/hooks/keyboards/useEditorTabKey'
-import useEditorSaveKey from '@/core/components/editor/hooks/keyboards/useEditorSaveKey'
 import useReadOnlyEditor from '@/core/components/editor/hooks/useReadOnly'
-import EditorClasses from '@/core/components/editor/consts/classes'
 import { assignProperties } from '@/utils'
-import { Colors } from '@/consts'
 import { EditorStateAtom } from '@/core/components/editor/hooks/useEditorState'
-import useGlobalKey from '@/core/components/editor/hooks/keyboards/useGlobalKey'
-import { GlobalSetting, useRenderLabel } from '@/core'
 import { selectAtom } from 'jotai/utils'
 import { useAtomValue } from 'jotai/react'
-import { Icon } from '@/components'
-import UseClickOutside from '@/hooks/utils/useClickOutside'
+import DecorationHelper from '@/core/components/editor/DecorationHelper'
+import { MetaStore } from '@/api/stores'
+import useIsSelecting from '@/core/components/editor/hooks/useIsSelecting'
+import handleInsertMetasIntoEditor from '@/core/components/editor/hooks/handleInsertMetasIntoEditor'
+import useEditorKeyEvents from '@/core/components/editor/hooks/keyboards/useEditorKeyEvents'
+import EditorElements from '@/core/components/editor/elements/EditorElements'
+import './textareaEditor.less'
 
 export type InnerEditorProps = {
   editor: CustomEditor
   defaultValue: Descendant[]
   scrollElementRef?: RefObject<HTMLDivElement | null>
   onChange?: (value: Descendant[]) => void
-  showToolbar?: boolean
   editorClassName?: string
   style?: CSSProperties
+  textareaMode?: boolean
+  onClick?: React.MouseEventHandler
 }
+const editorState = selectAtom(EditorStateAtom, s => ({
+  alwaysShowPlaceholder: s.layout?.alwaysShowPlaceholder,
+  showToolbar: s.layout?.showToolbar,
+  firstLinePlaceholder: s.layout?.firstLinePlaceholder
+}))
 
-const InnerEditor: FC<InnerEditorProps> = memo(
-  ({ editor, defaultValue, style, onChange, scrollElementRef, editorClassName }) => {
-    const scrollElement = scrollElementRef?.current
-    const renderInnerElement = useCallback((props: RenderElementProps) => <Element {...props} />, [])
-    const renderLeaf = useCallback((props: RenderLeafProps) => <Leaf {...props} />, [])
-    const editableRef = useRef<EditableProps['innerRef']>()
-    const scopedEmitter = useScopedEventEmitter()
-    const previousValue = useRef<Descendant[]>()
-    const readOnly = useReadOnlyEditor()
-    const { handleMentionKey } = useEditorMention(editor)
-    const instance = useEditorInstance()
-    const { handleSlashKeyDown } = useEditorSlashMenu(instance)
-    const handleDeleteKey = useEditorDeleteKey(instance)
-    const handleArrowKey = useEditorArrowKey(instance)
-    const handleCopyKey = useEditorCopyKey(instance)
-    const handleSaveKey = useEditorSaveKey(instance)
-    const handleSelectAllKey = useEditorSelectAllKey(instance)
-    const handleTabKey = useEditorTabKey(instance)
-    const canScrollIntoView = useSelectAtomValue(EditorStateAtom, s => s.layout?.canScrollIntoView) ?? true
-    useGlobalKey()
-    editor.innerRef = editableRef
-    const index = () => {
-      const map = new Map<number, Path>()
-
-      ID_TO_PATH_MAP.set(editor, map)
-
-      for (const [node, path] of Node.elements(editor)) {
-        node.id && map.set(node.id, path)
+const Element = (props: RenderElementProps) => {
+  const renderer = EditorElements[props.element.type]?.renderElement
+  if (!renderer) return null
+  return renderer(props)
+}
+const renderInnerElement = (props: RenderElementProps) => <Element {...props} />
+const renderLeaf = (props: RenderLeafProps) => <Leaf {...props} />
+const InnerEditor = memo(
+  forwardRef<HTMLDivElement, InnerEditorProps>(
+    ({ editor, defaultValue, style, onChange, onClick, scrollElementRef, editorClassName, textareaMode }, ref) => {
+      const scrollElement = scrollElementRef?.current
+      const previousValue = useRef<Descendant[]>()
+      const readOnly = useReadOnlyEditor()
+      const instance = useEditorInstance()
+      const handleKeyEvents = useEditorKeyEvents(instance)
+      const { alwaysShowPlaceholder, showToolbar, firstLinePlaceholder } = useAtomValue(editorState)
+      const isComposing = useEditorComposing()
+      const [isSelecting] = useIsSelecting()
+      const [isGlobalDragging] = useGlobalIsDragging()
+      const index = () => {
+        instance.values.ID_TO_PATH.clear()
+        for (const [node, path] of Node.elements(editor)) {
+          node.id && instance.values.ID_TO_PATH.set(node.id, path)
+        }
       }
-    }
-    const { run: debounceIndex } = useDebounceFn(
-      () => {
-        index()
-      },
-      { wait: 500 }
-    )
-    assignProperties(instance, {
-      indexPath: () => {
-        index()
-      }
-    })
+      const { run: debounceIndex } = useDebounceFn(
+        () => {
+          index()
+        },
+        { wait: 500 }
+      )
+      assignProperties(instance, {
+        indexPath: () => {
+          index()
+        }
+      })
 
-    const handleChange = useMemoizedFn((value: Descendant[]) => {
-      if (value.length === 0) {
-        Transforms.insertNodes(editor, { type: 'paragraph', id: Id.getId(), children: [{ text: '' }] }, { at: [0] })
-        return
-      }
-      let shouldChange = false
-      // already triggered
-      if (EDITOR_TO_CHANGED.get(editor) === true) return
-      EDITOR_TO_CHANGED.set(editor, true)
-      if (!(editor.operations.length === 1 && editor.operations[0].type === 'set_selection')) {
-        const firstLayerIdSet = new Set<number>()
-        const firstLayerMap = new Map<number, Path>()
-
-        ID_TO_FIRST_LAYER_MAP.set(editor, firstLayerMap)
-
-        firstLayerMap.clear()
-        firstLayerIdSet.clear()
-
-        const firstLayerArr = []
-        // normalize first layer ids to prevent path conflicts
-
-        editor.children.forEach((i, idx) => {
-          if (firstLayerIdSet.has(i.id)) {
-            Transforms.setNodes(editor, { id: Id.getId() }, { at: [idx] })
-          }
-          if (i.id) {
-            firstLayerIdSet.add(i.id)
-            firstLayerMap.set(i.id, [idx])
-            if (!i.hide) {
-              firstLayerArr.push(i)
+      const handleChange = useMemoizedFn((value: Descendant[]) => {
+        if (value.length === 0) {
+          Transforms.insertNodes(editor, { type: 'paragraph', id: Id.getId(), children: [{ text: '' }] }, { at: [0] })
+          return
+        }
+        let shouldChange = false
+        // already trigger change, early exit
+        if (editor.changeHandled) return
+        editor.changeHandled = true
+        if (!(editor.operations.length === 1 && editor.operations[0].type === 'set_selection')) {
+          // normalize first layer ids to prevent path conflicts
+          const allFirstLayerIds = new Set<number>()
+          editor.children.forEach((i, idx) => {
+            if (!('id' in i) || allFirstLayerIds.has(i.id)) {
+              Transforms.setNodes(editor, { id: Id.getId() }, { at: [idx] })
+            } else {
+              allFirstLayerIds.add(i.id)
             }
+          })
+          instance.emitEvent?.('valueChange')
+          shouldChange = true
+        }
+        const prevValue = previousValue.current
+        previousValue.current = value
+        if (prevValue !== value) {
+          if (editor.operations.some(i => Path.operationCanTransformPath(i))) {
+            debounceIndex()
           }
-        })
-        ID_TO_FIRST_LAYER_EXCEPET_HIDEN_MAP.set(editor, new Map(firstLayerArr.map((i, idx) => [i.id, idx])))
-        scopedEmitter.emit('editor', {
-          type: 'valueChange'
-        })
-        instance.triggerContentsChange?.()
-        shouldChange = true
-      }
-      const prevValue = previousValue.current
-      previousValue.current = value
-      if (prevValue !== value) {
-        if (editor.operations.some(i => Path.operationCanTransformPath(i)) || ID_TO_PATH_MAP.get(editor) === undefined) {
-          debounceIndex()
         }
-      }
-      if (shouldChange) {
-        if (value !== defaultValue) {
-          onChange?.(value)
+        if (shouldChange) {
+          if (value !== defaultValue) {
+            onChange?.(value)
+          }
         }
-      }
-    })
-    const inlineKeys = [...Object.values(InlineElements), 'tableCell', 'tableRow', 'inline-metaObject', 'math', 'inline-metapicker']
-    const renderElement = useCallback(
-      ({ children, element, attributes }: RenderElementProps) => {
-        if (element.hide === true) return null
-        if (element.type === 'columnList') {
-          return (
-            <Block
-              data-type="block"
-              key={element.id}
-              blockId={element.id}
-              data-spec-type="columnList"
-              id={String(element.id)}
-              type="columnList"
-              element={element}
-              attributes={attributes}
-              scrollElementRef={scrollElementRef}
-            >
-              {children}
-            </Block>
-          )
-        }
-        if (element.type === 'column') {
-          return (
-            <>
-              <Divider currentPath={ReactEditor.findPath(editor, element)} />
+      })
+      const renderElement = useCallback(
+        ({ children, element, attributes }: RenderElementProps) => {
+          if (element.hide === true) return null
+          if (element.type === 'columnList') {
+            return (
               <Block
-                data-type="column"
-                id={String(element.id)}
+                data-type="block"
                 key={element.id}
-                blockId={element.id}
-                ratio={element.ratio}
-                data-spec-type="column"
+                data-spec-type="columnList"
+                id={String(element.id)}
+                type="columnList"
                 element={element}
-                type="column"
                 attributes={attributes}
-                scrollElementRef={scrollElementRef}
+                isSelecting={isSelecting}
               >
                 {children}
               </Block>
-            </>
-          )
+            )
+          }
+          if (element.type === 'column') {
+            return (
+              <>
+                <Divider currentPath={ReactEditor.findPath(editor, element)} />
+                <Block
+                  data-type="column"
+                  id={String(element.id)}
+                  key={element.id}
+                  ratio={element.ratio}
+                  data-spec-type="column"
+                  element={element}
+                  type="column"
+                  attributes={attributes}
+                >
+                  {children}
+                </Block>
+              </>
+            )
+          }
+          if (!Editor.isInline(editor, element) && !['tableRow', 'tableCell'].includes(element.type)) {
+            return (
+              <Block
+                data-type="block"
+                data-spec-type={element.type}
+                key={element.id}
+                id={String(element.id)}
+                element={element}
+                attributes={attributes}
+                type={element.type}
+                isGlobalDragging={isGlobalDragging}
+                alwaysShowPlaceholder={alwaysShowPlaceholder}
+                firstLinePlaceholder={firstLinePlaceholder}
+                isComposing={isComposing}
+                isSelecting={isSelecting}
+              >
+                {renderInnerElement({ children, element, attributes })}
+              </Block>
+            )
+          } else {
+            return renderInnerElement({ children, element, attributes })
+          }
+        },
+        [alwaysShowPlaceholder, isSelecting, isComposing, isGlobalDragging]
+      )
+      const handleKeydown = useMemoizedFn((e: KeyboardEvent) => {
+        handleKeyEvents(e)
+        for (const hotkey in HOTKEYS) {
+          if (isHotkey(hotkey, e)) {
+            e.preventDefault()
+            const mark = HOTKEYS[hotkey]
+            toggleMark(editor, mark)
+          }
         }
-        if (!inlineKeys.includes(element.type)) {
-          return (
-            <Block
-              data-type="block"
-              data-spec-type={element.type}
-              blockId={element.id}
-              key={element.id}
-              id={String(element.id)}
-              element={element}
-              attributes={attributes}
-              type={element.type}
-              scrollElementRef={scrollElementRef}
-            >
-              {renderInnerElement({ children, element, attributes })}
-            </Block>
-          )
-        } else {
-          return renderInnerElement({ children, element, attributes })
-        }
-      },
-      [scrollElement]
-    )
-    const addParagraphSpacing = GlobalSetting.useSelectSettingAtom('addSpacingInReaderMode')
-    const globalKeydownHandler = useMemoizedFn((e: KeyboardEvent) => {
-      handleTabKey(e)
-    })
+      })
 
-    const handleKeydown = useMemoizedFn((e: KeyboardEvent) => {
-      handleMentionKey(e)
-      handleSlashKeyDown(e)
-      handleDeleteKey(e)
-      handleArrowKey(e)
-      handleCopyKey(e)
-      handleSelectAllKey(e)
-      handleSaveKey(e)
-      for (const hotkey in HOTKEYS) {
-        if (isHotkey(hotkey, e)) {
-          e.preventDefault()
-          const mark = HOTKEYS[hotkey]
-          toggleMark(editor, mark)
-        }
-      }
-    })
+      useLayoutEffect(() => {
+        handleChange(defaultValue)
+        index()
+      }, [])
+      const decorate = useCallback(
+        ([node, path]: NodeEntry) => {
+          if (editor.nodeToDecorations?.has(node)) {
+            const ranges = editor.nodeToDecorations.get(node) || []
 
-    useLayoutEffect(() => {
-      EDITOR_TO_CHANGED.set(editor, false)
-      handleChange(defaultValue)
-      index()
-      document.addEventListener('keydown', globalKeydownHandler)
-      return () => {
-        document.removeEventListener('keydown', globalKeydownHandler)
-      }
-    }, [])
-
-    return (
-      <Slate editor={editor} onChange={handleChange} value={defaultValue}>
-        <EditorToolbar
-          scrollElement={scrollElement}
-          on={useMemoizedFn(async event => {
-            switch (event.action) {
-              case 'bold':
-              case 'code':
-              case 'italic':
-              case 'underline':
-              case 'cloze':
-                toggleMark(editor, event.action)
-                break
-              case 'highlight':
-                {
-                  const isActive = isMarkActive(editor, 'highlight')
-                  if (isActive) {
-                    const highlightId = Editor.marks(editor)['highlight']
-                    Editor.removeMark(editor, 'highlight')
-                    instance.labelOps?.deleteLabel(Number(highlightId))
-                  } else {
-                    const highlightId = Id.getId()
-                    const selectedText = editor.selection ? Editor.string(editor, editor.selection, { voids: true }) : ''
-                    if (!selectedText) return
-                    Editor.addMark(editor, 'highlight', highlightId)
-                    const position = event.currentToolbarPosition
-                    if (position) {
-                      instance.labelOps?.openLabelEditor?.(
-                        {
-                          id: highlightId,
-                          selectedText
-                        },
-                        {
-                          width: 0,
-                          height: 0,
-                          left: position.x,
-                          top: position.y
-                        },
-                        editor.selection,
-                        event.toolbarDirection
-                      )
+            return ranges
+          }
+          return []
+        },
+        [editor.nodeToDecorations]
+      )
+      return (
+        <Slate editor={editor} onChange={handleChange} value={defaultValue}>
+          {showToolbar !== false && (
+            <EditorToolbar
+              scrollElement={scrollElement}
+              on={useMemoizedFn(async event => {
+                switch (event.action) {
+                  case 'highlight':
+                    {
+                      const isActive = isMarkActive(editor, 'highlight')
+                      if (isActive) {
+                        const highlightId = Editor.marks(editor)['highlight']
+                        Editor.removeMark(editor, 'highlight')
+                        instance.labelOps?.deleteLabel(Number(highlightId))
+                      } else {
+                        const highlightId = Id.getId()
+                        const selectedText = (
+                          window.getSelection()?.toString() ||
+                          (editor.selection ? Editor.string(editor, editor.selection, { voids: true }) : '')
+                        ).replace(/\n\s*\n/g, '\n')
+                        if (!selectedText) return
+                        const position = event.currentToolbarPosition
+                        if (position) {
+                          instance.labelOps?.openLabelEditor?.(
+                            {
+                              id: highlightId,
+                              selectedText
+                            },
+                            {
+                              width: 0,
+                              height: 0,
+                              left: position.x,
+                              top: position.y
+                            },
+                            editor.selection,
+                            event.toolbarDirection
+                          )
+                        }
+                      }
                     }
-                  }
+                    break
+                  case 'link':
+                    {
+                      if (event.currentToolbarPosition) {
+                        instance.overlayOps?.open('linkForm', {
+                          x: event.currentToolbarPosition.x,
+                          y: event.currentToolbarPosition.y - 8
+                        })
+                      }
+                    }
+                    break
                 }
-                break
-              case 'redo':
-                editor.redo()
-                break
-              case 'undo':
-                editor.undo()
-                break
-              case 'changeBackgroundColor':
-                if (event.backgroundColor === Colors.Background.Blank) {
-                  Editor.removeMark(editor, 'backgroundColor')
-                } else {
-                  Editor.addMark(editor, 'backgroundColor', event.backgroundColor)
-                }
-                break
-              case 'changeFontColor':
-                if (event.fontColor === Colors.Font.Blank) {
-                  Editor.removeMark(editor, 'fontColor')
-                } else {
-                  Editor.addMark(editor, 'fontColor', event.fontColor)
-                }
-                break
-              case 'changeFontSize':
-                changeFontSize(editor, event.fontSize)
-                break
-              case 'link':
-                {
-                  const blockPos = instance.blockOps?.getCurrentCursorBounding()
-                  if (blockPos) {
-                    instance.overlayOps?.open('linkForm', {
-                      x: blockPos.x,
-                      y: blockPos.y
-                    })
-                  }
-                }
-                break
-            }
-          })}
-        />
-        <Editable
-          readOnly={readOnly}
-          suppressContentEditableWarning={true}
-          spellCheck="false"
-          style={style}
-          onCopy={useCallback(() => {
-            editor.currentCopyElement = undefined
-            editor.currentCopyElements = undefined
-            return false
-          }, [])}
-          onBlur={() => {
-            editor.on({
-              type: 'blur'
-            })
-          }}
-          onPaste={useCallback(e => {
-            const copyElement = editor.currentCopyElement
-            const copyElements = editor.currentCopyElements
-            console.log(copyElement, copyElements)
-            if (copyElement) {
-              const newEle = {
-                ...copyElement,
-                id: Id.getId()
-              }
-              Transforms.insertNodes(editor, newEle)
-              e.preventDefault()
-              return true
-            }
-            if (copyElements) {
-              const newEles = copyElements.map(i => ({
-                ...i,
-                id: Id.getId()
-              }))
-              Transforms.insertNodes(editor, newEles)
-              e.preventDefault()
-              return true
-            }
-            return false
-          }, [])}
-          renderElement={renderElement}
-          renderLeaf={renderLeaf}
-          onKeyDown={handleKeydown}
-          scrollSelectionIntoView={(editor, domRange) => {
-            console.log(canScrollIntoView)
-            if (canScrollIntoView) {
-              defaultScrollSelectionIntoView(editor, domRange)
-            }
-          }}
-          className={classNames(
-            EditorClasses.TextBoxClass,
-            EditorClasses.DefaultContentClass,
-            readOnly && 'readOnlyEditor',
-            editorClassName,
-            readOnly && addParagraphSpacing && 'spacingParagraph'
+              })}
+            />
           )}
-          scrollElementRef={scrollElementRef}
-        ></Editable>
-      </Slate>
-    )
-  },
+          <DecorationHelper />
+          <Editable
+            ref={textareaMode ? scrollElementRef : ref}
+            decorate={decorate}
+            readOnly={readOnly}
+            suppressContentEditableWarning={true}
+            style={style}
+            onBlur={() => {
+              instance.on({
+                type: 'blur'
+              })
+            }}
+            onPaste={e => {
+              return handlePaste(e, editor, instance)
+            }}
+            renderElement={renderElement}
+            renderLeaf={renderLeaf}
+            onClick={onClick}
+            onKeyDown={handleKeydown}
+            className={classNames(
+              'w-full h-auto editor-styles relative flex flex-col',
+              readOnly && 'readOnlyEditor',
+              editorClassName,
+              textareaMode && 'textareaEditor'
+            )}
+            scrollElementRef={scrollElementRef}
+          ></Editable>
+        </Slate>
+      )
+    }
+  ),
   (prev, curr) => prev.defaultValue === curr.defaultValue
 )
+
+const handlePaste = (e: ClipboardEvent, editor: CustomEditor, instance: IEditorInstance) => {
+  const data = e.clipboardData
+  if (!data) return false
+  const html = data.getData('text/html')
+  if (html) {
+    const metas = Global.metaOps?.getCopiedMetaObjectsSync(html)
+    if (metas?.length) {
+      const noteMeta = instance.values.metaId ? MetaStore.getCachedMetaObject(instance.values.metaId) : undefined
+      const inserted = handleInsertMetasIntoEditor(metas, noteMeta, false)
+      Transforms.insertFragment(editor, inserted)
+      if (noteMeta) {
+        metas.forEach(m => {
+          MetaStore.addMetaLink({ sourceId: m.id, targetId: noteMeta.id })
+        })
+      }
+      e.preventDefault()
+      return true
+    }
+  }
+  return false
+}
+
 const toggleMark = (editor: CustomEditor, mark: string) => {
   const isActive = isMarkActive(editor, mark)
   if (isActive) {
@@ -391,201 +323,9 @@ const toggleMark = (editor: CustomEditor, mark: string) => {
   }
 }
 
-const changeFontSize = (editor: CustomEditor, fontSize: string) => {
-  if (fontSize === 'default') {
-    Editor.removeMark(editor, 'fontSize')
-    Array.from(Editor.nodes(editor, { mode: 'lowest' }))
-      .filter(i => i[0].type === 'emoji')
-      .map(i => i[1])
-      .forEach(i => {
-        Transforms.setNodes(
-          editor,
-          {
-            fontSize: undefined
-          },
-          {
-            at: i
-          }
-        )
-      })
-    return
-  }
-  editor.fontSize = fontSize
-  Editor.addMark(editor, 'fontSize', fontSize)
-  Array.from(Editor.nodes(editor, { mode: 'lowest' }))
-    .filter(i => i[0].type === 'emoji')
-    .map(i => i[1])
-    .forEach(i => {
-      Transforms.setNodes(
-        editor,
-        {
-          fontSize: fontSize
-        },
-        {
-          at: i
-        }
-      )
-    })
-}
-
 const isMarkActive = (editor: CustomEditor, mark: string) => {
   const marks = Editor.marks(editor)
   return marks ? mark in marks : false
 }
 
-const labelTypeAtom = selectAtom(EditorStateAtom, s => s.labelType)
-export const Leaf = (props: RenderLeafProps) => {
-  const [disableCloze, setDisableCloze] = useState(false)
-  let { leaf, attributes, children, text } = props
-  const style: CSSProperties = {
-    fontWeight: leaf.bold ? 'bold' : undefined,
-    fontStyle: leaf.italic ? 'italic' : undefined,
-    padding: leaf.code ? '0.2em 0.4em' : undefined,
-    color: leaf.cloze && !disableCloze ? 'transparent' : leaf.code ? '#EB5757' : undefined,
-    borderRadius: leaf.code ? 4 : undefined,
-    textDecoration: leaf.underline ? 'underline' : undefined,
-    fontSize: leaf.fontSize || leaf.code ? '0.85em' : '1em',
-    '--block-font-color': leaf.fontColor,
-    backgroundColor:
-      leaf.cloze && !disableCloze ? 'var(--emphasis)' : leaf.code ? 'rgba(135,131,120,0.15)' : Colors.getAdaptColor(leaf.backgroundColor),
-    cursor: leaf.cloze ? 'pointer' : undefined,
-    boxShadow: leaf.cloze && disableCloze ? '0 0 0 1px var(--emphasis)' : undefined
-  }
-  const handleClick = e => {
-    if (leaf.cloze) {
-      e.preventDefault()
-      setDisableCloze(!disableCloze)
-    }
-  }
-  if (leaf.sup) {
-    children = <sup>{children}</sup>
-  }
-  if (leaf.highlight) {
-    return <HighlightLeaf text={text} leaf={leaf} attributes={attributes} style={style} children={children} />
-  }
-  return (
-    <span {...attributes} onClick={handleClick} style={style}>
-      {children}
-    </span>
-  )
-}
-
-const HighlightLeaf = (props: RenderLeafProps & { style?: CSSProperties }) => {
-  let { leaf, attributes, children, style } = props
-  const editor = useSlateStatic()
-  const instance = useEditorInstance()
-  const labelType = useAtomValue(labelTypeAtom, { store: instance.values.editorLevelStore })
-  const { label, renderTags, labelMeta } = useRenderLabel({
-    objectId: leaf.highlight,
-    type: labelType
-  })
-  const defaultExpanded = GlobalSetting.useSelectSettingAtom('editorDefaultExpandHighlightDetails')
-  const [expanded, setExpanded] = useState(!!defaultExpanded)
-  const [renderName, setRenderName] = useState(false)
-  const show = GlobalSetting.useSelectSettingAtom('editorShowHighlightText')
-  const r = useRef()
-  UseClickOutside(
-    () => {
-      if (expanded && defaultExpanded !== true) {
-        setExpanded(false)
-      }
-    },
-    r,
-    expanded
-  )
-  useEffect(() => {
-    if (label) {
-      if (!instance.values.labelNoteRendered.has(label.id)) {
-        setRenderName(true)
-        instance.values.labelNoteRendered.add(label.id)
-        return () => {
-          instance.values.labelNoteRendered.delete(label.id)
-        }
-      }
-    }
-  }, [label])
-  return (
-    <DraggableElement
-      onDragStart={() => editor.on({ type: 'labelDrag', labelId: leaf.highlight! })}
-      hoverElement={<DraggingElement text={'Drop to add highlight'} />}
-    >
-      <span
-        {...attributes}
-        onClick={e => {
-          e.preventDefault()
-          editor.onHighlightClick?.(leaf.highlight)
-        }}
-        data-highlight={leaf.highlight}
-        className={'textHighlight'}
-        style={style}
-      >
-        {(label?.name || labelMeta?.tags?.length) &&
-          renderName &&
-          show &&
-          (expanded ? (
-            <div
-              onPointerOverCapture={e => e.stopPropagation()}
-              onPointerDownCapture={e => e.nativeEvent.stopPropagation()}
-              onPointerUpCapture={e => e.stopPropagation()}
-              ref={r}
-              onClick={e => {
-                e.preventDefault()
-                e.stopPropagation()
-              }}
-              style={{
-                maxWidth: 220,
-                position: 'absolute',
-                top: -4,
-                left: -4,
-                width: 'max-content',
-                boxShadow: 'var(--border-box-shadow)',
-                padding: 4,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 3,
-                color: 'var(--font-primary)',
-                lineHeight: '1.4',
-                cursor: 'auto',
-                background: Colors.Background.Popover,
-                fontSize: 13,
-                borderRadius: 4,
-                pointerEvents: 'auto',
-                transform: 'translateY(-100%)',
-                fontWeight: 400,
-                zIndex: 99
-              }}
-            >
-              {label?.name}
-              {renderTags(undefined, true)}
-            </div>
-          ) : (
-            <Icon
-              size={16}
-              onPointerDownCapture={e => e.stopPropagation()}
-              onPointerUpCapture={e => e.stopPropagation()}
-              onClick={e => {
-                setExpanded(true)
-                e.stopPropagation()
-                e.preventDefault()
-              }}
-              onPointerOverCapture={e => e.stopPropagation()}
-              style={{
-                position: 'absolute',
-                top: -16,
-                left: -16,
-                cursor: 'pointer',
-                zIndex: 99,
-                color: 'var(--emphasis)',
-                pointerEvents: 'auto',
-                transform: 'rotateY(180deg)'
-              }}
-              theme={'filled'}
-              name={'park-message'}
-            />
-          ))}
-        {children}
-      </span>
-    </DraggableElement>
-  )
-}
 export default InnerEditor

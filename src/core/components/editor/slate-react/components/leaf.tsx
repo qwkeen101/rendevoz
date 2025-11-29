@@ -1,9 +1,7 @@
-import React, { useEffect, useRef } from 'react'
+import React from 'react'
 import { Element, Text } from 'slate'
 import String from './string'
-import { EDITOR_TO_PLACEHOLDER_ELEMENT, EDITOR_TO_STYLE_ELEMENT, PLACEHOLDER_SYMBOL } from '../utils/weak-maps'
-import { RenderLeafProps, RenderPlaceholderProps } from './editable'
-import { useSlateStatic } from '../hooks/use-slate-static'
+import { RenderLeafProps } from './editable'
 
 /**
  * Individual leaves in a text node with unique formatting.
@@ -13,95 +11,11 @@ const Leaf = (props: {
   isLast: boolean
   leaf: Text
   parent: Element
-  renderPlaceholder: (props: RenderPlaceholderProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
   text: Text
 }) => {
-  const { leaf, isLast, text, parent, renderPlaceholder, renderLeaf = (props: RenderLeafProps) => <DefaultLeaf {...props} /> } = props
-
-  const placeholderRef = useRef<HTMLSpanElement | null>(null)
-  const editor = useSlateStatic()
-
-  const placeholderResizeObserver = useRef<ResizeObserver | null>(null)
-
-  useEffect(() => {
-    return () => {
-      if (placeholderResizeObserver.current) {
-        placeholderResizeObserver.current.disconnect()
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    const placeholderEl = placeholderRef?.current
-
-    if (placeholderEl) {
-      EDITOR_TO_PLACEHOLDER_ELEMENT.set(editor, placeholderEl)
-    } else {
-      EDITOR_TO_PLACEHOLDER_ELEMENT.delete(editor)
-    }
-
-    if (placeholderResizeObserver.current) {
-      // Update existing observer.
-      placeholderResizeObserver.current.disconnect()
-      if (placeholderEl) placeholderResizeObserver.current.observe(placeholderEl)
-    } else if (placeholderEl) {
-      // Create a new observer and observe the placeholder element.
-      placeholderResizeObserver.current = new ResizeObserver(([{ target }]) => {
-        const styleElement = EDITOR_TO_STYLE_ELEMENT.get(editor)
-        if (styleElement) {
-          // Make the min-height the height of the placeholder.
-          const minHeight = `${target.clientHeight}px`
-          styleElement.innerHTML = `:where([data-slate-editor-id="${editor.id}"]) { min-height: ${minHeight}; }`
-        }
-      })
-
-      placeholderResizeObserver.current.observe(placeholderEl)
-    }
-
-    if (!placeholderEl) {
-      // No placeholder element, so no need for a resize observer.
-      const styleElement = EDITOR_TO_STYLE_ELEMENT.get(editor)
-      if (styleElement) {
-        // No min-height if there is no placeholder.
-        styleElement.innerHTML = ''
-      }
-    }
-
-    return () => {
-      EDITOR_TO_PLACEHOLDER_ELEMENT.delete(editor)
-    }
-  }, [placeholderRef, leaf])
-
+  const { leaf, isLast, text, parent, renderLeaf = (props: RenderLeafProps) => <DefaultLeaf {...props} /> } = props
   let children = <String isLast={isLast} leaf={leaf} parent={parent} text={text} />
-
-  if (leaf[PLACEHOLDER_SYMBOL]) {
-    const placeholderProps: RenderPlaceholderProps = {
-      children: leaf.placeholder,
-      attributes: {
-        'data-slate-placeholder': true,
-        style: {
-          position: 'absolute',
-          pointerEvents: 'none',
-          width: '100%',
-          maxWidth: '100%',
-          display: 'block',
-          opacity: '0.333',
-          userSelect: 'none',
-          textDecoration: 'none'
-        },
-        contentEditable: false,
-        ref: placeholderRef
-      }
-    }
-
-    children = (
-      <React.Fragment>
-        {renderPlaceholder(placeholderProps)}
-        {children}
-      </React.Fragment>
-    )
-  }
 
   // COMPAT: Having the `data-` attributes on these leaf elements ensures that
   // in certain misbehaving browsers they aren't weirdly cloned/destroyed by
@@ -120,10 +34,8 @@ const MemoizedLeaf = React.memo(Leaf, (prev, next) => {
     next.parent === prev.parent &&
     next.isLast === prev.isLast &&
     next.renderLeaf === prev.renderLeaf &&
-    next.renderPlaceholder === prev.renderPlaceholder &&
     next.text === prev.text &&
-    Text.equals(next.leaf, prev.leaf) &&
-    next.leaf[PLACEHOLDER_SYMBOL] === prev.leaf[PLACEHOLDER_SYMBOL]
+    Text.equals(next.leaf, prev.leaf)
   )
 })
 

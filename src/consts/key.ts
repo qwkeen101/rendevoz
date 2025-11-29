@@ -14,5 +14,6 @@ export const KEY = {
   Slash: '/',
   Space: 'Space',
   ArrowRight: 'ArrowRight',
-  ArrowLeft: 'ArrowLeft'
+  ArrowLeft: 'ArrowLeft',
+  Paste: 'mod+v'
 }

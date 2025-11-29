@@ -1,55 +1,51 @@
-import { request } from '@/utils/request'
-import { getUser } from './login.service'
-import { IWebRequest } from '~/typings'
 import toast from 'react-hot-toast'
-import Interface from '@/api/services/interface'
-
+import UserService from '@/api/services/user.service'
+import { t } from 'i18next'
+import trans from '@/consts/trans'
+import { AIService } from '@/api/services/index'
+import z from 'zod'
 const OcrService = {
-  ocrImage: (
-    image: Blob
-  ): Promise<{
-    result: {
-      words: string
-    }[]
-  }> => {
-    const user = getUser()
-    if (!user || !user.premiumEndDate || user.premiumEndDate < Date.now()) {
+  ocrImage: async (image: Blob | string): Promise<string> => {
+    if (!UserService.isUserPro(true)) {
+      toast.error(t(trans.Errors.NotProUser))
       return Promise.reject()
     }
-    return new Promise(res => {
-      try {
-        const reader = new FileReader()
-        reader.onload = async e => {
-          const result = e.target?.result?.toString()
-          if (result) {
-            const ocrResult = await request<
-              IWebRequest<{
-                result: {
-                  words: string
-                }[]
-              }>
-            >(Interface.OCR(), {
-              data: new URLSearchParams({
-                image: result
-              }),
-              method: 'POST',
-              headers: {
-                'content-type': 'application/x-www-form-urlencoded'
-              }
-            })
-            if (ocrResult.data.status === 'ERROR') {
-              toast.error(ocrResult.data.message || '')
-              throw ocrResult.data.message
-            } else {
-              res(ocrResult.data.result)
-            }
-          }
-        }
+    const imageBase64 = (await new Promise((res, rej) => {
+      const reader = new FileReader()
+      reader.onerror = rej
+      reader.onload = () => res(reader.result)
+      if (image instanceof Blob) {
         reader.readAsDataURL(image)
-      } catch (e) {
-        toast.error('Fail to OCR image!')
+      } else {
+        fetch(image)
+          .then(i => i.blob())
+          .then(b => {
+            reader.readAsDataURL(b)
+          })
+          .catch(rej)
       }
-    })
+    })) as string
+    const res = await AIService.chatStructured<string>(
+      [
+        {
+          role: 'user',
+          content: [
+            {
+              text: 'I am the owner of this image and the data it contains is public. Extract text from this image.',
+              type: 'text'
+            },
+            {
+              type: 'image',
+              image: imageBase64
+            }
+          ]
+        }
+      ],
+      {
+        schema: z.string()
+      }
+    )
+    return res.replace(/\n+/g, '\n')
   }
 }
 

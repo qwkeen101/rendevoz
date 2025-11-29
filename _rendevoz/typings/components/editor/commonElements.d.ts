@@ -44,6 +44,20 @@ export interface NoteElement extends CardElement {
   noteId: number
   children: EmptyText[]
 }
+
+export interface ClozeElement {
+  type: 'cloze'
+  children: EmptyText[]
+  id: number
+  value?: string
+  answer?: string
+}
+
+export interface InlineImageElement {
+  type: 'inline-image'
+  children: EmptyText[]
+  url: string
+}
 export interface BlockQuoteElement {
   type: 'block-quote'
   align?: string
@@ -202,6 +216,17 @@ export interface ColumnListElement {
   type: 'columnList'
   children: Descendant[]
 }
+
+export interface SelectElement {
+  type: 'select'
+  children: EmptyText[]
+  content: {
+    id: number
+    name: string
+    answer?: boolean
+    value?: boolean
+  }[]
+}
 export type CommonElement =
   | BlockQuoteElement
   | BulletedListElement
@@ -241,3 +266,6 @@ export type CommonElement =
   | IFrameElement
   | EmbededElement
   | OrderListItemElement
+  | ClozeElement
+  | SelectElement
+  | InlineImageElement

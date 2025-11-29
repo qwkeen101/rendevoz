@@ -2,8 +2,8 @@ import Parser from 'rss-parser'
 import Id from '@/utils/id'
 import { getImg } from '@/core/components/webpage/utils/previewWebUrl'
 import parseYoutubeFeed from '@/core/components/feed/utils/parseYoutubeFeed'
-import { TransformGoogleNewsLinkToRealLink } from '@/core/components/feed/utils/googleNewsScraper'
-import { FeedItem } from '~/typings'
+import { IFeedItem } from '~/typings'
+
 const parser = new Parser({
   customFields: {
     item: [
@@ -17,17 +17,15 @@ const DParser = new DOMParser()
 const FeedParser = async (
   str: string,
   opts?: {
-    transformGoogle?: boolean
     urlFilterRule?: (s: string) => boolean
   }
 ) => {
-  const { transformGoogle, urlFilterRule } = opts || {}
+  const { urlFilterRule } = opts || {}
   const result = await parser.parseString(str)
-  console.log(result)
   const feedItemResults = result.items
     .map(i => {
       if (!i.title || !i.link) return
-      const newItem: FeedItem = {
+      const newItem: IFeedItem = {
         title: i.title,
         link: i.link,
         id: Id.getId(),
@@ -60,18 +58,8 @@ const FeedParser = async (
       }
       return newItem
     })
-    .filter(i => i) as FeedItem[]
-  if (transformGoogle) {
-    await Promise.all(
-      feedItemResults.map(async i => {
-        try {
-          if (i.link?.includes('news.google.com')) {
-            i.link = await TransformGoogleNewsLinkToRealLink(i.link)
-          }
-        } catch (e) {}
-      })
-    )
-  }
+    .filter(i => i) as IFeedItem[]
+
   const urlSet = new Set<string>()
   feedItemResults.forEach(i => {
     urlSet.add(i.link)
@@ -89,7 +77,7 @@ const FeedParser = async (
 
 export const fetchFavicon = async (url: string) => {
   const docStr = await fetch(url).then(res => res.text())
-  const doc = await DParser.parseFromString(docStr, 'text/html')
+  const doc = DParser.parseFromString(docStr, 'text/html')
   return await getImg(doc, url)
 }
 export default FeedParser

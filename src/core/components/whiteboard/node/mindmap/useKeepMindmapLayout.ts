@@ -1,6 +1,6 @@
 // 监听全局变化, 每次resize都会触发
-import { useRef } from 'react'
-import { IWhiteboardMindmap, IWhiteboardNode } from '~/typings'
+import { useEffect, useRef } from 'react'
+import { IWhiteboardMindmap, IWhiteboardNode, WhiteboardEvents } from '~/typings'
 import autoArrangeLayout from '@/core/components/whiteboard/node/mindmap/autoArrangeLayout'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import { useMemoizedFn } from '@/hooks'
@@ -111,8 +111,8 @@ export default (
       opts.drawEdges()
     })
   })
-  const handleNodeSizeChange = (n: IWhiteboardNode | IWhiteboardNode[]) => {
-    const nArr = Array.isArray(n) ? n : [n]
+  const handleNodeSizeChange = (e: WhiteboardEvents['nodeSizeChange']) => {
+    const nArr = e.changed
     const subIds = allSubNodeIds.current
     let rightChange = false,
       leftChange = false
@@ -133,8 +133,7 @@ export default (
     leftChange && node.leftChildren && handleLeftTreeChange(node.leftChildren!)
     rightChange && node.rightChildren && handleRightTreeChange(node.rightChildren)
   }
-
-  const handleNodesDelete = (deletedIds: number[]) => {
+  const handleNodesDelete = ({ deleted: deletedIds }: WhiteboardEvents['nodeDeleted']) => {
     const subs = allSubNodeIds.current
     if (deletedIds.some(id => subs.right.has(id) || subs.left.has(id))) {
       const newRightTree = deleteChildsFromTree(node.rightChildren || [], deletedIds).result
@@ -142,13 +141,17 @@ export default (
       instance.updateNode?.(node.id, n => ({ ...n, rightChildren: newRightTree, leftChildren: newLeftTree }), true)
     }
   }
-
+  useEffect(() => {
+    instance.addEventListener('nodeSizeChange', handleNodeSizeChange)
+    instance.addEventListener('nodeDeleted', handleNodesDelete)
+    return () => {
+      instance.removeEventListener('nodeSizeChange', handleNodeSizeChange)
+      instance.removeEventListener('nodeDeleted', handleNodesDelete)
+    }
+  })
   const nodeFuncs = instance.values.ID_TO_NODE_MAP.get(node.id)
   if (nodeFuncs) {
-    nodeFuncs.onSomeNodeSizeChange = handleNodeSizeChange
-    nodeFuncs.onNodesDelete = handleNodesDelete
     nodeFuncs.onNodeCollapse = nodeIds => {
-      console.log(nodeIds)
       if (nodeIds.some(id => node.id === id)) {
         node.rightChildren && handleRightTreeChange(node.rightChildren)
         node.leftChildren && handleLeftTreeChange(node.leftChildren)

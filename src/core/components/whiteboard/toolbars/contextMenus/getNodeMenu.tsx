@@ -3,20 +3,21 @@ import { IMenuLayoutItem } from '@/components/base/menu'
 import { WhiteboardDefaultKeyboardShortcut } from '@/core/components/whiteboard/hooks/keyboard/DefaultWhiteboardShortcuts'
 import BlockColorPicker from '@/core/components/editor/components/BlockColorPicker'
 import { defaultBgColor } from '@/components/picker/colorPicker'
-import { GlobalInstance } from '@/hooks'
 import { TFunction } from 'i18next'
 import getContextMenu from '@/core/components/whiteboard/toolbars/contextMenus/getContextMenu'
-import { Rendevoz } from '@/core/rendevoz'
-import { MetaStore, NoteStore, ObjectStore } from '@/api/stores'
+import { MetaStore, NoteStore } from '@/api/stores'
 import getVisibleNodeMenuItems from '@/core/components/whiteboard/toolbars/contextMenus/getVisibleNodeMenuItems'
 import { WhiteboardNodeMenuItems } from '@/core/components/whiteboard/toolbars/contextMenus/items'
-import { getSetting } from '@/core'
+import trans from '@/consts/trans'
+import { Icons } from '@/consts'
+import WhiteboardCardFormatter from '@/core/components/whiteboard/toolbars/WhiteboardCardFormatter'
+import { noRepeatArray } from '@/utils'
 
 export default (
   instance: IWhiteboardInstance,
   t: TFunction<'translation', undefined, 'translation'>,
-  toolbarType?: 'contextMenu' | 'click',
-  ids?: number | number[]
+  ids?: number | number[],
+  hasCopied?: boolean
 ): IMenuLayoutItem[] | null => {
   const selected = ((ids ? (Array.isArray(ids) ? ids : [ids]) : undefined) || instance.selectOps?.getSelectedNodes().map(i => i.id))
     ?.map(id => {
@@ -35,33 +36,45 @@ export default (
   const selectedIds = selected.map(i => i.id)
   // click on group head
   const ifContextMenuOnSingleGroup = selected.length === 1 && selected[0].type === 'group'
-  const metaMap = MetaStore.getMetaObjectsMap()
+  const backgrounds = noRepeatArray(selected.map(i => i.background).filter(Boolean))
+  const borders = noRepeatArray(selected.map(i => i.border).filter(Boolean))
   const menuItems = getVisibleNodeMenuItems(selected)
-  const hasWebpageMetas = selected.some(i => i.type === 'metaObject' && i.expanded && metaMap.get(i.metaObjectId)?.type === 'webpage')
   const commonTools: (IMenuLayoutItem | undefined)[] = [
     ...(ifContextMenuOnSingleGroup
       ? [
-          toolbarType !== 'click'
+          hasCopied
             ? {
                 type: 'item',
-                key: 'create-on-group',
-                text: t('whiteboard.Create new card'),
-                icon: 'park-plus',
-                subMenuStyle: {
-                  minWidth: 200
-                },
-                subMenu: [...getContextMenu(instance, t)]
+                key: 'paste',
+                icon: 'park-clipboard',
+                text: t('general.Paste'),
+                suffix: WhiteboardDefaultKeyboardShortcut.Paste.text,
+                onSelect: () => {
+                  const toolbarState = instance.toolbarOps?.getToolbarState()
+                  if (toolbarState && toolbarState.originX !== undefined && toolbarState.originY !== undefined) {
+                    const transformed = instance.coordOps?.transformWhiteboardPositionToWindowPosition({
+                      x: toolbarState.originX,
+                      y: toolbarState.originY
+                    })
+                    if (!transformed) return
+                    instance.nodeOps?.paste({
+                      x: transformed.x,
+                      y: transformed.y
+                    })
+                    instance.toolbarOps?.closeToolbar()
+                  }
+                }
               }
             : undefined,
           {
             type: 'item',
-            key: 'renameGroup',
-            icon: 'park-edit',
-            text: t('whiteboard.Rename group'),
-            onSelect: () => {
-              instance.groupOps?.renameGroup(selected[0].id)
-              instance.toolbarOps?.closeToolbar()
-            }
+            key: 'create-on-group',
+            text: t('whiteboard.Create new card'),
+            icon: 'park-plus',
+            subMenuStyle: {
+              minWidth: 200
+            },
+            subMenu: [...getContextMenu(instance, t)]
           },
           {
             type: 'item',
@@ -82,14 +95,14 @@ export default (
       ? {
           type: 'item',
           key: 'turn-into-document',
-          icon: Rendevoz.Utils.Object.getMetaObjectIcon('note'),
+          icon: Global.utils.getIcon('note'),
           text: t('whiteboard.Turn into document card'),
           onSelect: async () => {
             instance.toolbarOps?.closeToolbar()
             instance.selectOps?.deselectAll()
             const currentText = selected[0] as IWhiteboardNode & { type: 'text' }
             const note = await NoteStore.initializeNoteWithValue(currentText.content)
-            const noteMeta = await MetaStore.addMetaObject({ name: 'Untitled', objectId: note.id, type: 'note' })
+            const noteMeta = await MetaStore.addMetaObject({ objectId: note.id, type: 'note' })
             // instance.deleteNode?.(selected[0].id)
             instance.updateNode?.(selected[0].id, s => ({
               ...s,
@@ -138,6 +151,62 @@ export default (
       : undefined,
     {
       type: 'item',
+      key: 'background-color',
+      icon: 'park-background-color',
+      text: t('whiteboard.Card style'),
+      align: 'center',
+      popOver: {
+        key: 'bg-color',
+        node: (
+          <WhiteboardCardFormatter
+            onBorderChange={b => {
+              instance.updateWhiteboard?.(w => {
+                selected.forEach(n => {
+                  const o = w.nodes?.get(n.id)
+                  if (o) {
+                    w.nodes?.set(o.id, {
+                      ...o,
+                      border: b
+                    })
+                  }
+                })
+              }, true)
+            }}
+            showBorder={menuItems.showBorderType}
+            background={backgrounds.length === 1 ? backgrounds[0] : undefined}
+            border={borders.length === 1 ? borders[0] : undefined}
+            onBorderTypeChange={t => {
+              instance.updateWhiteboard?.(w => {
+                selected.forEach(n => {
+                  const o = w.nodes?.get(n.id)
+                  if (o) {
+                    w.nodes?.set(o.id, {
+                      ...o,
+                      borderType: t
+                    })
+                  }
+                })
+              }, true)
+            }}
+            onBackgroundChange={b => {
+              instance.updateWhiteboard?.(w => {
+                selected.forEach(n => {
+                  const o = w.nodes?.get(n.id)
+                  if (o) {
+                    w.nodes?.set(o.id, {
+                      ...o,
+                      background: b
+                    })
+                  }
+                })
+              }, true)
+            }}
+          />
+        )
+      }
+    },
+    {
+      type: 'item',
       key: 'card-actions',
       icon: 'park-application-two',
       text: t('whiteboard.Card actions'),
@@ -171,6 +240,19 @@ export default (
         },
         {
           type: 'item',
+          key: 'copy',
+          text: t('general.Copy'),
+          suffix: WhiteboardDefaultKeyboardShortcut.Copy.text,
+          icon: 'park-copy',
+          onSelect: () => {
+            if (selected?.length) {
+              instance.nodeOps?.copy(instance.nodeOps?.extendNodes(selected).map(i => i.id))
+            }
+            instance.toolbarOps?.closeToolbar()
+          }
+        },
+        {
+          type: 'item',
           key: 'highlight-related',
           text: t('whiteboard.Highlight related cards'),
           suffix: WhiteboardDefaultKeyboardShortcut.HighlightRelated.text,
@@ -182,57 +264,54 @@ export default (
             instance.toolbarOps?.closeToolbar()
           }
         },
-        hasWebpageMetas
-          ? {
-              type: 'item',
-              key: 'show-original-webpage',
-              icon: Rendevoz.Utils.Object.getMetaObjectIcon('webpage'),
-              text: t('general.Show original webpage'),
-              onSelect: async () => {
-                instance.toolbarOps?.closeToolbar()
-                instance.selectOps?.deselectAll()
-                const allWebpages = selected
-                  .filter(i => i.type === 'metaObject' && metaMap.get(i.metaObjectId)?.type === 'webpage')
-                  .map(i => metaMap.get(i.metaObjectId))
-                  .map(i => i?.objectId)
-                  .filter(i => i) as number[]
-                allWebpages.forEach(i => ObjectStore('webpage').updateOne({ id: i, showOriginal: true }))
+        ...(menuItems.showMetaOptions
+          ? [
+              {
+                type: 'title',
+                name: t('general.Open in'),
+                style: {
+                  margin: '8px 0px 4px'
+                }
+              },
+              ...(instance.nodeOps?.canExpand(selected[0])
+                ? [
+                    {
+                      type: 'item',
+                      key: 'open-in-side-peek',
+                      text: t('whiteboard.Open in side peek'),
+                      icon: 'custom-right-bar',
+                      onSelect: () => {
+                        instance.nodeOps?.open(selected[0].id, 'sidePeek')
+                        instance.toolbarOps?.closeToolbar()
+                      }
+                    },
+                    {
+                      type: 'item',
+                      key: 'open-in-float',
+                      icon: 'park-history-query',
+                      text: t('whiteboard.Open in floating panel'),
+                      onSelect: () => {
+                        instance.nodeOps?.open(selected[0].id, 'float')
+                        instance.toolbarOps?.closeToolbar()
+                      }
+                    }
+                  ]
+                : []),
+              {
+                type: 'item',
+                key: 'open-in-new-tab',
+                icon: 'park-efferent-three',
+                text: t('whiteboard.Open in new tab'),
+                onSelect: () => {
+                  instance.nodeOps?.open(selected[0].id, 'newTab')
+                  instance.toolbarOps?.closeToolbar()
+                }
               }
-            }
-          : undefined
+            ]
+          : [])
       ].filter(i => i)
     },
-    {
-      type: 'item',
-      key: 'background-color',
-      icon: 'park-background-color',
-      text: t('general.Background color'),
-      popOver: {
-        key: 'bg-color',
-        node: (
-          <BlockColorPicker
-            showBg={true}
-            showFont={false}
-            onPickBackgroundColor={v => {
-              instance.toolbarOps?.closeToolbar()
-              const selected = instance.selectOps?.getSelectedNodes()
-              if (selected?.length) {
-                instance.updateWhiteboard?.(w => {
-                  selected.forEach(n => {
-                    w.nodes?.set(n.id, {
-                      ...n,
-                      background: v === defaultBgColor ? undefined : v
-                    })
-                  })
-                }, true)
-              }
-            }}
-          />
-        )
-      }
-    },
     menuItems.showMindmapConnection ? menuItem.MindmapLineOptions : undefined,
-    menuItems.showBorderType ? menuItem.BorderOptions : undefined,
     ...(menuItems.showGroupOptions
       ? [
           {
@@ -393,65 +472,13 @@ export default (
       ? [
           {
             type: 'item',
-            key: 'open-in',
-            icon: 'park-efferent-three',
-            text: t('general.Open in'),
-            subMenu: [
-              ...(instance.nodeOps?.canExpand(selected[0])
-                ? [
-                    {
-                      type: 'item',
-                      key: 'open-in-side-peek',
-                      text: t('whiteboard.Open in side peek'),
-                      suffix: WhiteboardDefaultKeyboardShortcut.OpenInSidebar.text,
-                      onSelect: () => {
-                        instance.nodeOps?.open(selected[0].id, 'sidePeek')
-                        instance.toolbarOps?.closeToolbar()
-                      }
-                    },
-                    {
-                      type: 'item',
-                      key: 'open-in-center',
-                      text: t('whiteboard.Open in center'),
-                      suffix: WhiteboardDefaultKeyboardShortcut.OpenInCenter.text,
-                      onSelect: () => {
-                        instance.nodeOps?.open(selected[0].id, 'center')
-                        instance.toolbarOps?.closeToolbar()
-                      }
-                    },
-                    {
-                      type: 'item',
-                      key: 'open-in-float',
-                      text: t('whiteboard.Open in floating panel'),
-                      suffix: WhiteboardDefaultKeyboardShortcut.OpenInFloat.text,
-                      onSelect: () => {
-                        instance.nodeOps?.open(selected[0].id, 'float')
-                        instance.toolbarOps?.closeToolbar()
-                      }
-                    }
-                  ]
-                : []),
-              {
-                type: 'item',
-                key: 'open-in-new-tab',
-                text: t('whiteboard.Open in new tab'),
-                suffix: WhiteboardDefaultKeyboardShortcut.OpenInNewTabs.text,
-                onSelect: () => {
-                  instance.nodeOps?.open(selected[0].id, 'newTab')
-                  instance.toolbarOps?.closeToolbar()
-                }
-              }
-            ]
-          },
-          {
-            type: 'item',
             key: 'view-details',
             text: t('general.View details'),
             suffix: WhiteboardDefaultKeyboardShortcut.ViewDetails.text,
             icon: 'park-info',
             onSelect: () => {
               const item = selected[0].type === 'metaObject' && selected[0].metaObjectId
-              item && GlobalInstance.metaOps?.openDetails(item)
+              item && Global.metaOps?.openDetails(item)
               instance.toolbarOps?.closeToolbar()
             }
           },
@@ -459,23 +486,34 @@ export default (
             type: 'item',
             key: 'move-to',
             suffix: WhiteboardDefaultKeyboardShortcut.MoveTo.text,
-            text: t('general.Move to'),
-            icon: 'park-corner-up-right',
+            text: t(trans.Meta.MoveTo),
+            icon: Icons.MoveTo,
             onSelect: () => {
               const item = selected[0].type === 'metaObject' && selected[0].metaObjectId
-              item && GlobalInstance.metaOps?.quickAdd(item)
+              item && Global.metaOps.quickAdd?.(item)
               instance.toolbarOps?.closeToolbar()
             }
           },
           {
             type: 'item',
             key: 'edit-meta',
-            text: t('general.edit'),
-            icon: 'park-edit',
+            text: t(trans.Edit),
+            icon: Icons.Edit,
             suffix: WhiteboardDefaultKeyboardShortcut.Edit.text,
             onSelect: () => {
               const item = selected[0].type === 'metaObject' && selected[0].metaObjectId
-              item && Rendevoz.Actions.Open.Meta.openEditMetaDialog(item)
+              item && Global.metaOps.edit?.(item)
+              instance.toolbarOps?.closeToolbar()
+            }
+          },
+          {
+            type: 'item',
+            key: 'copy-link',
+            text: t(trans.CopyLink),
+            icon: Icons.Link,
+            onSelect: () => {
+              const item = selected[0].type === 'metaObject' && selected[0].metaObjectId
+              item && Global.metaOps?.copyLink(item)
               instance.toolbarOps?.closeToolbar()
             }
           }
@@ -491,7 +529,7 @@ export default (
           onSelect: () => {
             const items = selected.filter(i => i.type === 'metaObject')
             if (items.length) {
-              GlobalInstance.metaOps?.quickAdd(items.map(i => i.metaObjectId))
+              Global.metaOps?.quickAdd(items.map(i => i.metaObjectId))
             }
             instance.toolbarOps?.closeToolbar()
           }
@@ -499,21 +537,8 @@ export default (
       : undefined,
     {
       type: 'item',
-      key: 'copy',
-      text: t('general.Copy'),
-      suffix: WhiteboardDefaultKeyboardShortcut.Copy.text,
-      icon: 'park-copy',
-      onSelect: () => {
-        if (selected?.length) {
-          instance.nodeOps?.copy(instance.nodeOps?.extendNodes(selected).map(i => i.id))
-        }
-        instance.toolbarOps?.closeToolbar()
-      }
-    },
-    {
-      type: 'item',
       key: 'delete',
-      text: t('general.delete'),
+      text: t(trans.Delete),
       suffix: WhiteboardDefaultKeyboardShortcut.Delete.text,
       icon: 'park-delete-one',
       onSelect: () => {

@@ -1,8 +1,8 @@
-import { IBase } from './base'
+import { IBase, ISidebarDefaultProps } from './base'
 import { IHighlightLabel, ILabelContainerProps, IThoughtLabel } from './label'
-import { IFile } from '~/typings'
+import { IChat, IFile, IPDFAiSummary, ISubChat } from '~/typings'
 
-export interface IPdfDocument extends IFile, ILabelContainerProps {
+export interface IPdfDocument extends IFile, ILabelContainerProps, ISidebarDefaultProps {
   name?: string
   description?: string
   metadata?: IPdfMetadata
@@ -14,9 +14,12 @@ export interface IPdfDocument extends IFile, ILabelContainerProps {
   icon?: string
   labels?: number[]
   scale?: number
-  // online pdf documents
-  webFileUrl?: string
+  specType: 'pdf'
+  aiSummary?: IPDFAiSummary
+  aiChat?: ISubChat
+  exam?: number
 }
+
 export type CustomLabel = IHighlightLabel | IThoughtLabel
 export interface PdfNoteData {
   documentId?: number

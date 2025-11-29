@@ -4,12 +4,11 @@ import { ClassName } from 'rendevoz'
 import { exportRendevozDb, importRendevozDb } from '@/utils/db'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { Button, Content, Switch, Modal, Icon, ButtonChooser } from '@/components'
+import { Button, Content, Select, Switch, Modal, Icon, AnimatePopover, WithBorder } from '@/components'
 import useFileUpload from '../../components/base/useFileUpload'
 import { ISettingItem } from './SettingItem'
 import { useTranslation } from 'react-i18next'
 import GlobalSetting from '.'
-import Select from '@/components/base/select'
 import { SelectOptionProps } from '../../components/base/select/SelectOption'
 import produce from 'immer'
 import { useGlobalAtomValue } from '@/hooks/jotai'
@@ -17,17 +16,17 @@ import { updateInfoAtom } from '@/api/components/Initializer'
 import { ipcInstance } from '@/electron'
 import semver from 'semver'
 import Colors from '@/consts/colors'
-import BorderInput from '@/components/base/BorderInput'
-import { isValidHttpUrl } from '../components/webpage/utils'
 import { changeFilePath, openDatabaseFolder } from '@/utils/file'
 import SettingGroup from '@/core/setting/SettingGroup'
 import { DateFormat } from '@/utils'
-import { getAppState } from '@/core/rendevoz/appState'
 import FileSystem from '@/api/fileSystem'
 import { getOS } from '@/App'
 import { initializeSearch } from '@/api/textSearch/SearchHelper'
 import GlobalCSSEditor from '@/core/setting/GlobalCSSEditor'
-const arrayRange = (start, stop, step) => Array.from({ length: (stop - start) / step + 1 }, (value, index) => start + index * step)
+import langCodes from '@/assets/languageCodes.json'
+import trans from '@/consts/trans'
+import useImportFont from '@/core/setting/useImportFont'
+import { Icons } from '@/consts'
 
 const languageOptions: SelectOptionProps[] = [
   {
@@ -47,11 +46,11 @@ const GeneralSetting = () => {
   const updateInfo = useGlobalAtomValue(updateInfoAtom)
   const latestIsExporting = useLatest(isExporting)
   const hasExporting = useRef(false)
-  const lastBackUp = getAppState().lastBackupDate
+  const lastBackUp = Global.appState.getState().lastBackupDate
   const { t } = useTranslation()
   const [setting, setSetting] = GlobalSetting.useSetting()
-  const [validCustomSearchEngine, setValidSearchEngine] = useState(false)
   const [cssVisible, setCssVisible] = useState(false)
+  const { item: importFont, renderFontManager } = useImportFont()
   const handleImportData = async (file?: File) => {
     toggleIsImporting(true)
     try {
@@ -110,19 +109,6 @@ const GeneralSetting = () => {
           })
     }
   }, [isExporting])
-
-  useEffect(() => {
-    if (setting.general.customSearchEngineUrl) {
-      const v = setting.general.customSearchEngineUrl
-      if ((v.startsWith('http://') || v.startsWith('https://')) && v.includes('{query}') && isValidHttpUrl(v)) {
-        setValidSearchEngine(true)
-      } else {
-        setValidSearchEngine(false)
-      }
-    } else {
-      setValidSearchEngine(false)
-    }
-  }, [setting.general.customSearchEngineUrl])
 
   const VersionItems: ISettingItem[] = [
     {
@@ -244,7 +230,7 @@ const GeneralSetting = () => {
       title: t('settings.Global stylesheet'),
       children: (
         <Button.IconButton
-          text={t('general.edit')}
+          text={t(trans.Edit)}
           onClick={() => {
             setCssVisible(true)
           }}
@@ -270,15 +256,21 @@ const GeneralSetting = () => {
           }}
         ></Select>
       )
+    },
+    {
+      type: 'select',
+      title: t('settings.Target language for translation'),
+      options: langCodes.map(i => ({
+        children: i.language,
+        value: i.tag
+      })),
+      value: setting.general.translateTargetLanguage,
+      onChange: v => {
+        setSetting(s => ({ ...s, general: { ...s.general, translateTargetLanguage: v } }))
+      }
     }
   ]
   const OthersItems: ISettingItem[] = [
-    {
-      title: t('settings.Enable notifications'),
-      type: 'switch',
-      value: setting.notification.enabled,
-      onChange: v => setSetting(s => ({ ...s, notification: { ...s.notification, enabled: v } }))
-    },
     {
       title: t('settings.Rebuild search index'),
       description: t('settings.Rebuild search desc'),
@@ -328,158 +320,16 @@ const GeneralSetting = () => {
       )
     },
     {
-      title: t('settings.default search engine'),
-      children: (
-        <Select
-          closeOnSelect
-          value={setting.general.defaultSearchEngine}
-          menuStyle={{
-            maxHeight: 200,
-            overflowY: 'auto'
-          }}
-          onSelect={v => {
-            setSetting(
-              produce(setting, draft => {
-                draft.general.defaultSearchEngine = v[0]
-              })
-            )
-          }}
-          options={[
-            {
-              value: 'custom',
-              children: t('settings.custom')
-            },
-            {
-              value: 'google',
-              children: t('settings.google')
-            },
-            {
-              value: 'google scholar',
-              children: t('settings.google scholar')
-            },
-            {
-              value: 'semantic scholar',
-              children: t('settings.semantic scholar')
-            },
-            {
-              value: 'wikipedia',
-              children: t('settings.wikipedia')
-            },
-            // {
-            //   value: 'wiki summary',
-            //   children: t('settings.wiki summary')
-            // },
-            {
-              value: 'vocabulary',
-              children: t('settings.vocabulary')
-            },
-            {
-              value: 'bing',
-              children: t('settings.bing')
-            },
-            ...(setting.general.language === 'zh-CN'
-              ? [
-                  {
-                    value: 'baidu',
-                    children: t('settings.baidu')
-                  },
-                  {
-                    value: 'zhihu',
-                    children: t('settings.zhihu')
-                  },
-                  {
-                    value: 'bing dictionary',
-                    children: t('settings.bing dictionary')
-                  },
-                  {
-                    value: 'youdao dictionary',
-                    children: t('settings.youdao dictionary')
-                  }
-                ]
-              : [])
-          ]}
-        ></Select>
-      )
-    },
-    setting.general.defaultSearchEngine === 'custom'
-      ? {
-          title: t('settings.customize search engine'),
-          column: true,
-          children: (
-            <Content flex fullWidth column gap={5}>
-              <div style={{ textTransform: 'none' }} className={'font-size-12 transparent-font'}>
-                {t('settings.search engine example')}
-              </div>
-              <div
-                style={{
-                  color: validCustomSearchEngine ? 'green' : 'red',
-                  marginBottom: 4
-                }}
-              >
-                {validCustomSearchEngine ? t('settings.valid url') : t('settings.invalid url')}
-              </div>
-              <BorderInput
-                textarea={false}
-                placeholder={t('settings.input url')}
-                style={{ padding: '4px 12px' }}
-                containerStyle={{ width: '100%' }}
-                value={setting.general.customSearchEngineUrl}
-                onChange={v => {
-                  if (typeof v === 'string') {
-                    setSetting(
-                      produce(setting, s => {
-                        s.general.customSearchEngineUrl = v
-                      })
-                    )
-                  }
-                }}
-              ></BorderInput>
-            </Content>
-          )
-        }
-      : undefined,
-    {
       title: 'Youtube API key',
-      column: true,
-      children: (
-        <input
-          style={{
-            borderBottom: '1px solid var(--border-background)',
-            width: '100%'
-          }}
-          spellCheck={'false'}
-          placeholder={'Type your API key here...'}
-          defaultValue={setting.general.youtubeApiKey}
-          onBlur={e => {
-            setSetting(s =>
-              produce(s, draft => {
-                draft.general.youtubeApiKey = e.target.value
-              })
-            )
-          }}
-          className={ClassName.noStyleInput}
-        />
-      )
-    },
-    setting.general.youtubeApiKey
-      ? {
-          title: 'Youtube max results',
-          description: 'Max results you will get from a channel/playlist.',
-          children: (
-            <ButtonChooser
-              value={setting.general.youtubeMaxItems ? String(setting.general.youtubeMaxItems) : '100'}
-              onChange={v => {
-                setSetting(s =>
-                  produce(s, draft => {
-                    draft.general.youtubeMaxItems = Number(v)
-                  })
-                )
-              }}
-              options={arrayRange(50, 1000, 50).map(i => i.toString())}
-            />
-          )
-        }
-      : undefined
+      focusKey: 'youtubeApiKey',
+      type: 'input',
+      value: setting.general.youtubeApiKey,
+      onChange: v =>
+        setSetting(s => ({
+          ...s,
+          general: { ...s.general, youtubeApiKey: v }
+        }))
+    }
   ].filter(i => i) as ISettingItem[]
   const FileItems: ISettingItem[] = [
     {
@@ -517,7 +367,7 @@ const GeneralSetting = () => {
                   )
                 )
               }
-              icon="park-folder-close"
+              icon={Icons.Folder}
               text={t('settings.choose folder')}
             />
           </Content>
@@ -567,7 +417,7 @@ const GeneralSetting = () => {
     },
     {
       title: t('settings.data backup'),
-      description: lastBackUp ? t('settings.last backup at') + ': ' + DateFormat.formatDistanceToNowStrict(lastBackUp, true) : undefined,
+      description: lastBackUp ? t('settings.last backup at') + ': ' + DateFormat.formatTime(lastBackUp) : undefined,
       children: (
         <Content flex gap={8}>
           <Select
@@ -612,7 +462,7 @@ const GeneralSetting = () => {
             onClick={() => {
               openDatabaseFolder()
             }}
-            icon="park-folder-open"
+            icon={Icons.Folder}
             text={t('settings.open backup folder')}
           />
         </Content>
@@ -634,9 +484,9 @@ const GeneralSetting = () => {
       )
     }
   ]
-  console.log(lastBackUp)
   return (
     <>
+      {renderFontManager()}
       <Modal visible={cssVisible} onClose={() => setCssVisible(false)}>
         <GlobalCSSEditor />
       </Modal>

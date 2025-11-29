@@ -1,104 +1,97 @@
-import YoutubeServices, { IYoutubeVideoItem } from '@/core/components/feed/youtube/YoutubeServices'
+import YoutubeServices, { IYoutubeVideoItem } from '@/core/components/youtube/YoutubeServices'
 import { ReactElement, RefObject } from 'react'
-import useFeedInstance from '@/core/components/feed/hooks/useFeedInstance'
-import { useMeasure, useNorepeatNavigate } from '@/hooks'
-import ImageTitleItem from '@/core/components/feed/youtube/components/ImageTitleItem'
-import VirtualLoader from '@/core/components/feed/youtube/components/VirtualLoader'
+import { useMeasure } from '@/hooks'
+import VirtualLoader from '@/core/components/common/VirtualLoader'
 import ContextMenu from '@/components/contextMenu'
-import YoutubeItemMenu from '@/core/components/feed/youtube/YoutubeItemMenu'
-import { normalizeSecondsToTime } from '@/core/components/media/utils'
-import { DateFormat } from '@/utils'
+import YoutubeItemMenu from '@/core/components/youtube/YoutubeItemMenu'
+import useYoutubeInstance from '@/core/components/youtube/hooks/useYoutubeInstance'
+import YoutubeVideoCard from '@/core/components/youtube/components/YoutubeVideoCard'
+import { ObjectStore } from '@/api/stores'
+import { IYoutubeVideo } from '~/typings'
 export default ({
   items,
   onLoadMore,
   scrollElementRef,
   hasMore,
-  showChannelTitle,
   scrollKey,
   contextMenu = (i, c) => (
-    <ContextMenu content={setV => <YoutubeItemMenu type={'video'} id={items[i].snippet.resourceId.videoId} onClose={() => setV(false)} />}>
+    <ContextMenu key={i} content={setV => <YoutubeItemMenu type={'video'} id={i} onClose={() => setV(false)} />}>
       {c}
     </ContextMenu>
   ),
-  onNavigate
+  onNavigate,
+  large,
+  showChannel
 }: {
-  items: IYoutubeVideoItem[]
+  items: IYoutubeVideoItem[] | number[]
   onLoadMore: VoidFunction
-  scrollKey: string
+  scrollKey?: string
   hasMore: boolean
-  showChannelTitle?: boolean
-  withFilter?: boolean
+  showChannel?: boolean
+  large?: boolean
   scrollElementRef: RefObject<HTMLDivElement>
-  contextMenu?: (index: number, children: ReactElement) => ReactElement
-  onNavigate?: (item: IYoutubeVideoItem) => void
+  contextMenu?: (id: string, children: ReactElement) => ReactElement
+  onNavigate?: (item: string) => void
 }) => {
-  const instance = useFeedInstance()
+  const instance = useYoutubeInstance()
   const { width } = useMeasure(scrollElementRef)
-  const cols = Math.min(Math.floor(width / 400) + 1, 3)
-  const rows = items.length % cols === 0 ? items.length / cols : Math.floor(items.length / cols) + 1
+  const cols = Math.floor(width / (large ? 400 : 340)) + 1
+  const videos = ObjectStore('youtubeVideo').useMultiple(typeof items?.[0] === 'number' ? (items as number[]) : undefined)
+  const final =
+    typeof items?.[0] === 'number'
+      ? videos
+      : ((items as IYoutubeVideoItem[] | undefined)?.map(i => ({
+          name: i.snippet.title,
+          thumbnail: i.snippet.thumbnails?.high?.url ?? '',
+          channelTitle: i.snippet.channelTitle,
+          publishedAt: i.snippet.publishedAt,
+          viewCount: i.statistics?.viewCount,
+          videoId: i.id,
+          channelId: i.snippet.channelId,
+          duration: YoutubeServices.iso8601DurationToSeconds(i.contentDetails?.duration)
+        })) as IYoutubeVideo[])
+  const rows = final.length % cols === 0 ? final.length / cols : Math.floor(final.length / cols) + 1
   return (
     <VirtualLoader
       className={'pb-40'}
       size={260}
       hasMore={hasMore}
       onLoadMore={onLoadMore}
-      overscan={1}
+      overscan={3}
       scrollElementRef={scrollElementRef}
       scrollKey={scrollKey}
       count={rows}
       renderItem={idx => {
-        const sliced = items.slice(idx * cols, (idx + 1) * cols)
+        const sliced = final.slice(idx * cols, (idx + 1) * cols)
         return (
           <div
             style={{
               gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`
             }}
-            className={'grid gap-5 pb-5'}
+            className={'grid gap-6 pb-8'}
           >
-            {sliced.map((i, index) =>
-              contextMenu(
-                idx * cols + index,
-                <ImageTitleItem
+            {sliced.map(i => {
+              return contextMenu(
+                i.videoId,
+                <YoutubeVideoCard
+                  key={i.videoId}
+                  duration={i.duration}
+                  time={i.publishedAt}
+                  image={i.thumbnail}
+                  channelId={i.channelId}
+                  title={i.name}
+                  watch={i.viewCount}
+                  channel={showChannel ? i.channelTitle : undefined}
                   onClick={() => {
                     if (onNavigate) {
-                      onNavigate?.(i)
+                      onNavigate?.(i.videoId)
                       return
                     }
-                    instance.youtubeOps
-                      ?.addVideo(i.snippet.resourceId.videoId, {
-                        history: true
-                      })
-                      .then(res => {
-                        instance.youtubeOps?.goTo(res.id, 'video')
-                      })
+                    instance.load?.(i.videoId, 'video')
                   }}
-                  id={i.id}
-                  image={i.snippet.thumbnails?.high?.url}
-                  title={i.snippet.title}
-                  aboveTitle={
-                    <div className={'text-white font-size-12 flex gap-1'}>
-                      {showChannelTitle && i.snippet.channelTitle && (
-                        <>
-                          <div>{i.snippet.channelTitle}</div>
-                          <div>·</div>
-                        </>
-                      )}
-                      {i.snippet?.publishedAt && !showChannelTitle && (
-                        <>
-                          <div>{DateFormat.format(new Date(i.snippet.publishedAt), DateFormat.Formats.yearMonthDays)}</div>
-                          <div>·</div>
-                        </>
-                      )}
-                      {i.contentDetails?.duration && YoutubeServices.iso8601DurationToSeconds(i.contentDetails.duration) && (
-                        <div>{normalizeSecondsToTime(YoutubeServices.iso8601DurationToSeconds(i.contentDetails.duration)!)}</div>
-                      )}
-                    </div>
-                  }
-                  description={i.snippet.description}
-                  key={i.id}
                 />
               )
-            )}
+            })}
           </div>
         )
       }}

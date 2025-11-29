@@ -2,7 +2,7 @@ import { CustomEditor, CustomElement, IEditorInstance } from '~/typings'
 import { assignProperties } from '@/utils'
 import { Editor, Element, Node, Path, Transforms } from 'slate'
 import Id from '@/utils/id'
-import { ID_TO_ELEMENTS_MAP, ReactEditor } from '@/core'
+import { ReactEditor } from '@/core'
 
 const MAX_INDENT = 6
 export const transformableTargetType = [
@@ -23,17 +23,16 @@ const assignBlockOps = (instance: IEditorInstance, editor: CustomEditor) => {
   assignProperties(instance, {
     blockOps: {
       setBlockFuncs: (blockId, funcs) => {
-        const f = ID_TO_ELEMENTS_MAP.get(editor)?.get(blockId) || {}
-
+        const f = instance.values.ID_TO_ELEMENT.get(blockId) || {}
         const finalF = Object.assign({}, f, funcs)
-        ID_TO_ELEMENTS_MAP.get(editor)?.set(blockId, finalF)
+        instance.values.ID_TO_ELEMENT.set(blockId, finalF)
       },
       removeBlockFuncs: blockId => {
-        ID_TO_ELEMENTS_MAP.get(editor)?.delete(blockId)
+        instance.values.ID_TO_ELEMENT.delete(blockId)
         return
       },
       getBlockFuncs: blockId => {
-        return ID_TO_ELEMENTS_MAP.get(editor)?.get(blockId)
+        return instance.values.ID_TO_ELEMENT.get(blockId)
       },
       getClosestOutestBlock: (windowPoint, container) => {
         const elementBlocks = (container || ReactEditor.toDOMNode(editor, editor)).children
@@ -73,12 +72,19 @@ const assignBlockOps = (instance: IEditorInstance, editor: CustomEditor) => {
       copyLink: () => {
         const selected = instance.getSelectedElements?.()
         if (selected?.length) {
-          editor.on?.({
-            type: 'copyLink',
-            blocks: selected.map(i => ({
-              id: i.id,
-              text: Node.string(i) || i.content || ''
-            }))
+          instance.on({
+            type: 'getMeta',
+            onSuccess: id => {
+              const links = selected.map(i => `rendevoz://object/${id}?blockId=${i.id}`).join('\n')
+              const html = selected.map(i => `<p><a href="rendevoz://object/${id}?blockid=${i.id}">${Node.string(i)}</a></p>`).join('')
+              const content = [
+                new ClipboardItem({
+                  'text/html': new Blob([html], { type: 'text/html' }),
+                  'text/plain': new Blob([links], { type: 'text/plain' })
+                })
+              ]
+              navigator.clipboard.write(content)
+            }
           })
         }
       },
@@ -140,31 +146,32 @@ const assignBlockOps = (instance: IEditorInstance, editor: CustomEditor) => {
             Transforms.removeNodes(editor, {
               at: Editor.range(editor, [0], [editor.children.length - 1])
             })
-          }
-          const hasPaths = Array.from(selected.values()).filter(i => i.pathRef)
-          const elements = hasPaths
-            .map(n => {
-              if (n.pathRef?.current) return Editor.node(editor, n.pathRef.current)[0]
-            })
-            .filter(i => i) as CustomElement[]
-          hasPaths.forEach(i => i.pathRef?.unref())
-          const extended = instance.toggleOps?.extendElements(elements)
-          if (extended?.length) {
-            const extendedWithPathRef = extended.map(e => ({
-              element: e[0],
-              pathRef: Editor.pathRef(editor, e[1])
-            }))
-
-            Editor.withoutNormalizing(editor, () => {
-              extendedWithPathRef.forEach(i => {
-                i.pathRef.current &&
-                  Transforms.removeNodes(editor, {
-                    at: i.pathRef.current
-                  })
-                i.pathRef.unref()
+          } else {
+            const hasPaths = Array.from(selected.values()).filter(i => i.pathRef)
+            const elements = hasPaths
+              .map(n => {
+                if (n.pathRef?.current) return Editor.node(editor, n.pathRef.current)[0]
               })
-            })
-            selected.clear()
+              .filter(i => i) as CustomElement[]
+            hasPaths.forEach(i => i.pathRef?.unref())
+            const extended = instance.toggleOps?.extendElements(elements)
+            if (extended?.length) {
+              const extendedWithPathRef = extended.map(e => ({
+                element: e[0],
+                pathRef: Editor.pathRef(editor, e[1])
+              }))
+
+              Editor.withoutNormalizing(editor, () => {
+                extendedWithPathRef.forEach(i => {
+                  i.pathRef.current &&
+                    Transforms.removeNodes(editor, {
+                      at: i.pathRef.current
+                    })
+                  i.pathRef.unref()
+                })
+              })
+              selected.clear()
+            }
           }
         } else {
           if (!path) return

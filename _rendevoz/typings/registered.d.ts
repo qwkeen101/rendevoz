@@ -10,7 +10,8 @@ export type RegisteredSidebarItem = {
   key: string
   icon?: string
   text?: () => string
-  onClick?: React.MouseEventHandler
+  filled?: boolean
+  onClick?: VoidFunction
   element?: ReactElement
   tooltip?: () => string
 }

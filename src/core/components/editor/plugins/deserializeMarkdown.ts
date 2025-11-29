@@ -15,6 +15,7 @@ function textNodesUnder(el: HTMLElement) {
   }
   return children
 }
+
 export const deserializeMarkdown = (text: string, opts?: deserializeOptions): Descendant[] => {
   const html = markdownToHTMLConverter.makeHtml(text)
   const parsed = new DOMParser().parseFromString(html, 'text/html')

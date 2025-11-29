@@ -12,6 +12,7 @@ const SyncedBlockEditor = ({
 }) => {
   return (
     <SimpleEditor
+      textareaMode
       readOnly={readOnly}
       containerStyle={{ padding: '0px 4px 4px 8px', ...style }}
       value={useMemo(

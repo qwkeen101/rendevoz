@@ -9,6 +9,7 @@ export const waitFor = (
     // check mutiple times and every time should be true, if false, retry
     checkEnsure?: number
     requestAnimationFrame?: boolean
+    microTask?: boolean
   } = {
     timeout: 5000,
     checkDelay: 0,
@@ -43,7 +44,9 @@ export const waitFor = (
         }
       }, checkDelay)
     } else {
-      if (options.requestAnimationFrame) {
+      if (options.microTask) {
+        queueMicrotask(loop)
+      } else if (options.requestAnimationFrame) {
         requestAnimationFrame(loop)
       } else {
         requestIdleCallback(loop)

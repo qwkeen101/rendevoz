@@ -1,25 +1,24 @@
-import { Content } from '@/components'
 import { css } from '@emotion/css'
-import { memo, useEffect, useState } from 'react'
+import { CSSProperties, memo, useEffect, useRef, useState } from 'react'
 import { IMediaChapter, XYPosition } from '~/typings'
 import { useMediaInstance } from '../../hooks/useMediaInstance'
-import useThrottleFn from '@/hooks/utils/useThrottleFn'
 import useMediaState from '../../hooks/useMediaState'
 import useMediaToolbarState from '../../hooks/useMediaToolbarState'
 import { useRafFn } from '@/hooks'
 import { Colors } from '@/consts'
+import classNames from 'classnames'
 
 interface MediaChapterProps {
   percent: number
   startTime: number
   endTime: number
   chapter?: IMediaChapter
+  loadBg?: string
+  progressStyle?: CSSProperties
   idx: number
 }
-const progressBgColor = 'rgba(255,255,255,0.2)'
-const loadProgessBgColor = 'rgba(255,255,255,0.8)'
-const hoverProgressBgColor = 'rgba(255,255,255,0.5)'
-
+const progressBgColor = 'rgba(255,255,255,0.1)'
+const loadProgessBgColor = 'linear-gradient(to right, rgba(251, 196, 36, 0.15), rgba(251, 196, 36, 1))'
 
 const progressBarPadding = css({
   position: 'absolute',
@@ -28,175 +27,75 @@ const progressBarPadding = css({
   bottom: -8,
   zIndex: 30
 })
-const progressList = css({
-  background: progressBgColor,
-  height: '100%',
-  transform: 'scaleY(0.6)',
-  transition: 'transform 0.3s ease'
-})
-const MediaChapter = memo(({ percent, startTime, endTime, idx, chapter }: MediaChapterProps) => {
-  const [chapterState, setChapterState] = useState<{
-    thumbnailVisible: boolean
-    thumbnailPosition?: XYPosition
-    thumbnailUrl?: string
-    hovering?: boolean
-  }>({
-    thumbnailVisible: false
-  })
+
+const barClass = 'absolute left-0 bottom-0 w-full h-full origin-top-left'
+const MediaChapter = memo(({ startTime, endTime, progressStyle, loadBg }: MediaChapterProps) => {
   const instance = useMediaInstance()
-  const { hovering } = chapterState
 
   const [mediaState, setMediaState] = useMediaState()
   const [toolbarState, setToolbarState] = useMediaToolbarState()
-  const { progressbarHovering } = mediaState
+  const { progressbarHovering, currentTime } = mediaState
 
   const { currentHoverTime = 0, currentScrubberTime = 0, draggingScrubber } = toolbarState
-  const realHovering = draggingScrubber ? currentScrubberTime >= startTime && currentScrubberTime <= endTime : hovering
-  const realProgressBarHovering = progressbarHovering || draggingScrubber
+  console.log({
+    currentScrubberTime,
+    currentTime
+  })
   const hoverPercent =
     currentHoverTime > endTime ? 1 : currentHoverTime < startTime ? 0 : (currentHoverTime - startTime) / (endTime - startTime)
-
-  const { run: debounceGetThumbnail } = useThrottleFn(
-    async () => {
-      const time = (endTime - startTime) * hoverPercent + startTime
-      const data = await instance.imageOps?.captureImage(time)
-      setToolbarState(g => ({ ...g, thumbnailUrl: data }))
-    },
-    { wait: 200 }
-  )
-
-  const realLoadPercent =
-    currentScrubberTime < startTime ? 0 : currentScrubberTime > endTime ? 1 : (currentScrubberTime - startTime) / (endTime - startTime)
-  useEffect(() => {
-    if (toolbarState.currentHoveringChapterIdx !== undefined) {
-      const hoverIdx = toolbarState.currentHoveringChapterIdx
-      if (hoverIdx > idx) {
-        setChapterState(s => ({ ...s, hoverPercent: 1 }))
-      } else if (hoverIdx < idx) {
-        setChapterState(s => ({ ...s, hoverPercent: 0 }))
+  const loadTime = (draggingScrubber ? currentScrubberTime ?? currentTime : currentTime) ?? 0
+  const loadPercent = !endTime ? 0 : loadTime < startTime ? 0 : loadTime > endTime ? 1 : (loadTime - startTime) / (endTime - startTime)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const rafPointerMove = useRafFn((e: PointerEvent) => {
+    const { clientX } = e
+    const container = containerRef.current
+    if (container) {
+      const bounding = container.getBoundingClientRect()
+      const offset = clientX - bounding.left
+      if (offset >= 0) {
+        console.log(offset)
+        const ratio = offset / bounding.width
+        setToolbarState(s => ({ ...s, currentHoverTime: (endTime - startTime) * ratio }))
       }
-    }
-  }, [toolbarState.currentHoveringChapterIdx])
-
-  const rafPointerMove = useRafFn(e => {
-    const markerBounding = instance.getMarkerContainer?.()?.getBoundingClientRect()
-    if (markerBounding) {
-      const containerBounding = markerBounding
-      const { clientX } = e
-      debounceGetThumbnail()
-      setChapterState(s => ({
-        ...s,
-        hovering: true
-      }))
-      setMediaState(s => {
-        if (s.progressbarHovering) {
-          return s
-        } else {
-          return { ...s, progressbarHovering: true }
-        }
-      })
-      setToolbarState(s => ({
-        ...s,
-        currentHoveringChapterIdx: idx,
-        thumbnailPosition: {
-          x: clientX,
-          y: containerBounding.top
-        },
-        thumbnailChapterName: chapter?.name,
-        currentHoverTime: ((e.clientX - containerBounding.left) / containerBounding.width) * (mediaState.totalTime || 0),
-        thumbnailVisible: true
-      }))
     }
   })
 
-  if (hovering) {
-    if (draggingScrubber && (currentScrubberTime > endTime || currentScrubberTime < startTime)) {
-      setChapterState(s => ({ ...s, hovering: false }))
-    }
-    if (toolbarState.currentHoveringChapterIdx !== idx) {
-      setChapterState(s => ({ ...s, hovering: false }))
-    }
-  }
   return (
     <div
-      data-chapter-idx={idx}
-      onPointerLeave={e => {
-        rafPointerMove.cancel()
-        if (e.relatedTarget instanceof Element) {
-          if (e.relatedTarget.closest('[data-video-pin=true]')) {
-            const pinChapterIdx = e.relatedTarget.getAttribute('data-pin-chapter-idx')
-            if (pinChapterIdx) {
-              if (Number(pinChapterIdx) !== idx) {
-                setChapterState(s => ({ ...s, hovering: false }))
-              }
-              return
-            } else {
-              setChapterState(s => ({ ...s, hovering: false }))
-            }
-
-            return
-          }
-          if (e.relatedTarget.closest("[role='video-scrubber']")) {
-            if (currentScrubberTime > startTime && currentScrubberTime < endTime) return
-            else {
-              setChapterState(s => ({ ...s, hovering: false }))
-            }
-            return
-          }
-          const closetChapter = e.relatedTarget.closest(`[data-chapter-idx='${idx}']`)
-          if (closetChapter && Number(closetChapter?.getAttribute('data-chapter-idx')) !== idx) {
-            setMediaState(s => ({ ...s, progressbarHovering: false }))
-            setChapterState(s => ({ ...s, hovering: false }))
-            setToolbarState(s => ({ ...s, thumbnailVisible: false }))
-            return
-          }
-        }
-        setToolbarState(s => ({ ...s, thumbnailVisible: false }))
-        setMediaState(s => ({ ...s, progressbarHovering: false }))
-        setChapterState(s => ({ ...s, hovering: false }))
-      }}
       onClick={() => {
         const clickTime = hoverPercent * (endTime - startTime) + startTime
         instance.actionOps?.jumpTo(clickTime)
       }}
-      onPointerMove={rafPointerMove}
-      style={{
-        width: `${percent * 100}%`,
-        height: '100%',
-        transition: 'all 0.2s ease',
-        position: 'relative',
-        cursor: 'pointer',
-        transform: realHovering && percent !== 1 ? 'scaleY(1.6)' : undefined
+      onPointerEnter={() => setMediaState(s => ({ ...s, progressbarHovering: true }))}
+      onPointerLeave={() => setMediaState(s => ({ ...s, progressbarHovering: false }))}
+      onPointerDown={e => {
+        const clickTime = hoverPercent * (endTime - startTime) + startTime
+        instance.startDragScrubber?.(clickTime, e)
       }}
+      ref={containerRef}
+      onPointerMove={rafPointerMove}
+      className='w-full h-full group relative cursor-pointer'
     >
       <div className={progressBarPadding}></div>
-      <Content
-        className={progressList}
+      <div
+        className={'scale-y-90 group-hover:scale-y-150 transition-transform h-full'}
         style={{
           overflow: 'hidden',
-          borderRadius: 16,
-          transform: realProgressBarHovering ? 'none' : undefined,
-          backgroundColor: mediaState.mode === 'audio' ? Colors.Background.ButtonHover : undefined,
+          backgroundColor: mediaState.mode === 'audio' ? Colors.Background.ButtonHover : progressBgColor,
+          ...progressStyle,
           ...mediaState.styles?.progressStyle
         }}
       >
         <div
-          className="load-progress"
+          className={barClass}
           style={{
-            transform: `scaleX(${realLoadPercent})`,
-            background: mediaState.mode === 'audio' ? Colors.Background.ButtonActive : loadProgessBgColor
+            transform: `scaleX(${loadPercent})`,
+            background: loadBg ?? loadProgessBgColor,
+            borderTopRightRadius: 999,
+            borderBottomRightRadius: 999
           }}
         ></div>
-        <div
-          className="hover-progress"
-          style={{
-            transform: `scaleX(${hoverPercent})`,
-            background: mediaState.mode === 'audio' ? Colors.Background.Border : hoverProgressBgColor,
-            opacity: realProgressBarHovering ? 1 : 0,
-            transition: 'opacity 0.3s ease'
-          }}
-        ></div>
-      </Content>
+      </div>
     </div>
   )
 })

@@ -1,4 +1,4 @@
-import { atom, useAtomValue, useStore } from 'jotai'
+import { atom, useAtomValue } from 'jotai'
 import { IWhiteboardEdge, IWhiteboardInstance, IWhiteboardNode } from '~/typings'
 import useUpdateWhiteboard from '@/core/components/whiteboard/hooks/useUpdateWhiteboard'
 import { assignProperties } from '@/utils'
@@ -14,15 +14,20 @@ import assignContentOps from '@/core/components/whiteboard/hooks/ops/content'
 import { getSetting } from '@/core'
 import { MetaStore } from '@/api/stores'
 import assignMindmapOps from '@/core/components/whiteboard/hooks/ops/mindmap'
+import { IWhiteboardState } from '@/core/components/whiteboard/hooks/useWhiteboardState'
 
-export const WhiteboardInstanceAtom = atom<IWhiteboardInstance>({})
+export const WhiteboardInstanceAtom = atom<
+  IWhiteboardInstance & {
+    getState: () => IWhiteboardState
+  }
+>({})
 
 export const useWhiteboardInstance = () => useAtomValue(WhiteboardInstanceAtom)
 
 export const useAssignWhiteboardInstance = () => {
-  const updateWhiteboard = useUpdateWhiteboard()
   const instance = useWhiteboardInstance()
-  const store = useStore()
+  const updateWhiteboard = useUpdateWhiteboard(instance)
+  const store = instance.values.store
   assignProperties(instance, {
     moveToMetaNode: (metaId, opts) => {
       const nodes = instance.getAllNode?.()
@@ -59,7 +64,7 @@ export const useAssignWhiteboardInstance = () => {
           }
         }
       }
-      updateWhiteboard(w => {
+      instance.updateWhiteboard(w => {
         w.nodes?.delete(id)
         instance.values.NODE_TO_EDGE_MAP.get(id)?.forEach(l => {
           w.edges?.delete(l)
@@ -81,7 +86,7 @@ export const useAssignWhiteboardInstance = () => {
           }
         }
       }
-      updateWhiteboard(w => {
+      instance.updateWhiteboard(w => {
         w.edges?.delete(id)
       }, true)
     },
@@ -96,7 +101,7 @@ export const useAssignWhiteboardInstance = () => {
             id: node.id || Id.getId()
           }) as Required<IWhiteboardNode>
       )
-      await updateWhiteboard(w => {
+      await instance.updateWhiteboard(w => {
         if (w.nodes) {
           const maxZ = Math.max(...Array.from(w.nodes.values()).map(i => i.z), 0)
           newNodes.forEach((n, idx) => {
@@ -117,7 +122,7 @@ export const useAssignWhiteboardInstance = () => {
         id = obj.id
       }
       if (!id) return
-      await updateWhiteboard(w => {
+      await instance.updateWhiteboard(w => {
         const origin = w.edges?.get(id!)
         if (origin) {
           const newNode = (updater ? updater(origin) : typeof obj === 'object' ? { ...origin, ...obj } : undefined) as
@@ -138,7 +143,7 @@ export const useAssignWhiteboardInstance = () => {
         id = obj.id
       }
       if (!id) return
-      await updateWhiteboard(w => {
+      await instance.updateWhiteboard(w => {
         const origin = w.nodes?.get(id!)
         if (origin) {
           const newNode = (updater ? updater(origin) : typeof obj === 'object' ? { ...origin, ...obj } : undefined) as
@@ -151,10 +156,8 @@ export const useAssignWhiteboardInstance = () => {
       }, withUndo)
     },
     deleteNodes: ids => {
-      Array.from(instance.values.ID_TO_NODE_MAP.values()).forEach(i => {
-        i.onNodesDelete?.(ids)
-      })
-      updateWhiteboard(w => {
+      instance.emit({ type: 'nodeDeleted', deleted: ids })
+      instance.updateWhiteboard(w => {
         ids.forEach(i => {
           w.nodes?.delete(i)
           instance.values.NODE_TO_EDGE_MAP.get(i)?.forEach(l => {

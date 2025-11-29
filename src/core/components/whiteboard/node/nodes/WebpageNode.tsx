@@ -1,15 +1,13 @@
-import { Content } from '@/components/base'
 import { IWhiteboardNode } from '~/typings/data'
-import Webpage from '@/core/components/webpage/Webpage'
-import { css } from '@emotion/css'
 import { memo, useMemo } from 'react'
+import UncontrolledWebpage from '@/core/components/webpage/UncontrolledWebpage'
 
 const WebpageNode = memo(({ node, webpageId }: { node: IWhiteboardNode; webpageId: number }) => {
   return (
-    <Webpage
-      disableTabTitle={true}
+    <UncontrolledWebpage
       initialHeight={useMemo(() => node.height, [])}
-      initialWebpageId={webpageId}
+      switcherHeader
+      id={webpageId}
       editorOptions={{
         layout: {
           virtualizer: true,
@@ -25,20 +23,17 @@ const WebpageNode = memo(({ node, webpageId }: { node: IWhiteboardNode; webpageI
             fontSize: '2rem'
           },
           titleContainerStyle: {
-            padding: '30px 0px 5px',
+            padding: '1.6em 0px 0.6em',
             maxWidth: '100%',
             width: '100%'
           }
         },
-
         styles: {
           bottomPadding: 100,
           pageMinPadding: '0px 30px 0px',
           containerHeight: 'auto',
           containerMaxHeight: 'inherit',
           containerStyle: {
-            width: '520px',
-            minHeight: 'max(100%, 50px)',
             maxWidth: '100%',
             minWidth: '100%'
           }
@@ -46,12 +41,6 @@ const WebpageNode = memo(({ node, webpageId }: { node: IWhiteboardNode; webpageI
         state: {
           fontSize: 17,
           pageWidth: 'Max'
-        },
-        classNames: {
-          editorContainerClassName: css({
-            fontSize: '1em',
-            width: '100% !important'
-          })
         }
       }}
     />

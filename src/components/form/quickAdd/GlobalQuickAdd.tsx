@@ -1,8 +1,8 @@
 import { assignProperties } from '@/utils'
-import { GlobalInstance } from '@/hooks'
 import { memo, useState } from 'react'
 import { Modal } from '@/components'
 import QuickAddForm, { AvailableQuickAdd } from '@/components/form/quickAdd/QuickAddForm'
+import { Zindexes } from '@/consts'
 
 export default memo(() => {
   const [quickAddState, setQuickAddState] = useState<{
@@ -12,10 +12,11 @@ export default memo(() => {
   }>({
     visible: false
   })
-  assignProperties(GlobalInstance, {
+  assignProperties(Global, {
     metaOps: {
-      ...GlobalInstance.metaOps,
+      ...Global.metaOps,
       quickAdd: (metaId, target) => {
+        Global.metaOps.closeDetails?.()
         const idArr = Array.isArray(metaId) ? metaId : [metaId]
         setQuickAddState({
           visible: true,
@@ -27,17 +28,22 @@ export default memo(() => {
   })
 
   return (
-    <Modal
-      zIndex={8000}
-      visible={quickAddState.visible}
-      onClose={() => {
-        setQuickAddState(s => ({ ...s, visible: false, defaultVisible: undefined }))
-      }}
-      enableClickEvent={true}
-    >
-      {quickAddState.metaId && (
-        <QuickAddForm defaultVisible={quickAddState.defaultVisible} onClose={() => setQuickAddState(s => ({ ...s, visible: false, defaultVisible: undefined }))} currentMetaId={quickAddState.metaId} />
-      )}
-    </Modal>
+    <>
+      <Modal
+        zIndex={quickAddState.defaultVisible === 'tags' ? Zindexes.QuickAddTag : Zindexes.QuickAdd}
+        visible={quickAddState.visible}
+        onClose={() => {
+          setQuickAddState(s => ({ ...s, visible: false, defaultVisible: undefined }))
+        }}
+      >
+        {quickAddState.metaId && (
+          <QuickAddForm
+            defaultVisible={quickAddState.defaultVisible}
+            onClose={() => setQuickAddState(s => ({ ...s, visible: false, defaultVisible: undefined }))}
+            currentMetaId={quickAddState.metaId}
+          />
+        )}
+      </Modal>
+    </>
   )
 })

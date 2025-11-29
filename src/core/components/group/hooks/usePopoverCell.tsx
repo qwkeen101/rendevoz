@@ -63,10 +63,10 @@ const usePopoverCell = (
   useLayoutEffect(() => {
     if (cellState.visible) {
       opts.onOpen?.()
-      const h = (e: WheelEvent) => {
+      const h = (e: Event) => {
         const c = opts.targetRef?.current || popoverContentRef.current
         if (c && !c.contains(e.target)) {
-          opts.onClose?.()
+          setCellState({ visible: false })
         }
       }
       const k = (e: KeyboardEvent) => {
@@ -106,13 +106,13 @@ const usePopoverCell = (
       setTimeout(() => {
         setCellState(s => ({ ...s, realVisible: true }))
       }, 10)
-      window.addEventListener('wheel', h, { passive: false })
+      window.addEventListener('scroll', h, { passive: false })
       document.addEventListener('keydown', k)
       return () => {
         resizeObserver.disconnect()
         setGroupState(s => ({ ...s, popoverVisible: false }))
         document.removeEventListener('keydown', k)
-        window.removeEventListener('wheel', h)
+        window.removeEventListener('scroll', h)
         opts?.onClose?.()
         // timeout here to prevent some conditions group is not focused
         setTimeout(() => {
@@ -140,7 +140,8 @@ const usePopoverCell = (
             withCover
               ? { position: 'fixed', left: 0, top: 0, width: '100%', height: '100%', zIndex: 1002, opacity: cellState.realVisible ? 1 : 0 }
               : {
-                  zIndex: 99
+                  zIndex: 99,
+                  position: 'relative'
                 }
           }
         >

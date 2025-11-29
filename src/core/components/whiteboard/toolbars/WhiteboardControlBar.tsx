@@ -1,113 +1,57 @@
-import { useWhiteboardState } from '@/core/components/whiteboard/hooks/useWhiteboardState'
-import { Content, Icon, Tooltip, WithBorder } from '@/components'
-import { Colors } from '@/consts'
-import { ClassName } from 'rendevoz'
-import { useFlow } from '@/core/components/whiteboard/StateHooks'
-import WhiteboardMinimap from '@/core/components/whiteboard/minimap/WhiteboardMinimap'
-import { memo, useEffect, useState } from 'react'
+import { useSelectWhiteboardState, useSetWhiteboardState } from '@/core/components/whiteboard/hooks/useWhiteboardState'
+import { Icon, IconWithPopover } from '@/components'
+import { Colors, Icons } from '@/consts'
+import WhiteboardMinimap from '@/core/components/whiteboard/WhiteboardMinimap'
+import { memo } from 'react'
 import { useWhiteboardInstance } from '@/core/components/whiteboard/hooks'
 import { getBoxOfNodes } from '@/core/components/whiteboard/utils'
 import TooltipWithCmd from '@/components/TooltipWithCmd'
 import { useTranslation } from 'react-i18next'
 import classnames from 'classnames'
+import WhiteboardSettings from '@/core/components/whiteboard/WhiteboardSettings'
+import trans from '@/consts/trans'
+import { useAtom } from 'jotai/index'
+import { WhiteboardSidebarStateAtom } from '@/core/components/whiteboard/sidebar/WhiteboardRightbar'
+import WhiteboardContent from '@/core/components/whiteboard/sidebar/WhiteboardContent'
 
 const WhiteboardControlBar = memo(() => {
-  const [whiteboardState, setWhiteboardState] = useWhiteboardState()
-  const flow = useFlow()
-  const [historyState, setHistoryState] = useState({
-    redo: false,
-    undo: false
-  })
+  const setWhiteboardState = useSetWhiteboardState()
   const instance = useWhiteboardInstance()
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setHistoryState(s => {
-        const his = flow.history
-        const canRedo = !!his.redos.length
-        const canUndo = !!his.undos.length
-        if (canRedo !== s.redo || canUndo !== s.undo) {
-          return {
-            redo: canRedo,
-            undo: canUndo
-          }
-        }
-        return s
-      })
-    }, 200)
-    return () => {
-      clearInterval(interval)
-    }
-  }, [])
-  const transformHistory = instance.values.transformHistory
   const { t } = useTranslation()
-  const showUndo = transformHistory.undos.length > 0
+  const [rightBarState, setRightBarState] = useAtom(WhiteboardSidebarStateAtom)
+  const { readOnly, currentTool, isPanning, pointerMode, toolbarPointerMode, zoom } = useSelectWhiteboardState(s => ({
+    readOnly: s.readOnly,
+    currentTool: s.currentTool,
+    isPanning: s.isPanning,
+    pointerMode: s.pointerMode,
+    toolbarPointerMode: s.toolbarPointerMode,
+    zoom: s.zoom
+  }))
   return (
-    <Content
-      flex
-      gap={10}
+    <div
+      className={'flex gap-3 absolute items-center z-10'}
       style={{
-        zIndex: 10,
-        position: 'absolute',
-        alignItems: 'center',
         right: 20,
         bottom: 20
       }}
     >
-      {!whiteboardState.readOnly && (
-        <>
-          {(showUndo || transformHistory.redos.length > 0) && (
-            <Content flex alignItems={'center'} gap={7} className={'br-6 p-5 border-box-shadow bg-popover'}>
-              {showUndo && (
-                <Tooltip content={<TooltipWithCmd cmd={'Shift+E'} name={t('whiteboard.Undo view change')} />}>
-                  <Icon
-                    className={'button p-6 br-6'}
-                    name={'park-back-one'}
-                    onClick={() => {
-                      instance.containerOps?.undoTransform()
-                    }}
-                  />
-                </Tooltip>
-              )}
-              {transformHistory.redos.length > 0 && (
-                <Tooltip content={<TooltipWithCmd cmd={'Shift+Q'} name={'Redo view change'} />}>
-                  <Icon
-                    className={'button p-6 br-6'}
-                    name={'park-go-ahead'}
-                    onClick={() => {
-                      instance.containerOps?.redoTransform()
-                    }}
-                  />
-                </Tooltip>
-              )}
-            </Content>
-          )}
-          <Content flex alignItems={'center'} gap={7} className={'br-6 p-5 border-box-shadow bg-popover'}>
-            <Tooltip content={<TooltipWithCmd cmd={'Cmd+Z'} name={t('general.Undo')} />}>
-              <Icon
-                className={'button p-6 br-6'}
-                name={'park-back'}
-                onClick={() => flow.undo?.()}
-                style={{
-                  color: historyState.undo ? undefined : Colors.Background.Border,
-                  cursor: historyState.undo ? undefined : 'not-allowed'
-                }}
-              />
-            </Tooltip>
-            <Tooltip content={<TooltipWithCmd cmd={'Cmd+Y'} name={t('general.Redo')} />}>
-              <Icon
-                className={'button p-6 br-6'}
-                name={'park-share-two'}
-                onClick={() => flow.redo?.()}
-                style={{
-                  color: historyState.redo ? undefined : Colors.Background.Border,
-                  cursor: historyState.redo ? undefined : 'not-allowed'
-                }}
-              />
-            </Tooltip>
-          </Content>
-        </>
-      )}
-      <Content flex alignItems={'center'} gap={7} className={'br-6 p-5 border-box-shadow bg-popover'}>
+      <div className={'rounded-lg items-center gap-2 flex py-1.5 px-2 border-box-shadow bg-popover'}>
+        {!readOnly && (
+          <>
+            <Icon
+              onClick={() => {
+                setWhiteboardState(s => ({
+                  ...s,
+                  currentTool: s.currentTool === 'freehand' ? undefined : 'freehand',
+                  pointerMode: s.currentTool === 'freehand' ? s.pointerMode : 'select',
+                  toolbarPointerMode: s.currentTool === 'freehand' ? s.toolbarPointerMode : 'select'
+                }))
+              }}
+              className={classnames('square-button', currentTool === 'freehand' && 'active-button')}
+              name={'custom-markerpen'}
+            />
+          </>
+        )}
         <Icon
           onClick={() => {
             setWhiteboardState(s => ({
@@ -118,30 +62,22 @@ const WhiteboardControlBar = memo(() => {
             }))
           }}
           style={{
-            pointerEvents: whiteboardState.readOnly ? 'none' : 'auto'
+            pointerEvents: readOnly ? 'none' : 'auto'
           }}
-          className={classnames('button p-6 br-6', !whiteboardState.currentTool && 'active-button')}
-          name={
-            whiteboardState.readOnly ||
-            whiteboardState.isPanning ||
-            whiteboardState.pointerMode === 'pan' ||
-            whiteboardState.toolbarPointerMode === 'pan'
-              ? 'park-fist'
-              : 'park-move-one'
-          }
+          className={classnames('square-button', !currentTool && 'active-button')}
+          name={readOnly || isPanning || pointerMode === 'pan' || toolbarPointerMode === 'pan' ? 'park-fist' : 'park-move-one'}
         />
-        <div style={{ height: 28, width: 1, background: Colors.Background.Border }}></div>
+        <div style={{ height: 20, width: 1, background: Colors.Background.Border }}></div>
         <Icon
           onClick={e => {
             e.stopPropagation()
             e.preventDefault()
-            const container = flow.containerEle
-            const containerBounding = container?.parentElement?.getBoundingClientRect()
+            const containerBounding = instance.getOutestContainerNode()?.getBoundingClientRect()
             if (!containerBounding) return
-            flow.panzoom?.smoothZoom(containerBounding.width / 2, containerBounding.height / 2, 0.5)
+            instance.panzoom?.smoothZoom(containerBounding.width / 2, containerBounding.height / 2, 0.5)
           }}
           name={'park-minus'}
-          className={'button p-6 br-6'}
+          className={'square-button'}
         />
         <div
           onClick={() => {
@@ -153,45 +89,59 @@ const WhiteboardControlBar = memo(() => {
                 return
               }
             }
-            const bounding = flow.parentContainerEle?.getBoundingClientRect()
+            const bounding = instance.getOutestContainerNode()?.getBoundingClientRect()
             if (bounding) {
-              flow.panzoom?.smoothZoomAbs(bounding.width / 2, bounding.height / 2, 1)
+              instance.panzoom?.smoothZoomAbs(bounding.width / 2, bounding.height / 2, 1)
             }
           }}
-          className={'font-size-12 bold-font pointer'}
+          className={'text-sm mx-1 font-semibold cursor-pointer'}
         >
-          {(whiteboardState.zoom * 100).toFixed(0)}%
+          {(zoom * 100).toFixed(0)}%
         </div>
         <Icon
           onClick={e => {
             e.preventDefault()
             e.stopPropagation()
-            const container = flow.containerEle
-            const containerBounding = container?.parentElement?.getBoundingClientRect()
-            flow.panzoom?.smoothZoom(containerBounding.width / 2, containerBounding.height / 2, 2)
+            const containerBounding = instance.getOutestContainerNode()?.getBoundingClientRect()
+            if (containerBounding) {
+              instance.panzoom?.smoothZoom(containerBounding.width / 2, containerBounding.height / 2, 2)
+            }
           }}
           name={'park-plus'}
-          className={'button p-6 br-6'}
+          className={'square-button'}
         />
+        <div style={{ height: 20, width: 1, background: Colors.Background.Border }}></div>
         <Icon
-          name={'park-map-draw'}
-          className={'button p-6 br-6'}
-          onClick={() => setWhiteboardState(s => ({ ...s, openMinimap: !s.openMinimap }))}
+          name={Icons.Search}
+          className={'square-button'}
+          tooltip={<TooltipWithCmd cmd={'Cmd+F'} name={t(trans.Search)}></TooltipWithCmd>}
+          onClick={() => instance.searchOps?.toggleSearchPanel(true)}
         />
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 50,
-            right: 0,
-            opacity: whiteboardState.openMinimap ? 1 : 0,
-            pointerEvents: whiteboardState.openMinimap ? 'auto' : 'none',
-            transition: 'opacity 0.2s ease'
-          }}
-        >
-          <WhiteboardMinimap />
-        </div>
-      </Content>
-    </Content>
+        <IconWithPopover
+          padding={12}
+          size={14}
+          content={setV => (
+            <div style={{ paddingRight: 10 }}>
+              <WhiteboardContent onClose={() => setV(false)} />
+            </div>
+          )}
+          name={'custom-list'}
+          className={'square-button'}
+        />
+        <IconWithPopover
+          padding={12}
+          size={14}
+          content={
+            <div style={{ paddingRight: 10 }}>
+              <WhiteboardMinimap />
+            </div>
+          }
+          name={'park-map-draw'}
+          className={'square-button'}
+        />
+        <WhiteboardSettings />
+      </div>
+    </div>
   )
 })
 

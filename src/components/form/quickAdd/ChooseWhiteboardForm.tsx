@@ -1,213 +1,158 @@
-import { useEffect, useMemo, useState } from 'react'
-import { IWhiteboardEvents, IWhiteboardInstance, MetaObject } from '~/typings'
-import { MetaStore, ObjectStore } from '@/api/stores'
-import { Content, Icon, Menu } from '@/components'
-import { DraggableElement, GlobalSetting, Whiteboard } from '@/core'
-import { ClassName } from 'rendevoz'
-import { Rendevoz } from '@/core/rendevoz'
+import { memo, useLayoutEffect, useMemo, useState } from 'react'
+import { MetaFilterGroup, MetaObject } from '~/typings'
+import { MetaStore } from '@/api/stores'
+import { BetterInput, Icon } from '@/components'
+import { Whiteboard } from '@/core'
 import { useTranslation } from 'react-i18next'
-import { Colors, KEY } from '@/consts'
-import ButtonSwitch from '@/components/base/ButtonSwitch'
-import produce from 'immer'
+import { Icons, KEY } from '@/consts'
 import { useDebounceEffect } from '@/hooks'
-import fuzzysort from 'fuzzysort'
-import KeyvalueStore from '@/api/stores/keyvalue.store'
-import UpdateMovetoCache from '@/components/form/quickAdd/updateMovetoCache'
 import isHotkey from 'is-hotkey'
-import useMoveToCache from '@/components/form/quickAdd/useMoveToCache'
+import useCollectionMetaTreeView, { ITreeView } from '@/core/components/common/useCollectionMetaTreeView'
+import { SidebarExpandItem } from '@/components/layout/sidebar/main'
+import EmptyList from '@/core/components/common/EmptyList'
+import { atom } from 'jotai/index'
+import { useAtom } from 'jotai'
+import produce from 'immer'
 
-export default ({ onBack, onClose, metaId }: { onBack: VoidFunction; onClose: VoidFunction; metaId: number[] }) => {
-  const cache = useMoveToCache()?.whiteboard
+const WhiteboardMoveToAtom = atom<{
+  expanded: Set<number>
+  search: string
+  filter?: MetaFilterGroup
+  selected?: number
+}>({
+  expanded: new Set<number>(),
+  search: '',
+  filter: undefined
+})
 
-  const [setting, setSetting] = GlobalSetting.useSetting()
-  const index = MetaStore.useMetaObjectsMap()
-  const [whiteboardInstance, setInstance] = useState<IWhiteboardInstance>()
-  const moveToShowInvisible = KeyvalueStore.useValue('moveToShowInvisible')
-  const allWhiteboards = useMemo(() => {
-    const whiteboards = Array.from(index.values()).filter(
-      i => (!moveToShowInvisible ? MetaStore.isVisibleMetaObject(i) : true) && i.type === 'whiteboard'
-    )
-    whiteboards.sort((a, b) => b.createdAt - a.createdAt)
-    return whiteboards
-  }, [index, moveToShowInvisible])
-  const [selectedWhiteboard, setSelectedWhiteboard] = useState<number>(
-    cache?.id ? (allWhiteboards.some(i => i.objectId === cache.id) ? cache.id : undefined) : undefined
-  )
-  const [displayWhiteboards, setDisplayWhiteboards] = useState<MetaObject[]>()
-  const [search, setSearch] = useState('')
-  useEffect(() => {
-    if (whiteboardInstance) {
-      const h = (e: IWhiteboardEvents) => {
-        if (e.type === 'drop' && e.itemType === 'object') {
-          const ids = Array.isArray(e.metaId) ? e.metaId : [e.metaId]
-          UpdateMovetoCache(c => {
-            c.whiteboard = { id: selectedWhiteboard }
-            c.recently = c.recently
-              ? [{ type: 'whiteboard', id: selectedWhiteboard }, ...c.recently.filter(i => i.id !== selectedWhiteboard)]
-              : [{ type: 'whiteboard', id: selectedWhiteboard }]
-          })
-          if (setting.quickAdd.addIntoWhiteboardHideObject) {
-            ids.forEach(id => {
-              MetaStore.updateMetaObject({ id, hidden: true })
-            })
-          }
-        }
-      }
-      whiteboardInstance.addEventListener?.(h)
-      return () => {
-        whiteboardInstance.removeEventListener?.(h)
-      }
+export default memo(({ showHidden = false }: { showHidden: boolean }) => {
+  const [whiteboards, setWhiteboards] = useState<MetaObject[]>([])
+  const [{ search, expanded, filter, selected }, setCache] = useAtom(WhiteboardMoveToAtom)
+  const metas = MetaStore.useAll()
+  const calculateWhiteboards = async () => {
+    let all = MetaStore.getAll({
+      showHidden: true,
+      filter: o => o.type === 'whiteboard',
+      sort: 'createdAtDsc'
+    })
+    if (search) {
+      all = await Global.metaOps.search(search, all, { onlyName: true, showHidden })
     }
-  }, [whiteboardInstance])
+    if (filter?.rules.length) {
+      all = await Global.metaOps.filter(filter, all)
+    }
+    setWhiteboards(all)
+  }
+  useLayoutEffect(() => {
+    calculateWhiteboards()
+  }, [metas])
   useDebounceEffect(
     () => {
-      if (search) {
-        const result = Array.from(fuzzysort.go(search, allWhiteboards, { key: 'name' }).values()).map(i => i.obj)
-        setDisplayWhiteboards(result)
-      } else {
-        setDisplayWhiteboards(undefined)
-      }
+      calculateWhiteboards()
     },
-    [search],
-    { wait: 200 }
+    [search, filter],
+    { wait: 300 }
   )
+  const { view } = useCollectionMetaTreeView({ showHidden, id: useMemo(() => whiteboards.map(i => i.id), [whiteboards]) })
   const { t } = useTranslation()
-
-  return (
-    <Content flex style={{ width: '95vw', height: '90vh', minWidth: 800, fontSize: 14 }}>
-      <Content flex column style={{ padding: '12px 12px 12px 6px', width: 400, boxShadow: Colors.Consts.BoxShadowBorderRight }}>
-        <Content flex gap={12} className={ClassName.title()} style={{ marginBottom: 8 }}>
-          <Icon name={'park-left'} className={ClassName.circleButton()} onClick={onBack} />
-          <div>{t('general.Select a whiteboard')}</div>
-        </Content>
-        <DraggableElement
-          draggingDetails={{
-            type: 'metaObjects',
-            ids: metaId
-          }}
-        >
-          <Content
-            flex
-            alignItems={'center'}
-            className={'border-box-shadow transparent-font light-hover'}
-            style={{
-              cursor: 'grab',
-              padding: '4px 8px',
-              borderRadius: 4,
-              marginRight: 8,
-              fontSize: 14,
-              marginBottom: 8,
-              transition: 'all 0.15s ease-in-out',
-              marginLeft: 8
+  const renderSidebar = () => {
+    return (
+      <div className={'flex-col flex w-64 h-full border-right'}>
+        <div className={'flex items-center transparent-font bg-third gap-3 py-1.5 px-3'}>
+          <Icon name={Icons.Search} />
+          <BetterInput
+            placeholder={t('general.Type to search') + '...'}
+            onKeyDownCapture={e => {
+              if (isHotkey(KEY.Escape, e)) {
+                e.preventDefault()
+                e.stopPropagation()
+                e.currentTarget.blur()
+              }
             }}
-            gap={12}
-          >
-            <Icon name={'park-drag'} size={16} />
-            <div className={'font-size-14'}>{t('general.Drag to add object into whiteboard')}</div>
-          </Content>
-        </DraggableElement>
-        <ButtonSwitch
-          name={t('general.Hide object')}
-          value={setting.quickAdd.addIntoWhiteboardHideObject}
-          onChange={v =>
-            setSetting(s =>
-              produce(s, draft => {
-                draft.quickAdd.addIntoWhiteboardHideObject = v
-              })
-            )
-          }
-        />
-        <ButtonSwitch
-          name={t('general.Show hidden objects')}
-          value={!!moveToShowInvisible}
-          onChange={v => KeyvalueStore.updateOne('moveToShowInvisible', v)}
-        />
-        <input
-          autoFocus
-          onKeyDownCapture={e => {
-            if (isHotkey(KEY.Escape, e)) {
-              e.preventDefault()
-              e.stopPropagation()
-              e.currentTarget.blur()
-            }
-          }}
-          className={'border-box-shadow focus-input'}
-          style={{ padding: '3px 8px', borderRadius: 4, margin: '6px 8px' }}
-          placeholder={t('general.Type to search') + '...'}
-          value={search}
-          onChange={e => {
-            setSearch(e.target.value)
-          }}
-        />
-        <Content flex column style={{ overflowY: 'auto', paddingTop: 4 }}>
-          <Menu.NavigationMenu
-            disableEnterPreventDefault
-            reselectOnLayoutChange={search ? true : false}
-            defaultSelected={cache ? [String(cache.id)] : undefined}
-            layout={[
-              search
-                ? undefined
-                : {
-                    type: 'item',
-                    icon: 'park-plus',
-                    text: t('general.Create new whiteboard'),
-                    key: 'create',
-                    onSelect: () => {
-                      ObjectStore('whiteboard').addOneWithMeta(
-                        {},
-                        {
-                          showMetaModal: true
-                        }
-                      )
-                    }
-                  },
-              // @ts-ignore
-              ...(displayWhiteboards || allWhiteboards).map(i => ({
-                type: 'item',
-                key: String(i.objectId),
-                style:
-                  selectedWhiteboard === i.objectId
-                    ? {
-                        background: Colors.Common.SelectColorTransparentLight,
-                        color: Colors.Common.SelectColor
-                      }
-                    : undefined,
-                text: i.name || i.placeholderName || 'Unnamed whiteboard',
-                icon: i.icon || Rendevoz.Utils.Object.getMetaObjectIcon(i.type),
-                onSelect: () => {
-                  setSelectedWhiteboard(i.objectId!)
-                }
-              }))
-            ].filter(i => i)}
+            className={'flex-1 font-size-13'}
+            value={search}
+            onChange={v => setCache(s => ({ ...s, search: v.target.value }))}
           />
-        </Content>
-      </Content>
-      <Content flex column fullWidth fullHeight style={{ background: Colors.Background.Global, borderRadius: '0px 8px 8px 0px' }}>
-        <Content
-          flex
-          style={{
-            padding: '12px 16px',
-            position: 'absolute',
-            top: 0,
-            left: 0
-          }}
-          className={ClassName.title()}
-        >
-          {t('general.Preview')}
-        </Content>
-        <div
-          style={{
-            height: '100%',
-            overflow: 'hidden',
-            width: '100%',
-            position: 'relative'
-          }}
-        >
-          {selectedWhiteboard && (
-            <Whiteboard onInstanceInitialized={i => setInstance(i)} key={selectedWhiteboard} whiteboardId={selectedWhiteboard} />
-          )}
         </div>
-      </Content>
-    </Content>
+        <div className={'overflow-y-auto flex-1 p-2'}>
+          {view.map(i => (
+            <Item
+              {...i}
+              key={i.id}
+              expanded={expanded}
+              onClick={id => {
+                setCache(s => ({ ...s, selected: id }))
+              }}
+              onExpand={id => {
+                setCache(s =>
+                  produce(s, draft => {
+                    draft.expanded.has(id) ? draft.expanded.delete(id) : draft.expanded.add(id)
+                  })
+                )
+              }}
+              selected={selected}
+            />
+          ))}
+        </div>
+      </div>
+    )
+  }
+  const objectId = selected ? MetaStore.getCachedMetaObject(selected)?.objectId : undefined
+  return (
+    <div
+      className={'border-top relative overflow-hidden flex'}
+      style={{ width: '90vw', height: '80vh', minWidth: 800, borderRadius: '0px 0px 12px 12px' }}
+    >
+      {renderSidebar()}
+      <div className={'flex-1 h-full bg-global items-center flex justify-center relative overflow-hidden'}>
+        {objectId ? <Whiteboard key={objectId} whiteboardId={objectId} /> : <EmptyList />}
+      </div>
+    </div>
+  )
+})
+
+const Item = ({
+  name,
+  children,
+  id,
+  type,
+  onExpand,
+  expanded,
+  selected,
+  onClick
+}: ITreeView & {
+  expanded: Set<number>
+  selected?: number
+  onClick: (id: number) => void
+  onExpand: (id: number) => void
+}) => {
+  return (
+    <>
+      <SidebarExpandItem
+        name={name}
+        expandable={type === 'collection'}
+        onExpand={() => {
+          onExpand(id)
+        }}
+        expanded={expanded.has(id)}
+        className={selected === id ? 'select-color-box-shadow select-color-super-transparent-bg' : ''}
+        onClick={() => {
+          if (type === 'collection') {
+            onExpand(id)
+          } else {
+            onClick(id)
+          }
+        }}
+        icon={type === 'collection' ? Icons.Folder : undefined}
+        childrenSize={children.length}
+      />
+      {type === 'collection' && children.length && expanded.has(id) ? (
+        <div className={'pl-6'}>
+          {children.map(i => (
+            <Item {...i} selected={selected} onExpand={onExpand} expanded={expanded} onClick={onClick} key={i.id} />
+          ))}
+        </div>
+      ) : null}
+    </>
   )
 }

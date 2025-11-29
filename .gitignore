@@ -19,6 +19,7 @@ windowConfig.json
 .DS_Store
 *.suo
 *.ntvs*
+models
 *.njsproj
 *.sln
 *.sw?

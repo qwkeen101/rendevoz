@@ -1,5 +1,5 @@
 import { CustomEditor, IEditorInstance } from '~/typings'
-import { assignProperties } from '@/utils'
+import { assignProperties } from '../utils'
 import { useAtomValue, useSetAtom } from 'jotai/index'
 import { EditorSearchAtom, SearchEntry, SearchOccurrence } from '../hooks/useEditorSearch'
 import { useEffect, useRef } from 'react'

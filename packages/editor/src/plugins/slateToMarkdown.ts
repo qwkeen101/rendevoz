@@ -1,27 +1,56 @@
 import { CustomElement } from 'rendevoz'
 import { Descendant, Node, Text } from 'slate'
-import { globalStore } from '@/api/stores'
-import { metaObjectsAtom } from '@/api/stores/meta/meta.store'
-import { getSetting, GlobalSetting } from '@/core'
 import { TableRowElement } from '~/typings'
 
-export const slateToMarkdown = (value: (CustomElement | Descendant)[]) => {
+export type SlateToMarkdownOptions = {
+  metaObjects?: Map<number, { name?: string; placeholderName?: string }>
+  defaultCodeLanguage?: string
+  resolveFileUrl?: (url: string) => string
+  fileBasePath?: string
+}
+
+export const slateToMarkdown = (value: (CustomElement | Descendant)[], options: SlateToMarkdownOptions = {}) => {
+  const normalizedOptions: Required<Omit<SlateToMarkdownOptions, 'resolveFileUrl'>> & {
+    resolveFileUrl?: SlateToMarkdownOptions['resolveFileUrl']
+  } = {
+    metaObjects: options.metaObjects ?? new Map(),
+    defaultCodeLanguage: options.defaultCodeLanguage ?? 'typescript',
+    fileBasePath: options.fileBasePath ?? '',
+    resolveFileUrl: options.resolveFileUrl
+  }
   let content = ''
-  value.forEach((i, idx) => {
-    const s = parseNode(idx, value)
+  value.forEach((_, idx) => {
+    const s = parseNode(idx, value, normalizedOptions)
     content += s
   })
   return content
 }
 
-const parseNode = (idx: number, eles: CustomElement[]) => {
+const resolveImageUrl = (url: string, options: SlateToMarkdownOptions) => {
+  if (options.resolveFileUrl) {
+    return options.resolveFileUrl(url)
+  }
+  if (options.fileBasePath && url.startsWith('rendefile://')) {
+    return `file://${options.fileBasePath}${url.replace('rendefile://', '')}`
+  }
+  return url
+}
+
+const formatMetaLink = (id: number | undefined, options: SlateToMarkdownOptions) => {
+  if (id === undefined) return ''
+  const meta = options.metaObjects?.get(id)
+  if (!meta) return ''
+  return `[${meta.name || meta.placeholderName || 'meta'}](rendevoz://object/${id})`
+}
+
+const parseNode = (idx: number, eles: CustomElement[], options: SlateToMarkdownOptions) => {
   const ele = eles[idx] as CustomElement
   let str = ''
   if (ele.type === 'columnList') {
     ele.children.forEach(i => {
       if ('type' in i && 'children' in i && Array.isArray(i.children) && i.type === 'column') {
         i.children.forEach((o, _idx) => {
-          const s = parseNode(_idx, i.children)
+          const s = parseNode(_idx, i.children, options)
           str += s
         })
       }
@@ -44,7 +73,7 @@ const parseNode = (idx: number, eles: CustomElement[]) => {
         str += '|'
         row.children.forEach(i => {
           const s = Node.string(i)
-          Array.from(Array(Math.max(3, s.length + 2))).forEach(i => {
+          Array.from(Array(Math.max(3, s.length + 2))).forEach(() => {
             str += '-'
           })
           str += '|'
@@ -78,12 +107,7 @@ const parseNode = (idx: number, eles: CustomElement[]) => {
     }
   }
   if (ele.type === 'metaObject') {
-    if (ele.originId) {
-      const meta = globalStore.get(metaObjectsAtom).get(ele.originId)
-      if (meta) {
-        str += `[${meta.name || meta.placeholderName}](rendevoz://object/${ele.originId})`
-      }
-    }
+    str += formatMetaLink(ele.originId, options)
   }
   if (ele.type === 'math') {
     str += `$${ele.content}$`
@@ -108,25 +132,19 @@ const parseNode = (idx: number, eles: CustomElement[]) => {
     }
   }
   if (ele.type === 'code-block') {
-    const defaultLang = GlobalSetting.getSetting().code.defaultLanguage || 'typescript'
-    str += '```' + (ele.language || defaultLang) + '\n'
+    const language = ele.language || options.defaultCodeLanguage || 'typescript'
+    str += '```' + language + '\n'
     if ('children' in ele && Array.isArray(ele.children)) {
       ele.children.forEach((c, idx) => {
-        str += parseNode(idx, ele.children)
+        str += parseNode(idx, ele.children, options)
       })
     }
     str += '```\n'
     return str
   }
   if (ele.type === 'image') {
-    if (ele.url.startsWith('rendefile')) {
-      const setting = getSetting()
-      const filePath = setting.general.userFilePath
-      const replacedFilePath = filePath + ele.url.replace('rendefile://', '')
-      str += `![image](file://${replacedFilePath})`
-    } else {
-      str += `![image](${ele.url})`
-    }
+    const imageUrl = resolveImageUrl(ele.url, options)
+    str += `![image](${imageUrl})`
   }
   if (ele.type === 'order-list-item') {
     const order = getOrderOfNode(idx, eles)
@@ -145,12 +163,7 @@ const parseNode = (idx: number, eles: CustomElement[]) => {
     return `[${Node.string(ele)}](${ele.url})`
   }
   if (ele.type === 'inline-metaObject') {
-    if (ele.originId) {
-      const meta = globalStore.get(metaObjectsAtom).get(ele.originId)
-      if (meta) {
-        str += `[${meta.name || meta.placeholderName}](rendevoz://object/${ele.originId})`
-      }
-    }
+    str += formatMetaLink(ele.originId, options)
   }
   if (Text.isText(ele)) {
     let text = Node.string(ele)
@@ -168,7 +181,7 @@ const parseNode = (idx: number, eles: CustomElement[]) => {
   }
   if ('children' in ele && Array.isArray(ele.children)) {
     ele.children.forEach((c, idx) => {
-      str += parseNode(idx, ele.children)
+      str += parseNode(idx, ele.children, options)
     })
   }
   return str + '\n'

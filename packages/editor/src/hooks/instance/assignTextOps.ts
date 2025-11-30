@@ -1,5 +1,5 @@
 import { CustomEditor, IEditorInstance } from '~/typings'
-import { assignProperties } from '@/utils'
+import { assignProperties } from '../utils'
 import { Editor } from 'slate'
 
 const assignTextOps = (instance: IEditorInstance, editor: CustomEditor) => {

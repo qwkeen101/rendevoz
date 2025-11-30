@@ -7,7 +7,7 @@ import { ReactEditor, RenderElementProps, useSlate } from '../../slate-react'
 import { NODE_TO_INDEX, NODE_TO_PARENT } from '../../slate-react/utils/weak-maps'
 import { CustomElement, IEditorInnerEvents, TableCellElement, TableElement, TableRowElement } from '~/typings'
 import ClassName from '@/styles/classNames'
-import Colors from '@/consts/colors'
+import Colors from '../consts/colors'
 import useEditorInstance from '../hooks/useEditorInstance'
 import DragHandle from '../elements/table/TableCellDragHandle'
 import { useAtomValue, useSetAtom } from 'jotai'
@@ -77,12 +77,12 @@ const TableCell = ({
     if (hoveredCellPath) {
       const cellPath = ReactEditor.findPath(editor, element)
       if (isFirstRow) {
-        // 在同一�?
+        // 在同一?
         if (hoveredCellPath[hoveredCellPath.length - 1] === cellPath[cellPath.length - 1]) {
           columnVisible = true
         }
       }
-      // 在同一�?
+      // 在同一?
       if (isFirstCell) {
         if (cellPath[cellPath.length - 2] === hoveredCellPath[hoveredCellPath.length - 2]) {
           rowVisible = true

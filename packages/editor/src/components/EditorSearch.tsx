@@ -4,10 +4,10 @@ import useEditorSearch from '../hooks/useEditorSearch'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import classnames from 'classnames'
-import { Icons, KEY } from '@/consts'
+import { Icons, KEY } from '../consts'
 import isHotkey from 'is-hotkey'
 import { useDebounceEffect } from '@/hooks'
-import { assignProperties, getCursorElement } from '@/utils'
+import { assignProperties, getCursorElement } from '../utils'
 import { AnimatePresence, motion } from 'framer-motion'
 
 export default memo(() => {

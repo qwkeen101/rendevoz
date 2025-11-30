@@ -2,9 +2,7 @@ import { Descendant } from 'slate'
 import { IEditorInstance, IGlobalEvents } from '~/typings'
 import { RefObject, useEffect, useMemo, useRef, useState } from 'react'
 import { useDebounceFn, useMemoizedFn } from '@/hooks'
-import { NoteStore, ObjectStore } from '@/api/stores'
 import { isEqual } from 'lodash'
-import SyncAPI from '@/api/sync'
 
 const useStoreValue = (options: {
   onContentLoaded?: VoidFunction
@@ -16,20 +14,12 @@ const useStoreValue = (options: {
 }) => {
   const shouldSaveRef = useRef(!!options.defaultValue)
   const { noteId, instanceRef, defaultValue, onContentLoaded } = options
-  const { saveNoteAsBuffer, getNoteValue, saveNoteAsSearch } = NoteStore
-  const note = ObjectStore('note').useValue(noteId)
+  const note = undefined
   const [fetchedValue, setFetchedValue] = useState<Descendant[]>()
   const saveValueToNote = async (value: Descendant[]) => {
     if (!noteId) return
     if (!shouldSaveRef.current) return
-    if (note && note.contentId) {
-      Global.emitEvent('editorValueSaved', {
-        noteId
-      })
-      await saveNoteAsBuffer(value, note.contentId)
-      saveNoteAsSearch(value, options.metaId)
-      ObjectStore('note').updateOne({ id: noteId, lastSavedAt: Date.now() })
-    }
+    return
   }
   const debounceSaveValue = useDebounceFn(
     () => {
@@ -69,38 +59,24 @@ const useStoreValue = (options: {
   }
   const handleRefreshFromValue = (data: IGlobalEvents['editorRefreshFromValue']) => {
     const instance = instanceRef.current
-    if (noteId && instance && data.noteId.includes(noteId)) {
+    if (noteId && instance && data.noteId?.includes?.(noteId)) {
       fetchValue()
     }
   }
 
   const fetchValue = useMemoizedFn(async () => {
-    if (note?.contentId) {
-      const noteValue = await getNoteValue(note.contentId)
-      if (noteValue) {
-        setFetchedValue(noteValue)
-        const instance = instanceRef.current
-        const currentValue = instance?.getSlateEditor?.().children
-        onContentLoaded?.()
-        if (!isEqual(currentValue, fetchedValue)) {
-          instance?.replaceChildren?.(noteValue)
-        }
-      }
-    }
+    return
   })
   useMemo(() => {
-    if (note?.contentId) {
-      fetchValue()
-    }
-  }, [note?.contentId])
+    fetchValue()
+  }, [])
 
   useMemo(() => {
     const instance = instanceRef.current
-    if (defaultValue && (noteId ? !note?.contentId : true)) {
+    if (defaultValue) {
       instance?.replaceChildren?.(defaultValue)
-      saveNoteAsSearch(defaultValue, options.metaId)
     }
-  }, [defaultValue, note?.contentId])
+  }, [defaultValue])
   useEffect(() => {
     Global.addEventListener('editorOperationApplied', handleOperationApplied)
     Global.addEventListener('editorValueSaved', handleValueSaved)

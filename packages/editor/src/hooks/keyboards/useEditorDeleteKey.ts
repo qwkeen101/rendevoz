@@ -1,5 +1,5 @@
 import isHotkey from 'is-hotkey'
-import { KEY } from '@/consts'
+import { KEY } from '../consts'
 import { Transforms } from 'slate'
 import { IEditorInstance } from '~/typings'
 

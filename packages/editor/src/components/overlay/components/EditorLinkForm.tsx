@@ -7,7 +7,6 @@ import { ReactEditor } from '@/core'
 import { Editor, Text, Transforms } from 'slate'
 import useEditorInstance from '../hooks/useEditorInstance'
 import MetaFilterer, { isValidUrl } from '@/core/object/filter/MetaFilter'
-import { MetaStore } from '@/api/stores'
 import { useTranslation } from 'react-i18next'
 
 const EditorLinkForm = ({ editor, manager }: { editor: CustomEditor; manager: EditorOverlayManager }) => {
@@ -67,15 +66,6 @@ const EditorLinkForm = ({ editor, manager }: { editor: CustomEditor; manager: Ed
       }
       console.log(path, before, parent)
       let linkName = link
-      if (finalLink.startsWith('rendevoz://object/')) {
-        const metaId = Number(finalLink.replace('rendevoz://object/', ''))
-        if (!Number.isNaN(metaId)) {
-          const meta = MetaStore.getMetaObjectsMap().get(metaId)
-          if (meta) {
-            linkName = meta.name || meta.placeholderName
-          }
-        }
-      }
       if (!linkName) {
         linkName = finalLink
       }

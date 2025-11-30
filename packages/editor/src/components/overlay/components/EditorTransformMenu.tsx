@@ -2,7 +2,7 @@ import getEditorTransformMenu from '../components/overlay/components/getEditorTr
 import { Menu, WithBorder } from '@/components'
 import useEditorInstance from '../hooks/useEditorInstance'
 import { Transforms } from 'slate'
-import { Colors } from '@/consts'
+import { Colors } from '../consts'
 
 export default () => {
   const instance = useEditorInstance()

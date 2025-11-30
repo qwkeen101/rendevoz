@@ -1,12 +1,9 @@
 import { MetaObject } from '~/typings'
-import { GlobalSetting } from '@/core'
-import Id from '../../../../utils/id'
-import { ObjectStore } from '@/api/stores'
-import { noRepeatArray } from '@/utils'
+import Id from '../utils/id'
 
 export default (metas: MetaObject[], noteMeta?: MetaObject, inline = true) => {
-  const autoBecomeInline = GlobalSetting.getSetting().editor.objectAutoBecomeInline
-  if (autoBecomeInline && inline) {
+  const autoBecomeInline = inline
+  if (autoBecomeInline) {
     return [
       {
         type: 'paragraph',
@@ -22,18 +19,6 @@ export default (metas: MetaObject[], noteMeta?: MetaObject, inline = true) => {
   } else {
     return metas.map(m => {
       if (m.type === 'syncedBlock') {
-        if (m.objectId) {
-          ObjectStore('syncedBlock')
-            .getOneById(m.objectId)
-            .then(o => {
-              if (o && noteMeta?.id) {
-                ObjectStore('syncedBlock').updateOne({
-                  id: o.id,
-                  syncedMetaIds: noRepeatArray([noteMeta.id, ...o.syncedMetaIds])
-                })
-              }
-            })
-        }
         return {
           type: 'synced',
           originId: m.id,

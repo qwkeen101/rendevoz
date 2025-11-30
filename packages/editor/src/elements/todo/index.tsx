@@ -4,7 +4,7 @@ import { MouseEventHandler } from 'react'
 import { Transforms } from 'slate'
 import { ReactEditor, RenderElementProps, useSlate } from '../../slate-react'
 import { ToDoElement } from '~/typings'
-import Colors from '@/consts/colors'
+import Colors from '../consts/colors'
 import useReadOnlyEditor from '../hooks/useReadOnly'
 
 const ToDo = ({ element, children }: RenderElementProps) => {

@@ -1,8 +1,8 @@
-import Zindexes from '@/consts/zindex'
+import Zindexes from '../consts/zindex'
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { createPortal } from 'react-dom'
-import Colors from '@/consts/colors'
+import Colors from '../consts/colors'
 
 const useDragIndicator = () => {
   const [indicatorState, setIndicatorState] = useState<

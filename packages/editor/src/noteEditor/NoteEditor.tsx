@@ -1,4 +1,3 @@
-import { MetaStore, ObjectStore } from '@/api/stores'
 import { Editor } from '../Editor'
 import { useMemo, useRef, useState } from 'react'
 import Id from './utils/id'
@@ -12,7 +11,7 @@ import { AI_SUMMARY_PROP_ID } from '@/api/stores/meta/meta.store'
 
 /**
  *  基于笔记的编辑器
- *  支持多编辑器数据同步，保存到本地�?
+ *  支持多编辑器数据同步，保存到本地?
  */
 // initial height: 在内容没加载出来时的placeholder高度
 const NoteEditor = ({
@@ -23,11 +22,11 @@ const NoteEditor = ({
   metaId,
   ...rest
 }: { noteId?: number; metaId?: number; initialHeight?: number } & Omit<EditorProps, 'id'>) => {
-  const note = ObjectStore('note').useValue(noteId)
-  const noteMeta = MetaStore.useValue(metaId)
+  const note = undefined
+  const noteMeta = undefined
   const editorId = useMemo(() => Id.getStrId(), [])
   const instanceRef = useRef<IEditorInstance>()
-  const handleDrop = useDrop(noteId, metaId)
+  const handleDrop = useDrop(undefined, metaId)
   const [loaded, setLoaded] = useState(rest.defaultValue ? true : false)
   useSyncValue(editorId, noteId, instanceRef)
   const { fetchedValue } = useStoreValue({
@@ -43,7 +42,7 @@ const NoteEditor = ({
     },
     defaultValue: rest.defaultValue
   })
-  const { deleteLabel, addLabel } = useLabel(note)
+  const { deleteLabel, addLabel } = useLabel(undefined)
   useCheckInsideMeta(instanceRef, metaId, noteId)
   const attachMeta = () => {
     const i = instanceRef.current

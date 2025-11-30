@@ -2,7 +2,7 @@ import { RenderElementProps } from 'slate-react'
 import { AnimatePopover, Icon, WithBorder } from '@/components'
 import { useEffect, useRef, useState } from 'react'
 import isHotkey from 'is-hotkey'
-import { Colors, Icons, KEY } from '@/consts'
+import { Colors, Icons, KEY } from '../consts'
 import MetaFilterer from '@/core/object/filter/MetaFilter'
 import { Editor, Path, Transforms } from 'slate'
 import { ReactEditor, useSlateStatic } from '@/core'
@@ -13,7 +13,6 @@ import useEditorInstance from '../hooks/useEditorInstance'
 import Id from './utils/id'
 import AutoSizeTextArea from '@/components/base/AutoSizeTextArea'
 import { css } from '@emotion/css'
-import { MetaStore } from '@/api/stores'
 
 const InlineMetaPicker = ({ element, children, attributes }: RenderElementProps) => {
   const editor = useSlateStatic()
@@ -33,14 +32,10 @@ const InlineMetaPicker = ({ element, children, attributes }: RenderElementProps)
           at: path
         }
       )
-      instance.on({
+      // consumers can listen to editor events and perform meta link handling
+      instance.on?.({
         type: 'getMeta',
-        onSuccess: sourceId => {
-          MetaStore.addMetaLink({
-            sourceId,
-            targetId: id
-          })
-        }
+        onSuccess: () => {}
       })
       Transforms.setSelection(editor, Editor.range(editor, Path.next(path)))
       ReactEditor.focus(editor)

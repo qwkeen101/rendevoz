@@ -7,7 +7,7 @@ import {
   getDistanceBetweenPointAndScrollableElement
 } from '../utils/scroll'
 import { Editor, Range } from 'slate'
-import { boxesIntersect } from '@/utils'
+import { boxesIntersect } from '../utils'
 
 /**
  * Nested blocks can't be selected

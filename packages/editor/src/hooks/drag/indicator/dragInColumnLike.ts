@@ -1,9 +1,9 @@
 import { CustomEditor, CustomElement, IEditorInstance } from '~/typings'
-import { ReactEditor } from '@/core'
-import dragInsideMetaGroup from '../hooks/drag/indicator/dragInsideMetaGroup'
-import getDragResult from '../hooks/drag/indicator/getDragResult'
-import dragInsideColumnList from '../hooks/drag/indicator/dragInsideColumnList'
-import getDirection from '../hooks/drag/indicator/getDirection'
+import { ReactEditor } from '../../slate-react'
+import dragInsideMetaGroup from './dragInsideMetaGroup'
+import getDragResult from './getDragResult'
+import dragInsideColumnList from './dragInsideColumnList'
+import getDirection from './getDirection'
 
 export default (
   e: PointerEvent,

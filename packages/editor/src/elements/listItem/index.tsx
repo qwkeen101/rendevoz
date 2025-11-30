@@ -3,7 +3,7 @@ import { RenderElementProps } from 'slate-react'
 import { CustomElement } from '~/typings'
 import { ReactEditor, useSlate } from '@/core'
 import useToggleList from '../elements/listItem/useToggleList'
-import { Colors } from '@/consts'
+import { Colors } from '../consts'
 import classnames from 'classnames'
 import { memo } from 'react'
 

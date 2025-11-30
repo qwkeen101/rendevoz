@@ -10,7 +10,7 @@ import useEditorInstance from '../hooks/useEditorInstance'
 import EmptyList from '@/core/components/common/EmptyList'
 import { debounce } from 'lodash'
 import { Node } from 'slate'
-import { getElementId } from '@/utils'
+import { getElementId } from '../utils'
 
 interface HeadingTreeNode {
   id: number

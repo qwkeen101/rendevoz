@@ -2,12 +2,47 @@ import { Node, Transforms } from 'slate'
 import { ReactEditor } from 'slate-react'
 import { CustomEditor } from '~/typings'
 import deserializeHTML from './transformHTML/deserializeHTML'
-import Id from './utils/id'
-import FileSystem from '@/api/fileSystem'
-import { deserializeMarkdown } from '../plugins/deserializeMarkdown'
+import Id from '../utils/id'
+import { deserializeMarkdown } from './deserializeMarkdown'
 import { getSlateFragmentAttribute } from '../slate-react/utils/dom'
-const withHtml = (editor: CustomEditor) => {
+export interface WithHtmlOptions {
+  onFileUpload?: (file: File) => Promise<string>
+}
+
+const withHtml = (editor: CustomEditor, options: WithHtmlOptions = {}) => {
   const { insertData } = editor
+  const insertImage = (url: string) => {
+    Transforms.insertNodes(editor, {
+      type: 'image',
+      url,
+      id: Id.getId(),
+      children: [{ text: '' }]
+    })
+  }
+  const handleImageFile = (file: File | null) => {
+    if (!file) return
+    const uploadPromise = options.onFileUpload?.(file)
+    if (uploadPromise) {
+      uploadPromise.then(url => {
+        if (url) {
+          insertImage(url)
+        }
+      })
+      return
+    }
+    const path = 'path' in file ? (file as File & { path?: string }).path : undefined
+    if (path) {
+      insertImage(`file://${path}`)
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        insertImage(reader.result)
+      }
+    }
+    reader.readAsDataURL(file)
+  }
 
   editor.insertData = data => {
     const html = data.getData('text/html')
@@ -15,31 +50,13 @@ const withHtml = (editor: CustomEditor) => {
     const imageItem = Array.from(data.items).find(i => i.type.startsWith('image'))
     if (imageItem) {
       const blob = imageItem.getAsFile()
-      const reader = new FileReader()
-      reader.onload = () => {
-        const result = reader.result
-        if (result) {
-          FileSystem.saveImage(result).then(p => {
-            Transforms.insertNodes(editor, {
-              type: 'image',
-              url: p,
-              id: Id.getId(),
-              children: [{ text: '' }]
-            })
-          })
-        }
-      }
-      reader.readAsDataURL(blob)
+      const file = blob ? (blob instanceof File ? blob : new File([blob], 'pasted-image', { type: blob.type })) : null
+      handleImageFile(file)
       return
     }
     const imageFile = Array.from(data.files).find(i => i.type.startsWith('image'))
-    if (imageFile && imageFile.path) {
-      Transforms.insertNodes(editor, {
-        type: 'image',
-        url: `file://${imageFile.path}`,
-        id: Id.getId(),
-        children: [{ text: '' }]
-      })
+    if (imageFile) {
+      handleImageFile(imageFile)
       return
     }
     if (html) {

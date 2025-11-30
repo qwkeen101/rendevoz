@@ -1,4 +1,4 @@
-import { useGlobalIsDragging } from '@/core'
+import { useGlobalIsDragging, Global } from '../../global'
 import { useAutoScroll, useMemoizedFn, useRafFn } from '@/hooks'
 import { useEffect, useRef } from 'react'
 import { Path, Transforms } from 'slate'
@@ -48,7 +48,7 @@ export const normalizeEditorDragBlocksToGlobalDraggingDetails = async (
 }
 const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null) => {
   const [isDraggingInsideEditor, setIsDragging] = useIsDragging()
-  const [globalIsDragging] = useGlobalIsDragging()
+  const [globalIsDragging, setGlobalIsDragging] = useGlobalIsDragging()
   const readonly = useReadOnlyEditor()
   const preventLastMouseMoveRef = useRef(false)
   const { renderIndicator, indicatorManager } = useDragIndicator()
@@ -99,6 +99,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
     if (readonly) return
     if (!isDraggingInsideEditor) {
       setIsDragging(true)
+      setGlobalIsDragging(true)
     }
     startScroll.run(e as PointerEvent)
     const editorNode = ReactEditor.toDOMNode(editor, editor)
@@ -189,6 +190,7 @@ const useEditorDrag = (editor: CustomEditor, scrollElement?: HTMLElement | null)
     startScroll.end()
     setIsDragging(false)
     indicatorManager.setIndicatorState(s => ({ ...s, visible: false }))
+    setGlobalIsDragging(false)
   }
 
   return { renderIndicator }

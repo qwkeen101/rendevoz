@@ -9,7 +9,6 @@ import InnerEditor from './InnerEditor'
 import withVoid from './plugins/withVoid'
 import BlockHandle from './components/BlockHandle'
 import { withShortcuts, withCustomComponent, withHtml, withDeleteBackward } from './plugins'
-import { GlobalSetting } from '@/core'
 import { createStore } from 'jotai'
 import { Provider, useSetAtom } from 'jotai/react'
 import EditorTitle from './components/EditorTitle'
@@ -24,10 +23,12 @@ import { t } from 'i18next'
 import './editorStyles.less'
 import EditorSidebar from '../components/sidebar/EditorSidebar'
 import QuickLabelPopover from '../components/QuickLabelPopover'
-import PageConfigContext from '@/core/components/PageConfigContext'
 import EditorSearch from '../components/EditorSearch'
-import trans from '@/consts/trans'
+import trans from '../consts/trans'
 import classnames from 'classnames'
+import PageConfigContext, { defaultPageConfig } from './PageConfigContext'
+import { SlateToMarkdownOptions } from './plugins/slateToMarkdown'
+import { ToolbarConfig } from './components/EditorSelectionToolbar'
 
 // function, get unique id everytime
 const defaultSlateValue = () => [
@@ -46,6 +47,19 @@ const pageWidthToSize = {
   Max: '100%'
 }
 
+type EditorComponentProps = EditorProps & {
+  onFileUpload?: (file: File) => Promise<string>
+  slateToMarkdownOptions?: SlateToMarkdownOptions
+  toolbarConfig?: ToolbarConfig
+  onToolbarEvent?: (event: { action: string }) => void
+}
+
+const defaultEditorSettings = {
+  fontSize: 14,
+  lineSpacing: 1.57,
+  pageWidth: 'Medium' as const
+}
+
 const EditorResizeObserver = new ResizeObserver(entries => {
   entries.forEach(i => {
     const ele = i.target as HTMLElement
@@ -53,7 +67,7 @@ const EditorResizeObserver = new ResizeObserver(entries => {
   })
 })
 
-export const EditorV1: FC<EditorProps> = memo(
+export const EditorV1: FC<EditorComponentProps> = memo(
   ({
     id,
     onInstanceInitialized,
@@ -72,16 +86,18 @@ export const EditorV1: FC<EditorProps> = memo(
     onReadOnlyChange,
     stringTitle,
     styles,
-    defaultReadOnly = false
+    defaultReadOnly = false,
+    onFileUpload,
+    slateToMarkdownOptions
   }) => {
     const scrollElementRef = useRef<HTMLDivElement>(null)
     const innerEditorRef = useRef<HTMLDivElement>(null)
     const defaultV = useMemo(() => defaultSlateValue(), [])
-    const userSetting = GlobalSetting.useSelectSettingAtom('editorSettings')
+    const userSetting = defaultEditorSettings
     const setEditorState = useSetAtom(EditorStateAtom)
     const instance = useEditorInstance()
     instance.values.scrollElementRef = scrollElementRef
-    const pageConfig = useContext(PageConfigContext)
+    const pageConfig = useContext(PageConfigContext) ?? defaultPageConfig
     useLayoutEffect(() => {
       const scrollEle = scrollElementRef.current
       if (scrollEle) {
@@ -108,7 +124,8 @@ export const EditorV1: FC<EditorProps> = memo(
       }
       const editor = withVoid(
         withHtml(
-          withDeleteBackward(withCustomComponent(withShortcuts(withInstance(withNormalize(withHistory(withReact(createEditor())))))))
+          withDeleteBackward(withCustomComponent(withShortcuts(withInstance(withNormalize(withHistory(withReact(createEditor()))))))),
+          { onFileUpload }
         )
       )
       onInstanceInitialized?.(instance)
@@ -139,7 +156,7 @@ export const EditorV1: FC<EditorProps> = memo(
       }
       return (
         <>
-          <EditorPluginHooks plugins={plugins} editor={editor} scrollElementRef={scrollElementRef} />
+          <EditorPluginHooks plugins={plugins} editor={editor} scrollElementRef={scrollElementRef} serializeOptions={slateToMarkdownOptions} />
           <InnerEditor
             onClick={onClick}
             textareaMode
@@ -161,6 +178,8 @@ export const EditorV1: FC<EditorProps> = memo(
             scrollElementRef={scrollElementRef}
             editor={editor}
             onChange={memoedOnChange}
+            toolbarConfig={props.toolbarConfig}
+            onToolbarEvent={props.onToolbarEvent}
           />
         </>
       )
@@ -189,7 +208,7 @@ export const EditorV1: FC<EditorProps> = memo(
         className: 'flex w-full h-full'
       },
       <>
-        <EditorPluginHooks editor={editor} scrollElementRef={scrollElementRef} />
+        <EditorPluginHooks editor={editor} scrollElementRef={scrollElementRef} serializeOptions={slateToMarkdownOptions} />
         <QuickLabelPopover />
         <div
           onClick={onClick}
@@ -241,6 +260,8 @@ export const EditorV1: FC<EditorProps> = memo(
                 editor={editor}
                 ref={innerEditorRef}
                 onChange={memoedOnChange}
+                toolbarConfig={props.toolbarConfig}
+                onToolbarEvent={props.onToolbarEvent}
               />
             </div>
           </div>
@@ -257,8 +278,9 @@ export const EditorV1: FC<EditorProps> = memo(
   }
 )
 
-export const Editor: FC<EditorProps> = memo(props => {
-  const pageConfig = useContext(PageConfigContext)
+export const Editor: FC<EditorComponentProps> = memo(props => {
+  const { onFileUpload, slateToMarkdownOptions, ...editorProps } = props
+  const pageConfig = useContext(PageConfigContext) ?? defaultPageConfig
   const defaultOpenSidebar = pageConfig.defaultOpenSidebar !== false
   const store = useMemo(() => {
     const store = createStore()
@@ -266,7 +288,7 @@ export const Editor: FC<EditorProps> = memo(props => {
       values: {
         selectedBlocks: new Map(),
         editorLevelStore: store,
-        displayMode: props.layout?.displayMode,
+        displayMode: editorProps.layout?.displayMode,
         ID_TO_ELEMENT: new Map(),
         ID_TO_PATH: new Map()
       }
@@ -274,19 +296,19 @@ export const Editor: FC<EditorProps> = memo(props => {
     const current = store.get(EditorStateAtom)
     store.set(EditorStateAtom, {
       ...current,
-      ...props,
-      sidebarActive: props.state?.defaultActiveSidebar ?? current.sidebarActive,
-      sidebarVisible: defaultOpenSidebar ? props.state?.defaultSidebarVisible ?? current.sidebarVisible : current.sidebarVisible
+      ...editorProps,
+      sidebarActive: editorProps.state?.defaultActiveSidebar ?? current.sidebarActive,
+      sidebarVisible: defaultOpenSidebar ? editorProps.state?.defaultSidebarVisible ?? current.sidebarVisible : current.sidebarVisible
     })
     return store
   }, [])
   useEffect(() => {
-    store.set(EditorStateAtom, { ...store.get(EditorStateAtom), ...props })
-  }, [props])
+    store.set(EditorStateAtom, { ...store.get(EditorStateAtom), ...editorProps })
+  }, [editorProps])
   return (
     <Provider store={store}>
       <EditorStoreContext.Provider value={store}>
-        <EditorV1 {...props} />
+        <EditorV1 {...editorProps} onFileUpload={onFileUpload} slateToMarkdownOptions={slateToMarkdownOptions} />
       </EditorStoreContext.Provider>
     </Provider>
   )

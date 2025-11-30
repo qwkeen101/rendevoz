@@ -1,8 +1,8 @@
-import Id from './utils/id'
+import Id from '../utils/id'
 import { RefObject, useEffect } from 'react'
 import { Editor, Transforms } from 'slate'
 import { CustomEditor } from '~/typings'
-import { ReactEditor } from '@/core'
+import { ReactEditor } from '../slate-react'
 
 const useAutoInsertEndline = (scrollElementRef: RefObject<HTMLElement>, editor: CustomEditor) => {
   useEffect(() => {

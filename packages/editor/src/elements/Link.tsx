@@ -4,11 +4,11 @@ import { ToolbarV2, Tooltip, WithBorder } from '@/components'
 import { useMemo } from 'react'
 import { InlineObject } from '@/core'
 import { Editor, Node, Transforms } from 'slate'
-import { Icons } from '@/consts'
+import { Icons } from '../consts'
 import useEditorInstance from '../hooks/useEditorInstance'
 import useReadOnlyEditor from '../hooks/useReadOnly'
 import toast from 'react-hot-toast'
-import trans from '@/consts/trans'
+import trans from '../consts/trans'
 import { useTranslation } from 'react-i18next'
 // 需要这玩意，不然光标放在link右边会一直是link
 const InlineChromiumBugfix = () => (

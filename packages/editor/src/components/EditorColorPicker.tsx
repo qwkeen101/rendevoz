@@ -3,7 +3,7 @@ import { memo } from 'react'
 import material from 'material-colors'
 import { WithBorder } from '@/components'
 import { useTranslation } from 'react-i18next'
-import { Colors } from '@/consts'
+import { Colors } from '../consts'
 import tinycolor from 'tinycolor2'
 
 const textColors = [

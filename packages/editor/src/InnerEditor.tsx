@@ -3,7 +3,7 @@ import isHotkey from 'is-hotkey'
 import { CSSProperties, forwardRef, memo, RefObject, useCallback, useLayoutEffect, useRef } from 'react'
 import { Descendant, Editor, Node, NodeEntry, Path, Transforms } from 'slate'
 import { Editable, ReactEditor, RenderElementProps, RenderLeafProps, Slate } from './slate-react'
-import EditorToolbar from './components/EditorSelectionToolbar'
+import EditorToolbar, { ToolbarConfig } from './components/EditorSelectionToolbar'
 import HOTKEYS from './consts/hotkeys'
 import { CustomEditor, IEditorInstance } from '~/typings'
 import Divider from './components/Divider'
@@ -14,12 +14,11 @@ import classNames from 'classnames'
 import { useGlobalIsDragging } from '../../global'
 import useEditorInstance from './hooks/useEditorInstance'
 import useReadOnlyEditor from '../hooks/useReadOnly'
-import { assignProperties } from '@/utils'
+import { assignProperties } from '../utils'
 import { EditorStateAtom } from '../hooks/useEditorState'
 import { selectAtom } from 'jotai/utils'
 import { useAtomValue } from 'jotai/react'
 import DecorationHelper from '../DecorationHelper'
-import { MetaStore } from '@/api/stores'
 import useIsSelecting from '../hooks/useIsSelecting'
 import handleInsertMetasIntoEditor from '../hooks/handleInsertMetasIntoEditor'
 import useEditorKeyEvents from '../hooks/keyboards/useEditorKeyEvents'
@@ -35,6 +34,8 @@ export type InnerEditorProps = {
   style?: CSSProperties
   textareaMode?: boolean
   onClick?: React.MouseEventHandler
+  toolbarConfig?: import('./components/EditorSelectionToolbar').ToolbarConfig
+  onToolbarEvent?: (event: { action: string }) => void
 }
 const editorState = selectAtom(EditorStateAtom, s => ({
   alwaysShowPlaceholder: s.layout?.alwaysShowPlaceholder,
@@ -51,7 +52,7 @@ const renderInnerElement = (props: RenderElementProps) => <Element {...props} />
 const renderLeaf = (props: RenderLeafProps) => <Leaf {...props} />
 const InnerEditor = memo(
   forwardRef<HTMLDivElement, InnerEditorProps>(
-    ({ editor, defaultValue, style, onChange, onClick, scrollElementRef, editorClassName, textareaMode }, ref) => {
+    ({ editor, defaultValue, style, onChange, onClick, scrollElementRef, editorClassName, textareaMode, toolbarConfig, onToolbarEvent }, ref) => {
       const scrollElement = scrollElementRef?.current
       const previousValue = useRef<Descendant[]>()
       const readOnly = useReadOnlyEditor()
@@ -208,54 +209,8 @@ const InnerEditor = memo(
           {showToolbar !== false && (
             <EditorToolbar
               scrollElement={scrollElement}
-              on={useMemoizedFn(async event => {
-                switch (event.action) {
-                  case 'highlight':
-                    {
-                      const isActive = isMarkActive(editor, 'highlight')
-                      if (isActive) {
-                        const highlightId = Editor.marks(editor)['highlight']
-                        Editor.removeMark(editor, 'highlight')
-                        instance.labelOps?.deleteLabel(Number(highlightId))
-                      } else {
-                        const highlightId = Id.getId()
-                        const selectedText = (
-                          window.getSelection()?.toString() ||
-                          (editor.selection ? Editor.string(editor, editor.selection, { voids: true }) : '')
-                        ).replace(/\n\s*\n/g, '\n')
-                        if (!selectedText) return
-                        const position = event.currentToolbarPosition
-                        if (position) {
-                          instance.labelOps?.openLabelEditor?.(
-                            {
-                              id: highlightId,
-                              selectedText
-                            },
-                            {
-                              width: 0,
-                              height: 0,
-                              left: position.x,
-                              top: position.y
-                            },
-                            editor.selection,
-                            event.toolbarDirection
-                          )
-                        }
-                      }
-                    }
-                    break
-                  case 'link':
-                    {
-                      if (event.currentToolbarPosition) {
-                        instance.overlayOps?.open('linkForm', {
-                          x: event.currentToolbarPosition.x,
-                          y: event.currentToolbarPosition.y - 8
-                        })
-                      }
-                    }
-                    break
-                }
-              })}
+              config={toolbarConfig}
+              onEvent={onToolbarEvent}
             />
           )}
           <DecorationHelper />
@@ -299,14 +254,8 @@ const handlePaste = (e: ClipboardEvent, editor: CustomEditor, instance: IEditorI
   if (html) {
     const metas = Global.metaOps?.getCopiedMetaObjectsSync(html)
     if (metas?.length) {
-      const noteMeta = instance.values.metaId ? MetaStore.getCachedMetaObject(instance.values.metaId) : undefined
-      const inserted = handleInsertMetasIntoEditor(metas, noteMeta, false)
+      const inserted = handleInsertMetasIntoEditor(metas, undefined, false)
       Transforms.insertFragment(editor, inserted)
-      if (noteMeta) {
-        metas.forEach(m => {
-          MetaStore.addMetaLink({ sourceId: m.id, targetId: noteMeta.id })
-        })
-      }
       e.preventDefault()
       return true
     }

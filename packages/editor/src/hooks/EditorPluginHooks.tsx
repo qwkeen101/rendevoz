@@ -8,21 +8,24 @@ import useEditorInstance, { useAssignEditorInstance } from './useEditorInstance'
 import { EditorStateAtom } from './useEditorState'
 import { useSetAtom } from 'jotai'
 import useTypeFilterBlocks from '../hooks/useTypeFilterBlocks'
+import { SlateToMarkdownOptions } from '../plugins/slateToMarkdown'
 
 const EditorPluginHooks = ({
   editor,
   plugins,
-  scrollElementRef
+  scrollElementRef,
+  serializeOptions
 }: {
   editor: CustomEditor
   scrollElementRef: RefObject<HTMLDivElement>
   plugins?: EditorProps['plugins']
+  serializeOptions?: SlateToMarkdownOptions
 }) => {
   const instance = useEditorInstance()
   if (plugins?.addUnderLastLine !== false) {
     useAutoInsertEndline(scrollElementRef, editor)
   }
-  useAssignEditorInstance(editor, scrollElementRef)
+  useAssignEditorInstance(editor, scrollElementRef, { serializeOptions })
   const renders: (ReactElement | ReactPortal)[] = []
   if (plugins?.dragBlock !== false) {
     const { renderIndicator } = useEditorDrag(editor, scrollElementRef.current)

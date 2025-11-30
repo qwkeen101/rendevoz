@@ -1,5 +1,5 @@
-import FontSize from '@/consts/font'
-import getEmoji from '@/utils/emoji'
+import FontSize from '../consts/font'
+import getEmoji from '../utils/emoji'
 import { FC, useMemo } from 'react'
 import { RenderElementProps } from 'slate-react'
 import { EmojiElement } from '~/typings'

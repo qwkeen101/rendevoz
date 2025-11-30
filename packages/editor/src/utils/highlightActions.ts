@@ -3,7 +3,7 @@ import { goToBlock } from './blockActions'
 import { CustomEditor, CustomElement } from '~/typings'
 import { css } from '@emotion/css'
 import { ReactEditor } from '../slate-react'
-import { Colors } from '@/consts'
+import { Colors } from '../consts'
 
 export const blinkBg = css({
   backgroundColor: `${Colors.Emphasis.Emphasis}`

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css'
-import { Colors } from '@/consts'
+import { Colors } from './colors'
 
 const Editor = css({
   position: 'relative',

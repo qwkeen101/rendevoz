@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "declaration": true,
+    "declarationMap": true,
+    "composite": true,
+    "paths": {
+      "@/*": ["../../src/*"],
+      "~/*": ["../../_rendevoz/*"],
+      "@rendevoz/shared": ["../shared/src"],
+      "@rendevoz/shared/*": ["../shared/src/*"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}

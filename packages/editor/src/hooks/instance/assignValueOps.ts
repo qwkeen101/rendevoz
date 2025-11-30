@@ -1,5 +1,5 @@
 import { CustomEditor, IEditorInstance } from '~/typings'
-import { assignProperties } from '@/utils'
+import { assignProperties } from '../utils'
 import { useDebounceFn } from '@/hooks'
 import { Transforms } from 'slate'
 import Id from './utils/id'

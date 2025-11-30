@@ -2,7 +2,7 @@ import { memo } from 'react'
 import { Editor, Element, Node, NodeEntry, Path } from 'slate'
 import { CustomElement } from '~/typings'
 import Prism from 'prismjs'
-import { GlobalSetting, useSlate } from '@/core'
+import { useSlate } from './slate-react'
 import { CustomText } from '~/typings/components/editor/baseTypes'
 
 const mergeMaps = <K, V>(...maps: Map<K, V>[]) => {
@@ -155,7 +155,7 @@ const loopNextElements = (
 }
 export default memo(() => {
   const editor = useSlate()
-  const defaultLang = GlobalSetting.useSelectSettingAtom('codeLang')
+  const defaultLang = 'typescript'
   const blockEntries = Array.from(
     Editor.nodes(editor, {
       at: [],

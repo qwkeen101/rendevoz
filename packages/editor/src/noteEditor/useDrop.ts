@@ -1,12 +1,10 @@
 import { IEditorEvent, MetaObject } from '~/typings'
-import { MetaStore, ObjectStore } from '@/api/stores'
 import Id from './utils/id'
 import fileSystem from '@/api/fileSystem'
 import handleInsertMetasIntoEditor from '../hooks/handleInsertMetasIntoEditor'
 
-const useDrop = (noteId?: number, metaId?: number) => {
-  const note = ObjectStore('note').useValue(noteId)
-  const noteMeta = MetaStore.useValue(metaId || note?.metaId)
+const useDrop = (_noteId?: number, metaId?: number) => {
+  const noteMeta = undefined
   const handleProcessMetas = (metas: MetaObject[]) => handleInsertMetasIntoEditor(metas, noteMeta)
   const handlePointerDropToNoteEditor = async () => {
     const metas = await Global.metaOps.addDraggableAsMeta(undefined, {

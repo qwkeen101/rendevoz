@@ -2,7 +2,7 @@ import { IEditorInstance } from '~/typings'
 import { Editor, Range, Transforms } from 'slate'
 import Id from './utils/id'
 import { HistoryEditor } from 'slate-history'
-import { waitFor } from '@/utils'
+import { waitFor } from '../utils'
 
 const useEditorMention = (instance: IEditorInstance) => {
   const editor = instance.editor

@@ -2,7 +2,7 @@ import { CSSProperties, memo, useEffect, useState } from 'react'
 import { useIsIn, useSelectAtomValue } from '@/hooks'
 import { TableStateAtom } from '../elements/table/Table'
 import { TableElement } from '~/typings'
-import { Colors } from '@/consts'
+import { Colors } from '../consts'
 import { Icon } from '@/components'
 export default memo(
   ({

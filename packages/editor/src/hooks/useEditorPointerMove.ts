@@ -6,8 +6,8 @@ import { useSetAtom, useStore } from 'jotai'
 import { EditorStateAtom } from '../hooks/useEditorState'
 import { EditorBlockHandleAtom } from '../hooks/useBlockHandle'
 import { CustomEditor, IEditorInstance } from '~/typings'
-import { isGlobalDragging } from '@/core'
 import { EditorisSelectingAtom } from '../hooks/useIsSelecting'
+import { globalDraggingAtom } from '../global'
 
 export default (instance: IEditorInstance, editor: CustomEditor, ref: RefObject<HTMLDivElement>) => {
   const store = useStore()
@@ -42,8 +42,9 @@ export default (instance: IEditorInstance, editor: CustomEditor, ref: RefObject<
       }
       const element = result.element
       editor.currentEnterElement = element
+      const dragging = store.get(globalDraggingAtom)
       // if dragging, disable set block handle
-      if (isGlobalDragging()) return
+      if (dragging) return
       const targetEle =
         (result.node.classList.contains('selectable') ? result.node : result.node.querySelector('.selectable')) || result.node
       if (!targetEle) return

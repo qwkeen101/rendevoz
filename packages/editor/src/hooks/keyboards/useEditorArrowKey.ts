@@ -1,7 +1,7 @@
 import { IEditorInstance } from '~/typings'
 import isHotkey from 'is-hotkey'
 import { Editor, Path, Range, Transforms } from 'slate'
-import { KEY } from '@/consts'
+import { KEY } from '../consts'
 import { ReactEditor } from '@/core'
 
 const useEditorArrowKey = (instance: IEditorInstance) => {

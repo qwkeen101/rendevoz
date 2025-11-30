@@ -2,7 +2,7 @@ import { memo } from 'react'
 import useEditorState from '../hooks/useEditorState'
 import useEditorInstance from '../hooks/useEditorInstance'
 import { useTranslation } from 'react-i18next'
-import trans from '@/consts/trans'
+import trans from '../consts/trans'
 import SummaryToolbar from '@/core/components/ai/SummaryToolbar'
 import toast from 'react-hot-toast'
 export default memo(() => {

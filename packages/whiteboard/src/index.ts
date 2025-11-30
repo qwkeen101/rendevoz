@@ -1,0 +1,11 @@
+export * from './types/whiteboard'
+export * from './types/instance'
+export * from './types/geometry'
+export * from './adapters/types'
+export * from './plugins/types'
+export { default as Whiteboard, Whiteboard as WhiteboardComponent } from './Whiteboard'
+export * from './hooks'
+export * from './utils'
+export * from './components'
+
+export const version = '0.1.0'

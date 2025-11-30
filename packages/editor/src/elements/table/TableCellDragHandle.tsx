@@ -1,5 +1,5 @@
 import { css } from '@emotion/css'
-import { Colors } from '@/consts'
+import { Colors } from '../consts'
 import { CSSProperties, memo, useRef } from 'react'
 import { AnimatePopover, Icon } from '@/components'
 import { DragHandlers, motion } from 'framer-motion'

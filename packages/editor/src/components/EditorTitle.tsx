@@ -1,4 +1,4 @@
-import { KEY } from '@/consts/key'
+import { KEY } from '../consts/key'
 import { useDebounceFn, useGlobalAtomValue } from '@/hooks'
 import { css } from '@emotion/css'
 import isHotkey from 'is-hotkey'
@@ -12,7 +12,7 @@ import { GlobalSetting, ReactEditor } from '@/core'
 import { Transforms } from 'slate'
 import Id from './utils/id'
 import classnames from 'classnames'
-import trans from '@/consts/trans'
+import trans from '../consts/trans'
 import useEditorInstance from '../hooks/useEditorInstance'
 
 type EditorTitleProps = EditorProps['title'] & {

@@ -1,5 +1,5 @@
 import { CustomEditor, IEditorInstance } from '~/typings'
-import { ReactEditor } from '@/core'
+import { ReactEditor } from '../slate-react'
 import { Editor, Range } from 'slate'
 
 export default function getEditorBlockHandle(e: PointerEvent, instance: IEditorInstance, editor: CustomEditor, container?: HTMLElement) {

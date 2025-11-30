@@ -5,7 +5,7 @@ import { ReactEditor, useSlateStatic } from '@/core'
 import { getBoxOfBoxes } from '@/core/components/whiteboard/utils'
 import { Box } from '~/typings'
 import tinycolor from 'tinycolor2'
-import { Colors } from '@/consts'
+import { Colors } from '../consts'
 
 export default () => {
   const selectionState = useSelectAtomValue(TableStateAtom, s => s.selectionState)

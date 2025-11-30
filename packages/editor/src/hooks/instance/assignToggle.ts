@@ -1,11 +1,11 @@
 import { CustomEditor, CustomElement, HeadingElement, IEditorInstance } from '~/typings'
-import { assignProperties } from '@/utils'
+import { assignProperties } from '../utils'
 import { Editor, Element, Path, Transforms } from 'slate'
 import { HeadingToLevel } from '../elements/Heading'
 
 /**
  *  Toggle blocks like headings, ordered lists, bullet lists
- *  第一步：在当前层内找到被隐藏的元�?
+ *  第一步：在当前层内找到被隐藏的元?
  *  Example:
  *  - 1
  *  - 2
@@ -14,7 +14,7 @@ import { HeadingToLevel } from '../elements/Heading'
  *    - 2.3
  *      - 2.3.1
  *      - 2.3.2
- *  如果toggle 2,那么找到同一层下方全部level大于自身的节�?
+ *  如果toggle 2,那么找到同一层下方全部level大于自身的节?
  */
 
 type NodeEntry = [element: CustomElement, path: Path]

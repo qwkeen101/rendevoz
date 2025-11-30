@@ -5,7 +5,7 @@
  * 4.Shift+Tab做反动作
  */
 import isHotkey from 'is-hotkey'
-import { KEY } from '@/consts'
+import { KEY } from '../consts'
 import { Range, Transforms } from 'slate'
 import { IEditorInstance } from '~/typings'
 import { ReactEditor } from '@/core'

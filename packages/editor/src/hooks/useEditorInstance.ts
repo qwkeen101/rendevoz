@@ -1,4 +1,4 @@
-import { assignProperties } from '@/utils'
+import { assignProperties } from '../utils'
 import { atom, createStore, useAtomValue } from 'jotai'
 import { createContext, RefObject, useContext, useRef } from 'react'
 import { CustomEditor, IEditorInstance } from '~/typings'
@@ -12,8 +12,8 @@ import assignSearchOps from '../hooks/instance/assignSearchOps'
 import assignLabelOps from '../hooks/instance/assignLabelOps'
 import getInsideMetas from '../utils/getInsideMetas'
 import assignAIOps from '../components/AI/assignAIOps'
-import { ReactEditor } from '@/core'
-import { slateToMarkdown } from '../plugins/slateToMarkdown'
+import { ReactEditor } from '../slate-react'
+import { slateToMarkdown, SlateToMarkdownOptions } from '../plugins/slateToMarkdown'
 import slateToHTML from '../plugins/slateToHTML'
 
 export const EditorInstanceAtom = atom<IEditorInstance>({})
@@ -24,7 +24,13 @@ const useEditorInstance = () => {
   return useAtomValue(EditorInstanceAtom, { store: store })
 }
 const SelectionHighlight = 'selection-highlight'
-export const useAssignEditorInstance = (editor: CustomEditor, scrollElementRef: RefObject<HTMLElement>) => {
+export const useAssignEditorInstance = (
+  editor: CustomEditor,
+  scrollElementRef: RefObject<HTMLElement>,
+  options?: {
+    serializeOptions?: SlateToMarkdownOptions
+  }
+) => {
   const instance = useEditorInstance()
   const eventsMapRef = useRef(new Map<string, Set<any>>())
   const eventsMap = eventsMapRef.current
@@ -48,12 +54,12 @@ export const useAssignEditorInstance = (editor: CustomEditor, scrollElementRef: 
   assignProperties(instance, {
     serialize: (mode = 'markdown') => {
       if (mode === 'markdown') {
-        return slateToMarkdown(editor.children)
+        return slateToMarkdown(editor.children, options?.serializeOptions)
       }
       if (mode === 'html') {
         return slateToHTML(editor.children).html
       }
-      return slateToMarkdown(editor.children)
+      return slateToMarkdown(editor.children, options?.serializeOptions)
     },
     addEventListener: (k, f) => {
       const set = eventsMap.get(k) || new Set()

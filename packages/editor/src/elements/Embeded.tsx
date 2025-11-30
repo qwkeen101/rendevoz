@@ -1,5 +1,6 @@
-import { ReactEditor, RenderElementProps, useGlobalIsDragging, useSlateStatic } from '@/core'
-import { Colors } from '@/consts'
+import { ReactEditor, RenderElementProps, useSlateStatic } from '../slate-react'
+import { useGlobalIsDragging } from '../global'
+import { Colors } from '../consts'
 import { memo, useEffect, useState } from 'react'
 import { AnimatePopover, Icon, WithBorder } from '@/components'
 import { ClassName } from 'rendevoz'

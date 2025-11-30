@@ -1,6 +1,6 @@
 import { RenderLeafProps } from '@/core'
 import { CSSProperties, useState } from 'react'
-import { Colors } from '@/consts'
+import { Colors } from '../consts'
 import classnames from 'classnames'
 import HighlightLeaf from './HighlightLeaf'
 

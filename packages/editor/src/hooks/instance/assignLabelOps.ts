@@ -1,5 +1,5 @@
 import { CustomEditor, IEditorInstance } from '~/typings'
-import { assignProperties } from '@/utils'
+import { assignProperties } from '../utils'
 import { goToTextHighlight } from '../utils'
 import { Transforms } from 'slate'
 const assignLabelOps = (instance: IEditorInstance, editor: CustomEditor) => {

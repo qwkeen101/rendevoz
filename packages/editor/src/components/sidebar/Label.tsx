@@ -1,15 +1,12 @@
-import { ObjectStore } from '@/api/stores'
 import useEditorInstance from '../../hooks/useEditorInstance'
 import { memo, useLayoutEffect, useRef } from 'react'
-import { useRenderLabel } from '@/core/object'
 import { useSelectAtomValue } from '@/hooks'
-import Colors from '@/consts/colors'
+import Colors from '../consts/colors'
 import { Node, Path } from 'slate'
-import useRenderLabelContainer from '@/core/object/renderer/useRenderLabelContainer'
 import { INoteLabel } from '~/typings'
 import { EditorStateAtom } from '../hooks/useEditorState'
 import ContextMenu from '@/components/contextMenu'
-import { assignProperties } from '@/utils'
+import { assignProperties } from '../utils'
 import { useSetAtom } from 'jotai'
 
 const EditorLabelContainer = memo(({ labelIds, labelType }: { labelIds?: number[]; labelType: string }) => {
@@ -40,23 +37,10 @@ const EditorLabelContainer = memo(({ labelIds, labelType }: { labelIds?: number[
   useLayoutEffect(() => {
     getPath()
   }, [labelIds, state?.loaded])
-  const { renderContainer, renderHeader, triggerSort, setCurrentHighlight } = useRenderLabelContainer<INoteLabel>(labelType, {
-    labelIds,
-    labelState: { ...state },
-    onLabelStateChange: s => {
-      instance.on({
-        type: 'updateNote',
-        updater: c => ({ ...c, ...s })
-      })
-    },
-    onDelete: id => {
-      instance.labelOps?.deleteLabel(id)
-    },
-    availableSorts: ['article order', 'article order in reverse', 'created at', 'updated at'],
-    getPathFromLabel: label => {
-      return highlightToPathRef.current?.[label.id]
-    }
-  })
+  const renderContainer = (renderer: any) => <div>{labelIds?.map(id => renderer({ id } as any, false, () => {}))}</div>
+  const renderHeader = () => null
+  const triggerSort = () => {}
+  const setCurrentHighlight = (_?: number) => {}
   assignProperties(instance, {
     labelOps: {
       ...instance.labelOps,
@@ -86,7 +70,6 @@ const EditorLabelContainer = memo(({ labelIds, labelType }: { labelIds?: number[
 
 const Label = memo(
   ({ id, type, highlighted, onMove, path }: { id: number; type: string; highlighted: boolean; onMove: VoidFunction; path?: number[] }) => {
-    const label = ObjectStore(type).useValue(id) as INoteLabel | undefined
     const highlightId = id
     const instance = useEditorInstance()
     const { renderName, renderHeader, renderOriginalText, renderContextMenu, renderTags, ref, labelMeta, renderQuestions } = useRenderLabel(

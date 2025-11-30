@@ -1,7 +1,7 @@
 import { Content, Icon, AutosizeTextarea } from '@/components'
 import { memo, useEffect, useRef } from 'react'
 import isHotkey from 'is-hotkey'
-import { KEY } from '@/consts'
+import { KEY } from '../consts'
 import { useTranslation } from 'react-i18next'
 
 export default memo(

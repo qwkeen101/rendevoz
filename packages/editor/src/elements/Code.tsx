@@ -10,8 +10,8 @@ import { useIsIn, useSelectGlobalAtomValue } from '@/hooks'
 import { SettingAtom } from '@/core'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import trans from '@/consts/trans'
-import { Icons } from '@/consts'
+import trans from '../consts/trans'
+import { Icons } from '../consts'
 import classnames from 'classnames'
 
 const Code: FC<RenderElementProps> = ({ element, children }) => {

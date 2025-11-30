@@ -1,8 +1,8 @@
 import { CustomEditor, CustomElement, IEditorInstance } from '~/typings'
-import { assignProperties } from '@/utils'
+import { assignProperties } from '../../utils'
 import { Editor, Element, Node, Path, Transforms } from 'slate'
-import Id from './utils/id'
-import { ReactEditor } from '@/core'
+import Id from '../../utils/id'
+import { ReactEditor } from '../../slate-react'
 
 const MAX_INDENT = 6
 export const transformableTargetType = [
@@ -270,7 +270,7 @@ const assignBlockOps = (instance: IEditorInstance, editor: CustomEditor) => {
               const underNodes = instance.toggleOps?.getUnderNodes(path)
               if (underNodes && underNodes?.length > 1) {
                 underNodes?.forEach(([e, path]) => {
-                  // 嵌套节点的层级不能小于等于当前节�?
+                  // 嵌套节点的层级不能小于等于当前节?
                   if ((e.level || 0) - 1 <= nextIndent) {
                     return
                   }

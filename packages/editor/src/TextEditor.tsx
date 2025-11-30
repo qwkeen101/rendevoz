@@ -1,8 +1,8 @@
 import { CSSProperties, memo, useMemo } from 'react'
-import { CustomEditor, IEditorInstance } from '~/typings'
-import { Editor, withReact } from '@/core'
-import { Id } from '@/utils'
+import { IEditorInstance } from '~/typings'
+import { Editor } from './Editor'
 import { Descendant } from 'slate'
+import Id from './utils/id'
 
 type Props = {
   style?: CSSProperties

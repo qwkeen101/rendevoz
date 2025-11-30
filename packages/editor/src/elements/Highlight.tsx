@@ -1,13 +1,13 @@
 import { AnimatePopover, Content, WithBorder } from '@/components'
 import { RenderElementProps } from 'slate-react'
 import { CustomElement } from '~/typings'
-import getEmoji from '@/utils/emoji'
+import getEmoji from '../utils/emoji'
 import { useMemo } from 'react'
 import EmojiPicker from '@/components/picker/emojiPicker'
 import { ReactEditor, useSlateStatic } from '../slate-react'
 import { Transforms } from 'slate'
 import tinycolor from 'tinycolor2'
-import { Colors } from '@/consts'
+import { Colors } from '../consts'
 
 const HighlightBlock = ({ element, children }: RenderElementProps) => {
   const highlightBlockEle = element as CustomElement & {

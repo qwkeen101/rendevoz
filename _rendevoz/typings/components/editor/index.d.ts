@@ -11,6 +11,7 @@ import { Virtualizer } from '@tanstack/virtual-core'
 import { CSSProperties, ReactElement, ReactNode } from 'react'
 import { IEditorEvent } from './events'
 import { IMenuLayoutItem } from '@/components/base/menu'
+import { ToolbarConfig } from '@rendevoz/editor/toolbar'
 
 export type CustomEditor = BaseEditor &
   ReactEditor &
@@ -29,6 +30,7 @@ export type CustomEditor = BaseEditor &
     instance: IEditorInstance
     nodeToDecorations: Map<CustomElement, Range[]>
   }
+  toolbarConfig?: ToolbarConfig
 
 export type CustomElement = (CommonElement | OuterElement) & {
   hide?: boolean
@@ -51,6 +53,7 @@ declare module 'slate' {
     Element: CustomElement
     Text: CustomText | EmptyText
   }
+  toolbarConfig?: ToolbarConfig
 }
 
 export interface ElementFunctions {
@@ -78,6 +81,7 @@ export type DefaultAddElementHandler = (
     addAtInitialSelection?: boolean
     addAtCurrentSelection?: boolean
   }
+  toolbarConfig?: ToolbarConfig
 ) => void
 
 export type RegisteredEditorElement = {
@@ -90,6 +94,7 @@ export type RegisteredEditorElement = {
     // if present, use this, or use default
     onAddInMenu?: (actions: { type: string; defaultAddHandler: DefaultAddElementHandler; editor: CustomEditor }) => void
   }
+  toolbarConfig?: ToolbarConfig
   renderElement: (props: RenderElementProps) => ReactElement
   isInline?: boolean
   isVoid?: boolean
@@ -114,6 +119,7 @@ export type IEditorAISummary = IAISummary & {
     }[]
     keywords: string[]
   }
+  toolbarConfig?: ToolbarConfig
 }
 export interface EditorProps {
   onClick?: React.MouseEventHandler
@@ -123,6 +129,7 @@ export interface EditorProps {
       editor: CustomEditor
       instance: IEditorInstance
     }
+  toolbarConfig?: ToolbarConfig
   ) => Promise<any>
   aiSummary?: IEditorAISummary
   layout?: {
@@ -145,6 +152,7 @@ export interface EditorProps {
     settings?: (onClose?: VoidFunction) => IMenuLayoutItem[]
     displayMode?: boolean
   }
+  toolbarConfig?: ToolbarConfig
   title?: {
     customTitleRenderer?: (realTitle: string) => ReactElement
     titleStyle?: CSSProperties
@@ -152,6 +160,7 @@ export interface EditorProps {
     titleEditable?: boolean
     titleClassName?: string
   }
+  toolbarConfig?: ToolbarConfig
   // title can be custom node, you should pass string title to show in header
   stringTitle?: string
   styles?: {
@@ -162,6 +171,7 @@ export interface EditorProps {
     containerMaxHeight?: number | string
     containerStyle?: CSSProperties
   }
+  toolbarConfig?: ToolbarConfig
   header?: {
     boxShadow?: boolean
     display?: {
@@ -172,13 +182,16 @@ export interface EditorProps {
       title?: boolean
       more?: boolean
     }
+  toolbarConfig?: ToolbarConfig
     moreOptions?: {
       exportMD?: boolean
       exportPDF?: boolean
     }
+  toolbarConfig?: ToolbarConfig
     leftExtra?: ReactElement
     rightExtra?: ReactElement
   }
+  toolbarConfig?: ToolbarConfig
   state?: {
     loaded?: boolean
     pageWidth?: 'X-Small' | 'Small' | 'Medium' | 'Large' | 'X-Large' | 'Max'
@@ -194,14 +207,17 @@ export interface EditorProps {
   labelType?: string
   labelIds?: number[]
   toolbar?: {
+    config?: ToolbarConfig
     fontSize?: boolean
     color?: boolean
     highlight?: boolean
     extra?: boolean
   }
+  toolbarConfig?: ToolbarConfig
   classNames?: {
     editorContainerClassName?: string
   }
+  toolbarConfig?: ToolbarConfig
   plugins?: {
     blockHandle?: boolean
     dragBlock?: boolean
@@ -210,6 +226,7 @@ export interface EditorProps {
     labelPopover?: boolean
     addUnderLastLine?: boolean
   }
+  toolbarConfig?: ToolbarConfig
   // slate can not be controlled component, but you can use instance.replaceChildren to replace its value (lose all history, no redo/undo)
   defaultValue?: Descendant[]
   id: string

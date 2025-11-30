@@ -1,8 +1,7 @@
 import { useMemo } from 'react'
 import { CustomEditor, CustomElement } from '~/typings'
-import { MetaStore } from '@/api/stores'
 import { Editor } from 'slate'
-import { ReactEditor } from '@/core'
+import { ReactEditor } from '../../slate-react'
 
 const disableOverflowTypes = new Set(['list-item', 'order-list-item', 'synced', 'column', 'columnList'])
 export default (element: CustomElement, editor: CustomEditor) => {
@@ -21,17 +20,7 @@ export default (element: CustomElement, editor: CustomEditor) => {
   const getWidth = () => {
     const elementPath = ReactEditor.findPath(editor, element)
     if (element.type === 'metaObject' && element.cardType === 'embeded') {
-      const isGroup = MetaStore.getMetaObjectsMap().get(element.originId)?.type === 'group'
-      if (isGroup) {
-        const isInColumn = Editor.above(editor, {
-          at: elementPath,
-          match: n => n.type === 'column' || n.type === 'synced'
-        })
-        if (isInColumn) {
-          return '100%'
-        }
-        return 'var(--editor-width)'
-      }
+      return 'var(--editor-width)'
     }
     if (element.type === 'table') {
       const isInColumn = Editor.above(editor, {
@@ -57,18 +46,7 @@ export default (element: CustomElement, editor: CustomEditor) => {
       return true
     }
     if (element.type === 'metaObject' && element.cardType === 'embeded') {
-      const isGroup = MetaStore.getMetaObjectsMap().get(element.originId)?.type === 'group'
-      if (isGroup) {
-        const elementPath = ReactEditor.findPath(editor, element)
-        const isInColumn = Editor.above(editor, {
-          at: elementPath,
-          match: n => n.type === 'column' || n.type === 'synced'
-        })
-        if (isInColumn) {
-          return 'group-in-column'
-        }
-        return 'group'
-      }
+      return 'group'
     }
     return false
   }

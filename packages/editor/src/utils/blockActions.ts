@@ -3,7 +3,7 @@ import { Editor, Node, Transforms } from 'slate'
 import { ReactEditor } from '../slate-react'
 import { css } from '@emotion/css'
 import { HeadingToLevel } from '../elements/Heading'
-import { Colors } from '@/consts'
+import { Colors } from '../consts'
 import scrollIntoView from 'scroll-into-view-if-needed'
 
 export const goToBlock = async (blockId: number, editor: CustomEditor, align: 'start' | 'center' = 'center') => {
@@ -96,7 +96,7 @@ const findNearHidenBlocks = (centerBlockIndex: number, eles: CustomElement[]) =>
     const centerBlockLevel = HeadingToLevel[centerBlock.type]
     let leftIndex = centerBlockIndex
     let rightIndex = centerBlockIndex
-    // 这里和普通块一�?
+    // 这里和普通块一?
     while (rightIndex < eles.length - 1) {
       rightIndex += 1
       const currentEle = eles[rightIndex]

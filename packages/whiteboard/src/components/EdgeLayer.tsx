@@ -1,5 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
-import { useWhiteboard, useWhiteboardInstance, useWhiteboardSelection, useWhiteboardState } from '../hooks'
+import { useWhiteboard, useWhiteboardInstance, useWhiteboardSelection, useWhiteboardState, useVirtualization } from '../hooks'
 import { findNearestNode, getBezierPath, getHandlePosition, getRelativeHandlePosition, hitTestNode } from '../utils'
 import { EdgePosition, IWhiteboardEdge, IWhiteboardNode, SnapMode, WhiteboardEdgeStyle } from '../types/whiteboard'
 import EdgeHandle from './EdgeHandle'
@@ -117,6 +117,10 @@ const EdgeLayer = memo(() => {
   const dragPreviewRef = useRef<DragPreview>()
 
   const edges = useMemo(() => Array.from(whiteboard.edges?.values() || []), [whiteboard.edges])
+
+  // Use virtualization hook for edge culling
+  const { visibleEdgeIds } = useVirtualization()
+
   const nodeBoxes = useMemo(() => {
     const map = new Map<number, HandleBox>()
     whiteboard.nodes?.forEach((n, id) => map.set(id, getNodeBox(n)))
@@ -436,7 +440,7 @@ const EdgeLayer = memo(() => {
           pointerEvents: 'none'
         }}
       >
-        {edges.map(renderEdge)}
+        {edges.filter(edge => visibleEdgeIds.has(edge.id)).map(renderEdge)}
       </svg>
       {highlightedNodeId && nodeMap.get(highlightedNodeId) && (
         <div

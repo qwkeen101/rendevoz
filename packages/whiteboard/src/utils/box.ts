@@ -68,3 +68,29 @@ export const getBoxOfNodes = (nodes: IWhiteboardNode[]): Box | undefined => {
   })) as Box[]
   return getBoxOfBoxes(boxes)
 }
+
+export const boxContain = (outer: Box, inner: Box) => {
+  const outerLeft = outer.left ?? outer.x ?? 0
+  const outerTop = outer.top ?? outer.y ?? 0
+  const innerLeft = inner.left ?? inner.x ?? 0
+  const innerTop = inner.top ?? inner.y ?? 0
+  return (
+    innerLeft >= outerLeft &&
+    innerTop >= outerTop &&
+    innerLeft + (inner.width ?? 0) <= outerLeft + (outer.width ?? 0) &&
+    innerTop + (inner.height ?? 0) <= outerTop + (outer.height ?? 0)
+  )
+}
+
+export const boxesIntersect = (a: Box, b: Box) => {
+  const aLeft = a.left ?? a.x ?? 0
+  const aTop = a.top ?? a.y ?? 0
+  const bLeft = b.left ?? b.x ?? 0
+  const bTop = b.top ?? b.y ?? 0
+  return (
+    aLeft < bLeft + (b.width ?? 0) &&
+    aLeft + (a.width ?? 0) > bLeft &&
+    aTop < bTop + (b.height ?? 0) &&
+    aTop + (a.height ?? 0) > bTop
+  )
+}

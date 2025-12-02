@@ -3,24 +3,23 @@ import { memo } from 'react'
 type Props = {
   x: number
   y: number
-  onPointerDown?: (e: React.PointerEvent<HTMLDivElement>) => void
+  onPointerDown?: (e: React.PointerEvent<SVGCircleElement>) => void
 }
 
 const EdgeHandle = memo(({ x, y, onPointerDown }: Props) => {
   return (
-    <div
+    <circle
+      cx={x}
+      cy={y}
+      r={5}
       onPointerDown={onPointerDown}
+      fill="#fff"
+      stroke="#0ea5e9"
+      strokeWidth={2}
       style={{
-        position: 'absolute',
-        width: 10,
-        height: 10,
-        borderRadius: 999,
-        background: '#fff',
-        border: '2px solid #0ea5e9',
-        boxShadow: '0 2px 6px rgba(14,165,233,0.3)',
-        transform: `translate(${x - 5}px, ${y - 5}px)`,
+        cursor: 'crosshair',
         pointerEvents: 'auto',
-        cursor: 'crosshair'
+        filter: 'drop-shadow(0 2px 4px rgba(14,165,233,0.3))'
       }}
     />
   )

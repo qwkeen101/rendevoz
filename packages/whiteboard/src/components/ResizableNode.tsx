@@ -1,5 +1,6 @@
 import { memo, useEffect, useRef, useState } from 'react'
 import Resizer, { Direction } from './Resizer'
+import { useWhiteboardState } from '../hooks'
 
 type Props = {
   x: number
@@ -16,6 +17,7 @@ const ResizableNode = memo(({ x, y, width, height, children, onResize, onResizeS
   const ref = useRef<HTMLDivElement>(null)
   const [resizing, setResizing] = useState(false)
   const startRef = useRef<{ w: number; h: number; clientX: number; clientY: number; dir: Direction }>()
+  const { lastViewport } = useWhiteboardState()
 
   const handleResizeStart = (e: PointerEvent, dir: Direction) => {
     startRef.current = { w: width, h: height, clientX: e.clientX, clientY: e.clientY, dir }
@@ -27,8 +29,9 @@ const ResizableNode = memo(({ x, y, width, height, children, onResize, onResizeS
     if (!resizing || !startRef.current) return
     const handleMove = (e: PointerEvent) => {
       const { w, h, clientX, clientY, dir } = startRef.current!
-      let deltaX = e.clientX - clientX
-      let deltaY = e.clientY - clientY
+      const scale = lastViewport?.scale || 1
+      let deltaX = (e.clientX - clientX) / scale
+      let deltaY = (e.clientY - clientY) / scale
       let nextW = w
       let nextH = h
       if (dir.includes('right')) nextW = Math.max(40, w + deltaX)
@@ -52,7 +55,7 @@ const ResizableNode = memo(({ x, y, width, height, children, onResize, onResizeS
       window.removeEventListener('pointermove', handleMove)
       window.removeEventListener('pointerup', handleUp)
     }
-  }, [resizing, onResize, onResizeEnd, width, height])
+  }, [resizing, onResize, onResizeEnd, width, height, lastViewport?.scale])
 
   return (
     <div

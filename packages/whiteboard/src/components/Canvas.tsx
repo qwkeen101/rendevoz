@@ -1,9 +1,13 @@
-import { memo, useMemo } from 'react'
+import { memo, RefObject, useMemo } from 'react'
 import { useWhiteboardState } from '../hooks'
 import NodeLayer from './NodeLayer'
 import EdgeLayer from './EdgeLayer'
 
-const Canvas = memo(() => {
+type CanvasProps = {
+  transformRef?: RefObject<HTMLDivElement>
+}
+
+const Canvas = memo(({ transformRef }: CanvasProps) => {
   const { lastViewport } = useWhiteboardState()
   const transformStyle = useMemo(() => {
     const t = lastViewport || { x: 0, y: 0, scale: 1 }
@@ -27,6 +31,7 @@ const Canvas = memo(() => {
           inset: 0,
           ...transformStyle
         }}
+        ref={transformRef}
       >
         <EdgeLayer />
         <NodeLayer />

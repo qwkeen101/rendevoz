@@ -1,6 +1,10 @@
 import { atom, createStore } from 'jotai'
 import { selectAtom } from 'jotai/utils'
-import { Draft, Patch, applyPatches, produceWithPatches } from 'immer'
+import { Draft, Patch, applyPatches, produceWithPatches, enableMapSet, enablePatches } from 'immer'
+
+// Enable Immer plugins to support Map/Set and Patches
+enableMapSet()
+enablePatches()
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { IWhiteboard, WhiteboardState } from '../types/whiteboard'
 import { IWhiteboardInstance, WhiteboardEvent, WhiteboardSelection } from '../types/instance'
@@ -14,6 +18,9 @@ import { assignLayoutOps } from './ops/layout'
 import { assignCoordOps } from './ops/coord'
 import { assignContainerOps } from './ops/container'
 import { assignHistoryOps } from './ops/history'
+import { assignGroupOps } from './ops/group'
+import { assignMindmapOps } from './ops/mindmap'
+import { assignContentOps } from './ops/content'
 import { getDefaultNodeRenderers } from '../components/renderers'
 
 export const normalizeWhiteboard = (value: IWhiteboard): IWhiteboard => {
@@ -54,6 +61,12 @@ export const WhiteboardStateAtom = atom<WhiteboardState>({
     x: 0,
     y: 0,
     scale: 1
+  },
+  virtualization: {
+    enabled: true,
+    viewportPadding: 0.2,
+    alwaysRenderSelected: true,
+    debounceMs: 16
   }
 })
 
@@ -119,6 +132,7 @@ export const createWhiteboardStore = ({ value, onChange, onPatch, adapter }: Cre
       ID_TO_NODE_MAP: new Map(),
       ID_TO_EDGE_MAP: new Map(),
       NODE_TO_EDGE_MAP: new Map(),
+      NODE_DOM_MAP: new Map(),
       copiedElements: [],
       isFocused: false
     },
@@ -260,6 +274,9 @@ export const createWhiteboardStore = ({ value, onChange, onPatch, adapter }: Cre
   assignEdgeOps(instance, store, updateWhiteboard)
   assignLayoutOps(instance, store, updateWhiteboard)
   assignContainerOps(instance, store)
+  assignGroupOps(instance, store)
+  assignMindmapOps(instance)
+  assignContentOps(instance)
 
   store.set(WhiteboardInstanceAtom, instance)
 

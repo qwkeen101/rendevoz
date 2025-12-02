@@ -21,20 +21,23 @@
   ],
   "license": "MIT",
   "peerDependencies": {
+    "jotai": "^2.11.0",
     "react": "^18.0.0",
-    "react-dom": "^18.0.0",
-    "jotai": "^2.11.0"
+    "react-dom": "^18.0.0"
   },
   "dependencies": {
     "@rendevoz/shared": "*",
+    "amator": "^1.1.0",
     "html-to-image": "^1.11.11",
     "immer": "^9.0.15",
     "lodash": "^4.17.21",
+    "ngraph.events": "^1.4.0",
     "panzoom": "^9.4.3",
     "perfect-freehand": "^1.2.0",
-    "react-rnd": "^10.3.5",
     "re-resizable": "^6.9.9",
-    "tinycolor2": "^1.6.0"
+    "react-rnd": "^10.3.5",
+    "tinycolor2": "^1.6.0",
+    "wheel": "^1.0.0"
   },
   "devDependencies": {
     "@types/react": "^18.0.0",

@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useWhiteboard, useWhiteboardInstance, useWhiteboardSelection, useWhiteboardState } from '../hooks'
-import { IWhiteboardNode } from '../types'
+import { useWhiteboard, useWhiteboardInstance, useWhiteboardSelection, useWhiteboardState, useVirtualization } from '../hooks'
+import { IWhiteboardNode, NodeRenderConfig } from '../types'
 import ResizableNode from './ResizableNode'
 import { DefaultNodeRenderer } from './renderers'
 
 type DragState =
   | {
     nodeId: number
-    startX: number
-    startY: number
-    originX: number
-    originY: number
+    offsetX: number
+    offsetY: number
   }
   | undefined
 
@@ -27,19 +25,24 @@ const NodeLayer = () => {
   useEffect(() => {
     const handlePointerMove = (e: PointerEvent) => {
       if (!dragState) return
-      const scale = lastViewport?.scale || 1
-      const deltaX = (e.clientX - dragState.startX) / scale
-      const deltaY = (e.clientY - dragState.startY) / scale
-      const nextX = dragState.originX + deltaX
-      const nextY = dragState.originY + deltaY
-      lastPosition.current = { x: nextX, y: nextY }
+      // Use coordOps to properly transform window position to whiteboard position
+      const pos = instance.coordOps?.transformWindowPositionToPosition?.({ x: e.clientX, y: e.clientY })
+      if (!pos) return
+
+      // Apply offset to keep mouse at the same relative position on the node
+      const nextPos = {
+        x: pos.x - dragState.offsetX,
+        y: pos.y - dragState.offsetY
+      }
+
+      lastPosition.current = nextPos
       instance.updateWhiteboard?.(draft => {
         const node = draft.nodes?.get(dragState.nodeId)
         if (node) {
           draft.nodes?.set(dragState.nodeId, {
             ...node,
-            x: nextX,
-            y: nextY
+            x: nextPos.x,
+            y: nextPos.y
           })
         }
       }, false)
@@ -64,7 +67,7 @@ const NodeLayer = () => {
       window.removeEventListener('pointermove', handlePointerMove)
       window.removeEventListener('pointerup', handlePointerUp)
     }
-  }, [dragState, instance, lastViewport?.scale])
+  }, [dragState, instance])
 
   // Get renderer for a specific node type
   const getNodeRenderer = useCallback(
@@ -74,6 +77,40 @@ const NodeLayer = () => {
     },
     [nodeRenderers]
   )
+
+  // Get node render config
+  const getNodeRenderConfig = useCallback(
+    (nodeType: IWhiteboardNode['type']): NodeRenderConfig | undefined => {
+      const renderer = nodeRenderers?.[nodeType]
+      if (!renderer || typeof renderer === 'function') return undefined
+      return renderer.config
+    },
+    [nodeRenderers]
+  )
+
+  // Use virtualization hook
+  const { visibleNodeIds, keepAliveNodeIds } = useVirtualization()
+
+  // Track visibility for lifecycle callbacks
+  const prevVisibilityRef = useRef<Map<number, boolean>>(new Map())
+
+  useEffect(() => {
+    nodes.forEach(node => {
+      const isVisible = visibleNodeIds.has(node.id)
+      const wasVisible = prevVisibilityRef.current.get(node.id) ?? false
+      const renderConfig = getNodeRenderConfig(node.type)
+
+      if (!wasVisible && isVisible) {
+        // Entered viewport
+        renderConfig?.onEnterViewport?.(node)
+      } else if (wasVisible && !isVisible) {
+        // Left viewport
+        renderConfig?.onLeaveViewport?.(node)
+      }
+
+      prevVisibilityRef.current.set(node.id, isVisible)
+    })
+  }, [visibleNodeIds, nodes, getNodeRenderConfig])
 
   return (
     <div
@@ -85,6 +122,18 @@ const NodeLayer = () => {
       }}
     >
       {nodes.map(node => {
+        // Virtualization logic
+        const isVisible = visibleNodeIds.has(node.id)
+        const shouldKeepAlive = keepAliveNodeIds.has(node.id)
+        const shouldUnmount = !isVisible && !shouldKeepAlive
+
+        // Unmount node if not visible and not keepAlive
+        if (shouldUnmount) {
+          const renderConfig = getNodeRenderConfig(node.type)
+          renderConfig?.onBeforeUnmount?.(node, 'viewport')
+          return null
+        }
+
         const selected = selection.nodes.has(node.id)
         const Renderer = getNodeRenderer(node)
 
@@ -101,6 +150,9 @@ const NodeLayer = () => {
           e.stopPropagation()
           // Reserved for future focus/edit logic
         }
+
+        // Extract component type
+        const RendererComp = typeof Renderer === 'function' ? Renderer : Renderer.render
 
         return (
           <ResizableNode
@@ -130,8 +182,13 @@ const NodeLayer = () => {
                 }, true)
                 .then(() => instance.nodeOps?.updateRelatedEdges?.(node.id))
             }}
+            style={{ display: isVisible ? undefined : 'none' }}
           >
             <div
+              ref={el => {
+                if (el) instance.values.NODE_DOM_MAP?.set(node.id, el)
+                else instance.values.NODE_DOM_MAP?.delete(node.id)
+              }}
               role="node"
               data-node-id={node.id}
               onPointerDown={e => {
@@ -139,13 +196,16 @@ const NodeLayer = () => {
                 e.stopPropagation()
                 e.preventDefault()
                 instance.selectOps?.selectNode?.(node.id, e.shiftKey)
-                setDragState({
-                  nodeId: node.id,
-                  startX: e.clientX,
-                  startY: e.clientY,
-                  originX: node.x,
-                  originY: node.y
-                })
+
+                // Calculate offset from mouse to node's top-left corner
+                const pos = instance.coordOps?.transformWindowPositionToPosition?.({ x: e.clientX, y: e.clientY })
+                if (pos) {
+                  setDragState({
+                    nodeId: node.id,
+                    offsetX: pos.x - node.x,
+                    offsetY: pos.y - node.y
+                  })
+                }
               }}
               style={{
                 width: '100%',
@@ -161,7 +221,7 @@ const NodeLayer = () => {
                 overflow: 'hidden'
               }}
             >
-              <Renderer node={node} selected={selected} instance={instance} onChange={handleChange} onClick={handleClick} />
+              <RendererComp node={node} selected={selected} instance={instance} onChange={handleChange} onClick={handleClick} />
             </div>
           </ResizableNode>
         )

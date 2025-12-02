@@ -16,8 +16,9 @@ const WhiteboardCanvas = memo(() => {
   const store = useStore()
   const instance = store.get(WhiteboardInstanceAtom)
   const ref = useRef<HTMLDivElement>(null)
+  const transformRef = useRef<HTMLDivElement>(null)
 
-  usePanzoom({ containerRef: ref, instance })
+  usePanzoom({ containerRef: ref, transformRef, instance, store })
   usePointerBridge(instance)
   useHistoryShortcut()
   useKeyboardShortcuts()
@@ -56,7 +57,7 @@ const WhiteboardCanvas = memo(() => {
       onFocus={() => instance.setFocused?.(true)}
       onBlur={() => instance.setFocused?.(false)}
     >
-      <Canvas />
+      <Canvas transformRef={transformRef} />
       <SelectionOverlay />
       <Toolbar />
     </div>

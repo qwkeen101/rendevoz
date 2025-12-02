@@ -16,3 +16,5 @@ export const useWhiteboardState = (): WhiteboardState => useAtomValue(Whiteboard
 export const useSelectWhiteboard = useSelectWhiteboardValue
 export const useSelectWhiteboardStateSlice = useSelectWhiteboardState
 export const useWhiteboardSelection = (): WhiteboardSelection => useAtomValue(WhiteboardSelectionAtom)
+
+export * from './hooks/useVirtualization'

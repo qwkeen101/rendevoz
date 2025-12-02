@@ -122,8 +122,8 @@ export type IWhiteboardOutline = {
 export type IWhiteboard = {
   id?: number
   name?: string
-  nodes?: Map<number, IWhiteboardNode> | IWhiteboardNode[]
-  edges?: Map<number, IWhiteboardEdge> | IWhiteboardEdge[]
+  nodes?: Map<number, IWhiteboardNode>
+  edges?: Map<number, IWhiteboardEdge>
   color?: string
   icon?: string
   backgroundType?: 'dot' | 'line' | 'none'
@@ -192,6 +192,8 @@ export type WhiteboardState = {
     y: number
     scale: number
   }
+  snapMode?: SnapMode
+  virtualization?: VirtualizationConfig
 }
 
 export type WhiteboardLayoutOptions = WhiteboardState['layout']
@@ -208,7 +210,55 @@ export type NodeRendererProps<T extends IWhiteboardNode = IWhiteboardNode> = {
 export type NodeRenderer<T extends IWhiteboardNode = IWhiteboardNode> = (props: NodeRendererProps<T>) => ReactNode
 
 export type NodeRendererRegistry = {
-  [K in IWhiteboardNode['type']]?: NodeRenderer<Extract<IWhiteboardNode, { type: K }>>
+  [K in IWhiteboardNode['type']]?:
+  | NodeRenderer<Extract<IWhiteboardNode, { type: K }>>
+  | NodeRendererWithConfig<Extract<IWhiteboardNode, { type: K }>>
+}
+
+// 节点渲染策略配置
+export type NodeRenderConfig = {
+  /**
+   * 控制节点是否永不 unmount
+   * - boolean: true 时永不 unmount，使用 display:none；false 时正常 unmount
+   * - () => boolean: 动态判断，每次视口变化时调用
+   * - () => Promise<boolean>: 异步判断，支持复杂逻辑（如检查资源加载状态）
+   * 
+   * 适用于重新挂载成本高的节点（iframe、video 等）
+   */
+  keepAlive?: boolean | (() => boolean) | (() => Promise<boolean>)
+
+  /**
+   * 在节点即将 unmount 前调用（纯副作用回调，不控制是否 unmount）
+   * 常用于清理工作：暂停视频、保存状态、记录日志等
+   */
+  onBeforeUnmount?: (node: IWhiteboardNode, reason: 'viewport' | 'manual') => void
+
+  /**
+   * 节点从视口移出时的回调
+   * 与 onBeforeUnmount 的区别：
+   * - onLeaveViewport: 节点移出视口（可能仍被渲染，如 keepAlive=true）
+   * - onBeforeUnmount: 节点即将从 DOM 卸载
+   */
+  onLeaveViewport?: (node: IWhiteboardNode) => void
+
+  /**
+   * 节点进入视口时的回调
+   */
+  onEnterViewport?: (node: IWhiteboardNode) => void
+}
+
+// 扩展 NodeRenderer 以支持配置
+export type NodeRendererWithConfig<T extends IWhiteboardNode = IWhiteboardNode> = {
+  render: NodeRenderer<T>
+  config?: NodeRenderConfig
+}
+
+// 虚拟化配置
+export type VirtualizationConfig = {
+  enabled?: boolean  // 默认 true
+  viewportPadding?: number  // 默认 0.2 (20%)
+  alwaysRenderSelected?: boolean  // 默认 true
+  debounceMs?: number  // 默认 16ms (~60fps)
 }
 
 export type WhiteboardProps = {

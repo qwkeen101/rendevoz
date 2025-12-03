@@ -1,7 +1,18 @@
 import { PrimitiveAtom } from 'jotai'
 import { BaseStore, bumpAtomVersion, globalStore } from './BaseStore'
 import { applyQuery } from './query'
-import { IAdapter, FindManyOptions, IStore, LifecycleHooks, PartialWithId, SchemaValidator, StoreConfig, StoreKey, StoreOperationOptions } from './types'
+import { IndexManager } from './indexes/IndexManager'
+import {
+    IAdapter,
+    FindManyOptions,
+    IStore,
+    LifecycleHooks,
+    PartialWithId,
+    SchemaValidator,
+    StoreConfig,
+    StoreKey,
+    StoreOperationOptions
+} from './types'
 
 type GetOneTask = {
     id: StoreKey
@@ -24,76 +35,7 @@ export function initializeLocalStore<T>(
 
     let batchGetOneTaskQueue: GetOneTask[] = []
     let batchFetchOneTaskQueue: GetOneTask[] = []
-    const indexDefs = config?.indexes || []
-    type FieldIndex = Map<any, Set<StoreKey>>
-    const indexMaps = new Map<string, FieldIndex>()
-
-    const getFieldIndex = (field: string): FieldIndex => {
-        if (!indexMaps.has(field)) {
-            indexMaps.set(field, new Map<any, Set<StoreKey>>())
-        }
-        return indexMaps.get(field)!
-    }
-
-    const matchesIndexedCondition = (value: any, cond: any): boolean => {
-        if (cond && typeof cond === 'object' && !Array.isArray(cond)) {
-            const { in: inArr, gt, gte, lt, lte, contains } = cond as any
-            if (inArr && Array.isArray(inArr)) {
-                if (!inArr.some(v => v === value)) return false
-            }
-            if (gt !== undefined && !(value > gt)) return false
-            if (gte !== undefined && !(value >= gte)) return false
-            if (lt !== undefined && !(value < lt)) return false
-            if (lte !== undefined && !(value <= lte)) return false
-            if (contains !== undefined) {
-                // contains 用于字符串匹配，索引层不处理子串，直接判等/包含
-                if (value === undefined || value === null) return false
-                if (!String(value).toLowerCase().includes(String(contains).toLowerCase())) return false
-            }
-            return true
-        }
-        return value === cond
-    }
-
-    const addToIndex = (item: T) => {
-        indexDefs.forEach(field => {
-            const val = (item as any)[field]
-            if (val === undefined) return
-            const fieldMap = getFieldIndex(field)
-            const set = fieldMap.get(val) || new Set<StoreKey>()
-            set.add((item as any).id as StoreKey)
-            fieldMap.set(val, set)
-        })
-    }
-
-    const removeFromIndex = (item: T | undefined) => {
-        if (!item) return
-        indexDefs.forEach(field => {
-            const val = (item as any)[field]
-            if (val === undefined) return
-            const fieldMap = indexMaps.get(field)
-            if (!fieldMap) return
-            const set = fieldMap.get(val)
-            if (set) {
-                set.delete((item as any).id as StoreKey)
-                if (set.size === 0) {
-                    fieldMap.delete(val)
-                } else {
-                    fieldMap.set(val, set)
-                }
-            }
-            if (fieldMap.size === 0) {
-                indexMaps.delete(field)
-            } else {
-                indexMaps.set(field, fieldMap)
-            }
-        })
-    }
-
-    const rebuildIndexesFromMap = () => {
-        indexMaps.clear()
-        jotaiStore.get(atom).forEach((value) => addToIndex(value as any))
-    }
+    const indexManager = config?.indexes && config.indexes.length ? new IndexManager<T>(config.indexes) : null
 
     // Helper to transform data if configured
     const transform = (item: T): T => {
@@ -240,7 +182,7 @@ export function initializeLocalStore<T>(
                         store: jotaiStore,
                         onSuccess: async o => {
                             await runAfterSave(validObj, 'add')
-                            addToIndex(validObj as any)
+                            indexManager?.add(validObj as any)
                             resolve(o)
                         },
                         onFail: (error) => {
@@ -262,7 +204,7 @@ export function initializeLocalStore<T>(
                     store: jotaiStore,
                     clearCache: options?.clearCache,
                     onSuccess: () => {
-                        removeFromIndex(oldItem as any)
+                        indexManager?.remove(oldItem as any)
                         resolve(true)
                     },
                     onFail: (error) => {
@@ -285,6 +227,7 @@ export function initializeLocalStore<T>(
             } else {
                 jotaiStore.set(atom, BaseStore.bulkAdd(arr as PartialWithId<T>[], jotaiStore.get(atom)))
             }
+            indexManager?.rebuild(jotaiStore.get(atom).values())
             bumpAtomVersion(atom)
 
             return arr
@@ -306,6 +249,7 @@ export function initializeLocalStore<T>(
             if (cache) {
                 if (arr.some(i => !map.has((i as any).id))) {
                     jotaiStore.set(atom, BaseStore.bulkAdd(arr as PartialWithId<T>[], jotaiStore.get(atom)))
+                    arr.forEach(item => indexManager?.add(item))
                     bumpAtomVersion(atom)
                 }
             }
@@ -351,8 +295,8 @@ export function initializeLocalStore<T>(
                             store: jotaiStore,
                             onSuccess: async updated => {
                                 await runAfterSave(validObj, 'update')
-                                removeFromIndex(base as any)
-                                addToIndex(validObj as any)
+                                indexManager?.remove(base as any)
+                                indexManager?.add(validObj as any)
                                 resolve(updated)
                             },
                             onFail: (error) => {
@@ -367,11 +311,11 @@ export function initializeLocalStore<T>(
                             // Transform and validate fetched data before caching
                             const transformed = transform(data)
 
-                            validateWithSchema(transformed, config?.schema)
-                                .then(validFetched => {
-                                    jotaiStore.set(atom, BaseStore.add(validFetched as PartialWithId<T>, jotaiStore.get(atom)))
-                                    addToIndex(validFetched as any)
-                                    bumpAtomVersion(atom)
+                                    validateWithSchema(transformed, config?.schema)
+                                        .then(validFetched => {
+                                            jotaiStore.set(atom, BaseStore.add(validFetched as PartialWithId<T>, jotaiStore.get(atom)))
+                                            indexManager?.add(validFetched as any)
+                                            bumpAtomVersion(atom)
 
                                     const prepare = async () => {
                                         const base = validFetched as unknown as PartialWithId<T>
@@ -391,6 +335,8 @@ export function initializeLocalStore<T>(
                                             store: jotaiStore,
                                             onSuccess: async updated => {
                                                 await runAfterSave(validObj, 'update')
+                                                indexManager?.remove(base as any)
+                                                indexManager?.add(validObj as any)
                                                 resolve(updated)
                                             },
                                             onFail: (error) => {
@@ -411,63 +357,37 @@ export function initializeLocalStore<T>(
         },
 
         findMany: async (options?: FindManyOptions<T>) => {
-            // Compute from current cache for即时 UI
-            const map = jotaiStore.get(atom)
-
-            // Simple query planner: pick the smallest candidate set from available indexes
-            const pickIndexedCandidates = (): Set<StoreKey> | undefined => {
-                const where = options?.where
-                if (!where) return undefined
-                const entries = Object.entries(where as any)
-                let best: { ids: Set<StoreKey>, size: number } | undefined
-
-                entries.forEach(([field, cond]) => {
-                    const fieldMap = indexMaps.get(field)
-                    if (!fieldMap || fieldMap.size === 0) return
-
-                    const collect = (): Set<StoreKey> | undefined => {
-                        // in array
-                        if (cond && typeof cond === 'object' && !Array.isArray(cond) && (cond as any).in) {
-                            const vals = (cond as any).in as any[]
-                            const merged = new Set<StoreKey>()
-                            vals.forEach(v => {
-                                const set = fieldMap.get(v)
-                                if (set) set.forEach(k => merged.add(k))
-                            })
-                            return merged
-                        }
-
-                        // eq / range
-                        const ids = new Set<StoreKey>()
-                        fieldMap.forEach((set, value) => {
-                            if (matchesIndexedCondition(value, cond)) {
-                                set.forEach(id => ids.add(id))
-                            }
-                        })
-                        return ids
-                    }
-
-                    const ids = collect()
-                    if (!ids || ids.size === 0) return
-                    if (!best || ids.size < best.size) {
-                        best = { ids, size: ids.size }
-                    }
+            const evaluateWithIndexes = (mapRef: Map<StoreKey, T>, opts?: FindManyOptions<T>) => {
+                const candidateIds = indexManager?.collectCandidates(opts?.where)
+                const singleOrder = opts?.orderBy && !Array.isArray(opts.orderBy) ? opts.orderBy : undefined
+                const hasFullCoverage = !!(indexManager && indexManager.coversWhere(opts?.where))
+                const orderedIds = indexManager?.getOrderedCandidates(singleOrder, candidateIds, {
+                    limit: opts?.limit,
+                    offset: opts?.offset,
+                    applyLimit: hasFullCoverage
                 })
-
-                return best?.ids
+                const appliedLimitInIndex = Boolean(orderedIds && hasFullCoverage && opts?.limit !== undefined)
+                const queryOptions = appliedLimitInIndex ? { ...opts, limit: undefined, offset: undefined } : opts
+                const preSorted = Boolean(orderedIds)
+                const source = orderedIds
+                    ? orderedIds.map(id => mapRef.get(id) as T).filter(Boolean)
+                    : candidateIds
+                        ? Array.from(candidateIds).map(id => mapRef.get(id) as T).filter(Boolean)
+                        : Array.from(mapRef.values()) as T[]
+                return applyQuery(source, queryOptions, { preSorted })
             }
 
-            const candidateIds = pickIndexedCandidates()
-            const source = candidateIds ? Array.from(candidateIds).map(id => map.get(id) as T).filter(Boolean) : Array.from(map.values()) as T[]
-            const localResult = applyQuery(source, options)
+            // Compute from current cache for即时 UI
+            const map = jotaiStore.get(atom)
+            const localResult = evaluateWithIndexes(map, options)
 
             try {
                 let remote = await adapter.getAll(options?.where as any)
                 remote = remote.map(transform)
                 jotaiStore.set(atom, BaseStore.bulkAdd(remote as PartialWithId<T>[], jotaiStore.get(atom)))
-                rebuildIndexesFromMap()
+                indexManager?.rebuild(jotaiStore.get(atom).values())
                 bumpAtomVersion(atom)
-                return applyQuery(remote, options)
+                return evaluateWithIndexes(jotaiStore.get(atom), options)
             } catch (error) {
                 adapter.onError?.(error as Error, 'findMany')
                 return localResult

@@ -8,6 +8,8 @@ type WhereValue =
         gte?: number
         lt?: number
         lte?: number
+        startsWith?: string
+        endsWith?: string
         contains?: string
     }
 
@@ -18,7 +20,7 @@ const normalizeString = (value: any) => {
 
 const matchesCondition = (value: any, condition: WhereValue): boolean => {
     if (condition && typeof condition === 'object' && !Array.isArray(condition)) {
-        const { in: inArr, gt, gte, lt, lte, contains } = condition as any
+        const { in: inArr, gt, gte, lt, lte, contains, startsWith, endsWith } = condition as any
         if (inArr && Array.isArray(inArr)) {
             if (!inArr.some(v => v === value)) return false
         }
@@ -26,8 +28,14 @@ const matchesCondition = (value: any, condition: WhereValue): boolean => {
         if (gte !== undefined && !(value >= gte)) return false
         if (lt !== undefined && !(value < lt)) return false
         if (lte !== undefined && !(value <= lte)) return false
+        const haystack = normalizeString(value)
+        if (startsWith !== undefined) {
+            if (!haystack.startsWith(normalizeString(startsWith))) return false
+        }
+        if (endsWith !== undefined) {
+            if (!haystack.endsWith(normalizeString(endsWith))) return false
+        }
         if (contains !== undefined) {
-            const haystack = normalizeString(value)
             const needle = normalizeString(contains)
             if (!haystack.includes(needle)) return false
         }
@@ -102,7 +110,7 @@ function quickSelect<T>(arr: T[], compareFn: (a: T, b: T) => number, k: number):
     return arr.slice(0, k).sort(compareFn)
 }
 
-export function applyQuery<T extends Record<string, any>>(data: T[], options?: FindManyOptions<T>): T[] {
+export function applyQuery<T extends Record<string, any>>(data: T[], options?: FindManyOptions<T>, opts?: { preSorted?: boolean }): T[] {
     if (!options) return data
     const { where, orderBy, limit, offset } = options
 
@@ -118,7 +126,7 @@ export function applyQuery<T extends Record<string, any>>(data: T[], options?: F
     }
 
     // 2. Apply sorting with Top-K optimization
-    if (orderBy) {
+    if (orderBy && !opts?.preSorted) {
         const rules = Array.isArray(orderBy) ? orderBy : [orderBy]
         const compareFn = compareBy(rules)
 

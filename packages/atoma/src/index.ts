@@ -21,6 +21,8 @@ export type {
     StoreKey,
     FindManyOptions,
     UseFindManyResult,
+    IndexDefinition,
+    IndexType,
     // Core
     HistoryChange,
     IEventEmitter
@@ -46,3 +48,20 @@ export { createUseFindMany } from './hooks'
 // History
 export { HistoryManager, applyPatchesOnAtom } from './history'
 export type { HistoryRecord, HistoryManagerConfig } from './history'
+
+// StoreRegistry
+export {
+    Store,
+    setDefaultAdapterFactory,
+    registerStore,
+    clearStoreCache,
+    preloadStores,
+    getLoadedStores,
+    getStoreConfig
+} from './registry/StoreFactory'
+
+export type {
+    StoreRegistry,
+    RegistryStoreConfig,
+    AdapterFactory
+} from './registry/types'

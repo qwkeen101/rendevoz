@@ -1,5 +1,5 @@
 import { atom } from 'jotai'
-import { FindManyOptions, IAdapter, IStore, LifecycleHooks, SchemaValidator, StoreKey, UseFindManyResult } from './types'
+import { FindManyOptions, IAdapter, IStore, IndexDefinition, LifecycleHooks, SchemaValidator, StoreKey, UseFindManyResult } from './types'
 import { initializeLocalStore } from './initializeLocalStore'
 import { createUseValue } from '../hooks/useValue'
 import { createUseAll } from '../hooks/useAll'
@@ -31,6 +31,9 @@ export interface SyncStoreConfig<T> {
 
     /** Lifecycle hooks for add/update */
     hooks?: LifecycleHooks<T>
+
+    /** Index definitions */
+    indexes?: Array<IndexDefinition<T>>
 }
 
 /**
@@ -71,7 +74,8 @@ export function createSyncStore<T>(config: SyncStoreConfig<T>): SyncStore<T> {
         idGenerator: config.idGenerator,
         store: jotaiStore,
         schema: config.schema,
-        hooks: config.hooks
+        hooks: config.hooks,
+        indexes: config.indexes
     })
 
     // Create React hooks with custom store

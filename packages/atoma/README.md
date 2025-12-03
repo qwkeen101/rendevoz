@@ -166,10 +166,14 @@ User Action → Jotai Atom → Immer Patches → Adapter → Backend
           React Re-render (fine-grained)
 ```
 
-**Key Benefits:**
-- **Batching**: Multiple updates in same frame = 1 DB write
-- **Patches**: Only transmit what changed (70% smaller payloads)
-- **Fine-grained**: Components only re-render when their data changes
+**Key Pieces:**
+- **State Core**: `Map<id, entity>` per store, Jotai global store for fine-grained subscriptions (`useValue/useAll/useFindMany`).
+- **Queue + Patches**: `OperationApplier → AdapterSync` batches ops, produces Immer patches + inverse patches for rollback/history; `queueConfig` switches optimistic/strict.
+- **Indexes + Query**: `IndexManager` maintains number/date/string/text indexes; `findMany/applyQuery` uses candidates + Top-K sort to avoid full scans.
+- **Adapters**: IndexedDB (Dexie), HTTP (retry/offline queue/conflict), Hybrid (local+remote strategies).
+- **History**: `HistoryRecorder` + `HistoryManager` provide undo/redo with adapter persistence.
+
+More detail (ZH): [ARCHITECTURE.zh.md](./ARCHITECTURE.zh.md)
 
 ## ⚙️ ID Generation
 
@@ -183,6 +187,7 @@ User Action → Jotai Atom → Immer Patches → Adapter → Backend
 - [Migration from Original Code](./ATOMA_IMPLEMENTATION.md#migration-guide)
 - [HTTP Adapter Specification](./ATOMA_IMPLEMENTATION.md#http-adapter-implementation)
 - [Conflict Resolution Strategies](./ATOMA_IMPLEMENTATION.md#conflict-resolution-strategies)
+- [Architecture Overview (ZH)](./ARCHITECTURE.zh.md)
 
 ## 🎨 Advanced Examples
 
@@ -250,7 +255,7 @@ npm run dev
 
 ## 📄 License
 
-MIT © Rendevoz Team
+MIT © RealRong
 
 ## 🙏 Credits
 

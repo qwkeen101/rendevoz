@@ -118,6 +118,8 @@ export type WhereOperator<T> = Partial<Record<keyof T & string, any | {
     gte?: number
     lt?: number
     lte?: number
+    startsWith?: string
+    endsWith?: string
     contains?: string
 }>>
 
@@ -180,7 +182,19 @@ export interface StoreConfig<T> {
     hooks?: LifecycleHooks<T>
 
     /** Optional index definitions (for findMany 优先命中) */
-    indexes?: Array<keyof T & string>
+    indexes?: Array<IndexDefinition<T>>
+}
+
+export type IndexType = 'number' | 'date' | 'string' | 'text'
+
+export interface IndexDefinition<T> {
+    field: keyof T & string
+    type: IndexType
+    options?: {
+        minTokenLength?: number
+        fuzzyDistance?: 0 | 1 | 2
+        tokenizer?: (text: string) => string[]
+    }
 }
 
 /**

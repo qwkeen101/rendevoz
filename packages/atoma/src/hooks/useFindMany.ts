@@ -34,33 +34,19 @@ export function createUseFindMany<T>(
         const [error, setError] = useState<Error | undefined>(undefined)
         const [isStale, setIsStale] = useState(false)
 
-        // 🔥 Result cache to avoid recomputing identical queries
-        const resultCache = useRef<{
-            relevantVersion: number
-            queryKey: string
-            result: T[]
-        }>()
-
-        const data = useMemo(() => {
-            // Cache hit: version and query haven't changed
-            if (resultCache.current?.relevantVersion === relevantVersion &&
-                resultCache.current?.queryKey === queryKey) {
-                return resultCache.current.result
-            }
-
-            // Cache miss: recompute
+        // 🔥 First layer: Cache filtered ID list (only recompute when query conditions change)
+        const filteredIds = useMemo(() => {
             const arr = Array.from(map.values()) as T[]
             const result = applyQuery(arr as any, options) as T[]
-
-            // Update cache
-            resultCache.current = {
-                relevantVersion,
-                queryKey,
-                result
-            }
-
-            return result
+            return result.map(item => (item as any).id as StoreKey)
         }, [relevantVersion, queryKey])
+
+        // 🔥 Second layer: Map IDs to latest objects (re-map when data changes, but don't re-filter)
+        const data = useMemo(() => {
+            return filteredIds
+                .map(id => map.get(id))
+                .filter(Boolean) as T[]
+        }, [filteredIds, map])
 
         useEffect(() => {
             let cancelled = false

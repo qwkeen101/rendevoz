@@ -1,5 +1,0 @@
-export * from './blockActions'
-export * from './highlightActions'
-export { default as isInline } from './isInline'
-export * from './object'
-export * from './dom'

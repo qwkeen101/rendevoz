@@ -9,6 +9,10 @@ lerna-debug.log*
 *.md
 docs
 keys.config
+todo.yaml
+sync.config
+auth.p8
+entitlements.mac.plist
 packages
 node_modules
 dist

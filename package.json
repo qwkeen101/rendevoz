@@ -2,7 +2,7 @@
   "name": "rendevoz-monorepo",
   "productName": "Rendevoz",
   "private": true,
-  "version": "1.4.0",
+  "version": "1.4.1",
   "workspaces": [
     "packages/*",
     "apps/*"

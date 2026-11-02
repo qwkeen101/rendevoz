@@ -1,4 +1,4 @@
-import Colors from '@/consts/colors'
+import Colors from '../../consts/colors'
 import { css } from '@emotion/css'
 
 export const blurBackground = css({

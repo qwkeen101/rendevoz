@@ -7,7 +7,8 @@
     "paths": {
       "@/*": ["src/*"],
       "styles/*": ["src/assets/styles/*"],
-      "~/*" : ["./_rendevoz/*"]
+      "~/*" : ["./_rendevoz/*"],
+      "rendevoz": ["./_rendevoz/src/index.ts"]
     },
     "allowJs": false,
     "declaration": false,

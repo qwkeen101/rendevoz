@@ -140,7 +140,6 @@
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.0",
     "remark-math": "^6.0.0",
-    "rendevoz": "^0.4.69",
     "rss-parser": "^3.13.0",
     "rxjs": "^7.5.5",
     "semver": "^7.3.8",

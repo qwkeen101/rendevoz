@@ -23,6 +23,8 @@ export default defineConfig(({ command }) => ({
   resolve: {
     alias: {
       stream: 'stream-browserify',
+      // The rendevoz npm package was unpublished; build it from its source in _rendevoz/
+      rendevoz: path.join(__dirname, '_rendevoz/src/index.ts'),
       '@': path.join(__dirname, 'src'),
       styles: path.join(__dirname, 'src/assets/styles')
     }

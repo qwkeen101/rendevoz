@@ -1,6 +1,6 @@
 import { css } from '@emotion/css'
 import ClassName from '.'
-import FontSize from '@/consts/font'
+import FontSize from '../../consts/font'
 
 export const TagBackgrounds = {
   blue: 'rgba(228,239,254,1)',

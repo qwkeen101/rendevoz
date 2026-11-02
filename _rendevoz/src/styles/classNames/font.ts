@@ -1,4 +1,4 @@
-import { Colors, FontSize } from '@/consts'
+import { Colors, FontSize } from '../../consts'
 import { css } from '@emotion/css'
 
 export const ellipsisFont = (line: number) =>

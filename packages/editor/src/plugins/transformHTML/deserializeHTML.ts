@@ -1,0 +1,205 @@
+import deserializeSpan from './deserialize/deserializeSpan'
+import { jsx } from 'slate-hyperscript'
+import deserializeMedia from './deserialize/deserializeMedia'
+import { WrapperNodeNames } from './consts'
+import deserializeText from './deserialize/deserializeText'
+import { ELEMENT_TAGS, TEXT_TAGS } from '../plugins/transformHTML/HTMLTags'
+import deserializeLi from '../plugins/transformHTML/deserialize/deserializeLi'
+import { Descendant, Text } from 'slate'
+import Id from './utils/id'
+import deserializeTable from '../plugins/transformHTML/deserialize/deserializeTable'
+import deserializeLink from '../plugins/transformHTML/deserialize/deserializeLink'
+import deserializeWeixinAudio from '../plugins/transformHTML/deserialize/deserializeWeixinAudio'
+import { normalize } from './normalizeParsed'
+import { isInline } from '../utils'
+import wrapElementText from '../plugins/transformHTML/deserialize/wrapElementText'
+import deserializePre from '../plugins/transformHTML/deserialize/deserializePre'
+const NoNestedNodeNames = ['A', 'H1', 'H2', 'H3', 'HR', 'LI', 'H4', 'H5', 'H6', 'PRE', 'SUP', 'CITE', 'FIGCAPTION', 'BLOCKQUOTE']
+
+export const deserializeRoot = (root: HTMLElement, opts?: deserializeOptions): Descendant[] | null => {
+  // deserialize text node
+  if (root.nodeType === Node.TEXT_NODE) {
+    return deserializeText(root)
+  }
+  // if not text node and not element node, return null
+  if (root.nodeType !== Node.ELEMENT_NODE) return null
+  // wrapper, return fragment
+  if (WrapperNodeNames.includes(root.nodeName)) {
+    const c = deserializeHTMLChildren(root, {
+      ...opts,
+      wrapperType: root.nodeName === 'BLOCKQUOTE' ? 'block-quote' : undefined,
+      wrap: true
+    })
+    return jsx('fragment', {}, c)
+  }
+  // deserialize specific nodes
+  switch (root.nodeName) {
+    case 'LI':
+      return deserializeLi(root)
+    case 'CITE':
+    case 'SPAN':
+      return deserializeSpan(root)
+    case 'MP-COMMON-MPAUDIO':
+      return deserializeWeixinAudio(root)
+    case 'BR':
+      return jsx('text', undefined, '\n')
+    case 'PRE':
+      return deserializePre(root)
+    case 'A':
+      return deserializeLink(root)
+    case 'TABLE':
+      return deserializeTable(root, opts)
+    case 'IMG':
+    case 'AUDIO':
+    case 'IFRAME':
+      return deserializeMedia(root)
+    default: {
+      if (ELEMENT_TAGS[root.nodeName]) {
+        const attrs = ELEMENT_TAGS[root.nodeName](root)
+        let children: any[] = []
+        if (NoNestedNodeNames.includes(root.nodeName)) {
+          children = wrapElementText(root)
+        } else {
+          children = deserializeHTMLChildren(root, opts)
+        }
+        if (!children) return null
+        return jsx('element', attrs, !children.length ? [{ text: '' }] : children)
+      }
+    }
+  }
+  // text tags, but not text node
+  if (TEXT_TAGS[root.nodeName]) {
+    const children = wrapElementText(root)
+    return jsx('fragment', {}, children)
+  }
+  return null
+}
+export const normalizeResult = (result: Descendant[]) => {
+  // first walk, remove start whitespace and end whitespace
+  let res = result.map(i => {
+    i.children?.forEach((c, idx, arr) => {
+      if (idx === 0 && Text.isText(c)) {
+        c.text = c.text.trimStart()
+      }
+      if (idx === arr.length - 1 && Text.isText(c)) {
+        c.text = c.text.trimEnd()
+      }
+    })
+    return i
+  })
+  // second walk, remove text block and wrap inline block
+  res = res.map(i => {
+    if (!i.type) {
+      return null
+    }
+    if (isInline(i)) {
+      return {
+        type: 'paragraph',
+        id: Id.getId(),
+        children: [i]
+      }
+    }
+    return {
+      ...i,
+      id: Id.getId()
+    }
+  })
+  return res
+}
+export const deserializeHTMLChildren = (node: HTMLElement, opts?: deserializeOptions & { wrapperType?: string; wrap?: boolean }) => {
+  const res = Array.from(node.childNodes)
+    .map(n => {
+      const r = deserializeRoot(n, opts)
+      return r
+    })
+    .flat()
+    .filter(i => i !== null)
+
+  const normalized = normalize(res)
+  if (opts?.wrap) {
+    return wrapElements(normalized, opts?.wrapperType)
+  }
+  return normalized
+}
+
+// wrap elements from [text,text,ele,text] to [ele: {children:[text,text]}, ele, ele: {children:[text]}]
+// and filter out empty texts
+export const wrapElements = (eles: Descendant[], wrapperType = 'paragraph', addPlaceholder?: boolean) => {
+  const final: Descendant[] = []
+  let wrapped: Descendant[] = []
+  const sliced = eles.slice()
+  const isEmptyWrapped = () => {
+    if (wrapped.every(i => Text.isText(i) && !i.text.trim())) {
+      return true
+    }
+    return false
+  }
+  const cleanLastAndStartLinebreak = () => {
+    const first = wrapped[0]
+    // merge start line breaks and spaces into one space
+    if (Text.isText(first)) {
+      first.text = first.text.replace(/^[\s\t\r]+/, ' ')
+    } else {
+      const children = first.children
+      const firstText = children[0]
+      if (Text.isText(firstText)) {
+        firstText.text = firstText.text.replace(/^[\s\t\r]+/, ' ')
+      }
+    }
+    const last = wrapped[wrapped.length - 1]
+    // remove last spaces and line breaks
+    if (Text.isText(last)) {
+      last.text = last.text.trimEnd()
+    } else {
+      const children = last.children
+      const lastText = children[children.length - 1]
+      if (Text.isText(lastText)) {
+        lastText.text = lastText.text.trimEnd()
+      }
+    }
+  }
+  while (sliced.length) {
+    const first = sliced.shift()
+    if (Text.isText(first) || isInline(first)) {
+      if (Text.isText(first) && !first.text) continue
+      wrapped.push(first)
+    } else {
+      if (wrapped.length && !isEmptyWrapped()) {
+        cleanLastAndStartLinebreak()
+        final.push({
+          type: wrapperType,
+          id: Id.getId(),
+          children: wrapped
+        })
+      }
+      wrapped = []
+      final.push(first)
+    }
+  }
+  if (wrapped.length && !isEmptyWrapped()) {
+    cleanLastAndStartLinebreak()
+    final.push({
+      type: wrapperType,
+      id: Id.getId(),
+      children: wrapped
+    })
+  }
+  if (!wrapped.length && !final.length && addPlaceholder) {
+    final.push({
+      type: wrapperType,
+      id: Id.getId(),
+      children: [{ text: '' }]
+    })
+  }
+  return final
+}
+export type deserializeOptions = {
+  tableWidth?: number
+  minTableCellWidth?: number
+}
+export default (root: HTMLElement, opts?: deserializeOptions) => {
+  const res = deserializeRoot(root, opts)
+  if (res) {
+    return wrapElements(res)
+  }
+}

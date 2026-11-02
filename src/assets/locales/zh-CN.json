@@ -514,6 +514,13 @@
     "close right side tabs": "关闭右侧标签页"
   },
   "login": {
+    "Username": "用户名",
+    "Display name (optional)": "昵称（可选）",
+    "Create account": "创建账户",
+    "No account yet? Create one": "还没有账户？创建一个",
+    "Already have an account? Log in": "已有账户？去登录",
+    "Local account hint": "账户只保存在这台电脑上，不会上传。忘记密码无法找回。",
+    "please input your username": "请输入用户名",
     "Forget my password": "忘记密码?",
     "Send reset code": "发送重置密码验证码",
     "Send verification code": "发送验证码",
@@ -636,6 +643,8 @@
     "code-block": "代码块"
   },
   "settings": {
+    "Local logout desc": "退出当前账户，下次需要重新登录。",
+    "Local delete desc": "删除这台电脑上的这个账户。笔记等数据不会被删除。",
     "Custom explain prompt": "自定义解释提示词(Prompt)",
     "Custom translate prompt": "自定义翻译提示词(Prompt)",
     "Font size": "字体大小",
@@ -1130,6 +1139,9 @@
     "Payment Successful": "支付成功 \uD83C\uDF89"
   },
   "error": {
+    "Username must be 2-32 characters": "用户名需为 2 到 32 个字符",
+    "Username already exists": "用户名已存在",
+    "Wrong username or password": "用户名或密码错误",
     "Load error": "加载失败",
     "View in cloud": "请在云端查看此文件",
     "Operation failed": "操作失败",

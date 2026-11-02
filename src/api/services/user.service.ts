@@ -8,6 +8,7 @@ import FileSystem from '@/api/fileSystem'
 import { encryptData } from '@/utils/crypt'
 import LoginService from '@/api/services/login.service'
 import { OFFICIAL_BACKEND_ENABLED } from '@/config/backend'
+import LocalAuth from '@/api/services/localAuth'
 
 const userAtom = atom<IUser | null>(
   import.meta.env.PROD
@@ -20,17 +21,23 @@ const userAtom = atom<IUser | null>(
 )
 const UserService = {
   logout: () => {
+    if (!OFFICIAL_BACKEND_ENABLED) LocalAuth.logout()
     globalStore.set(userAtom, null)
     localStorage.removeItem('userDetails')
     LoginService.removeRefreshToken()
   },
   logoutOfAllDevices: async () => {
+    if (!OFFICIAL_BACKEND_ENABLED) return UserService.logout()
     await request<IWebRequest<undefined>>(Interface.User() + '/logout')
     UserService.logout()
   },
   deleteUser: async () => {
     const user = UserService.getUser()
     if (!user?.uid) return Promise.reject()
+    if (!OFFICIAL_BACKEND_ENABLED) {
+      LocalAuth.deleteAccount(user.uid)
+      return UserService.logout()
+    }
     await request<IWebRequest<undefined>>(Interface.User(), {
       method: 'DELETE'
     })
@@ -69,6 +76,8 @@ const UserService = {
     }
   },
   cacheUserDetails: () => {
+    // local accounts are restored from LocalAuth's session instead
+    if (!OFFICIAL_BACKEND_ENABLED) return
     setTimeout(async () => {
       const u = UserService.getUser()
       if (u) {
@@ -81,6 +90,11 @@ const UserService = {
     }, 200)
   },
   updateUserDetails: async (user: Partial<IUser>) => {
+    if (!OFFICIAL_BACKEND_ENABLED) {
+      const updated = LocalAuth.updateProfile(UserService.getUser()?.uid, user)
+      UserService.updateLocalUserDetails(updated)
+      return
+    }
     const res = await request<IWebRequest<undefined>>(Interface.User(), {
       data: {
         user
@@ -91,6 +105,10 @@ const UserService = {
     return res
   },
   getUserDetails: async () => {
+    if (!OFFICIAL_BACKEND_ENABLED) {
+      const u = UserService.getUser()
+      return u ? u : Promise.reject()
+    }
     const res = await request<IWebRequest<IUser>>(Interface.User(), {
       method: 'GET'
     })
@@ -98,6 +116,9 @@ const UserService = {
     return res.data.result
   },
   updatePassword: async (currentPassword: string, newPassword: string) => {
+    if (!OFFICIAL_BACKEND_ENABLED) {
+      return LocalAuth.changePassword(UserService.getUser()?.uid, currentPassword, newPassword)
+    }
     const res = await request<IWebRequest<{ token: string; refreshToken: string }>>(Interface.User() + '/updatePassword', {
       data: {
         currentPassword,

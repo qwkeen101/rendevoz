@@ -9,6 +9,7 @@ import initializeApp from '@/api/lifycycle/startup/initialize'
 import GlobalStates from '@/api/global/states'
 import UserService from '@/api/services/user.service'
 import { OFFICIAL_BACKEND_ENABLED } from '@/config/backend'
+import LocalAuth from '@/api/services/localAuth'
 export const updateInfoAtom = atom<
   | {
       version: string
@@ -58,6 +59,11 @@ const Initializer = () => {
             }
           })
         })
+    } else {
+      // stay signed in to the local account used last time
+      const localUser = LocalAuth.restoreSession()
+      if (localUser) UserService.updateLocalUserDetails(localUser)
+      UserService.autoLogined = true
     }
 
     initializeApp().then(() => {

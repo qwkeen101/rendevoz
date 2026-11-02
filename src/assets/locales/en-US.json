@@ -510,6 +510,13 @@
     "close right side tabs": "Close tabs to the right"
   },
   "login": {
+    "Username": "Username",
+    "Display name (optional)": "Display name (optional)",
+    "Create account": "Create account",
+    "No account yet? Create one": "No account yet? Create one",
+    "Already have an account? Log in": "Already have an account? Log in",
+    "Local account hint": "Accounts are stored only on this computer and never uploaded. A forgotten password cannot be recovered.",
+    "please input your username": "Please input your username",
     "Forget my password": "Forget my password?",
     "Send reset code": "Send reset code",
     "Send verification code": "Send verification code",
@@ -628,6 +635,8 @@
     "code-block": "Code block"
   },
   "settings": {
+    "Local logout desc": "Sign out of this account on this computer.",
+    "Local delete desc": "Remove this account from this computer. Notes and other data are kept.",
     "Custom explain prompt": "Custom explain prompt",
     "Custom translate prompt": "Custom translate prompt",
     "Font size": "Font size",
@@ -1073,6 +1082,9 @@
     "Payment Successful": "Payment Successful \uD83C\uDF89"
   },
   "error": {
+    "Username must be 2-32 characters": "Username must be 2 to 32 characters",
+    "Username already exists": "Username already exists",
+    "Wrong username or password": "Wrong username or password",
     "Load error": "Failed to load",
     "View in cloud": "Please view this file in cloud",
     "Operation failed": "Operation failed",

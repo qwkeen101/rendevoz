@@ -9,6 +9,8 @@ import UserService from '@/api/services/user.service'
 import trans from '@/consts/trans'
 import isHotkey from 'is-hotkey'
 import { Icons, KEY } from '@/consts'
+import { OFFICIAL_BACKEND_ENABLED } from '@/config/backend'
+import LocalLogin from './LocalLogin'
 
 const loginInputClassName = classnames('focus-input rounded px-2.5 py-1.5 bg-input border-box-shadow w-full')
 const loginTextClassName = classnames('text-xl md:text-3xl mb-8 font-bold')
@@ -352,4 +354,5 @@ const Login = () => {
   )
 }
 
-export default Login
+// Without the account server, sign-in uses local accounts instead.
+export default OFFICIAL_BACKEND_ENABLED ? Login : LocalLogin

@@ -20,6 +20,7 @@ import Account from '@/core/setting/Account'
 import UserService from '@/api/services/user.service'
 import Subscription from '@/core/setting/Subscription'
 import { isEqual } from 'lodash'
+import { OFFICIAL_BACKEND_ENABLED } from '@/config/backend'
 
 enum Settings {
   'account',
@@ -271,7 +272,7 @@ const SettingDialog = () => {
             <>
               <div className={'menu-sub-title pl-2 mb-1 mt-3'}>{t('settings.Account')}</div>
               {renderSidebarItem('account', t('settings.My account'), 'park-user')}
-              {renderSidebarItem('subscription', t('settings.Subscription'), 'park-crown')}
+              {OFFICIAL_BACKEND_ENABLED && renderSidebarItem('subscription', t('settings.Subscription'), 'park-crown')}
             </>
           )}
           <div className={'menu-sub-title pl-2 mb-1 mt-3'}>{t('general.Settings')}</div>

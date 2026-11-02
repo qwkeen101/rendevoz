@@ -9,12 +9,12 @@ import Colors from '@/consts/colors'
 import UserService from '@/api/services/user.service'
 import trans from '@/consts/trans'
 import { GlobalSetting } from '@/core'
-import { OFFICIAL_BACKEND_ENABLED } from '@/config/backend'
 
 const SidebarUser = memo(({ extra }: { extra?: ReactElement }) => {
   const [user] = UserService.useUser()
   const [popoverVisible, togglePopoverVisible] = useToggle(false)
   const [loginVisible, toggleLoginVisible] = useToggle(false)
+  const { t } = useTranslation()
   useEffect(() => {
     if (user && user.displayName !== undefined && loginVisible) {
       toggleLoginVisible(false)
@@ -44,14 +44,11 @@ const SidebarUser = memo(({ extra }: { extra?: ReactElement }) => {
       </AnimatePopover>
     )
   }
-  if (!OFFICIAL_BACKEND_ENABLED) {
-    return <div className={'flex items-center gap-2 mb-2 !p-2 primary-font'}>{extra}</div>
-  }
   return (
     <>
       <div onClick={() => toggleLoginVisible(true)} className={'flex items-center button gap-2 mb-2 !p-2 primary-font'}>
         <Icon name={'park-login'} size={18} />
-        <div className={'ml-1'}>Login</div>
+        <div className={'ml-1'}>{t('login.login')}</div>
         {extra}
       </div>
       <Modal visible={loginVisible} onClose={toggleLoginVisible} noStyle>
@@ -84,7 +81,13 @@ const UserPopover = ({ onClose }: { onClose: VoidFunction }) => {
       }}
     >
       <div style={{ padding: '4px 8px' }} className={'text-xs leading-normal transparent-font'}>
-        <div>Email: {user?.email || 'Unknown Email'}</div>
+        {user?.username ? (
+          <div>
+            {t(trans.LocalAccount.Username)}: {user.username}
+          </div>
+        ) : (
+          <div>Email: {user?.email || 'Unknown Email'}</div>
+        )}
         <div>UID: {user?.uid || 'Unknown UID'}</div>
       </div>
       <Content style={{ padding: '4px 8px 8px' }} className={'border-bottom mb-1.5'} flex column gap={4}>

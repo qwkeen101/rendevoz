@@ -10,6 +10,8 @@ import trans from '@/consts/trans'
 import toast from 'react-hot-toast'
 import isHotkey from 'is-hotkey'
 import LoginService from '@/api/services/login.service'
+import { OFFICIAL_BACKEND_ENABLED } from '@/config/backend'
+import { localAuthErrorText } from '@/components/LocalLogin'
 
 const apikey = import.meta.env.VITE_FREEIMAGE_API_KEY ?? ''
 const endpoint = 'https://freeimage.host/api/1/upload'
@@ -22,6 +24,27 @@ const upload = async (file: File) => {
   }).then(i => i.json())
   return res.image.display_url
 }
+// Local accounts keep the avatar on this computer: a 256px JPEG data URL.
+const toLocalAvatar = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      const size = 256
+      const scale = Math.max(size / img.width, size / img.height)
+      const canvas = document.createElement('canvas')
+      canvas.width = canvas.height = size
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, (size - img.width * scale) / 2, (size - img.height * scale) / 2, img.width * scale, img.height * scale)
+      URL.revokeObjectURL(url)
+      resolve(canvas.toDataURL('image/jpeg', 0.85))
+    }
+    img.onerror = e => {
+      URL.revokeObjectURL(url)
+      reject(e)
+    }
+    img.src = url
+  })
 export default memo(() => {
   const [user] = UserService.useUser()
   const [deleteVisible, setDeleteVisible] = useState(false)
@@ -52,7 +75,7 @@ export default memo(() => {
                 .then(f => {
                   if (f instanceof File) {
                     setIsUploading(true)
-                    upload(f)
+                    ;(OFFICIAL_BACKEND_ENABLED ? upload(f) : toLocalAvatar(f))
                       .catch(() => {
                         toast.error(t(trans.Errors.NetworkError))
                         throw ''
@@ -114,7 +137,12 @@ export default memo(() => {
       description: user?.uid,
       containerClassName: '!select-auto'
     },
-    {
+    !OFFICIAL_BACKEND_ENABLED && {
+      type: 'item',
+      title: t(trans.LocalAccount.Username),
+      description: user?.username
+    },
+    OFFICIAL_BACKEND_ENABLED && {
       type: 'item',
       title: t(trans.Email),
       description: user?.email,
@@ -149,12 +177,12 @@ export default memo(() => {
         </div>
       )
     }
-  ]
+  ].filter(Boolean) as ISettingItem[]
   const supportSettings: ISettingItem[] = [
     {
       type: 'item',
       title: t(trans.Logout),
-      description: t(trans.Settings.Logout),
+      description: t(OFFICIAL_BACKEND_ENABLED ? trans.Settings.Logout : trans.LocalAccount.LogoutDesc),
       children: (
         <div
           onClick={() => {
@@ -173,7 +201,7 @@ export default memo(() => {
       children: <Icon name={'park-right'} />,
       containerClassName: 'cursor-pointer',
       onClick: () => setDeleteVisible(true),
-      description: t(trans.Settings.DeleteAccount.Desc)
+      description: t(OFFICIAL_BACKEND_ENABLED ? trans.Settings.DeleteAccount.Desc : trans.LocalAccount.DeleteDesc)
     }
   ]
   return (
@@ -310,6 +338,7 @@ const ChangeModal = ({ visible, onClose, type }: { visible: boolean; onClose: Vo
           toast.success(t(trans.Success.UpdateSuccessful))
           onClose()
         } catch (e) {
+          if (!OFFICIAL_BACKEND_ENABLED) toast.error(localAuthErrorText(e, t))
           setPasswordState(s => ({ ...s, loading: false }))
         }
       }
@@ -375,7 +404,7 @@ const DeleteModal = ({ visible, onClose }: { visible: boolean; onClose: VoidFunc
       <div className={'w-[90vw] max-w-md p-6 pb-3 flex flex-col items-center'}>
         <Icon name={'park-caution'} size={40} className={'delete-font mb-3'} theme={'filled'} />
         <div className={'text-xl font-semibold mb-1'}>{t(trans.Settings.DeleteAccount.ModalTitle)}</div>
-        <div className={'transparent-font text-center'}>{t(trans.Settings.DeleteAccount.ModalDesc)}</div>
+        <div className={'transparent-font text-center'}>{t(OFFICIAL_BACKEND_ENABLED ? trans.Settings.DeleteAccount.ModalDesc : trans.LocalAccount.DeleteDesc)}</div>
         <div
           onClick={() => {
             setIsLoading(true)

@@ -28,7 +28,8 @@
     "publishMulti": "npm run publishMac && npm run publishWindows"
   },
   "overrides": {
-    "canvas": "../_EXCLUDED_"
+    "canvas": "../_EXCLUDED_",
+    "@swc/core": "~1.15.3"
   },
   "engines": {
     "node": ">=18"

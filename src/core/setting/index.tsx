@@ -41,6 +41,10 @@ const icons: Record<keyof typeof Settings, string> = {
   components: 'park-components',
   AI: 'custom-stars'
 }
+// Panels listed under "Settings" in the dialog's left column. The 2025-11
+// redesign left this list out, so only the default panel could be reached.
+const SettingPanels = ['general', 'AI', 'workspace', 'components', 'shortcuts', 'sync'] as const
+
 export type Setting = IShortCutSetting & IGeneralSetting & IObjectsAndLinkSetting & IAISettings & IComponentSetting & ISyncSetting
 
 const defaultSetting: Setting = {
@@ -271,6 +275,7 @@ const SettingDialog = () => {
             </>
           )}
           <div className={'menu-sub-title pl-2 mb-1 mt-3'}>{t('general.Settings')}</div>
+          {SettingPanels.map(i => renderSidebarItem(i, t(`settings.${i}`), icons[i]))}
         </div>
         <div className={'w-full h-full flex flex-col overflow-y-auto gap-10'} style={{ padding: '32px 60px' }}>
           {renderContent()}

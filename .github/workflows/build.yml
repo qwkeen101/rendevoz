@@ -1,6 +1,11 @@
 name: Build/release
 
-on: push
+# Manual runs or version tags only: the macOS build needs signing files
+# (entitlements.mac.plist, auth.p8) that are not in the repo.
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
 
 jobs:
   release:
@@ -25,7 +30,7 @@ jobs:
         with:
           # GitHub token, automatically provided to the action
           # (No need to define this secret in the repo settings)
-          github_token: REDACTED
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
           # If the commit is tagged with a version (e.g. "v1.0.0"),
           # release the app after building

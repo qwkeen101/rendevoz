@@ -1,7 +1,8 @@
 import Dexie from 'dexie'
 import { exportDB, importInto, peakImportFile } from 'dexie-export-import'
 import { throttle } from 'lodash'
-export const db = new Dexie('rendevozDb')
+import { APP_DB_NAME } from './dbName'
+export const db = new Dexie(APP_DB_NAME)
 export const syncDB = new Dexie('sync')
 let SyncAPI: undefined | (typeof import('@/api/sync'))['default'] = undefined
 let GlobalStates: undefined | (typeof import('@/api/global/states'))['default'] = undefined

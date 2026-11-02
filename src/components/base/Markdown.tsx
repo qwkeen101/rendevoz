@@ -162,7 +162,7 @@ const LinkRenderer = ({ url, children }: { url: string; children: string }) => {
 }
 
 const GoogleMapRenderer = ({ search }: { search: string }) => {
-  const key = 'REDACTED'
+  const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? ''
   return (
     <iframe
       width="100%"

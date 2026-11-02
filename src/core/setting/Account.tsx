@@ -11,7 +11,7 @@ import toast from 'react-hot-toast'
 import isHotkey from 'is-hotkey'
 import LoginService from '@/api/services/login.service'
 
-const apikey = 'REDACTED'
+const apikey = import.meta.env.VITE_FREEIMAGE_API_KEY ?? ''
 const endpoint = 'https://freeimage.host/api/1/upload'
 const upload = async (file: File) => {
   const form = new FormData()

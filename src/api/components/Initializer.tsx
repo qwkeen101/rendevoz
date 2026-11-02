@@ -8,6 +8,7 @@ import '@/api/lifycycle/close/close'
 import initializeApp from '@/api/lifycycle/startup/initialize'
 import GlobalStates from '@/api/global/states'
 import UserService from '@/api/services/user.service'
+import { OFFICIAL_BACKEND_ENABLED } from '@/config/backend'
 export const updateInfoAtom = atom<
   | {
       version: string
@@ -43,19 +44,21 @@ const Initializer = () => {
       }
     })
     // try login first, otherwise switch to offline mode
-    LoginService.loginWithRefreshToken()
-      .then(() => {
-        UserService.getUserDetails().finally(() => {
-          UserService.autoLogined = true
+    if (OFFICIAL_BACKEND_ENABLED) {
+      LoginService.loginWithRefreshToken()
+        .then(() => {
+          UserService.getUserDetails().finally(() => {
+            UserService.autoLogined = true
+          })
         })
-      })
-      .catch(() => {
-        LoginService.loadUserDetailsFromCache().then(i => {
-          if (i) {
-            UserService.updateLocalUserDetails(i)
-          }
+        .catch(() => {
+          LoginService.loadUserDetailsFromCache().then(i => {
+            if (i) {
+              UserService.updateLocalUserDetails(i)
+            }
+          })
         })
-      })
+    }
 
     initializeApp().then(() => {
       setTimeout(() => {

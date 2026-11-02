@@ -7,6 +7,7 @@ import { atom } from 'jotai/index'
 import FileSystem from '@/api/fileSystem'
 import { encryptData } from '@/utils/crypt'
 import LoginService from '@/api/services/login.service'
+import { OFFICIAL_BACKEND_ENABLED } from '@/config/backend'
 
 const userAtom = atom<IUser | null>(
   import.meta.env.PROD
@@ -37,6 +38,8 @@ const UserService = {
   },
   autoLogined: false,
   isUserPro: (includeLifetime?: boolean) => {
+    // No account server means nobody can subscribe, so nothing stays locked.
+    if (!OFFICIAL_BACKEND_ENABLED) return true
     const u = UserService.getUser()
     if (!u) return false
     if (includeLifetime && u.lifetimePro) return true

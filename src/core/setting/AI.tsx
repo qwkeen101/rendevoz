@@ -8,6 +8,8 @@ import Select from '@/components/base/select'
 import { Line } from 'rc-progress'
 import { useToggle } from '@/hooks'
 import BuyCredit from '@/components/BuyCredit'
+import { usesOfficialAI } from '@/api/services/ai/universalAIProvider'
+import { OFFICIAL_BACKEND_ENABLED } from '@/config/backend'
 import { memo, useEffect } from 'react'
 import UserService from '@/api/services/user.service'
 import toast from 'react-hot-toast'
@@ -30,7 +32,7 @@ export default memo(() => {
   const isPro = UserService.useIsUserPro(true)
   const isPaidPro = UserService.useIsUserPro(false)
   useEffect(() => {
-    if (isPro) {
+    if (isPro && OFFICIAL_BACKEND_ENABLED) {
       UserService.getUserDetails()
     }
   }, [])
@@ -109,7 +111,7 @@ export default memo(() => {
   ].filter(i => i)
   const openAISettings: ISettingItem[] = [
     // @ts-ignore
-    ...(setting.AI.provider !== 'official' && setting.AI.provider !== undefined
+    ...(!usesOfficialAI(setting.AI.provider)
       ? [
           {
             title: 'API key',

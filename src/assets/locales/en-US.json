@@ -72,6 +72,7 @@
     "message": "Message",
     "Explain": "Explain",
     "Subscription is required to use this feature": "Subscription is required to use this feature.",
+    "This feature needs a server and is not available yet": "This feature needs a server and is not available yet.",
     "Subscription": "Subscription",
     "Credit usage": "AI credit usage",
     "Account info": "Account info",

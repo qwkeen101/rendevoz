@@ -7,6 +7,7 @@ import trans from '@/consts/trans'
 import { t } from 'i18next'
 import uploadAndTranscribe from '@/api/services/ai/uploadAndTranscribe'
 import UserService from '@/api/services/user.service'
+import { OFFICIAL_BACKEND_ENABLED } from '@/config/backend'
 import { chatStreamStandard, chatStructuredStandard } from './chatStandard'
 export const CreditToYuan = {
   200: 1,
@@ -48,7 +49,7 @@ const buyAICredit = async (
 
 const hasTranscript = async (url: string) => {
   try {
-    if (UserService.isUserPro(true)) {
+    if (OFFICIAL_BACKEND_ENABLED && UserService.isUserPro(true)) {
       await request(Interface.AI('hasTranscript'), {
         params: {
           url
@@ -121,6 +122,10 @@ const transcribe = async (
     model?: 'general' | 'small' | 'existing'
   }
 ) => {
+  if (!OFFICIAL_BACKEND_ENABLED) {
+    toast.error(t(trans.FeatureNeedServer))
+    return Promise.reject()
+  }
   return await transcribeRemote(file, options?.model, options?.prompt, options?.signal)
 }
 

@@ -205,6 +205,7 @@ const Trans = {
   Continue: 'general.Continue',
   Logout: 'general.Logout',
   FeatureNeedSubscription: 'general.Subscription is required to use this feature',
+  FeatureNeedServer: 'general.This feature needs a server and is not available yet',
   Feed,
   Meta,
   AI,

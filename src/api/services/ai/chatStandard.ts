@@ -17,12 +17,12 @@ import { normalizeAIQuery, normalizeEasyMessagesToStandard, parseEvent } from '@
 import { EasyInputMessage } from 'openai/resources/responses/responses'
 import { request } from '@/utils/request'
 import { IWebRequest } from '~/typings'
-import universalAIProvider, { IAvailableModels } from '@/api/services/ai/universalAIProvider'
+import universalAIProvider, { getAIProvider, IAvailableModels, usesOfficialAI } from '@/api/services/ai/universalAIProvider'
 import { generateObject, streamText } from 'ai'
 
 const chatLocalStream: IChatStreamInput = async (query, opts) => {
   const provider = universalAIProvider()
-  const model = GlobalSetting.getSetting().AI.provider as IAvailableModels
+  const model = getAIProvider() as IAvailableModels
   if (!provider) {
     setTimeout(() => {
       GlobalSetting.focusSetting('AI', 'openaiApiKey')
@@ -141,9 +141,8 @@ export const chatStreamStandard: IChatStreamInput = async (query, opts) => {
     toast.error(t(trans.Errors.NotProUser))
     return Promise.reject()
   }
-  const setting = GlobalSetting.getSetting()
   const normalizedMessages = (await normalizeAIQuery(query)) as EasyInputMessage[]
-  if (setting.AI.provider !== 'official' && setting.AI.provider !== undefined) {
+  if (!usesOfficialAI()) {
     return await chatLocalStream(normalizedMessages, opts)
   }
   return await chatRemoteStream(normalizedMessages, opts)
@@ -160,7 +159,7 @@ const chatLocal: IStructuredResponseInput = async (query, opts) => {
   try {
     const res = await generateObject({
       messages: normalizeEasyMessagesToStandard(query),
-      model: provider?.languageModel(GlobalSetting.getSetting().AI.provider!),
+      model: provider?.languageModel(getAIProvider()!),
       schema: opts.schema,
       abortSignal: opts.signal
     })
@@ -202,8 +201,7 @@ export const chatStructuredStandard: IStructuredResponseInput = async (query, op
     return Promise.reject()
   }
   const normalizedQuery = await normalizeAIQuery(query)
-  const setting = GlobalSetting.getSetting()
-  if (setting.AI.provider !== 'official' && setting.AI.provider !== undefined) {
+  if (!usesOfficialAI()) {
     return await chatLocal(normalizedQuery, opts)
   }
   return await chatRemote(normalizedQuery, opts)

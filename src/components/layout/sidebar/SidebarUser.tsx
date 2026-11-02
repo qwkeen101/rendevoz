@@ -9,6 +9,7 @@ import Colors from '@/consts/colors'
 import UserService from '@/api/services/user.service'
 import trans from '@/consts/trans'
 import { GlobalSetting } from '@/core'
+import { OFFICIAL_BACKEND_ENABLED } from '@/config/backend'
 
 const SidebarUser = memo(({ extra }: { extra?: ReactElement }) => {
   const [user] = UserService.useUser()
@@ -42,6 +43,9 @@ const SidebarUser = memo(({ extra }: { extra?: ReactElement }) => {
         </div>
       </AnimatePopover>
     )
+  }
+  if (!OFFICIAL_BACKEND_ENABLED) {
+    return <div className={'flex items-center gap-2 mb-2 !p-2 primary-font'}>{extra}</div>
   }
   return (
     <>

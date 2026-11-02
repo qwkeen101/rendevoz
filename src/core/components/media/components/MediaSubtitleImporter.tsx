@@ -11,6 +11,7 @@ import { useAtom, useStore } from 'jotai'
 import useMediaTranscribe from '@/core/components/media/hooks/useMediaTranscribe'
 import { useUnmount } from 'react-use'
 import UserService from '@/api/services/user.service'
+import { OFFICIAL_BACKEND_ENABLED } from '@/config/backend'
 import trans from '@/consts/trans'
 import classnames from 'classnames'
 import { AIService } from '@/api/services'
@@ -68,6 +69,10 @@ const MediaSubtitleImporter = memo(({ visible, onChange }: Props) => {
   }, [mediaState.url, mediaState.totalTime])
   const instance = useMediaInstance()
   const handleTranscribe = async (mode: 'general' | 'small' | 'existing') => {
+    if (!OFFICIAL_BACKEND_ENABLED) {
+      toast.error(t(trans.FeatureNeedServer))
+      return
+    }
     const isPro = UserService.isUserPro(true)
     if (!isPro) {
       toast.error(t(trans.FeatureNeedSubscription))
@@ -167,7 +172,7 @@ const MediaSubtitleImporter = memo(({ visible, onChange }: Props) => {
     }
     let canTranscribeWithWhisper = false
     const isPro = UserService.isUserPro(true)
-    if (isPro) {
+    if (OFFICIAL_BACKEND_ENABLED && isPro) {
       canTranscribeWithWhisper = true
     }
     let whipserButtonText = ''
@@ -179,7 +184,7 @@ const MediaSubtitleImporter = memo(({ visible, onChange }: Props) => {
         return (
           <div className="flex gap-1.5 items-center text-sm delete-font w-fit">
             <Icon name={'park-error'} theme={'filled'} />
-            <span>{t(trans.FeatureNeedSubscription)}</span>
+            <span>{t(OFFICIAL_BACKEND_ENABLED ? trans.FeatureNeedSubscription : trans.FeatureNeedServer)}</span>
           </div>
         )
       }

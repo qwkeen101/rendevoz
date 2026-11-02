@@ -6,6 +6,7 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createMistral } from '@ai-sdk/mistral'
 import { GlobalSetting } from '@/core'
 import AIConsts from '@/core/ai/chat/AIConsts'
+import { OFFICIAL_BACKEND_ENABLED } from '@/config/backend'
 type Anthropic =
   | 'claude-4-opus-20250514'
   | 'claude-4-sonnet-20250514'
@@ -37,10 +38,36 @@ type Mistral = 'ministral-3b-latest' | 'ministral-8b-latest' | 'mistral-large-la
 type Deepseek = 'deepseek-chat' | 'deepseek-reasoner'
 export type IAvailableModels = XAI | Google | Mistral | OpenAI | Anthropic | Deepseek | 'custom' | 'official'
 // Three providers support web search: ''
+/** The model the chat model picker shows when none is chosen. */
+export const DEFAULT_AI_MODEL: IAvailableModels = 'gpt-4o-mini'
+
+/**
+ * The provider requests actually use. Without an official backend there is no
+ * official AI, so an unset or 'official' choice falls back to DEFAULT_AI_MODEL.
+ */
+export const getAIProvider = (provider = GlobalSetting.getSetting().AI.provider): IAvailableModels | undefined => {
+  if (!OFFICIAL_BACKEND_ENABLED && (provider === 'official' || provider === undefined)) {
+    return DEFAULT_AI_MODEL
+  }
+  return provider
+}
+
+/** Whether AI requests go to the official server instead of the user's own provider. */
+export const usesOfficialAI = (provider = GlobalSetting.getSetting().AI.provider) => {
+  const p = getAIProvider(provider)
+  return p === 'official' || p === undefined
+}
+
 export default (opts?: { web?: boolean; reasoning?: boolean }) => {
   const setting = GlobalSetting.getSetting()
-  const { provider, baseUrl, apiKey } = setting.AI
+  const { baseUrl, apiKey } = setting.AI
+  const provider = getAIProvider(setting.AI.provider)
   if (provider === 'official' || provider === undefined) {
+    return
+  }
+  // Without a key the request can only fail; returning nothing makes callers
+  // send the user to the API key setting instead. Custom endpoints may not need one.
+  if (!apiKey && provider !== 'custom') {
     return
   }
   if (provider === 'custom') {

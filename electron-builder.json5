@@ -17,10 +17,14 @@
       repo: "rendevoz",
       releaseType: "draft"
   },
+  // Vite bundles the renderer and most of the main process. electron-builder
+  // also packs package.json "dependencies" (plus what they depend on), so that
+  // list holds only the native modules the main process loads at runtime
+  // (the externals in vite.config.ts: usearch, onnxruntime-*, sharp);
+  // everything Vite bundles belongs in devDependencies.
   files: [
     "dist-electron",
-    "dist",
-    "!node_modules"
+    "dist"
   ],
   protocols: {
     name: "rendevoz",
@@ -36,6 +40,13 @@
       },
     ],
     artifactName: "Rendevoz-Windows-Setup.${ext}",
+    // drop the other platforms' native binaries (~230 MB of onnxruntime)
+    files: [
+      "!node_modules/onnxruntime-node/bin/napi-v*/{linux,darwin}/**",
+      "!node_modules/onnxruntime-node/bin/napi-v*/win32/arm64/**",
+      "!node_modules/usearch/prebuilds/{linux,darwin}-*/**",
+      "!node_modules/usearch/numkong/**",
+    ],
   },
   nsis: {
     oneClick: false,

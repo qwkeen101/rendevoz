@@ -56,6 +56,7 @@ jobs:
         run: |
           ls -la release
           du -sh release/win-unpacked/resources/*
+          du -sh release/win-unpacked/resources/app.asar.unpacked/node_modules/* || true
           release/win-unpacked/Rendevoz.exe .github/scripts/check-native.cjs release/win-unpacked/resources/app.asar
 
       # Starts the packaged app and checks it is still running with a normal

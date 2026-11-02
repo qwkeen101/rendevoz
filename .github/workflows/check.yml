@@ -30,7 +30,16 @@ jobs:
       # package.json and the lockfile disagree. After changing dependencies,
       # run npm install locally and commit the updated lockfile.
       - name: Install dependencies
-        run: npm ci --no-audit --no-fund
+        run: npm install --no-audit --no-fund
+
+      # Temporary: package.json dependency groups changed; hand the updated
+      # lockfile back so it can be committed.
+      - name: Upload lockfile
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-lock
+          path: package-lock.json
 
       - name: Build
         run: npm run build

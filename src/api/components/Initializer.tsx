@@ -68,6 +68,8 @@ const Initializer = () => {
 
     ipcInstance.send('getUpdateDetails').then(res => {
       console.log(res)
+      // undefined when the check failed (offline, no release yet)
+      if (!res?.data?.version) return
       globalStore.set(updateInfoAtom, {
         version: res.data.version
       })

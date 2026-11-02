@@ -1,38 +1,88 @@
-name: Build/release
+name: Build Windows installer
 
-# Manual runs or version tags only: the macOS build needs signing files
-# (entitlements.mac.plist, auth.p8) that are not in the repo.
+# Run by hand (Actions -> Build Windows installer -> Run workflow) to get an
+# installer as a download on the run page. Pushing a tag v<version> does the
+# same and also uploads the installer and latest.yml to a draft GitHub
+# release; installed copies only see it as an update once the draft is
+# published. The tag must equal "v" + package.json "version".
+# No code signing yet, so Windows shows an "unknown publisher" warning.
+# macOS needs signing files (entitlements.mac.plist, auth.p8) that are not in
+# the repo, so there is no macOS job.
 on:
   workflow_dispatch:
   push:
     tags: ['v*']
 
+permissions:
+  contents: write
+
 jobs:
-  release:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        # os: [windows-latest]
-        os: [macos-latest]
-
+  windows:
+    runs-on: windows-latest
     steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Install Node.js, NPM and Yarn
-        uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
+          cache: npm
 
-      - name: Build/release Electron app
-        uses: coparse-inc/action-electron-builder@v1.0.0
+      - name: Check tag matches package.json version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          v=$(node -p "require('./package.json').version")
+          if [ "$GITHUB_REF_NAME" != "v$v" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match package.json version $v"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Build
+        run: npm run build
+
+      - name: Package
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --win --publish ${{ startsWith(github.ref, 'refs/tags/') && 'always' || 'never' }}
+
+      - name: Check native modules load from the package
+        shell: bash
+        env:
+          ELECTRON_RUN_AS_NODE: '1'
+        run: |
+          ls -la release
+          du -sh release/win-unpacked/resources/*
+          release/win-unpacked/Rendevoz.exe .github/scripts/check-native.cjs release/win-unpacked/resources/app.asar
+
+      # Starts the packaged app and checks it is still running with a normal
+      # window after 30s. An uncaught error in the main process shows a dialog
+      # titled "A JavaScript error occurred in the main process" instead.
+      - name: Smoke test
+        shell: pwsh
+        run: |
+          $env:ELECTRON_ENABLE_LOGGING = '1'
+          $p = Start-Process -FilePath 'release\win-unpacked\Rendevoz.exe' -PassThru `
+            -RedirectStandardOutput smoke-out.txt -RedirectStandardError smoke-err.txt
+          Start-Sleep -Seconds 30
+          $p.Refresh()
+          $exited = $p.HasExited
+          $title = if ($exited) { '' } else { $p.MainWindowTitle }
+          Write-Host "exited=$exited title='$title'"
+          Get-Process Rendevoz -ErrorAction SilentlyContinue | Stop-Process -Force
+          Write-Host '--- stdout (tail)'; Get-Content smoke-out.txt -Tail 40 -ErrorAction SilentlyContinue
+          Write-Host '--- stderr (tail)'; Get-Content smoke-err.txt -Tail 40 -ErrorAction SilentlyContinue
+          if ($exited) { Write-Error "app exited within 30s (code $($p.ExitCode))"; exit 1 }
+          if ($title -match 'error') { Write-Error "app shows an error dialog: $title"; exit 1 }
+
+      - uses: actions/upload-artifact@v4
         with:
-          # GitHub token, automatically provided to the action
-          # (No need to define this secret in the repo settings)
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
-          # If the commit is tagged with a version (e.g. "v1.0.0"),
-          # release the app after building
-          release: ${{ startsWith(github.ref, 'refs/tags/v') }}
-
+          name: Rendevoz-Windows-Setup
+          path: |
+            release/*.exe
+            release/*.blockmap
+            release/latest.yml
+          if-no-files-found: error

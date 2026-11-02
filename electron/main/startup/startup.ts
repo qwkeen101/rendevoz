@@ -36,10 +36,10 @@ const startElectron = async () => {
   autoUpdater.autoInstallOnAppQuit = true
   autoUpdater.autoRunAppAfterInstall = true
 
-  autoUpdater.setFeedURL({
-    provider: 'generic',
-    url: 'https://rendevoz.com/download'
-  })
+  // The update feed comes from app-update.yml, which electron-builder writes
+  // from the "publish" block in electron-builder.json5. The old hard-coded
+  // feed (https://rendevoz.com/download) belonged to the original author and
+  // is offline; whoever controls that domain could push installers to users.
   autoUpdater.on('update-available', info => {
     win.webContents.send('updateAvailable')
   })

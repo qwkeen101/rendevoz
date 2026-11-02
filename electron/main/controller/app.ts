@@ -5,8 +5,9 @@ import fs from 'fs'
 import { machineId } from '../utils/getMachineId'
 
 callback('getUpdateDetails', async () => {
+  // null when not packaged (dev) or updates are disabled
   const result = await autoUpdater.checkForUpdates()
-  return result.updateInfo
+  return result?.updateInfo
 })
 callback('getMachineId', async () => {
   return await machineId(false)

@@ -6,11 +6,16 @@
   directories: {
     output: "release"
   },
+  // Where installed copies look for updates (written into app-update.yml).
+  // Tagged builds upload here as a draft release; nothing reaches users
+  // until the draft is published on GitHub. The github provider only works
+  // while this repo is public; before making it private, move releases to a
+  // separate public repo and change owner/repo here.
   publish: {
       provider: "github",
-      repo: "RendevozPublic",
-      owner: "Rendevoz",
-      releaseType: "release"
+      owner: "qwkeen101",
+      repo: "rendevoz",
+      releaseType: "draft"
   },
   files: [
     "dist-electron",

@@ -24,17 +24,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
+      # npm ci installs exactly what package-lock.json says and fails if
+      # package.json and the lockfile disagree. After changing dependencies,
+      # run npm install locally and commit the updated lockfile.
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
-
-      # Temporary: hand the resolved lockfile back so it can be committed.
-      - name: Upload lockfile
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: package-lock
-          path: package-lock.json
+        run: npm ci --no-audit --no-fund
 
       - name: Build
         run: npm run build

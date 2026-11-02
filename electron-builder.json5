@@ -2,6 +2,8 @@
   appId: "rendevoz",
   productName: "Rendevoz",
   copyright: "Copyright © 2023 Rendevoz",
+  // the current logo (the tray uses it too); electron-builder converts it to .ico
+  icon: "public/icon.png",
   asar: true,
   directories: {
     output: "release"
